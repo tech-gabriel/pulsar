@@ -159,65 +159,65 @@ public class PulsarDbContext : DbContext
         }
     }
 
-    private static void SeedData(ModelBuilder modelBuilder)
+    private static void SeedData(ModelBuilder modelBuilder) // dados oficiais: GeoPortal SP (centróides dos polígonos WGS-84)
     {
         var seedDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        // --- Regiões ---
+        // --- Regiões (GeoPortal SP: cd_regiao_05) ---
         var idCentro = new Guid("10000000-0000-0000-0000-000000000001");
-        var idNorte  = new Guid("10000000-0000-0000-0000-000000000002");
-        var idSul    = new Guid("10000000-0000-0000-0000-000000000003");
-        var idLeste  = new Guid("10000000-0000-0000-0000-000000000004");
-        var idOeste  = new Guid("10000000-0000-0000-0000-000000000005");
+        var idLeste  = new Guid("10000000-0000-0000-0000-000000000002");
+        var idNorte  = new Guid("10000000-0000-0000-0000-000000000003");
+        var idOeste  = new Guid("10000000-0000-0000-0000-000000000004");
+        var idSul    = new Guid("10000000-0000-0000-0000-000000000005");
 
         modelBuilder.Entity<Regiao>().HasData(
-            new { Id = idCentro, Nome = "Centro",  CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idNorte,  Nome = "Norte",   CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idSul,    Nome = "Sul",     CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idLeste,  Nome = "Leste",   CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idOeste,  Nome = "Oeste",   CriadoEm = seedDate, AtualizadoEm = seedDate }
+            new { Id = idCentro, Nome = "Centro", CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idLeste,  Nome = "Leste",  CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idNorte,  Nome = "Norte",  CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idOeste,  Nome = "Oeste",  CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idSul,    Nome = "Sul",    CriadoEm = seedDate, AtualizadoEm = seedDate }
         );
 
-        // --- Subprefeituras (32) ---
+        // --- Subprefeituras (32) — centróides WGS-84 calculados dos polígonos oficiais ---
         var subprefeituras = new[]
         {
-            // Centro (6)
-            new { Id = new Guid("20000000-0000-0000-0000-000000000001"), RegiaoId = idCentro, Nome = "Sé",             Latitude = -23.5505, Longitude = -46.6333, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000002"), RegiaoId = idCentro, Nome = "Mooca",          Latitude = -23.5561, Longitude = -46.6019, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000003"), RegiaoId = idCentro, Nome = "Lapa",           Latitude = -23.5260, Longitude = -46.7084, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000004"), RegiaoId = idCentro, Nome = "Pinheiros",      Latitude = -23.5663, Longitude = -46.6929, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000005"), RegiaoId = idCentro, Nome = "Vila Mariana",   Latitude = -23.5874, Longitude = -46.6355, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000006"), RegiaoId = idCentro, Nome = "Butantã",        Latitude = -23.5674, Longitude = -46.7371, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            // Norte (6)
-            new { Id = new Guid("20000000-0000-0000-0000-000000000007"), RegiaoId = idNorte,  Nome = "Santana/Tucuruvi",           Latitude = -23.5003, Longitude = -46.6258, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000008"), RegiaoId = idNorte,  Nome = "Casa Verde/Cachoeirinha",     Latitude = -23.4986, Longitude = -46.6578, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000009"), RegiaoId = idNorte,  Nome = "Freguesia do Ó/Brasilândia", Latitude = -23.4673, Longitude = -46.6880, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000010"), RegiaoId = idNorte,  Nome = "Pirituba/Jaraguá",           Latitude = -23.4726, Longitude = -46.7541, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000011"), RegiaoId = idNorte,  Nome = "Perus",                      Latitude = -23.4031, Longitude = -46.7621, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000012"), RegiaoId = idNorte,  Nome = "Tremembé/Jacanã",            Latitude = -23.4612, Longitude = -46.5959, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            // Sul (6)
-            new { Id = new Guid("20000000-0000-0000-0000-000000000013"), RegiaoId = idSul,    Nome = "Santo Amaro",       Latitude = -23.6510, Longitude = -46.7073, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000014"), RegiaoId = idSul,    Nome = "Campo Limpo",        Latitude = -23.6267, Longitude = -46.7674, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000015"), RegiaoId = idSul,    Nome = "Capela do Socorro",  Latitude = -23.7069, Longitude = -46.6875, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000016"), RegiaoId = idSul,    Nome = "Cidade Ademar",      Latitude = -23.6597, Longitude = -46.6449, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000017"), RegiaoId = idSul,    Nome = "M'Boi Mirim",        Latitude = -23.7093, Longitude = -46.7451, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000018"), RegiaoId = idSul,    Nome = "Parelheiros",        Latitude = -23.8246, Longitude = -46.7296, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            // Leste (11)
-            new { Id = new Guid("20000000-0000-0000-0000-000000000019"), RegiaoId = idLeste,  Nome = "Aricanduva/Formosa/Carrão", Latitude = -23.5381, Longitude = -46.5354, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000020"), RegiaoId = idLeste,  Nome = "Cidade Tiradentes",         Latitude = -23.6082, Longitude = -46.4260, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000021"), RegiaoId = idLeste,  Nome = "Ermelino Matarazzo",        Latitude = -23.5060, Longitude = -46.4688, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000022"), RegiaoId = idLeste,  Nome = "Guaianases",                Latitude = -23.5640, Longitude = -46.4113, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000023"), RegiaoId = idLeste,  Nome = "Itaim Paulista",            Latitude = -23.5147, Longitude = -46.4057, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000024"), RegiaoId = idLeste,  Nome = "Itaquera",                  Latitude = -23.5376, Longitude = -46.4570, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000025"), RegiaoId = idLeste,  Nome = "Penha",                     Latitude = -23.5224, Longitude = -46.5310, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000026"), RegiaoId = idLeste,  Nome = "São Mateus",                Latitude = -23.6182, Longitude = -46.4873, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000027"), RegiaoId = idLeste,  Nome = "São Miguel Paulista",       Latitude = -23.5115, Longitude = -46.4451, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000028"), RegiaoId = idLeste,  Nome = "Sapopemba",                 Latitude = -23.5918, Longitude = -46.4881, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000029"), RegiaoId = idLeste,  Nome = "Vila Prudente",             Latitude = -23.5863, Longitude = -46.5670, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            // Centro (1)
+            new { Id = new Guid("20000000-0000-0000-0000-000000000001"), RegiaoId = idCentro, Nome = "Sé",                          Latitude = -23.548360, Longitude = -46.639876, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            // Leste (12)
+            new { Id = new Guid("20000000-0000-0000-0000-000000000002"), RegiaoId = idLeste,  Nome = "Aricanduva-Formosa-Carrão",   Latitude = -23.563778, Longitude = -46.533801, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000003"), RegiaoId = idLeste,  Nome = "Cidade Tiradentes",           Latitude = -23.584802, Longitude = -46.400847, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000004"), RegiaoId = idLeste,  Nome = "Ermelino Matarazzo",          Latitude = -23.501367, Longitude = -46.488332, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000005"), RegiaoId = idLeste,  Nome = "Guaianases",                  Latitude = -23.545071, Longitude = -46.407617, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000006"), RegiaoId = idLeste,  Nome = "Itaim Paulista",              Latitude = -23.506280, Longitude = -46.399181, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000007"), RegiaoId = idLeste,  Nome = "Itaquera",                    Latitude = -23.559879, Longitude = -46.458407, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000008"), RegiaoId = idLeste,  Nome = "Mooca",                       Latitude = -23.548745, Longitude = -46.588138, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000009"), RegiaoId = idLeste,  Nome = "Penha",                       Latitude = -23.521186, Longitude = -46.516174, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000010"), RegiaoId = idLeste,  Nome = "Sapopemba",                   Latitude = -23.605570, Longitude = -46.509548, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000011"), RegiaoId = idLeste,  Nome = "São Mateus",                  Latitude = -23.613550, Longitude = -46.450006, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000012"), RegiaoId = idLeste,  Nome = "São Miguel Paulista",         Latitude = -23.495421, Longitude = -46.437505, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000013"), RegiaoId = idLeste,  Nome = "Vila Prudente",               Latitude = -23.593597, Longitude = -46.558054, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            // Norte (7)
+            new { Id = new Guid("20000000-0000-0000-0000-000000000014"), RegiaoId = idNorte,  Nome = "Casa Verde-Limão-Cachoeirinha", Latitude = -23.476931, Longitude = -46.664169, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000015"), RegiaoId = idNorte,  Nome = "Freguesia-Brasilândia",       Latitude = -23.461469, Longitude = -46.691466, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000016"), RegiaoId = idNorte,  Nome = "Jaçanã-Tremembé",             Latitude = -23.422594, Longitude = -46.587577, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000017"), RegiaoId = idNorte,  Nome = "Perus-Anhanguera",            Latitude = -23.421114, Longitude = -46.773602, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000018"), RegiaoId = idNorte,  Nome = "Pirituba-Jaraguá",            Latitude = -23.465172, Longitude = -46.736836, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000019"), RegiaoId = idNorte,  Nome = "Santana-Tucuruvi",            Latitude = -23.478587, Longitude = -46.627833, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000020"), RegiaoId = idNorte,  Nome = "Vila Maria-Vila Guilherme",   Latitude = -23.504908, Longitude = -46.585228, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
             // Oeste (3)
-            new { Id = new Guid("20000000-0000-0000-0000-000000000030"), RegiaoId = idOeste,  Nome = "Ipiranga",                  Latitude = -23.5868, Longitude = -46.6083, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000031"), RegiaoId = idOeste,  Nome = "Jabaquara",                 Latitude = -23.6554, Longitude = -46.6432, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000032"), RegiaoId = idOeste,  Nome = "Vila Maria/Vila Guilherme", Latitude = -23.5138, Longitude = -46.5938, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000021"), RegiaoId = idOeste,  Nome = "Butantã",                     Latitude = -23.585714, Longitude = -46.743287, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000022"), RegiaoId = idOeste,  Nome = "Lapa",                        Latitude = -23.528214, Longitude = -46.713954, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000023"), RegiaoId = idOeste,  Nome = "Pinheiros",                   Latitude = -23.573253, Longitude = -46.688826, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            // Sul (9)
+            new { Id = new Guid("20000000-0000-0000-0000-000000000024"), RegiaoId = idSul,    Nome = "Campo Limpo",                 Latitude = -23.645517, Longitude = -46.759994, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000025"), RegiaoId = idSul,    Nome = "Capela do Socorro",           Latitude = -23.766676, Longitude = -46.679802, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000026"), RegiaoId = idSul,    Nome = "Cidade Ademar",               Latitude = -23.693687, Longitude = -46.652667, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000027"), RegiaoId = idSul,    Nome = "Ipiranga",                    Latitude = -23.619492, Longitude = -46.606713, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000028"), RegiaoId = idSul,    Nome = "Jabaquara",                   Latitude = -23.650550, Longitude = -46.645908, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000029"), RegiaoId = idSul,    Nome = "M'Boi Mirim",                 Latitude = -23.701308, Longitude = -46.756119, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000030"), RegiaoId = idSul,    Nome = "Parelheiros",                 Latitude = -23.890827, Longitude = -46.711490, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000031"), RegiaoId = idSul,    Nome = "Santo Amaro",                 Latitude = -23.650098, Longitude = -46.688771, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000032"), RegiaoId = idSul,    Nome = "Vila Mariana",                Latitude = -23.599434, Longitude = -46.646222, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
         };
 
         modelBuilder.Entity<Subprefeitura>().HasData(subprefeituras);

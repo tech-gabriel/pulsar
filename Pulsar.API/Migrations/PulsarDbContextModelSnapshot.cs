@@ -142,28 +142,28 @@ namespace Pulsar.API.Migrations
                             Id = new Guid("10000000-0000-0000-0000-000000000002"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Nome = "Norte"
+                            Nome = "Leste"
                         },
                         new
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000003"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Nome = "Sul"
+                            Nome = "Norte"
                         },
                         new
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000004"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Nome = "Leste"
+                            Nome = "Oeste"
                         },
                         new
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000005"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Nome = "Oeste"
+                            Nome = "Sul"
                         });
                 });
 
@@ -242,8 +242,8 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.5505,
-                            Longitude = -46.633299999999998,
+                            Latitude = -23.548359999999999,
+                            Longitude = -46.639876000000001,
                             Nome = "Sé",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000001")
                         },
@@ -253,10 +253,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.556100000000001,
-                            Longitude = -46.601900000000001,
-                            Nome = "Mooca",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000001")
+                            Latitude = -23.563777999999999,
+                            Longitude = -46.533800999999997,
+                            Nome = "Aricanduva-Formosa-Carrão",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
@@ -264,10 +264,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.526,
-                            Longitude = -46.708399999999997,
-                            Nome = "Lapa",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000001")
+                            Latitude = -23.584802,
+                            Longitude = -46.400846999999999,
+                            Nome = "Cidade Tiradentes",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
@@ -275,10 +275,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.566299999999998,
-                            Longitude = -46.692900000000002,
-                            Nome = "Pinheiros",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000001")
+                            Latitude = -23.501366999999998,
+                            Longitude = -46.488332,
+                            Nome = "Ermelino Matarazzo",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
@@ -286,10 +286,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.587399999999999,
-                            Longitude = -46.6355,
-                            Nome = "Vila Mariana",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000001")
+                            Latitude = -23.545071,
+                            Longitude = -46.407617000000002,
+                            Nome = "Guaianases",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
@@ -297,10 +297,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.567399999999999,
-                            Longitude = -46.737099999999998,
-                            Nome = "Butantã",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000001")
+                            Latitude = -23.50628,
+                            Longitude = -46.399180999999999,
+                            Nome = "Itaim Paulista",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
@@ -308,9 +308,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.500299999999999,
-                            Longitude = -46.625799999999998,
-                            Nome = "Santana/Tucuruvi",
+                            Latitude = -23.559878999999999,
+                            Longitude = -46.458407000000001,
+                            Nome = "Itaquera",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
@@ -319,9 +319,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.4986,
-                            Longitude = -46.657800000000002,
-                            Nome = "Casa Verde/Cachoeirinha",
+                            Latitude = -23.548745,
+                            Longitude = -46.588138000000001,
+                            Nome = "Mooca",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
@@ -330,9 +330,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.467300000000002,
-                            Longitude = -46.688000000000002,
-                            Nome = "Freguesia do Ó/Brasilândia",
+                            Latitude = -23.521186,
+                            Longitude = -46.516173999999999,
+                            Nome = "Penha",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
@@ -341,9 +341,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.4726,
-                            Longitude = -46.754100000000001,
-                            Nome = "Pirituba/Jaraguá",
+                            Latitude = -23.60557,
+                            Longitude = -46.509548000000002,
+                            Nome = "Sapopemba",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
@@ -352,9 +352,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.403099999999998,
-                            Longitude = -46.762099999999997,
-                            Nome = "Perus",
+                            Latitude = -23.61355,
+                            Longitude = -46.450006000000002,
+                            Nome = "São Mateus",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
@@ -363,9 +363,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.461200000000002,
-                            Longitude = -46.5959,
-                            Nome = "Tremembé/Jacanã",
+                            Latitude = -23.495421,
+                            Longitude = -46.437505000000002,
+                            Nome = "São Miguel Paulista",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
@@ -374,10 +374,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.651,
-                            Longitude = -46.707299999999996,
-                            Nome = "Santo Amaro",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000003")
+                            Latitude = -23.593596999999999,
+                            Longitude = -46.558053999999998,
+                            Nome = "Vila Prudente",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new
                         {
@@ -385,9 +385,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.6267,
-                            Longitude = -46.767400000000002,
-                            Nome = "Campo Limpo",
+                            Latitude = -23.476931,
+                            Longitude = -46.664169000000001,
+                            Nome = "Casa Verde-Limão-Cachoeirinha",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000003")
                         },
                         new
@@ -396,9 +396,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.706900000000001,
-                            Longitude = -46.6875,
-                            Nome = "Capela do Socorro",
+                            Latitude = -23.461469000000001,
+                            Longitude = -46.691465999999998,
+                            Nome = "Freguesia-Brasilândia",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000003")
                         },
                         new
@@ -407,9 +407,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.659700000000001,
-                            Longitude = -46.6449,
-                            Nome = "Cidade Ademar",
+                            Latitude = -23.422594,
+                            Longitude = -46.587577000000003,
+                            Nome = "Jaçanã-Tremembé",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000003")
                         },
                         new
@@ -418,9 +418,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.709299999999999,
-                            Longitude = -46.745100000000001,
-                            Nome = "M'Boi Mirim",
+                            Latitude = -23.421113999999999,
+                            Longitude = -46.773601999999997,
+                            Nome = "Perus-Anhanguera",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000003")
                         },
                         new
@@ -429,9 +429,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.8246,
-                            Longitude = -46.729599999999998,
-                            Nome = "Parelheiros",
+                            Latitude = -23.465171999999999,
+                            Longitude = -46.736835999999997,
+                            Nome = "Pirituba-Jaraguá",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000003")
                         },
                         new
@@ -440,10 +440,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.5381,
-                            Longitude = -46.535400000000003,
-                            Nome = "Aricanduva/Formosa/Carrão",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
+                            Latitude = -23.478587000000001,
+                            Longitude = -46.627833000000003,
+                            Nome = "Santana-Tucuruvi",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000003")
                         },
                         new
                         {
@@ -451,10 +451,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.6082,
-                            Longitude = -46.426000000000002,
-                            Nome = "Cidade Tiradentes",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
+                            Latitude = -23.504908,
+                            Longitude = -46.585228000000001,
+                            Nome = "Vila Maria-Vila Guilherme",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000003")
                         },
                         new
                         {
@@ -462,9 +462,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.506,
-                            Longitude = -46.468800000000002,
-                            Nome = "Ermelino Matarazzo",
+                            Latitude = -23.585713999999999,
+                            Longitude = -46.743287000000002,
+                            Nome = "Butantã",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
                         },
                         new
@@ -473,9 +473,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.564,
-                            Longitude = -46.411299999999997,
-                            Nome = "Guaianases",
+                            Latitude = -23.528213999999998,
+                            Longitude = -46.713954000000001,
+                            Nome = "Lapa",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
                         },
                         new
@@ -484,9 +484,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.514700000000001,
-                            Longitude = -46.405700000000003,
-                            Nome = "Itaim Paulista",
+                            Latitude = -23.573253000000001,
+                            Longitude = -46.688825999999999,
+                            Nome = "Pinheiros",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
                         },
                         new
@@ -495,10 +495,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.537600000000001,
-                            Longitude = -46.457000000000001,
-                            Nome = "Itaquera",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
+                            Latitude = -23.645517000000002,
+                            Longitude = -46.759993999999999,
+                            Nome = "Campo Limpo",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
                         },
                         new
                         {
@@ -506,10 +506,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.522400000000001,
-                            Longitude = -46.530999999999999,
-                            Nome = "Penha",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
+                            Latitude = -23.766676,
+                            Longitude = -46.679802000000002,
+                            Nome = "Capela do Socorro",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
                         },
                         new
                         {
@@ -517,10 +517,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.618200000000002,
-                            Longitude = -46.487299999999998,
-                            Nome = "São Mateus",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
+                            Latitude = -23.693687000000001,
+                            Longitude = -46.652667000000001,
+                            Nome = "Cidade Ademar",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
                         },
                         new
                         {
@@ -528,10 +528,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.511500000000002,
-                            Longitude = -46.445099999999996,
-                            Nome = "São Miguel Paulista",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
+                            Latitude = -23.619492000000001,
+                            Longitude = -46.606712999999999,
+                            Nome = "Ipiranga",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
                         },
                         new
                         {
@@ -539,10 +539,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.591799999999999,
-                            Longitude = -46.488100000000003,
-                            Nome = "Sapopemba",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
+                            Latitude = -23.650549999999999,
+                            Longitude = -46.645907999999999,
+                            Nome = "Jabaquara",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
                         },
                         new
                         {
@@ -550,10 +550,10 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.586300000000001,
-                            Longitude = -46.567,
-                            Nome = "Vila Prudente",
-                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000004")
+                            Latitude = -23.701308000000001,
+                            Longitude = -46.756118999999998,
+                            Nome = "M'Boi Mirim",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
                         },
                         new
                         {
@@ -561,9 +561,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.5868,
-                            Longitude = -46.6083,
-                            Nome = "Ipiranga",
+                            Latitude = -23.890827000000002,
+                            Longitude = -46.711489999999998,
+                            Nome = "Parelheiros",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
                         },
                         new
@@ -572,9 +572,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.6554,
-                            Longitude = -46.6432,
-                            Nome = "Jabaquara",
+                            Latitude = -23.650098,
+                            Longitude = -46.688771000000003,
+                            Nome = "Santo Amaro",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
                         },
                         new
@@ -583,9 +583,9 @@ namespace Pulsar.API.Migrations
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Latitude = -23.5138,
-                            Longitude = -46.593800000000002,
-                            Nome = "Vila Maria/Vila Guilherme",
+                            Latitude = -23.599433999999999,
+                            Longitude = -46.646222000000002,
+                            Nome = "Vila Mariana",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
                         });
                 });

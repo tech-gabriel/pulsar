@@ -1,0 +1,40 @@
+## .NET Build artifacts
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docobj
+.vs/
+
+## NuGet
+*.nupkg
+*.snupkg
+nuget.config
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Secrets and configuration
+appsettings.Production.json
+*.pfx
+*.p12
+secrets.json
+
+## Database files
+*.db
+*.db-shm
+*.db-wal
+
+## Logs
+logs/
+*.log
+
+## OS
+.DS_Store
+Thumbs.db
+
+## IDE
+.idea/
+*.swp
+*~

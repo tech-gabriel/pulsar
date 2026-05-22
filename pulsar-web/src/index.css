@@ -47,6 +47,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Animação slide-in da direita para DetalheRegiao */
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.22s ease-out forwards;
+}
+
 /* Leaflet overrides — garantir que o mapa renderize corretamente */
 .leaflet-container {
   height: 100%;

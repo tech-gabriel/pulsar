@@ -1,5 +1,7 @@
 export type FaixaRisco = 'BAIXO' | 'MODERADO' | 'ALTO';
 
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
 export interface UsuarioDto {
   id: string;
   nome: string;
@@ -22,69 +24,74 @@ export interface LoginResponseDto {
   usuario: UsuarioDto;
 }
 
-export interface LeituraDto {
-  id: string;
-  timestamp: string;
-  chuvaMmH: number;
-  ventoKmH: number;
-  visibilidadeKm: number;
-  indiceUv: number;
-}
-
-export interface SubprefeituraDto {
-  id: string;
-  nome: string;
-  sigla: string;
-  latitude: number;
-  longitude: number;
-  scoreAtual: number | null;
-  faixaRisco: FaixaRisco | null;
-  ultimaLeitura: LeituraDto | null;
-}
-
-export interface RegiaoDto {
-  id: string;
-  nome: string;
-  scoreAtual: number | null;
-  faixaRisco: FaixaRisco | null;
-  subprefeituras: SubprefeituraDto[];
-}
+// ── Score / Leitura ───────────────────────────────────────────────────────────
 
 export interface ScoreDto {
-  id: string;
   valor: number;
   faixa: FaixaRisco;
   timestamp: string;
 }
 
-export interface AlertaDto {
-  id: string;
-  regiaoId: string;
-  regiaoNome: string;
-  mensagem: string;
-  faixaRisco: FaixaRisco;
-  criadoEm: string;
-}
-
-export interface LeituraComScoreDto {
-  timestamp: string;
+export interface LeituraDto {
   chuvaMmH: number;
   ventoKmH: number;
   visibilidadeKm: number;
   indiceUv: number;
-  score: number | null;
-  faixaRisco: FaixaRisco | null;
+  timestamp: string;
+}
+
+// ── Região ────────────────────────────────────────────────────────────────────
+
+/** Retornado por GET /api/regioes (lista resumida) */
+export interface RegiaoDto {
+  id: string;
+  nome: string;
+  scoreAgregado: number;
+  faixaRisco: FaixaRisco;
+  totalSubprefeituras: number;
+  ultimaAtualizacao: string;
+}
+
+/** Retornado por GET /api/regioes/{id} (detalhe completo) */
+export interface RegiaoDetalheDto extends RegiaoDto {
+  subprefeituras: SubprefeituraDto[];
+}
+
+// ── Subprefeitura ─────────────────────────────────────────────────────────────
+
+export interface SubprefeituraDto {
+  id: string;
+  nome: string;
+  latitude: number;
+  longitude: number;
+  scoreAtual: ScoreDto | null;
+  faixaRisco: FaixaRisco;
+  ultimaLeitura: LeituraDto | null;
+}
+
+// ── Histórico ─────────────────────────────────────────────────────────────────
+
+export interface LeituraComScoreDto {
+  chuvaMmH: number;
+  ventoKmH: number;
+  visibilidadeKm: number;
+  indiceUv: number;
+  timestamp: string;
+  score: ScoreDto | null;
 }
 
 export interface HistoricoDto {
-  subprefeituraId: string;
-  subprefeituranome: string;
+  subprefeituraNome: string;
   leituras: LeituraComScoreDto[];
 }
+
+// ── Favoritos ─────────────────────────────────────────────────────────────────
 
 export interface FavoritoDto {
   regiaoId: string;
   regiaoNome: string;
-  scoreAtual: number | null;
-  faixaRisco: FaixaRisco | null;
+}
+
+export interface AdicionarFavoritoRequestDto {
+  regiaoId: string;
 }

@@ -66,7 +66,7 @@ export default function RegioesLayer({
         ${
           regiao
             ? `<div style="font-size: 12px;">
-                Score: <b style="font-family: JetBrains Mono, monospace;">${scoreFormatado(regiao.scoreAtual)}</b>
+                Score: <b style="font-family: JetBrains Mono, monospace;">${scoreFormatado(regiao.scoreAgregado)}</b>
                 — <b>${labelFaixa(regiao.faixaRisco)}</b>
                </div>`
             : '<div style="font-size: 12px; color: #94a3b8;">Sem dados no momento</div>'

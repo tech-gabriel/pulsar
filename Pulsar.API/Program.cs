@@ -99,7 +99,8 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PulsarDbContext>();
-    db.Database.Migrate();
+    try { db.Database.Migrate(); }
+    catch (InvalidOperationException) { db.Database.EnsureCreated(); }
 }
 
 // --- Middleware Pipeline ---
@@ -114,9 +115,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors(frontendOrigins);
-app.UseHttpsRedirection();
+if (!app.Environment.IsEnvironment("Test"))
+    app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

@@ -1,20 +1,67 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.External.Clients;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Repositories.Interfaces;
+using Scalar.AspNetCore;
 using Pulsar.API.Scheduler;
 using Pulsar.API.Services;
 using Pulsar.API.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- Controllers ---
 builder.Services.AddControllers();
+
+// --- OpenAPI / Swagger ---
 builder.Services.AddOpenApi();
 
+// --- CORS ---
+var frontendOrigins = "_frontendOrigins";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(frontendOrigins, policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173",  // Vite dev server
+                "http://localhost:3000"   // fallback CRA / outros
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+// --- JWT Authentication ---
+var jwtSecret = builder.Configuration["Jwt:SecretKey"]
+    ?? throw new InvalidOperationException("Jwt:SecretKey não configurada.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// --- Database ---
 builder.Services.AddDbContext<PulsarDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// --- HTTP Clients ---
 builder.Services.AddHttpClient("openweathermap", (sp, client) =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
@@ -25,33 +72,51 @@ builder.Services.AddHttpClient("openweathermap", (sp, client) =>
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
-builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
-
+// --- Repositories ---
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IRegiaoRepository, RegiaoRepository>();
 builder.Services.AddScoped<ISubprefeituraRepository, SubprefeituraRepository>();
 builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
 builder.Services.AddScoped<ISugestaoRepository, SugestaoRepository>();
 builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();
 
+// --- Services ---
+builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IClimateService, ClimateService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<ISugestaoService, SugestaoService>();
 builder.Services.AddScoped<IAlertaService, AlertaService>();
 
+// --- Scheduler ---
 builder.Services.AddHostedService<DataCollectionJob>();
 
+// --- Build ---
 var app = builder.Build();
 
+// --- Migrations ---
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PulsarDbContext>();
     db.Database.Migrate();
 }
 
+// --- Middleware Pipeline ---
 if (app.Environment.IsDevelopment())
+{
     app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.Title = "Pulsar API";
+        options.Theme = Scalar.AspNetCore.ScalarTheme.DeepSpace;
+    });
+}
 
+app.UseCors(frontendOrigins);
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();

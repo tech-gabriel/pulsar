@@ -3,6 +3,7 @@ import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
 import MapaPage from './pages/MapaPage';
+import HistoricoPage from './pages/HistoricoPage';
 
 function RotaProtegida({ children }: { children: React.ReactNode }) {
   const { estaAutenticado } = useAuth();
@@ -39,6 +40,14 @@ export default function App() {
           <RotaPublica>
             <CadastroPage />
           </RotaPublica>
+        }
+      />
+      <Route
+        path="/historico/:subprefeituraId"
+        element={
+          <RotaProtegida>
+            <HistoricoPage />
+          </RotaProtegida>
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />

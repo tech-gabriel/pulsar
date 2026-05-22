@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,7 +15,9 @@ using Pulsar.API.Services.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Controllers ---
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+        opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // --- OpenAPI / Swagger ---
 builder.Services.AddOpenApi();

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentAssertions;
 using Pulsar.API.DTOs;
 using Pulsar.Tests.Helpers;
@@ -10,8 +11,11 @@ namespace Pulsar.Tests.Controllers;
 public class AuthControllerTests : IClassFixture<PulsarWebApplicationFactory>
 {
     private readonly HttpClient _client;
-    private static readonly JsonSerializerOptions JsonOpts =
-        new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public AuthControllerTests(PulsarWebApplicationFactory factory)
         => _client = factory.CreateClient();

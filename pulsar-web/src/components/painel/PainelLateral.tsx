@@ -20,15 +20,15 @@ function formatarHorario(data: Date | null): string {
   return data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
-// Ordena regiões: Alto → Moderado → Baixo → sem dados
-const ORDEM_FAIXA = { ALTO: 0, MODERADO: 1, BAIXO: 2 };
+// Ordena regiões: Alto → Moderado → Baixo
+const ORDEM_FAIXA: Record<string, number> = { ALTO: 0, MODERADO: 1, BAIXO: 2 };
 
 function ordenarRegioes(regioes: RegiaoDto[]): RegiaoDto[] {
   return [...regioes].sort((a, b) => {
-    const oa = a.faixaRisco ? (ORDEM_FAIXA[a.faixaRisco] ?? 3) : 3;
-    const ob = b.faixaRisco ? (ORDEM_FAIXA[b.faixaRisco] ?? 3) : 3;
+    const oa = ORDEM_FAIXA[a.faixaRisco] ?? 3;
+    const ob = ORDEM_FAIXA[b.faixaRisco] ?? 3;
     if (oa !== ob) return oa - ob;
-    return (b.scoreAtual ?? -1) - (a.scoreAtual ?? -1);
+    return b.scoreAgregado - a.scoreAgregado;
   });
 }
 
@@ -106,12 +106,12 @@ export default function PainelLateral({
                     <div className="min-w-0">
                       <p className="font-semibold text-sm text-slate-800 truncate">{regiao.nome}</p>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {regiao.subprefeituras.length} subprefeituras
+                        {regiao.totalSubprefeituras} subprefeituras
                       </p>
                     </div>
                     <BadgeRisco
                       faixa={regiao.faixaRisco}
-                      score={regiao.scoreAtual}
+                      score={regiao.scoreAgregado}
                       size="sm"
                     />
                   </button>

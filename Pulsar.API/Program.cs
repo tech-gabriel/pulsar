@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.External.Clients;
 using Pulsar.API.External.Interfaces;
+using Pulsar.API.OpenApi;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Repositories.Interfaces;
 using Scalar.AspNetCore;
@@ -20,7 +21,11 @@ builder.Services.AddControllers()
         opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // --- OpenAPI / Swagger ---
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<PulsarDocumentTransformer>();
+    options.AddOperationTransformer<SecurityOperationTransformer>();
+});
 
 // --- CORS ---
 var frontendOrigins = "_frontendOrigins";

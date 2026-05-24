@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import {
-  X, Star, StarOff, CloudRain, Wind, Eye, Sun, History, ArrowLeft,
+  X, Star, StarOff, CloudRain, Wind, Eye, Sun, History, ArrowLeft, RefreshCw,
 } from 'lucide-react';
 import type { SubprefeituraDto } from '../../types';
 import { useRegiaoDetalhe } from '../../hooks/useRegiaoDetalhe';
 import { coresParaFaixa } from '../../utils/risco';
 import BadgeRisco from '../ui/BadgeRisco';
-import LoadingSpinner from '../ui/LoadingSpinner';
+import { SkeletonCardSubprefeitura } from '../ui/Skeleton';
 
 interface Props {
   regiaoId: string;
@@ -162,11 +162,24 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
-        {carregando && <LoadingSpinner mensagem="Carregando dados..." className="h-40" />}
+        {carregando && (
+          <>
+            <SkeletonCardSubprefeitura />
+            <SkeletonCardSubprefeitura />
+            <SkeletonCardSubprefeitura />
+          </>
+        )}
 
-        {erro && (
-          <div className="px-4 py-6 text-center text-sm text-slate-500">
-            {erro}
+        {!carregando && erro && (
+          <div className="px-4 py-8 flex flex-col items-center gap-3 text-center">
+            <RefreshCw size={24} className="text-slate-300" />
+            <p className="text-sm text-slate-500">{erro}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-xs text-pulsar-600 hover:underline font-medium"
+            >
+              Tentar novamente
+            </button>
           </div>
         )}
 

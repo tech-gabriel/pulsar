@@ -48,12 +48,13 @@ export default function CadastroPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pulsar-950 via-pulsar-900 to-pulsar-800 px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pulsar-950 via-pulsar-900 to-pulsar-800 px-4 py-8">
+      <div className="w-full max-w-[400px]">
+
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-pulsar-500/20 border border-pulsar-400/30 mb-4">
-            <Activity size={28} className="text-pulsar-400" />
+        <div className="text-center mb-7">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-pulsar-500/15 border border-pulsar-400/20 mb-5">
+            <Activity size={30} className="text-pulsar-400" />
           </div>
           <h1
             className="text-3xl font-bold text-white tracking-tight"
@@ -61,27 +62,27 @@ export default function CadastroPage() {
           >
             PULSAR
           </h1>
-          <p className="text-pulsar-300 text-sm mt-1">O mapa vivo da sua segurança</p>
+          <p className="text-pulsar-300 text-sm mt-1.5">O mapa vivo da sua segurança</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-xl shadow-xl p-6">
+        <div className="bg-white rounded-2xl shadow-2xl px-6 py-7 sm:px-7">
           <h2
-            className="text-lg font-semibold text-slate-800 mb-5"
+            className="text-xl font-semibold text-slate-800 mb-6"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             Criar conta
           </h2>
 
           {erro && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">
+            <div className="mb-5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
               {erro}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Nome</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome</label>
               <input
                 type="text"
                 value={nome}
@@ -89,12 +90,12 @@ export default function CadastroPage() {
                 required
                 autoComplete="name"
                 placeholder="Seu nome"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pulsar-500 focus:border-transparent transition"
+                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pulsar-500 focus:border-transparent transition bg-slate-50 focus:bg-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">E-mail</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">E-mail</label>
               <input
                 type="email"
                 value={email}
@@ -102,12 +103,12 @@ export default function CadastroPage() {
                 required
                 autoComplete="email"
                 placeholder="seu@email.com"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pulsar-500 focus:border-transparent transition"
+                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pulsar-500 focus:border-transparent transition bg-slate-50 focus:bg-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Senha</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Senha</label>
               <div className="relative">
                 <input
                   type={mostrarSenha ? 'text' : 'password'}
@@ -116,18 +117,18 @@ export default function CadastroPage() {
                   required
                   autoComplete="new-password"
                   placeholder="8+ chars, 2 números, 1 especial"
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pulsar-500 focus:border-transparent transition pr-10"
+                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pulsar-500 focus:border-transparent transition bg-slate-50 focus:bg-white pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setMostrarSenha((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                   tabIndex={-1}
                 >
-                  {mostrarSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 mt-1.5">
                 Mínimo 8 caracteres, 2 números e 1 caractere especial
               </p>
             </div>
@@ -135,15 +136,15 @@ export default function CadastroPage() {
             <button
               type="submit"
               disabled={enviando}
-              className="w-full bg-pulsar-600 hover:bg-pulsar-700 disabled:opacity-60 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors mt-1"
+              className="w-full bg-pulsar-600 hover:bg-pulsar-700 active:bg-pulsar-800 disabled:opacity-60 text-white font-semibold rounded-xl py-3.5 text-base transition-all duration-150 active:scale-[0.98] mt-1 shadow-sm"
             >
-              {enviando ? 'Criando conta...' : 'Criar conta'}
+              {enviando ? 'Criando conta…' : 'Criar conta'}
             </button>
           </form>
 
-          <p className="text-center text-xs text-slate-500 mt-4">
+          <p className="text-center text-sm text-slate-500 mt-5">
             Já tem conta?{' '}
-            <Link to="/login" className="text-pulsar-600 hover:underline font-medium">
+            <Link to="/login" className="text-pulsar-600 hover:text-pulsar-700 font-semibold">
               Entrar
             </Link>
           </p>

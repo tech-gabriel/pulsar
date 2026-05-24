@@ -1,0 +1,78 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* Paleta primária Pulsar */
+  --color-pulsar-50:  #F0F9FF;
+  --color-pulsar-100: #DFF2FE;
+  --color-pulsar-200: #B8E6FE;
+  --color-pulsar-300: #74D4FF;
+  --color-pulsar-400: #00BCFF;
+  --color-pulsar-500: #00A6F4;
+  --color-pulsar-600: #0084D1;
+  --color-pulsar-700: #0069A8;
+  --color-pulsar-800: #00598A;
+  --color-pulsar-900: #024A70;
+  --color-pulsar-950: #052F4A;
+
+  /* Faixas de risco */
+  --color-risco-baixo-bg:       #D4EDDA;
+  --color-risco-baixo-text:     #155724;
+  --color-risco-moderado-bg:    #FFF3CD;
+  --color-risco-moderado-text:  #856404;
+  --color-risco-alto-bg:        #F8D7DA;
+  --color-risco-alto-text:      #721C24;
+
+  /* Tipografia */
+  --font-heading: "Plus Jakarta Sans", sans-serif;
+  --font-body:    "DM Sans", sans-serif;
+  --font-mono:    "JetBrains Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+}
+
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Slide-in da direita — DetalheRegiao desktop */
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.animate-slide-in {
+  animation: slide-in 0.22s ease-out forwards;
+}
+
+/* Slide-up do rodapé — overlay mobile */
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* Leaflet overrides — garantir que o mapa renderize corretamente */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  font-family: var(--font-body);
+}

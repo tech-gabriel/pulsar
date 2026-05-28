@@ -1,0 +1,6 @@
+@Pulsar.API_HostAddress = http://localhost:5245
+
+GET {{Pulsar.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

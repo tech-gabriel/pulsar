@@ -163,4 +163,4 @@ Pulsar/
 
 Este projeto está protegido por uma licença proprietária. Consulte o arquivo [LICENSE](LICENSE) para os termos completos.
 
-© 2025 Gabriel Leite. Todos os direitos reservados.
+© 2026 Gabriel Silva de Paula Leite. Todos os direitos reservados.

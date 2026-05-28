@@ -38,3 +38,12 @@ Thumbs.db
 .idea/
 *.swp
 *~
+
+## Claude Code (configs internas, não versionar)
+.claude/
+
+## Vite cache
+pulsar-web/.vite/
+
+## Node modules
+pulsar-web/node_modules/

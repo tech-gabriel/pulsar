@@ -1,9 +1,9 @@
 import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { GeoJsonObject } from 'geojson';
-import type { RegiaoDto } from '../../types';
+import type { SubprefeituraMapaDto } from '../../types';
 import RegioesLayer from './RegioesLayer';
-import ScoreLabels from './ScoreLabels';
+import ScoreLabel from './ScoreLabel';
 
 // Centro geográfico de São Paulo
 const SP_CENTER: [number, number] = [-23.5505, -46.6333];
@@ -25,12 +25,12 @@ const TILE_CONFIG = MAPTILER_KEY
 
 interface Props {
   geojson: GeoJsonObject | null;
-  regioes: RegiaoDto[];
-  regiaoSelecionada: string | null;
-  onSelecionarRegiao: (nome: string) => void;
+  subprefeituras: SubprefeituraMapaDto[];
+  subSelecionada: SubprefeituraMapaDto | null;
+  onSelecionarSub: (sub: SubprefeituraMapaDto) => void;
 }
 
-export default function MapaBase({ geojson, regioes, regiaoSelecionada, onSelecionarRegiao }: Props) {
+export default function MapaBase({ geojson, subprefeituras, subSelecionada, onSelecionarSub }: Props) {
   return (
     <MapContainer
       center={SP_CENTER}
@@ -48,14 +48,14 @@ export default function MapaBase({ geojson, regioes, regiaoSelecionada, onSeleci
         <>
           <RegioesLayer
             geojson={geojson}
-            regioes={regioes}
-            regiaoSelecionada={regiaoSelecionada}
-            onSelecionarRegiao={onSelecionarRegiao}
+            subprefeituras={subprefeituras}
+            subSelecionada={subSelecionada}
+            onSelecionarSub={onSelecionarSub}
           />
-          <ScoreLabels
-            geojson={geojson}
-            regioes={regioes}
-            onSelecionarRegiao={onSelecionarRegiao}
+          <ScoreLabel
+            subprefeituras={subprefeituras}
+            subSelecionada={subSelecionada}
+            onSelecionarSub={onSelecionarSub}
           />
         </>
       )}

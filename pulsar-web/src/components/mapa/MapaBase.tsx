@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import type { GeoJsonObject } from 'geojson';
 import type { RegiaoDto } from '../../types';
 import RegioesLayer from './RegioesLayer';
+import ScoreLabels from './ScoreLabels';
 
 // Centro geográfico de São Paulo
 const SP_CENTER: [number, number] = [-23.5505, -46.6333];
@@ -44,12 +45,19 @@ export default function MapaBase({ geojson, regioes, regiaoSelecionada, onSeleci
         url={TILE_CONFIG.url}
       />
       {geojson && (
-        <RegioesLayer
-          geojson={geojson}
-          regioes={regioes}
-          regiaoSelecionada={regiaoSelecionada}
-          onSelecionarRegiao={onSelecionarRegiao}
-        />
+        <>
+          <RegioesLayer
+            geojson={geojson}
+            regioes={regioes}
+            regiaoSelecionada={regiaoSelecionada}
+            onSelecionarRegiao={onSelecionarRegiao}
+          />
+          <ScoreLabels
+            geojson={geojson}
+            regioes={regioes}
+            onSelecionarRegiao={onSelecionarRegiao}
+          />
+        </>
       )}
     </MapContainer>
   );

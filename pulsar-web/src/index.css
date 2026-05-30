@@ -76,3 +76,31 @@ body {
   border-radius: 8px;
   font-family: var(--font-body);
 }
+
+/* Score visível sobre cada região — pílula clicável que escala com o zoom.
+   O divIcon tem tamanho 0; a pílula é centralizada via transform. */
+.pulsar-score-label {
+  background: none;
+  border: none;
+}
+.pulsar-score-pill {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  line-height: 1.15;
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.12s ease-out;
+}
+.pulsar-score-pill:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+}

@@ -8,36 +8,39 @@ export interface RiscoCores {
   fillOpacity: number;
 }
 
+// Nota: bg/text/fill são usados também nos badges (tema claro) e têm testes.
+// border/fillOpacity são exclusivos dos polígonos do mapa e foram calibrados
+// para ficarem vibrantes sobre o basemap escuro (MapTiler Dataviz Dark).
 const CORES: Record<FaixaRisco, RiscoCores> = {
   BAIXO: {
     bg: '#D4EDDA',
     text: '#155724',
-    border: '#a3d9a5',
+    border: '#22c55e',
     fill: '#22c55e',
-    fillOpacity: 0.35,
+    fillOpacity: 0.25,
   },
   MODERADO: {
     bg: '#FFF3CD',
     text: '#856404',
-    border: '#f6cc53',
+    border: '#f59e0b',
     fill: '#f59e0b',
-    fillOpacity: 0.45,
+    fillOpacity: 0.35,
   },
   ALTO: {
     bg: '#F8D7DA',
     text: '#721C24',
-    border: '#f08080',
+    border: '#ef4444',
     fill: '#ef4444',
-    fillOpacity: 0.55,
+    fillOpacity: 0.45,
   },
 };
 
 const SEM_DADO: RiscoCores = {
   bg: '#F1F5F9',
   text: '#64748b',
-  border: '#cbd5e1',
+  border: '#64748b',
   fill: '#94a3b8',
-  fillOpacity: 0.25,
+  fillOpacity: 0.2,
 };
 
 export function coresParaFaixa(faixa: FaixaRisco | null | undefined): RiscoCores {

@@ -1,6 +1,7 @@
-import { expect, afterEach } from 'vitest';
+import { afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import * as matchers from '@testing-library/jest-dom/matchers';
+// Registra os matchers do jest-dom no `expect` e augmenta os tipos do Vitest
+// (toBeInTheDocument, toHaveClass, etc.) para o typecheck do `npm run build`.
+import '@testing-library/jest-dom/vitest';
 
-expect.extend(matchers as never);
 afterEach(cleanup);

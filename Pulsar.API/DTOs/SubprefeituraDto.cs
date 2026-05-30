@@ -10,5 +10,6 @@ public class SubprefeituraDto
     public double Longitude { get; set; }
     public ScoreDto? ScoreAtual { get; set; }
     public FaixaRisco FaixaRisco { get; set; }
+    public double TemperaturaAtual { get; set; }
     public LeituraDto? UltimaLeitura { get; set; }
 }

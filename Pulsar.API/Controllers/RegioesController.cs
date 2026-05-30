@@ -90,6 +90,7 @@ public class RegioesController : ControllerBase
             Latitude = sub.Latitude,
             Longitude = sub.Longitude,
             FaixaRisco = ultimoScore?.Faixa ?? FaixaRisco.BAIXO,
+            TemperaturaAtual = ultimaLeitura?.TemperaturaC ?? 0.0,
             ScoreAtual = ultimoScore is null ? null : new ScoreDto
             {
                 Valor = Math.Round(ultimoScore.Valor, 1),
@@ -102,6 +103,9 @@ public class RegioesController : ControllerBase
                 VentoKmH = ultimaLeitura.VentoKmH,
                 VisibilidadeKm = ultimaLeitura.VisibilidadeKm,
                 IndiceUv = ultimaLeitura.IndiceUv,
+                TemperaturaC = ultimaLeitura.TemperaturaC,
+                SensacaoTermica = ultimaLeitura.SensacaoTermica,
+                Umidade = ultimaLeitura.Umidade,
                 Timestamp = ultimaLeitura.Timestamp
             }
         };

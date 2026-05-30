@@ -37,6 +37,9 @@ export interface LeituraDto {
   ventoKmH: number;
   visibilidadeKm: number;
   indiceUv: number;
+  temperaturaC: number;
+  sensacaoTermica: number;
+  umidade: number;
   timestamp: string;
 }
 
@@ -66,7 +69,14 @@ export interface SubprefeituraDto {
   longitude: number;
   scoreAtual: ScoreDto | null;
   faixaRisco: FaixaRisco;
+  temperaturaAtual: number;
   ultimaLeitura: LeituraDto | null;
+}
+
+/** SubprefeituraDto achatada com a região a que pertence — usada nos labels do mapa. */
+export interface SubprefeituraMapaDto extends SubprefeituraDto {
+  regiaoId: string;
+  regiaoNome: string;
 }
 
 // ── Histórico ─────────────────────────────────────────────────────────────────
@@ -76,6 +86,9 @@ export interface LeituraComScoreDto {
   ventoKmH: number;
   visibilidadeKm: number;
   indiceUv: number;
+  temperaturaC: number;
+  sensacaoTermica: number;
+  umidade: number;
   timestamp: string;
   score: ScoreDto | null;
 }

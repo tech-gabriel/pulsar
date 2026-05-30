@@ -89,11 +89,20 @@ namespace Pulsar.API.Migrations
                     b.Property<double>("IndiceUv")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("SensacaoTermica")
+                        .HasColumnType("REAL");
+
                     b.Property<Guid>("SubprefeituraId")
                         .HasColumnType("TEXT");
 
+                    b.Property<double>("TemperaturaC")
+                        .HasColumnType("REAL");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("TEXT");
+
+                    b.Property<double>("Umidade")
+                        .HasColumnType("REAL");
 
                     b.Property<double>("VentoKmH")
                         .HasColumnType("REAL");

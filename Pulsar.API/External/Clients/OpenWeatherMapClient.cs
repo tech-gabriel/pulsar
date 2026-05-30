@@ -24,6 +24,9 @@ internal sealed class WeatherResponse
     [JsonPropertyName("rain")]
     public RainData? Rain { get; set; }
 
+    [JsonPropertyName("main")]
+    public MainData? Main { get; set; }
+
     [JsonPropertyName("dt")]
     public long Dt { get; set; }
 }
@@ -32,6 +35,18 @@ internal sealed class WindData
 {
     [JsonPropertyName("speed")]
     public double Speed { get; set; }
+}
+
+internal sealed class MainData
+{
+    [JsonPropertyName("temp")]
+    public double Temp { get; set; }
+
+    [JsonPropertyName("feels_like")]
+    public double FeelsLike { get; set; }
+
+    [JsonPropertyName("humidity")]
+    public double Humidity { get; set; }
 }
 
 internal sealed class RainData
@@ -84,6 +99,9 @@ public class OpenWeatherMapClient : IWeatherClient
             VentoKmH = (weather.Wind?.Speed ?? 0.0) * 3.6,
             VisibilidadeKm = weather.Visibility / 1000.0,
             IndiceUv = uvi,
+            TemperaturaC = weather.Main?.Temp ?? 0.0,
+            SensacaoTermica = weather.Main?.FeelsLike ?? 0.0,
+            Umidade = weather.Main?.Humidity ?? 0.0,
             Timestamp = DateTimeOffset.FromUnixTimeSeconds(weather.Dt).UtcDateTime
         };
     }

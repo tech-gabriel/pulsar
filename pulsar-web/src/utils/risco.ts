@@ -57,3 +57,41 @@ export function scoreFormatado(score: number | null | undefined): string {
   if (score == null) return '—';
   return score.toFixed(1);
 }
+
+// ── Estilo dos polígonos no tema dark (ETAPA 2.3) ──────────────────────────────
+// Valores exatos da especificação: vibrantes sobre o basemap escuro.
+export interface EstiloPoligono {
+  fillColor: string;
+  fillOpacity: number;
+  color: string;      // borda
+  opacity: number;    // opacidade da borda
+  weight: number;
+}
+
+const ESTILO_POLIGONO: Record<FaixaRisco, EstiloPoligono> = {
+  BAIXO:    { fillColor: '#22c55e', fillOpacity: 0.25, color: '#22c55e', opacity: 0.5, weight: 1.5 },
+  MODERADO: { fillColor: '#eab308', fillOpacity: 0.3,  color: '#eab308', opacity: 0.5, weight: 1.5 },
+  ALTO:     { fillColor: '#ef4444', fillOpacity: 0.35, color: '#ef4444', opacity: 0.6, weight: 2 },
+};
+
+const ESTILO_POLIGONO_SEM_DADO: EstiloPoligono = {
+  fillColor: '#94a3b8', fillOpacity: 0.15, color: '#94a3b8', opacity: 0.3, weight: 1,
+};
+
+export function estiloPoligono(faixa: FaixaRisco | null | undefined): EstiloPoligono {
+  if (!faixa) return ESTILO_POLIGONO_SEM_DADO;
+  return ESTILO_POLIGONO[faixa] ?? ESTILO_POLIGONO_SEM_DADO;
+}
+
+// ── Cor de fundo do label de score circular (ETAPA 2.4) ────────────────────────
+const COR_LABEL: Record<FaixaRisco, string> = {
+  BAIXO:    'rgba(34, 197, 94, 0.85)',
+  MODERADO: 'rgba(234, 179, 8, 0.85)',
+  ALTO:     'rgba(239, 68, 68, 0.85)',
+};
+const COR_LABEL_SEM_DADO = 'rgba(148, 163, 184, 0.85)';
+
+export function corLabelFaixa(faixa: FaixaRisco | null | undefined): string {
+  if (!faixa) return COR_LABEL_SEM_DADO;
+  return COR_LABEL[faixa] ?? COR_LABEL_SEM_DADO;
+}

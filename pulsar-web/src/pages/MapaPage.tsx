@@ -7,17 +7,21 @@ import DetalheRegiao from '../components/painel/DetalheRegiao';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import { useAuth } from '../contexts/AuthContext';
 import { useRegioes } from '../hooks/useRegioes';
+import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { useIsMobile } from '../hooks/useIsMobile';
+import type { SubprefeituraMapaDto } from '../types';
 
 export default function MapaPage() {
   const { usuario, logout } = useAuth();
   const { regioes, carregando, erro, recarregar, ultimaAtualizacao } = useRegioes();
+  const subprefeituras = useSubprefeituras(regioes);
   const { isFavorito, toggleFavorito } = useFavoritos(usuario?.id ?? null);
   const isMobile = useIsMobile(768);
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
   const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(null);
+  const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
   const [sidebarColapsada, setSidebarColapsada] = useState(false);
 
@@ -34,11 +38,21 @@ export default function MapaPage() {
 
   function fecharDetalhe() {
     setRegiaoSelecionadaNome(null);
+    setSubSelecionada(null);
   }
 
-  function handleSelecionarRegiao(nome: string) {
-    setRegiaoSelecionadaNome(nome);
+  // Clique em um label/polígono de subprefeitura: abre o detalhe da região e
+  // marca a subprefeitura selecionada (highlight do polígono + centralização).
+  function handleSelecionarSub(sub: SubprefeituraMapaDto) {
+    setSubSelecionada(sub);
+    setRegiaoSelecionadaNome(sub.regiaoNome);
     if (isMobile) setPainelMobileAberto(false);
+  }
+
+  // Seleção via lista lateral (por nome de região) — sem subprefeitura específica.
+  function selecionarRegiaoPorNome(nome: string) {
+    setRegiaoSelecionadaNome(nome);
+    setSubSelecionada(null);
   }
 
   const painelProps = {
@@ -67,9 +81,9 @@ export default function MapaPage() {
       <div className={`absolute inset-0 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
         <MapaBase
           geojson={geojson}
-          regioes={regioes}
-          regiaoSelecionada={regiaoSelecionadaNome}
-          onSelecionarRegiao={handleSelecionarRegiao}
+          subprefeituras={subprefeituras}
+          subSelecionada={subSelecionada}
+          onSelecionarSub={handleSelecionarSub}
         />
       </div>
 
@@ -138,7 +152,7 @@ export default function MapaPage() {
           ) : (
             <PainelLateral
               {...painelProps}
-              onSelecionarRegiao={setRegiaoSelecionadaNome}
+              onSelecionarRegiao={selecionarRegiaoPorNome}
             />
           )
         )}
@@ -192,7 +206,7 @@ export default function MapaPage() {
           <PainelLateral
             {...painelProps}
             onSelecionarRegiao={(nome) => {
-              setRegiaoSelecionadaNome(nome);
+              selecionarRegiaoPorNome(nome);
               setPainelMobileAberto(false);
             }}
             hideHeader

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Marker, useMapEvents } from 'react-leaflet';
+import { Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { GeoJsonObject, FeatureCollection, Feature } from 'geojson';
 import type { RegiaoDto } from '../../types';
@@ -28,7 +28,7 @@ function fontSizeParaZoom(zoom: number): number {
 }
 
 export default function ScoreLabels({ geojson, regioes, onSelecionarRegiao }: Props) {
-  const map = useMapEvents({});
+  const map = useMap();
   const [zoom, setZoom] = useState<number>(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
 

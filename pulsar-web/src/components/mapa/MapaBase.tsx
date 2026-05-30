@@ -8,6 +8,20 @@ import RegioesLayer from './RegioesLayer';
 const SP_CENTER: [number, number] = [-23.5505, -46.6333];
 const SP_ZOOM = 10;
 
+// Tile layer: MapTiler Dataviz Dark se houver key; senão, fallback CartoDB Dark Matter.
+const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
+
+const TILE_CONFIG = MAPTILER_KEY
+  ? {
+      url: `https://api.maptiler.com/maps/dataviz-dark/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`,
+      attribution: '© MapTiler © OpenStreetMap contributors',
+    }
+  : {
+      url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      attribution:
+        '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    };
+
 interface Props {
   geojson: GeoJsonObject | null;
   regioes: RegiaoDto[];
@@ -25,9 +39,9 @@ export default function MapaBase({ geojson, regioes, regiaoSelecionada, onSeleci
       zoomControl
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        opacity={0.7}
+        key={TILE_CONFIG.url}
+        attribution={TILE_CONFIG.attribution}
+        url={TILE_CONFIG.url}
       />
       {geojson && (
         <RegioesLayer

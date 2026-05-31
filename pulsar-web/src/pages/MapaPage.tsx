@@ -32,6 +32,8 @@ export default function MapaPage() {
     (r) => r.nome.toLowerCase() === regiaoSelecionadaNome?.toLowerCase()
   ) ?? null;
 
+  const alertasAtivos = regioes.filter((r) => r.faixaRisco === 'ALTO').length;
+
   useEffect(() => {
     fetch('/subprefeituras_wgs84.geojson')
       .then((r) => r.json())
@@ -67,6 +69,8 @@ export default function MapaPage() {
     ultimaAtualizacao,
     onLogout: logout,
     nomeUsuario: usuario?.nome ?? '',
+    isFavorito,
+    onToggleFavorito: toggleFavorito,
   };
 
   // Classes do mapa: offset lateral conforme sidebar (tablet esquerda / desktop direita)
@@ -88,6 +92,8 @@ export default function MapaPage() {
           subSelecionada={subSelecionada}
           onSelecionarSub={handleSelecionarSub}
           camadaAtiva={camadaAtiva}
+          regiaoSelecionadaNome={regiaoSelecionadaNome}
+          subSelecionadaAtiva={!!subSelecionada}
         />
 
         {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
@@ -115,7 +121,7 @@ export default function MapaPage() {
       <aside
         className={[
           "hidden md:flex flex-col absolute top-0 bottom-0 z-[200]",
-          "bg-white border-slate-200 shadow-xl overflow-hidden",
+          "bg-pulsar-950 border-pulsar-800/40 shadow-xl overflow-hidden",
           "transition-[width] duration-300 ease-out",
           // Tablet: lado esquerdo
           "md:left-0 md:border-r",
@@ -130,16 +136,16 @@ export default function MapaPage() {
           className={[
             "lg:hidden absolute top-1/2 -translate-y-1/2 z-10",
             sidebarColapsada ? "right-0" : "-right-3",
-            "w-6 h-10 bg-white border border-slate-200 shadow",
+            "w-6 h-10 bg-pulsar-900 border border-pulsar-800 shadow",
             "flex items-center justify-center rounded-r-lg",
-            "hover:bg-pulsar-50 active:bg-pulsar-100 transition-colors",
+            "hover:bg-pulsar-800 active:bg-pulsar-700 transition-colors",
           ].join(" ")}
           onClick={() => setSidebarColapsada((v) => !v)}
           title={sidebarColapsada ? "Expandir painel" : "Recolher painel"}
         >
           {sidebarColapsada
-            ? <ChevronRight size={12} className="text-slate-500" />
-            : <ChevronLeft size={12} className="text-slate-500" />
+            ? <ChevronRight size={12} className="text-pulsar-300" />
+            : <ChevronLeft size={12} className="text-pulsar-300" />
           }
         </button>
 
@@ -175,7 +181,7 @@ export default function MapaPage() {
           Altura: 72vh. Fechado: 3.5rem visíveis.
       ══════════════════════════════════════════ */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] bg-white overflow-hidden"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] bg-pulsar-950 overflow-hidden"
         style={{
           boxShadow: '0 -8px 40px rgba(5, 47, 74, 0.20)',
           transform: painelMobileAberto
@@ -193,7 +199,9 @@ export default function MapaPage() {
           <div className="absolute top-[9px] left-1/2 -translate-x-1/2 w-9 h-[3px] bg-white/20 rounded-full" />
 
           <span className="flex-1 text-sm font-semibold text-white mt-1 text-left truncate">
-            Regiões de São Paulo
+            {alertasAtivos > 0
+              ? `${alertasAtivos} ${alertasAtivos === 1 ? 'alerta ativo' : 'alertas ativos'}`
+              : 'Tudo tranquilo em São Paulo'}
           </span>
 
           {/* Botão Sair dentro do handle */}
@@ -241,7 +249,7 @@ export default function MapaPage() {
           Aparece ao selecionar uma região no mobile
       ══════════════════════════════════════════ */}
       {regiaoSelecionada && isMobile && (
-        <div className="fixed inset-0 z-[700] flex flex-col bg-white animate-slide-up">
+        <div className="fixed inset-0 z-[700] flex flex-col bg-pulsar-950 animate-slide-up">
           <DetalheRegiao
             key={regiaoSelecionada.id}
             regiaoId={regiaoSelecionada.id}

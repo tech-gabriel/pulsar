@@ -13,6 +13,7 @@ interface Props {
   subSelecionada: SubprefeituraMapaDto | null;
   onSelecionarSub: (sub: SubprefeituraMapaDto) => void;
   camadaAtiva: Camada;
+  regiaoSelecionadaNome: string | null;
 }
 
 function nomeFeature(feature: Feature): string {
@@ -25,6 +26,7 @@ export default function RegioesLayer({
   subSelecionada,
   onSelecionarSub,
   camadaAtiva,
+  regiaoSelecionadaNome,
 }: Props) {
   const map = useMap();
   const layerRef = useRef<L.GeoJSON | null>(null);
@@ -33,9 +35,18 @@ export default function RegioesLayer({
   const subsRef = useRef(subprefeituras);
   const selRef = useRef(subSelecionada);
   const camadaRef = useRef(camadaAtiva);
+  const regiaoRef = useRef(regiaoSelecionadaNome);
   subsRef.current = subprefeituras;
   selRef.current = subSelecionada;
   camadaRef.current = camadaAtiva;
+  regiaoRef.current = regiaoSelecionadaNome;
+
+  // True quando a subprefeitura pertence à região atualmente selecionada (4.7).
+  function naRegiaoAtiva(sub: SubprefeituraMapaDto | undefined): boolean {
+    const regiao = regiaoRef.current;
+    if (!regiao) return true;
+    return !!sub && normalizarNome(sub.regiaoNome) === normalizarNome(regiao);
+  }
 
   function subDaFeature(feature: Feature): SubprefeituraMapaDto | undefined {
     const alvo = normalizarNome(nomeFeature(feature));
@@ -59,6 +70,21 @@ export default function RegioesLayer({
 
   function estilo(sub: SubprefeituraMapaDto | undefined, selecionada: boolean): PathOptions {
     const base = estiloBase(sub);
+    const temRegiao = !!regiaoRef.current;
+    const naRegiao = naRegiaoAtiva(sub);
+
+    // Demais regiões ficam esmaecidas quando há uma região selecionada (4.7).
+    if (temRegiao && !naRegiao) {
+      return {
+        fillColor: base.fillColor,
+        fillOpacity: 0.05,
+        color: base.color,
+        opacity: 0.15,
+        weight: 1,
+        dashArray: undefined,
+      };
+    }
+    // Subprefeitura clicada: borda branca tracejada (marching ants).
     if (selecionada) {
       return {
         fillColor: base.fillColor,
@@ -69,26 +95,41 @@ export default function RegioesLayer({
         dashArray: '5 5',
       };
     }
+    // Demais subprefeituras da região selecionada: borda branca destacada.
+    if (temRegiao && naRegiao) {
+      return {
+        fillColor: base.fillColor,
+        fillOpacity: (base.fillOpacity ?? 0.2) + 0.05,
+        color: '#ffffff',
+        opacity: 0.9,
+        weight: 2,
+        dashArray: undefined,
+      };
+    }
     return { ...base, dashArray: undefined };
   }
 
-  // Aplica o estilo atual (camada + seleção) a uma camada e alterna a classe
-  // de "marching ants" no elemento SVG.
+  // Aplica o estilo atual (camada + seleção + região) a uma camada e alterna as
+  // classes de animação no elemento SVG.
   function aplicarEstilo(layer: L.Path) {
     const feature = (layer as unknown as { feature: Feature }).feature;
     const sub = subDaFeature(feature);
     const selecionada = !!selRef.current && sub?.id === selRef.current.id;
+    const destacaRegiao = !!regiaoRef.current && naRegiaoAtiva(sub) && !selecionada;
     layer.setStyle(estilo(sub, selecionada));
     // Path não expõe getElement(); o renderer SVG guarda o <path> em _path.
     const el = (layer as unknown as { _path?: SVGElement })._path;
-    if (el) el.classList.toggle('poligono-selecionado', selecionada);
+    if (el) {
+      el.classList.toggle('poligono-selecionado', selecionada);
+      el.classList.toggle('poligono-regiao', destacaRegiao);
+    }
   }
 
-  // Re-estiliza quando os dados, a seleção ou a camada ativa mudam.
+  // Re-estiliza quando os dados, a seleção, a camada ou a região mudam.
   useEffect(() => {
     layerRef.current?.eachLayer((layer) => aplicarEstilo(layer as L.Path));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subprefeituras, subSelecionada, camadaAtiva]);
+  }, [subprefeituras, subSelecionada, camadaAtiva, regiaoSelecionadaNome]);
 
   function onEachFeature(feature: Feature, layer: Layer) {
     const path = layer as L.Path;

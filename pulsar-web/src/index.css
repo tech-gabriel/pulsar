@@ -456,3 +456,55 @@ body {
   border-radius: 6px;
   animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ETAPA 6 — Legenda dinâmica + responsividade / touch
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Fade ao trocar a camada na legenda (200ms, spec 6.1) */
+@keyframes legend-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.legend-fade {
+  animation: legend-fade 200ms ease-out;
+}
+
+/* Altura confiável no mobile (dvh) + sem bounce/pull-to-refresh (spec 6.8) */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+@supports (height: 100dvh) {
+  html, body, #root {
+    height: 100dvh;
+  }
+}
+
+/* Trava o scroll do body apenas na tela do mapa (toggle via MapaPage) */
+body.mapa-lock {
+  overflow: hidden;
+}
+
+/* Remove o flash cinza de toque em toda a app (spec 6.7) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Evita double-tap zoom em elementos clicáveis (spec 6.8) */
+button, a, [role="button"], [role="radio"] {
+  touch-action: manipulation;
+}
+
+/* O container do mapa gerencia o próprio gesto (sem pull-to-refresh, spec 6.8) */
+.leaflet-container {
+  touch-action: none;
+}
+
+/* Feedback de toque nos cards do painel: scale 0.98 em 100ms (spec 6.7) */
+.regiao-card {
+  transition: border-color 200ms, background 200ms, transform 100ms ease;
+}
+.regiao-card:active {
+  transform: scale(0.98);
+}

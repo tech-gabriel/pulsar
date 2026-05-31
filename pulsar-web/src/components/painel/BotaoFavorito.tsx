@@ -15,7 +15,7 @@ export default function BotaoFavorito({ ativo, onToggle, size = 18 }: Props) {
         e.stopPropagation();
         onToggle();
       }}
-      className="flex-shrink-0 p-1 rounded-md transition-colors hover:bg-white/5"
+      className="flex-shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] -m-2 rounded-md transition-colors hover:bg-white/5 active:scale-95"
       title={ativo ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
       aria-label={ativo ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
       aria-pressed={ativo}

@@ -100,7 +100,7 @@ export default function HistoricoPage() {
     : null;
 
   // Altura e rotação dos labels do eixo X conforme viewport
-  const chartHeight = isMobile ? 260 : 360;
+  const chartHeight = isMobile ? 250 : 360;
   const xAxisProps = isMobile
     ? { angle: -45, textAnchor: 'end' as const, height: 48, tick: { fontSize: 9, fill: AXIS_MUTED } }
     : { angle: 0, textAnchor: 'middle' as const, height: 20, tick: { fontSize: 11, fill: AXIS_MUTED } };
@@ -109,7 +109,7 @@ export default function HistoricoPage() {
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
       <Header nomeUsuario={usuario?.nome} onLogout={logout} />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 pb-8 flex flex-col gap-5 sm:gap-6" style={{ paddingTop: 72 }}>
+      <main className="flex-1 max-w-5xl mx-auto w-full px-3 sm:px-4 pb-8 flex flex-col gap-5 sm:gap-6" style={{ paddingTop: 72 }}>
 
         {/* Header da página */}
         <GlassCard hover={false} padding="lg" className="flex items-center gap-3 sm:gap-4">

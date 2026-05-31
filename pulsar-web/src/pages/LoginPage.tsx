@@ -39,8 +39,8 @@ export default function LoginPage() {
             <Activity size={30} className="text-pulsar-400" />
           </div>
           <h1
-            className="text-pulsar-50 tracking-tight"
-            style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 28, textShadow: '0 0 30px rgba(0, 188, 255, 0.4)' }}
+            className="text-pulsar-50 tracking-tight text-[24px] sm:text-[28px]"
+            style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, textShadow: '0 0 30px rgba(0, 188, 255, 0.4)' }}
           >
             PULSAR
           </h1>
@@ -48,7 +48,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <GlassCard hover={false} padding="lg" className="!px-8 !py-8">
+        <GlassCard hover={false} padding="lg" className="!px-5 !py-6 sm:!px-8 sm:!py-8">
           <h2
             className="text-pulsar-50 mb-6"
             style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 20 }}
@@ -107,7 +107,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={enviando}
-              className="btn-gradient w-full py-3 mt-1"
+              className="btn-gradient w-full py-3 mt-1 min-h-[48px]"
             >
               {enviando ? 'Entrando…' : 'Entrar'}
             </button>

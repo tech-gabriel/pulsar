@@ -6,6 +6,7 @@ import LayerControl from '../components/mapa/LayerControl';
 import PainelLateral from '../components/painel/PainelLateral';
 import DetalheRegiao from '../components/painel/DetalheRegiao';
 import ErrorBanner from '../components/ui/ErrorBanner';
+import Header from '../components/ui/Header';
 import type { Camada } from '../utils/camadas';
 import { useAuth } from '../contexts/AuthContext';
 import { useRegioes } from '../hooks/useRegioes';
@@ -79,13 +80,20 @@ export default function MapaPage() {
     : 'md:left-80 lg:left-0 lg:right-[350px]';
 
   return (
-    <div className="relative h-screen overflow-hidden bg-slate-900">
+    <div className="relative h-screen overflow-hidden bg-pulsar-950">
+
+      {/* Header glass fixo (ETAPA 5.4) */}
+      <Header
+        nomeUsuario={usuario?.nome}
+        onLogout={logout}
+        totalSubprefeituras={subprefeituras.length || 32}
+      />
 
       {/* ══════════════════════════════════════════
           MAPA — camada de fundo absoluta
-          Recua margem conforme sidebar visível
+          Recua margem conforme sidebar visível; abaixo do header fixo
       ══════════════════════════════════════════ */}
-      <div className={`absolute inset-0 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
+      <div className={`absolute left-0 right-0 bottom-0 top-12 md:top-14 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
         <MapaBase
           geojson={geojson}
           subprefeituras={subprefeituras}
@@ -106,7 +114,7 @@ export default function MapaPage() {
 
       {/* Banner de erro sobre o mapa */}
       {erro && !regiaoSelecionada && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
+        <div className="absolute top-16 md:top-[4.5rem] left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
           <div className="pointer-events-auto">
             <ErrorBanner mensagem={erro} onRetry={recarregar} />
           </div>
@@ -120,7 +128,7 @@ export default function MapaPage() {
       ══════════════════════════════════════════ */}
       <aside
         className={[
-          "hidden md:flex flex-col absolute top-0 bottom-0 z-[200]",
+          "hidden md:flex flex-col absolute top-14 bottom-0 z-[200]",
           "bg-pulsar-950 border-pulsar-800/40 shadow-xl overflow-hidden",
           "transition-[width] duration-300 ease-out",
           // Tablet: lado esquerdo
@@ -249,7 +257,7 @@ export default function MapaPage() {
           Aparece ao selecionar uma região no mobile
       ══════════════════════════════════════════ */}
       {regiaoSelecionada && isMobile && (
-        <div className="fixed inset-0 z-[700] flex flex-col bg-pulsar-950 animate-slide-up">
+        <div className="fixed inset-0 z-[1100] flex flex-col bg-pulsar-950 animate-slide-up">
           <DetalheRegiao
             key={regiaoSelecionada.id}
             regiaoId={regiaoSelecionada.id}

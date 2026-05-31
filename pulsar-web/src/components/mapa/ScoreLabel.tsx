@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { SubprefeituraMapaDto } from '../../types';
-import { corLabelFaixa } from '../../utils/risco';
+import { estiloCamada, type Camada } from '../../utils/camadas';
 import { tooltipSubprefeituraHtml } from './tooltipSub';
 
 interface Props {
   subprefeituras: SubprefeituraMapaDto[];
   subSelecionada: SubprefeituraMapaDto | null;
   onSelecionarSub: (sub: SubprefeituraMapaDto) => void;
+  camadaAtiva: Camada;
 }
 
 interface TamanhoLabel {
@@ -24,7 +25,12 @@ function tamanhoParaZoom(zoom: number): TamanhoLabel | null {
   return { diametro: 38, fonte: 13 };
 }
 
-export default function ScoreLabel({ subprefeituras, subSelecionada, onSelecionarSub }: Props) {
+// Extrai a opacidade de uma cor rgba(...) para montar o glow (alpha ~0.4).
+function glowDaCor(cor: string): string {
+  return cor.replace(/[\d.]+\)$/, '0.5)');
+}
+
+export default function ScoreLabel({ subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva }: Props) {
   const map = useMap();
   const [zoom, setZoom] = useState<number>(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
@@ -37,29 +43,27 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, onSeleciona
   return (
     <>
       {subprefeituras.map((sub) => {
-        const valor = sub.scoreAtual?.valor;
-        const cor = corLabelFaixa(sub.faixaRisco);
-        const glow = cor.replace('0.85', '0.4');
-        const pulsa = (valor ?? 0) > 60;
+        const estilo = estiloCamada(sub, camadaAtiva);
+        const glow = glowDaCor(estilo.corCirculo);
         const selecionada = subSelecionada?.id === sub.id;
 
         const classes = [
           'pulsar-score-circle',
-          pulsa ? 'pulsa' : '',
+          estilo.pulsa ? 'pulsa' : '',
           selecionada ? 'selecionado' : '',
         ].filter(Boolean).join(' ');
-
-        const texto = valor != null ? String(Math.round(valor)) : '—';
 
         const icon = L.divIcon({
           className: 'pulsar-score-label',
           iconSize: [0, 0],
-          html: `<div class="${classes}" style="width:${diametro}px;height:${diametro}px;font-size:${fonte}px;background:${cor};box-shadow:0 0 10px ${glow};">${texto}</div>`,
+          html: `<div class="${classes}" style="width:${diametro}px;height:${diametro}px;font-size:${fonte}px;background:${estilo.corCirculo};box-shadow:0 0 10px ${glow};">${estilo.texto}</div>`,
         });
 
         return (
+          // key inclui a camada → re-monta o marker ao trocar de camada,
+          // disparando a animação de fade (ETAPA 3.3).
           <Marker
-            key={sub.id}
+            key={`${sub.id}-${camadaAtiva}`}
             position={[sub.latitude, sub.longitude]}
             icon={icon}
             keyboard={false}
@@ -71,7 +75,7 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, onSeleciona
             }}
           >
             <Tooltip direction="top" offset={[0, -diametro / 2]} className="pulsar-tooltip" opacity={1}>
-              <div dangerouslySetInnerHTML={{ __html: tooltipSubprefeituraHtml(sub, sub.nome) }} />
+              <div dangerouslySetInnerHTML={{ __html: tooltipSubprefeituraHtml(sub, sub.nome, camadaAtiva) }} />
             </Tooltip>
           </Marker>
         );

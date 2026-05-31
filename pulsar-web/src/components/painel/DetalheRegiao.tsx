@@ -1,11 +1,16 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  X, Star, StarOff, CloudRain, Wind, Eye, Sun, History, ArrowLeft, RefreshCw,
+  ArrowLeft, Thermometer, CloudRain, Wind, Eye, Droplets, Sun,
+  ShieldAlert, History, RefreshCw,
 } from 'lucide-react';
-import type { SubprefeituraDto } from '../../types';
+import type { SubprefeituraDto, LeituraDto } from '../../types';
 import { useRegiaoDetalhe } from '../../hooks/useRegiaoDetalhe';
-import { coresParaFaixa } from '../../utils/risco';
-import BadgeRisco from '../ui/BadgeRisco';
+import { useCountUp } from '../../hooks/useCountUp';
+import { coresParaFaixa, labelFaixa } from '../../utils/risco';
+import { centroideRegiao } from '../../utils/geo';
+import { gerarSugestoes, type CategoriaSugestao } from '../../utils/sugestoes';
+import BotaoFavorito from './BotaoFavorito';
 import { SkeletonCardSubprefeitura } from '../ui/Skeleton';
 
 interface Props {
@@ -15,187 +20,294 @@ interface Props {
   onToggleFavorito: () => void;
 }
 
-function BarraScore({ valor, faixa }: { valor: number; faixa: string }) {
-  const cores = coresParaFaixa(faixa as never);
+// ── Ring de progresso circular (ETAPA 4.3) ─────────────────────────────────────
+const RING_DIAMETRO = 80;
+const RING_STROKE = 4;
+const RING_RAIO = (RING_DIAMETRO - RING_STROKE) / 2;
+const RING_CIRC = 2 * Math.PI * RING_RAIO;
+
+function ScoreRing({ score, cor }: { score: number; cor: string }) {
+  const animado = useCountUp(score, 800);
+  const offset = RING_CIRC * (1 - Math.min(animado, 100) / 100);
+  const centro = RING_DIAMETRO / 2;
+
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${Math.min(valor, 100)}%`, backgroundColor: cores.fill }}
+    <div className="relative" style={{ width: RING_DIAMETRO, height: RING_DIAMETRO }}>
+      <svg width={RING_DIAMETRO} height={RING_DIAMETRO} className="-rotate-90">
+        <circle
+          cx={centro} cy={centro} r={RING_RAIO}
+          fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={RING_STROKE}
         />
-      </div>
+        <circle
+          cx={centro} cy={centro} r={RING_RAIO}
+          fill="none" stroke={cor} strokeWidth={RING_STROKE} strokeLinecap="round"
+          strokeDasharray={RING_CIRC} strokeDashoffset={offset}
+        />
+      </svg>
       <span
-        className="text-xs font-mono font-semibold w-10 text-right"
-        style={{ color: cores.text }}
+        className="absolute inset-0 flex items-center justify-center text-pulsar-50"
+        style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 28 }}
       >
-        {valor.toFixed(1)}
+        {Math.round(animado)}
       </span>
     </div>
   );
 }
 
-function ItemClima({
-  icon: Icon,
-  label,
-  valor,
-  unidade,
+// ── Agregação das condições climáticas da região ───────────────────────────────
+interface ClimaRegiao {
+  temperatura: number;
+  sensacao: number;
+  chuva: number;
+  vento: number;
+  visibilidade: number;
+  umidade: number;
+  uv: number;
+}
+
+function agregarClima(subs: SubprefeituraDto[]): ClimaRegiao | null {
+  const leituras = subs.map((s) => s.ultimaLeitura).filter((l): l is LeituraDto => l != null);
+  if (leituras.length === 0) return null;
+  const n = leituras.length;
+  const media = (sel: (l: LeituraDto) => number) => leituras.reduce((a, l) => a + sel(l), 0) / n;
+  return {
+    temperatura: media((l) => l.temperaturaC),
+    sensacao: media((l) => l.sensacaoTermica),
+    chuva: Math.max(...leituras.map((l) => l.chuvaMmH)),
+    vento: Math.max(...leituras.map((l) => l.ventoKmH)),
+    visibilidade: Math.min(...leituras.map((l) => l.visibilidadeKm)),
+    umidade: media((l) => l.umidade),
+    uv: Math.max(...leituras.map((l) => l.indiceUv)),
+  };
+}
+
+function LinhaClima({
+  icon: Icon, corIcone, label, valor, unidade,
 }: {
-  icon: React.ElementType;
-  label: string;
-  valor: number;
-  unidade: string;
+  icon: React.ElementType; corIcone: string; label: string; valor: string; unidade: string;
 }) {
   return (
-    <div className="flex items-center gap-1.5 text-xs text-slate-600">
-      <Icon size={14} className="text-slate-400 shrink-0" />
-      <span className="text-slate-400">{label}</span>
-      <span className="font-mono font-medium text-slate-700">{valor.toFixed(1)}</span>
-      <span className="text-slate-400">{unidade}</span>
-    </div>
-  );
-}
-
-function CardSubprefeitura({ sub, onVerHistorico }: {
-  sub: SubprefeituraDto;
-  onVerHistorico: () => void;
-}) {
-  const score = sub.scoreAtual?.valor ?? 0;
-  const faixa = sub.faixaRisco;
-  const leitura = sub.ultimaLeitura;
-
-  return (
-    <div className="px-4 py-3 border-b border-slate-100 last:border-0">
-      <div className="flex items-start justify-between gap-2 mb-1.5">
-        <p className="text-sm font-medium text-slate-800 leading-tight">{sub.nome}</p>
-        <BadgeRisco faixa={faixa} size="sm" />
+    <div className="flex items-center justify-between py-2.5 border-b border-[rgba(0,188,255,0.06)] last:border-0">
+      <div className="flex items-center gap-2.5">
+        <Icon size={18} style={{ color: corIcone }} className="flex-shrink-0" />
+        <span className="text-pulsar-200" style={{ fontFamily: 'var(--font-body)', fontSize: 13 }}>
+          {label}
+        </span>
       </div>
-
-      <BarraScore valor={score} faixa={faixa} />
-
-      {leitura && (
-        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
-          <ItemClima icon={CloudRain} label="Chuva" valor={leitura.chuvaMmH} unidade="mm/h" />
-          <ItemClima icon={Wind} label="Vento" valor={leitura.ventoKmH} unidade="km/h" />
-          <ItemClima icon={Eye} label="Visib." valor={leitura.visibilidadeKm} unidade="km" />
-          <ItemClima icon={Sun} label="UV" valor={leitura.indiceUv} unidade="" />
-        </div>
-      )}
-
-      {!leitura && (
-        <p className="text-xs text-slate-400 mt-1">Dados não disponíveis para esta zona</p>
-      )}
-
-      <button
-        onClick={onVerHistorico}
-        className="mt-2 flex items-center gap-1.5 text-xs text-pulsar-600 hover:text-pulsar-800 font-medium transition-colors"
-      >
-        <History size={12} />
-        Ver histórico (24h)
-      </button>
+      <div className="flex items-baseline gap-1">
+        <span className="text-pulsar-50" style={{ fontFamily: 'var(--font-mono)', fontWeight: 500, fontSize: 14 }}>
+          {valor}
+        </span>
+        {unidade && <span className="text-pulsar-300" style={{ fontSize: 12 }}>{unidade}</span>}
+      </div>
     </div>
   );
 }
+
+// ── Item de subprefeitura com barra de progresso (ETAPA 4.4) ────────────────────
+function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
+  sub: SubprefeituraDto; indice: number; onVerHistorico: () => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const score = sub.scoreAtual?.valor ?? 0;
+  const cores = coresParaFaixa(sub.faixaRisco);
+  const temp = sub.temperaturaAtual ?? sub.ultimaLeitura?.temperaturaC;
+
+  return (
+    <div className="py-2">
+      <button
+        type="button"
+        onClick={() => setAberto((v) => !v)}
+        className="w-full text-left"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-pulsar-50 truncate" style={{ fontFamily: 'var(--font-body)', fontSize: 13 }}>
+            {sub.nome}
+          </span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {temp != null && (
+              <span className="text-pulsar-300" style={{ fontSize: 11 }}>{Math.round(temp)}°C</span>
+            )}
+            <span
+              className="text-white rounded-full px-2 py-0.5"
+              style={{ background: cores.fill, fontFamily: 'var(--font-mono)', fontWeight: 500, fontSize: 12 }}
+            >
+              {score.toFixed(0)}
+            </span>
+          </div>
+        </div>
+
+        {/* Barra de progresso animada (delay escalonado por índice) */}
+        <div className="mt-1.5 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <div
+            className="h-full rounded-full barra-progresso"
+            style={{
+              width: `${Math.min(score, 100)}%`,
+              background: cores.fill,
+              animationDelay: `${indice * 50}ms`,
+            }}
+          />
+        </div>
+      </button>
+
+      {aberto && (
+        <button
+          type="button"
+          onClick={onVerHistorico}
+          className="mt-2 flex items-center gap-1.5 text-xs text-pulsar-300 hover:text-pulsar-100 font-medium transition-colors"
+        >
+          <History size={12} />
+          Ver histórico (24h)
+        </button>
+      )}
+    </div>
+  );
+}
+
+const ICONE_CATEGORIA: Record<CategoriaSugestao, React.ElementType> = {
+  chuva: CloudRain,
+  vento: Wind,
+  visibilidade: Eye,
+  uv: Sun,
+};
 
 export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggleFavorito }: Props) {
   const navigate = useNavigate();
   const { regiao, carregando, erro } = useRegiaoDetalhe(regiaoId);
 
+  const subsOrdenadas = regiao
+    ? [...regiao.subprefeituras].sort((a, b) => (b.scoreAtual?.valor ?? 0) - (a.scoreAtual?.valor ?? 0))
+    : [];
+  const clima = regiao ? agregarClima(regiao.subprefeituras) : null;
+  const centro = regiao ? centroideRegiao(regiao.subprefeituras) : null;
+  const cores = regiao ? coresParaFaixa(regiao.faixaRisco) : null;
+  const score = regiao?.scoreAgregado ?? 0;
+  const sugestoes = regiao ? gerarSugestoes(regiao.subprefeituras) : [];
+
   return (
-    <div className="flex flex-col h-full animate-slide-in">
+    <div className="painel-glass flex flex-col h-full overflow-hidden animate-slide-left">
       {/* Header */}
-      <div className="px-4 py-3 bg-pulsar-950 text-white">
-        <div className="flex items-center gap-2 mb-1">
-          <button
-            onClick={onFechar}
-            className="text-pulsar-300 hover:text-white transition-colors"
-            title="Voltar"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <h2 className="flex-1 text-base font-bold truncate" style={{ fontFamily: 'var(--font-heading)' }}>
-            {regiao?.nome ?? 'Carregando...'}
+      <div className="px-4 pt-4 pb-3 flex items-start gap-2 flex-shrink-0">
+        <button
+          onClick={onFechar}
+          className="text-pulsar-300 hover:text-white transition-colors mt-0.5 flex-shrink-0"
+          title="Voltar"
+          aria-label="Voltar para a lista"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-pulsar-50 truncate" style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 18 }}>
+            {regiao?.nome ?? 'Carregando…'}
           </h2>
-          <button
-            onClick={onToggleFavorito}
-            className="text-pulsar-300 hover:text-yellow-400 transition-colors"
-            title={isFavorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          >
-            {isFavorito ? <Star size={18} className="fill-yellow-400 text-yellow-400" /> : <StarOff size={18} />}
-          </button>
-          <button
-            onClick={onFechar}
-            className="text-pulsar-300 hover:text-white transition-colors"
-            title="Fechar"
-          >
-            <X size={18} />
-          </button>
+          {centro && (
+            <p className="text-pulsar-300 truncate" style={{ fontFamily: 'var(--font-mono)', fontWeight: 400, fontSize: 11 }}>
+              lat {centro.lat.toFixed(2)}, lon {centro.lon.toFixed(2)}
+            </p>
+          )}
         </div>
+        <BotaoFavorito ativo={isFavorito} onToggle={onToggleFavorito} size={18} />
       </div>
 
-      {/* Score destaque */}
-      {regiao && (
-        <div
-          className="px-4 py-4 flex items-center gap-4"
-          style={{ backgroundColor: coresParaFaixa(regiao.faixaRisco).bg }}
-        >
-          <div className="text-center">
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Score agregado</p>
-            <p
-              className="text-4xl font-bold leading-none"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                color: coresParaFaixa(regiao.faixaRisco).text,
-              }}
-            >
-              {regiao.scoreAgregado.toFixed(1)}
-            </p>
-          </div>
-          <div>
-            <BadgeRisco faixa={regiao.faixaRisco} size="md" />
-            <p className="text-xs text-slate-500 mt-1">
-              {regiao.totalSubprefeituras} subprefeituras ativas
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Body */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="painel-scroll flex-1 overflow-y-auto overscroll-contain px-4 pb-6" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         {carregando && (
-          <>
+          <div className="pt-2">
             <SkeletonCardSubprefeitura />
             <SkeletonCardSubprefeitura />
             <SkeletonCardSubprefeitura />
-          </>
+          </div>
         )}
 
         {!carregando && erro && (
-          <div className="px-4 py-8 flex flex-col items-center gap-3 text-center">
-            <RefreshCw size={24} className="text-slate-300" />
-            <p className="text-sm text-slate-500">{erro}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-xs text-pulsar-600 hover:underline font-medium"
-            >
+          <div className="py-8 flex flex-col items-center gap-3 text-center">
+            <RefreshCw size={24} className="text-pulsar-700" />
+            <p className="text-sm text-pulsar-200">{erro}</p>
+            <button onClick={() => window.location.reload()} className="text-xs text-pulsar-300 hover:underline font-medium">
               Tentar novamente
             </button>
           </div>
         )}
 
-        {regiao && regiao.subprefeituras.length === 0 && (
-          <div className="px-4 py-6 text-center text-sm text-slate-500">
-            Dados não disponíveis para esta zona
-          </div>
-        )}
+        {regiao && cores && (
+          <>
+            {/* Score em destaque com ring */}
+            <div className="flex flex-col items-center py-4">
+              <ScoreRing score={score} cor={cores.fill} />
+              <span className="mt-2 text-pulsar-100" style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: 13 }}>
+                Risco {labelFaixa(regiao.faixaRisco)}
+              </span>
+            </div>
 
-        {regiao?.subprefeituras.map((sub) => (
-          <CardSubprefeitura
-            key={sub.id}
-            sub={sub}
-            onVerHistorico={() => navigate(`/historico/${sub.id}`, { state: { regiaoNome: regiao.nome, subNome: sub.nome } })}
-          />
-        ))}
+            {/* Grid de variáveis climáticas */}
+            {clima && (
+              <div className="painel-card-glass px-4 py-1 rounded-[10px]">
+                <LinhaClima icon={Thermometer} corIcone="var(--color-pulsar-400)" label="Temperatura" valor={clima.temperatura.toFixed(1)} unidade="°C" />
+                <LinhaClima icon={Thermometer} corIcone="var(--color-pulsar-400)" label="Sensação" valor={clima.sensacao.toFixed(1)} unidade="°C" />
+                <LinhaClima icon={CloudRain} corIcone="#3B82F6" label="Chuva" valor={clima.chuva.toFixed(1)} unidade="mm/h" />
+                <LinhaClima icon={Wind} corIcone="#94A3B8" label="Vento" valor={clima.vento.toFixed(1)} unidade="km/h" />
+                <LinhaClima icon={Eye} corIcone="#F59E0B" label="Visibilidade" valor={clima.visibilidade.toFixed(1)} unidade="km" />
+                <LinhaClima icon={Droplets} corIcone="#06B6D4" label="Umidade" valor={Math.round(clima.umidade).toString()} unidade="%" />
+                <LinhaClima icon={Sun} corIcone="#EAB308" label="Índice UV" valor={Math.round(clima.uv).toString()} unidade="" />
+              </div>
+            )}
+
+            {/* Sugestões de segurança / atenção */}
+            {score > 60 && sugestoes.length > 0 && (
+              <div className="mt-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <ShieldAlert size={15} className="text-red-400" />
+                  <h3 className="text-pulsar-100" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 14 }}>
+                    Sugestões de Segurança
+                  </h3>
+                </div>
+                {sugestoes.map((s, i) => {
+                  const Icon = ICONE_CATEGORIA[s.categoria];
+                  return (
+                    <div key={i} className="sugestao-card flex gap-2.5">
+                      <Icon size={16} className="text-red-300 flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-pulsar-50 font-semibold" style={{ fontSize: 13 }}>{s.titulo}</p>
+                        <p className="text-pulsar-200" style={{ fontSize: 12, lineHeight: 1.45 }}>{s.descricao}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {score > 30 && score <= 60 && (
+              <div className="mt-4 px-3 py-2.5 rounded-lg bg-yellow-400/10 border border-yellow-400/20">
+                <p className="text-yellow-200" style={{ fontSize: 12.5 }}>
+                  <span className="font-semibold">Atenção:</span> condições moderadas. Acompanhe a evolução do tempo.
+                </p>
+              </div>
+            )}
+
+            {/* Lista de subprefeituras */}
+            <div className="mt-4">
+              <h3 className="text-pulsar-200 mb-1" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 14 }}>
+                Subprefeituras
+              </h3>
+              {subsOrdenadas.length === 0 ? (
+                <p className="text-sm text-pulsar-300 py-2">Dados não disponíveis para esta zona</p>
+              ) : (
+                <div className="divide-y divide-[rgba(0,188,255,0.06)]">
+                  {subsOrdenadas.map((sub, i) => (
+                    <ItemSubprefeitura
+                      key={sub.id}
+                      sub={sub}
+                      indice={i}
+                      onVerHistorico={() =>
+                        navigate(`/historico/${sub.id}`, { state: { regiaoNome: regiao.nome, subNome: sub.nome } })
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

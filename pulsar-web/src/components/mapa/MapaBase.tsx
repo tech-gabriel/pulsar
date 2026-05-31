@@ -2,6 +2,7 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { GeoJsonObject } from 'geojson';
 import type { SubprefeituraMapaDto } from '../../types';
+import type { Camada } from '../../utils/camadas';
 import RegioesLayer from './RegioesLayer';
 import ScoreLabel from './ScoreLabel';
 
@@ -28,9 +29,10 @@ interface Props {
   subprefeituras: SubprefeituraMapaDto[];
   subSelecionada: SubprefeituraMapaDto | null;
   onSelecionarSub: (sub: SubprefeituraMapaDto) => void;
+  camadaAtiva: Camada;
 }
 
-export default function MapaBase({ geojson, subprefeituras, subSelecionada, onSelecionarSub }: Props) {
+export default function MapaBase({ geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva }: Props) {
   return (
     <MapContainer
       center={SP_CENTER}
@@ -51,11 +53,13 @@ export default function MapaBase({ geojson, subprefeituras, subSelecionada, onSe
             subprefeituras={subprefeituras}
             subSelecionada={subSelecionada}
             onSelecionarSub={onSelecionarSub}
+            camadaAtiva={camadaAtiva}
           />
           <ScoreLabel
             subprefeituras={subprefeituras}
             subSelecionada={subSelecionada}
             onSelecionarSub={onSelecionarSub}
+            camadaAtiva={camadaAtiva}
           />
         </>
       )}

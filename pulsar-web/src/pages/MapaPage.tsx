@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import type { GeoJsonObject } from 'geojson';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers, LogOut } from 'lucide-react';
 import MapaBase from '../components/mapa/MapaBase';
+import LayerControl from '../components/mapa/LayerControl';
 import PainelLateral from '../components/painel/PainelLateral';
 import DetalheRegiao from '../components/painel/DetalheRegiao';
 import ErrorBanner from '../components/ui/ErrorBanner';
+import type { Camada } from '../utils/camadas';
 import { useAuth } from '../contexts/AuthContext';
 import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
@@ -24,6 +26,7 @@ export default function MapaPage() {
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
   const [sidebarColapsada, setSidebarColapsada] = useState(false);
+  const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');
 
   const regiaoSelecionada = regioes.find(
     (r) => r.nome.toLowerCase() === regiaoSelecionadaNome?.toLowerCase()
@@ -84,6 +87,14 @@ export default function MapaPage() {
           subprefeituras={subprefeituras}
           subSelecionada={subSelecionada}
           onSelecionarSub={handleSelecionarSub}
+          camadaAtiva={camadaAtiva}
+        />
+
+        {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
+        <LayerControl
+          camadaAtiva={camadaAtiva}
+          onChange={setCamadaAtiva}
+          isMobile={isMobile}
         />
       </div>
 

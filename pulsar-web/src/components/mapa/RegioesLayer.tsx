@@ -134,10 +134,11 @@ export default function RegioesLayer({
   function onEachFeature(feature: Feature, layer: Layer) {
     const path = layer as L.Path;
 
-    // Tooltip dinâmico (lê dados frescos e a camada ativa a cada abertura).
+    // Tooltip dinâmico glass (lê dados frescos a cada abertura). sticky: segue o
+    // mouse dentro do polígono. É o único tooltip do mapa (labels não têm).
     path.bindTooltip(
-      () => tooltipSubprefeituraHtml(subDaFeature(feature), nomeFeature(feature), camadaRef.current),
-      { sticky: true, direction: 'top', className: 'pulsar-tooltip', opacity: 1 },
+      () => tooltipSubprefeituraHtml(subDaFeature(feature), nomeFeature(feature)),
+      { sticky: true, direction: 'auto', offset: [10, 0], className: 'pulsar-tooltip', opacity: 1 },
     );
 
     layer.on({

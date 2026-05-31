@@ -1,6 +1,6 @@
 import { Activity, RefreshCw, Shield, LogOut } from 'lucide-react';
 import type { RegiaoDto } from '../../types';
-import LoadingSpinner from '../ui/LoadingSpinner';
+import { SkeletonCard } from '../ui/Skeleton';
 import RegiaoCard from './RegiaoCard';
 
 interface Props {
@@ -116,7 +116,11 @@ export default function PainelLateral({
         style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
         {carregando && regioes.length === 0 ? (
-          <LoadingSpinner mensagem="Buscando dados..." className="h-40" />
+          <div className="pt-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
         ) : (
           <>
             {semAlertas && (

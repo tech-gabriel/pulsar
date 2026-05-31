@@ -152,3 +152,47 @@ body {
   font-family: var(--font-mono);
   font-weight: 600;
 }
+
+/* Tooltip: variável da camada ativa em destaque; demais menores (ETAPA 3.5) */
+.pulsar-tooltip .pt-destaque {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-pulsar-50);
+  margin-bottom: 2px;
+}
+.pulsar-tooltip .pt-sec {
+  font-size: 11px;
+  color: var(--color-pulsar-200);
+  opacity: 0.85;
+}
+
+/* ── Sidebar de camadas — LayerControl (ETAPA 3.1/3.6) ─────────────────────────*/
+.layer-btn {
+  transition: all 200ms;
+  cursor: pointer;
+}
+.layer-btn:not(.ativo):hover {
+  background: rgba(0, 89, 138, 0.3) !important;
+  color: var(--color-pulsar-50) !important;
+}
+
+/* Esconde a scrollbar da barra horizontal de camadas no mobile */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fade ao trocar de camada: o label re-monta e reaparece suavemente (ETAPA 3.3) */
+@keyframes camada-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.pulsar-score-circle {
+  animation: camada-fade 0.3s ease-out;
+}
+.pulsar-score-circle.pulsa {
+  animation: camada-fade 0.3s ease-out, score-pulse 1.6s ease-in-out infinite;
+}

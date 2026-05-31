@@ -1206,7 +1206,7 @@ namespace Pulsar.API.Migrations
                     b.HasOne("Pulsar.API.Domain.Entities.ScorePerigo", "Score")
                         .WithMany()
                         .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Regiao");
@@ -1249,7 +1249,7 @@ namespace Pulsar.API.Migrations
                     b.HasOne("Pulsar.API.Domain.Entities.LeituraClimatica", "Leitura")
                         .WithMany()
                         .HasForeignKey("LeituraId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")

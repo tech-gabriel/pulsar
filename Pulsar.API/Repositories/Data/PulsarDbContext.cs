@@ -71,20 +71,23 @@ public class PulsarDbContext : DbContext
         {
             e.HasKey(s => s.Id);
             e.HasIndex(s => new { s.SubprefeituraId, s.Timestamp });
+            // Score deriva de uma leitura e compartilha seu ciclo de 24h: ao limpar
+            // leituras antigas, os scores associados são removidos em cascata.
             e.HasOne(s => s.Leitura)
              .WithMany()
              .HasForeignKey(s => s.LeituraId)
-             .OnDelete(DeleteBehavior.Restrict);
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Alerta>(e =>
         {
             e.HasKey(a => a.Id);
             e.Property(a => a.Mensagem).IsRequired().HasMaxLength(500);
+            // Alerta deriva de um score; remover o score remove o alerta em cascata.
             e.HasOne(a => a.Score)
              .WithMany()
              .HasForeignKey(a => a.ScoreId)
-             .OnDelete(DeleteBehavior.Restrict);
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Sugestao>(e =>

@@ -29,6 +29,38 @@
   --font-mono:    "JetBrains Mono", monospace;
 }
 
+/* ── Tema Dark + Glassmorphism — variáveis globais (ETAPA 5.1) ──────────────────*/
+:root {
+  /* Backgrounds */
+  --bg-primary: #052F4A;
+  --bg-secondary: rgba(0, 89, 138, 0.15);
+  --bg-elevated: rgba(0, 105, 168, 0.10);
+  --bg-glass: rgba(5, 47, 74, 0.6);
+  --bg-glass-hover: rgba(0, 89, 138, 0.18);
+  --bg-input: rgba(0, 89, 138, 0.2);
+
+  /* Borders */
+  --border-glass: rgba(0, 188, 255, 0.12);
+  --border-glass-hover: rgba(0, 188, 255, 0.25);
+  --border-subtle: rgba(0, 188, 255, 0.06);
+
+  /* Text */
+  --text-primary: #F0F9FF;
+  --text-secondary: #B8E6FE;
+  --text-muted: rgba(184, 230, 254, 0.5);
+  --text-accent: #00BCFF;
+
+  /* Glow effects */
+  --glow-cyan: 0 0 20px rgba(0, 188, 255, 0.3);
+  --glow-green: 0 0 12px rgba(34, 197, 94, 0.4);
+  --glow-yellow: 0 0 12px rgba(234, 179, 8, 0.4);
+  --glow-red: 0 0 12px rgba(239, 68, 68, 0.4);
+
+  /* Glassmorphism */
+  --glass-blur: blur(16px) saturate(180%);
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -40,9 +72,12 @@ html, body, #root {
   font-family: var(--font-body);
 }
 
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -293,4 +328,131 @@ body {
 }
 .pulsar-score-circle.pulsa {
   animation: camada-fade 0.3s ease-out, score-pulse 1.6s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ETAPA 5 — Dark Mode + Glassmorphism global
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Scrollbar global customizada (ETAPA 5.7) */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(0, 105, 168, 0.4);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 105, 168, 0.6);
+}
+
+/* GlassCard (ETAPA 5.2) */
+.glass-card {
+  background: var(--bg-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  box-shadow: var(--glass-shadow);
+}
+.glass-card-hover {
+  transition: all 200ms ease;
+}
+.glass-card-hover:hover {
+  border-color: var(--border-glass-hover);
+  background: var(--bg-glass-hover);
+}
+
+/* Fundo das páginas de auth com grid pattern sutil (ETAPA 5.3) */
+.auth-bg {
+  position: relative;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+.auth-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 188, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 188, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* Input dark glass (ETAPA 5.3) */
+.input-glass {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px; /* >=16px evita zoom no iOS */
+  transition: all 200ms;
+}
+.input-glass::placeholder {
+  color: var(--text-muted);
+}
+.input-glass:focus {
+  outline: none;
+  border-color: #00BCFF;
+  box-shadow: 0 0 0 3px rgba(0, 188, 255, 0.15);
+}
+
+/* Botão principal com gradiente (ETAPA 5.3) */
+.btn-gradient {
+  background: linear-gradient(135deg, #0084D1, #00A6F4);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 200ms;
+}
+.btn-gradient:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 16px rgba(0, 132, 209, 0.4);
+}
+.btn-gradient:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.btn-gradient:disabled {
+  opacity: 0.6;
+}
+
+/* Mensagem de erro dark (ETAPA 5.3/5.6) */
+.erro-glass {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #FCA5A5;
+  font-size: 13px;
+}
+
+/* Dot verde pulsante do header (ETAPA 5.4) */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.dot-pulse {
+  animation: dot-pulse 1.8s ease-in-out infinite;
+}
+
+/* Skeleton loader dark (ETAPA 5.6) */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+.skeleton-block {
+  background: rgba(0, 89, 138, 0.15);
+  border-radius: 6px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
 }

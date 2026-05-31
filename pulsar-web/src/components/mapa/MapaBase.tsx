@@ -113,7 +113,6 @@ export default function MapaBase({
           <ScoreLabel
             subprefeituras={subprefeituras}
             subSelecionada={subSelecionada}
-            onSelecionarSub={onSelecionarSub}
             camadaAtiva={camadaAtiva}
             regiaoSelecionadaNome={regiaoSelecionadaNome}
           />

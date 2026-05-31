@@ -70,8 +70,11 @@ function faixaUv(u: number): FaixaCamada {
 }
 
 // Extratores do valor bruto de cada camada (null quando não há leitura).
+// temperaturaAtual vem como 0.0 do backend quando não há leitura, então só é
+// confiável se houver ultimaLeitura — caso contrário, retornamos null ("—").
 function valorTemperatura(sub: SubprefeituraMapaDto): number | null {
-  return sub.temperaturaAtual ?? sub.ultimaLeitura?.temperaturaC ?? null;
+  if (sub.ultimaLeitura) return sub.ultimaLeitura.temperaturaC;
+  return null;
 }
 function valorChuva(sub: SubprefeituraMapaDto): number | null {
   return sub.ultimaLeitura?.chuvaMmH ?? null;

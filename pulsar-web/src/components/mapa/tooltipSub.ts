@@ -1,14 +1,17 @@
 import type { SubprefeituraMapaDto } from '../../types';
-import { labelFaixa, scoreFormatado } from '../../utils/risco';
+import { metricasSubprefeitura, type Camada } from '../../utils/camadas';
 
 /**
  * HTML do tooltip dark exibido ao passar o mouse sobre o label de score ou
- * sobre o polígono da subprefeitura (ETAPA 2.5/2.6).
- * Mostra: nome, score (faixa), temperatura e chuva.
+ * sobre o polígono da subprefeitura (ETAPA 2.5/2.6 + ETAPA 3.5).
+ *
+ * A variável da camada ativa aparece primeiro e em destaque; as demais
+ * aparecem abaixo em tamanho menor.
  */
 export function tooltipSubprefeituraHtml(
   sub: SubprefeituraMapaDto | undefined,
   nomeFallback: string,
+  camadaAtiva: Camada = 'score',
 ): string {
   const nome = sub?.nome ?? nomeFallback ?? 'Subprefeitura';
 
@@ -19,14 +22,20 @@ export function tooltipSubprefeituraHtml(
     `;
   }
 
-  const score = sub.scoreAtual?.valor;
-  const temp = sub.temperaturaAtual ?? sub.ultimaLeitura?.temperaturaC;
-  const chuva = sub.ultimaLeitura?.chuvaMmH;
+  const metricas = metricasSubprefeitura(sub);
+  const ativa = metricas.find((m) => m.camada === camadaAtiva);
+  const demais = metricas.filter((m) => m.camada !== camadaAtiva);
+
+  const linhaDestaque = ativa
+    ? `<div class="pt-linha pt-destaque">${ativa.label}: <span class="pt-mono">${ativa.valor}</span></div>`
+    : '';
+  const linhasSec = demais
+    .map((m) => `<div class="pt-linha pt-sec">${m.label}: <span class="pt-mono">${m.valor}</span></div>`)
+    .join('');
 
   return `
     <div class="pt-titulo">${nome}</div>
-    <div class="pt-linha">Score: <span class="pt-mono">${scoreFormatado(score)}</span> (${labelFaixa(sub.faixaRisco)})</div>
-    <div class="pt-linha">Temperatura: <span class="pt-mono">${temp != null ? temp.toFixed(1) : '—'}</span>°C</div>
-    <div class="pt-linha">Chuva: <span class="pt-mono">${chuva != null ? chuva.toFixed(1) : '—'}</span> mm/h</div>
+    ${linhaDestaque}
+    ${linhasSec}
   `;
 }

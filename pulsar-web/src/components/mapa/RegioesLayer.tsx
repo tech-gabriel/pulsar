@@ -3,7 +3,7 @@ import { GeoJSON, useMap } from 'react-leaflet';
 import type { GeoJsonObject, Feature } from 'geojson';
 import type { Layer, PathOptions, LeafletMouseEvent } from 'leaflet';
 import type { SubprefeituraMapaDto } from '../../types';
-import { estiloPoligono } from '../../utils/risco';
+import { estiloCamada, type Camada } from '../../utils/camadas';
 import { normalizarNome } from '../../utils/texto';
 import { tooltipSubprefeituraHtml } from './tooltipSub';
 
@@ -12,6 +12,7 @@ interface Props {
   subprefeituras: SubprefeituraMapaDto[];
   subSelecionada: SubprefeituraMapaDto | null;
   onSelecionarSub: (sub: SubprefeituraMapaDto) => void;
+  camadaAtiva: Camada;
 }
 
 function nomeFeature(feature: Feature): string {
@@ -23,6 +24,7 @@ export default function RegioesLayer({
   subprefeituras,
   subSelecionada,
   onSelecionarSub,
+  camadaAtiva,
 }: Props) {
   const map = useMap();
   const layerRef = useRef<L.GeoJSON | null>(null);
@@ -30,37 +32,47 @@ export default function RegioesLayer({
   // Refs para os handlers (hover/click) sempre lerem dados atuais.
   const subsRef = useRef(subprefeituras);
   const selRef = useRef(subSelecionada);
+  const camadaRef = useRef(camadaAtiva);
   subsRef.current = subprefeituras;
   selRef.current = subSelecionada;
+  camadaRef.current = camadaAtiva;
 
   function subDaFeature(feature: Feature): SubprefeituraMapaDto | undefined {
     const alvo = normalizarNome(nomeFeature(feature));
     return subsRef.current.find((s) => normalizarNome(s.nome) === alvo);
   }
 
+  // Estilo base do polígono na camada ativa (preenchimento mais sutil que o label).
+  function estiloBase(sub: SubprefeituraMapaDto | undefined): PathOptions {
+    if (!sub) {
+      return { fillColor: '#94a3b8', fillOpacity: 0.12, color: '#94a3b8', opacity: 0.3, weight: 1 };
+    }
+    const e = estiloCamada(sub, camadaRef.current);
+    return {
+      fillColor: e.fillColor,
+      fillOpacity: e.fillOpacity,
+      color: e.borderColor,
+      opacity: 0.6,
+      weight: e.weight,
+    };
+  }
+
   function estilo(sub: SubprefeituraMapaDto | undefined, selecionada: boolean): PathOptions {
-    const base = estiloPoligono(sub?.faixaRisco);
+    const base = estiloBase(sub);
     if (selecionada) {
       return {
         fillColor: base.fillColor,
-        fillOpacity: base.fillOpacity + 0.1,
+        fillOpacity: (base.fillOpacity ?? 0.2) + 0.1,
         color: '#ffffff',
         opacity: 1,
         weight: 2,
         dashArray: '5 5',
       };
     }
-    return {
-      fillColor: base.fillColor,
-      fillOpacity: base.fillOpacity,
-      color: base.color,
-      opacity: base.opacity,
-      weight: base.weight,
-      dashArray: undefined,
-    };
+    return { ...base, dashArray: undefined };
   }
 
-  // Aplica o estilo atual (faixa + seleção) a uma camada e alterna a classe
+  // Aplica o estilo atual (camada + seleção) a uma camada e alterna a classe
   // de "marching ants" no elemento SVG.
   function aplicarEstilo(layer: L.Path) {
     const feature = (layer as unknown as { feature: Feature }).feature;
@@ -72,30 +84,28 @@ export default function RegioesLayer({
     if (el) el.classList.toggle('poligono-selecionado', selecionada);
   }
 
-  // Re-estiliza quando os dados das subprefeituras ou a seleção mudam.
+  // Re-estiliza quando os dados, a seleção ou a camada ativa mudam.
   useEffect(() => {
     layerRef.current?.eachLayer((layer) => aplicarEstilo(layer as L.Path));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subprefeituras, subSelecionada]);
+  }, [subprefeituras, subSelecionada, camadaAtiva]);
 
   function onEachFeature(feature: Feature, layer: Layer) {
     const path = layer as L.Path;
 
-    // Tooltip dinâmico (lê dados frescos a cada abertura).
-    path.bindTooltip(() => tooltipSubprefeituraHtml(subDaFeature(feature), nomeFeature(feature)), {
-      sticky: true,
-      direction: 'top',
-      className: 'pulsar-tooltip',
-      opacity: 1,
-    });
+    // Tooltip dinâmico (lê dados frescos e a camada ativa a cada abertura).
+    path.bindTooltip(
+      () => tooltipSubprefeituraHtml(subDaFeature(feature), nomeFeature(feature), camadaRef.current),
+      { sticky: true, direction: 'top', className: 'pulsar-tooltip', opacity: 1 },
+    );
 
     layer.on({
       mouseover: (e: LeafletMouseEvent) => {
         const target = e.target as L.Path;
         const sub = subDaFeature(feature);
-        const base = estiloPoligono(sub?.faixaRisco);
+        const base = estiloBase(sub);
         target.setStyle({
-          fillOpacity: base.fillOpacity + 0.15,
+          fillOpacity: (base.fillOpacity ?? 0.2) + 0.15,
           weight: 2.5,
           color: 'rgba(255,255,255,0.6)',
           opacity: 1,

@@ -1,8 +1,11 @@
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { GeoJsonObject } from 'geojson';
 import type { SubprefeituraMapaDto } from '../../types';
 import type { Camada } from '../../utils/camadas';
+import { centroideRegiao } from '../../utils/geo';
+import { normalizarNome } from '../../utils/texto';
 import RegioesLayer from './RegioesLayer';
 import ScoreLabel from './ScoreLabel';
 
@@ -30,9 +33,55 @@ interface Props {
   subSelecionada: SubprefeituraMapaDto | null;
   onSelecionarSub: (sub: SubprefeituraMapaDto) => void;
   camadaAtiva: Camada;
+  regiaoSelecionadaNome: string | null;
+  subSelecionadaAtiva: boolean;
 }
 
-export default function MapaBase({ geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva }: Props) {
+/**
+ * Centraliza o mapa na região selecionada (ETAPA 4.7). Quando a seleção parte
+ * de um clique no mapa (subSelecionadaAtiva), o próprio handler já faz o flyTo
+ * para a subprefeitura, então aqui só agimos quando a seleção vem da lista.
+ * Sem região selecionada, volta ao enquadramento padrão de SP.
+ */
+function MapController({
+  subprefeituras,
+  regiaoSelecionadaNome,
+  subSelecionadaAtiva,
+}: {
+  subprefeituras: SubprefeituraMapaDto[];
+  regiaoSelecionadaNome: string | null;
+  subSelecionadaAtiva: boolean;
+}) {
+  const map = useMap();
+  const subSelRef = useRef(subSelecionadaAtiva);
+  subSelRef.current = subSelecionadaAtiva;
+
+  useEffect(() => {
+    if (!regiaoSelecionadaNome) {
+      map.flyTo(SP_CENTER, SP_ZOOM, { duration: 0.6 });
+      return;
+    }
+    if (subSelRef.current) return; // clique no mapa já centralizou na subprefeitura
+    const daRegiao = subprefeituras.filter(
+      (s) => normalizarNome(s.regiaoNome) === normalizarNome(regiaoSelecionadaNome),
+    );
+    const centro = centroideRegiao(daRegiao);
+    if (centro) map.flyTo([centro.lat, centro.lon], 11, { duration: 0.6 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [regiaoSelecionadaNome]);
+
+  return null;
+}
+
+export default function MapaBase({
+  geojson,
+  subprefeituras,
+  subSelecionada,
+  onSelecionarSub,
+  camadaAtiva,
+  regiaoSelecionadaNome,
+  subSelecionadaAtiva,
+}: Props) {
   return (
     <MapContainer
       center={SP_CENTER}
@@ -46,6 +95,11 @@ export default function MapaBase({ geojson, subprefeituras, subSelecionada, onSe
         attribution={TILE_CONFIG.attribution}
         url={TILE_CONFIG.url}
       />
+      <MapController
+        subprefeituras={subprefeituras}
+        regiaoSelecionadaNome={regiaoSelecionadaNome}
+        subSelecionadaAtiva={subSelecionadaAtiva}
+      />
       {geojson && (
         <>
           <RegioesLayer
@@ -54,12 +108,14 @@ export default function MapaBase({ geojson, subprefeituras, subSelecionada, onSe
             subSelecionada={subSelecionada}
             onSelecionarSub={onSelecionarSub}
             camadaAtiva={camadaAtiva}
+            regiaoSelecionadaNome={regiaoSelecionadaNome}
           />
           <ScoreLabel
             subprefeituras={subprefeituras}
             subSelecionada={subSelecionada}
             onSelecionarSub={onSelecionarSub}
             camadaAtiva={camadaAtiva}
+            regiaoSelecionadaNome={regiaoSelecionadaNome}
           />
         </>
       )}

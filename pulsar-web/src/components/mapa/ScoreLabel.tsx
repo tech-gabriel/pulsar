@@ -10,6 +10,7 @@ interface Props {
   subSelecionada: SubprefeituraMapaDto | null;
   onSelecionarSub: (sub: SubprefeituraMapaDto) => void;
   camadaAtiva: Camada;
+  regiaoSelecionadaNome: string | null;
 }
 
 interface TamanhoLabel {
@@ -30,7 +31,11 @@ function glowDaCor(cor: string): string {
   return cor.replace(/[\d.]+\)$/, '0.5)');
 }
 
-export default function ScoreLabel({ subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva }: Props) {
+function normalizar(nome: string): string {
+  return nome.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+}
+
+export default function ScoreLabel({ subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, regiaoSelecionadaNome }: Props) {
   const map = useMap();
   const [zoom, setZoom] = useState<number>(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
@@ -39,6 +44,7 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, onSeleciona
   if (!tamanho) return null; // mapa muito afastado: esconde os labels
 
   const { diametro, fonte } = tamanho;
+  const regiaoNorm = regiaoSelecionadaNome ? normalizar(regiaoSelecionadaNome) : null;
 
   return (
     <>
@@ -46,6 +52,9 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, onSeleciona
         const estilo = estiloCamada(sub, camadaAtiva);
         const glow = glowDaCor(estilo.corCirculo);
         const selecionada = subSelecionada?.id === sub.id;
+        // Esmaecer labels de outras regiões quando há uma região selecionada (4.7).
+        const esmaecida = regiaoNorm != null && normalizar(sub.regiaoNome) !== regiaoNorm;
+        const opacidade = esmaecida ? 0.2 : 1;
 
         const classes = [
           'pulsar-score-circle',
@@ -56,7 +65,7 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, onSeleciona
         const icon = L.divIcon({
           className: 'pulsar-score-label',
           iconSize: [0, 0],
-          html: `<div class="${classes}" style="width:${diametro}px;height:${diametro}px;font-size:${fonte}px;background:${estilo.corCirculo};box-shadow:0 0 10px ${glow};">${estilo.texto}</div>`,
+          html: `<div class="${classes}" style="width:${diametro}px;height:${diametro}px;font-size:${fonte}px;background:${estilo.corCirculo};box-shadow:0 0 10px ${glow};opacity:${opacidade};">${estilo.texto}</div>`,
         });
 
         return (

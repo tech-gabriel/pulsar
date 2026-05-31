@@ -3,6 +3,7 @@ import type { GeoJsonObject } from 'geojson';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers, LogOut } from 'lucide-react';
 import MapaBase from '../components/mapa/MapaBase';
 import LayerControl from '../components/mapa/LayerControl';
+import MapLegend from '../components/mapa/MapLegend';
 import PainelLateral from '../components/painel/PainelLateral';
 import DetalheRegiao from '../components/painel/DetalheRegiao';
 import ErrorBanner from '../components/ui/ErrorBanner';
@@ -40,6 +41,13 @@ export default function MapaPage() {
       .then((r) => r.json())
       .then(setGeojson)
       .catch(() => console.warn('GeoJSON não encontrado'));
+  }, []);
+
+  // Trava o scroll do body enquanto o mapa está montado (evita pull-to-refresh /
+  // bounce no mobile). Páginas com scroll (histórico, auth) não usam esta classe.
+  useEffect(() => {
+    document.body.classList.add('mapa-lock');
+    return () => document.body.classList.remove('mapa-lock');
   }, []);
 
   function fecharDetalhe() {
@@ -110,6 +118,9 @@ export default function MapaPage() {
           onChange={setCamadaAtiva}
           isMobile={isMobile}
         />
+
+        {/* Legenda dinâmica (ETAPA 6.1/6.2): muda conforme a camada ativa */}
+        <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} />
       </div>
 
       {/* Banner de erro sobre o mapa */}

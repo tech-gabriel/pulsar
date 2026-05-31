@@ -65,6 +65,104 @@ body {
   animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
+/* Slide do detalhe entrando pela direita — LISTA → DETALHE (ETAPA 4.6) */
+@keyframes slide-left {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.animate-slide-left {
+  animation: slide-left 0.3s ease-out forwards;
+}
+
+/* ── Painel dark glass (ETAPA 4.1/4.3) ─────────────────────────────────────────*/
+.painel-glass {
+  background: linear-gradient(180deg, rgba(5, 47, 74, 0.97) 0%, rgba(2, 37, 58, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.painel-card-glass {
+  background: rgba(0, 89, 138, 0.1);
+  border: 1px solid rgba(0, 188, 255, 0.08);
+}
+.painel-separador {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--color-pulsar-400) 50%, transparent 100%);
+  opacity: 0.5;
+}
+
+/* Scrollbar customizada do painel (width 4px, thumb pulsar-700) */
+.painel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-pulsar-700) transparent;
+}
+.painel-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.painel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.painel-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-pulsar-700);
+  border-radius: 4px;
+}
+
+/* Ícone Activity pulsante no header (ETAPA 4.1) */
+@keyframes activity-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.activity-pulse {
+  animation: activity-pulse 1.8s ease-in-out infinite;
+}
+
+/* ── RegiaoCard (ETAPA 4.2) ────────────────────────────────────────────────────*/
+.regiao-card {
+  display: block;
+  background: rgba(0, 89, 138, 0.1);
+  border: 1px solid rgba(0, 188, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  transition: all 200ms;
+  cursor: pointer;
+}
+.regiao-card:hover {
+  border-color: rgba(0, 188, 255, 0.25);
+  background: rgba(0, 89, 138, 0.18);
+}
+.regiao-card-ativa {
+  border-color: rgba(0, 188, 255, 0.4);
+  background: rgba(0, 89, 138, 0.22);
+}
+
+/* Card de sugestão de segurança (ETAPA 4.5) */
+.sugestao-card {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 3px solid rgba(239, 68, 68, 0.5);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+/* Barra de progresso das subprefeituras: cresce 500ms ease-out (ETAPA 4.4/4.6) */
+@keyframes barra-cresce {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.barra-progresso {
+  transform-origin: left;
+  animation: barra-cresce 0.5s ease-out both;
+}
+
+/* Polígono da região selecionada: borda branca pulsante (ETAPA 4.7) */
+@keyframes regiao-pulse {
+  0%, 100% { stroke-opacity: 0.55; }
+  50%      { stroke-opacity: 1; }
+}
+.poligono-regiao {
+  animation: regiao-pulse 1.4s ease-in-out infinite;
+}
+
 /* Leaflet overrides — garantir que o mapa renderize corretamente */
 .leaflet-container {
   height: 100%;

@@ -701,3 +701,160 @@ html.light *::-webkit-scrollbar-thumb:hover {
 .theme-switch.on .theme-switch-knob {
   transform: translateX(22px);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   AUTH — Login/Cadastro split-screen (redesign)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Layout dividido: hero (marca) à esquerda + formulário à direita */
+.auth-split {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Painel do formulário (sempre visível) */
+.auth-form-pane {
+  flex: 1 1 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+/* Painel hero — só em telas grandes (lg+) */
+.auth-hero {
+  position: relative;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+  overflow: hidden;
+  border-right: 1px solid var(--border-glass);
+  background:
+    radial-gradient(120% 120% at 15% 5%, rgba(0, 132, 209, 0.20) 0%, transparent 45%),
+    radial-gradient(110% 110% at 95% 95%, rgba(0, 188, 255, 0.12) 0%, transparent 50%),
+    linear-gradient(160deg, #052F4A 0%, #03263B 60%, #021C2C 100%);
+}
+@media (min-width: 1024px) {
+  .auth-hero { display: flex; flex: 1 1 48%; }
+}
+
+/* Grid sutil sobre o hero, com máscara radial para esmaecer nas bordas */
+.auth-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 188, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 188, 255, 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 40%, #000 25%, transparent 78%);
+  mask-image: radial-gradient(ellipse 75% 75% at 50% 40%, #000 25%, transparent 78%);
+  pointer-events: none;
+}
+
+/* Anéis de radar pulsantes — flourish decorativo do hero */
+.auth-radar {
+  position: absolute;
+  top: 14%;
+  right: 12%;
+  width: 130px;
+  height: 130px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.auth-radar-ring {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 188, 255, 0.35);
+  animation: radar-pulse 3.2s ease-out infinite;
+}
+.auth-radar-core {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-accent);
+  box-shadow: 0 0 14px 3px rgba(0, 188, 255, 0.6);
+}
+@keyframes radar-pulse {
+  0%   { transform: scale(0.35); opacity: 0.65; }
+  100% { transform: scale(1.7);  opacity: 0; }
+}
+
+/* Value props (lista de benefícios no hero) */
+.auth-feature {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.auth-feature-ic {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: rgba(0, 188, 255, 0.10);
+  border: 1px solid rgba(0, 188, 255, 0.18);
+  color: var(--text-accent);
+  flex-shrink: 0;
+}
+
+/* Divisor "ou ... com" entre o formulário e os botões sociais */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-glass-hover), transparent);
+}
+
+/* Botões de login social */
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  min-height: 50px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  border-radius: 11px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+.social-btn:hover {
+  border-color: var(--border-glass-hover);
+  background: var(--bg-glass-hover);
+  transform: translateY(-1px);
+}
+.social-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Checklist de requisitos de senha (cadastro) */
+.req-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: color 200ms ease;
+}
+.req-item.ok {
+  color: #4ADE80;
+}

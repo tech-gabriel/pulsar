@@ -38,6 +38,9 @@ public class ClimateService : IClimateService
             VentoKmH = dados.VentoKmH,
             VisibilidadeKm = dados.VisibilidadeKm > 0 ? dados.VisibilidadeKm : 10.0,
             IndiceUv = dados.IndiceUv,
+            TemperaturaC = dados.TemperaturaC,
+            SensacaoTermica = dados.SensacaoTermica,
+            Umidade = dados.Umidade,
             Timestamp = dados.Timestamp
         };
 

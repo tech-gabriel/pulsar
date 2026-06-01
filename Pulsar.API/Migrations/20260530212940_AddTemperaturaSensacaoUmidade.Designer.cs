@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Pulsar.API.Repositories.Data;
 
@@ -10,9 +11,11 @@ using Pulsar.API.Repositories.Data;
 namespace Pulsar.API.Migrations
 {
     [DbContext(typeof(PulsarDbContext))]
-    partial class PulsarDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260530212940_AddTemperaturaSensacaoUmidade")]
+    partial class AddTemperaturaSensacaoUmidade
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.8");
@@ -1206,7 +1209,7 @@ namespace Pulsar.API.Migrations
                     b.HasOne("Pulsar.API.Domain.Entities.ScorePerigo", "Score")
                         .WithMany()
                         .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Regiao");
@@ -1249,7 +1252,7 @@ namespace Pulsar.API.Migrations
                     b.HasOne("Pulsar.API.Domain.Entities.LeituraClimatica", "Leitura")
                         .WithMany()
                         .HasForeignKey("LeituraId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")

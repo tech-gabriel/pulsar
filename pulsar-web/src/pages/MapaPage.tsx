@@ -90,18 +90,15 @@ export default function MapaPage() {
   return (
     <div className="relative h-screen overflow-hidden bg-pulsar-950">
 
-      {/* Header glass fixo (ETAPA 5.4) */}
-      <Header
-        nomeUsuario={usuario?.nome}
-        onLogout={logout}
-        totalSubprefeituras={subprefeituras.length || 32}
-      />
+      {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
+      <Header alertasAtivos={alertasAtivos} />
 
       {/* ══════════════════════════════════════════
           MAPA — camada de fundo absoluta
-          Recua margem conforme sidebar visível; abaixo do header fixo
+          Abaixo do header (48px mobile / 64px desktop); no mobile termina
+          acima da tab bar inferior (48px).
       ══════════════════════════════════════════ */}
-      <div className={`absolute left-0 right-0 bottom-0 top-12 md:top-14 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
+      <div className={`absolute left-0 right-0 bottom-12 md:bottom-0 top-12 md:top-16 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
         <MapaBase
           geojson={geojson}
           subprefeituras={subprefeituras}
@@ -125,7 +122,7 @@ export default function MapaPage() {
 
       {/* Banner de erro sobre o mapa */}
       {erro && !regiaoSelecionada && (
-        <div className="absolute top-16 md:top-[4.5rem] left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
+        <div className="absolute top-14 md:top-20 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
           <div className="pointer-events-auto">
             <ErrorBanner mensagem={erro} onRetry={recarregar} />
           </div>
@@ -139,7 +136,7 @@ export default function MapaPage() {
       ══════════════════════════════════════════ */}
       <aside
         className={[
-          "hidden md:flex flex-col absolute top-14 bottom-0 z-[200]",
+          "hidden md:flex flex-col absolute top-16 bottom-0 z-[200]",
           "bg-pulsar-950 border-pulsar-800/40 shadow-xl overflow-hidden",
           "transition-[width] duration-300 ease-out",
           // Tablet: lado esquerdo
@@ -200,7 +197,7 @@ export default function MapaPage() {
           Altura: 72vh. Fechado: 3.5rem visíveis.
       ══════════════════════════════════════════ */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] bg-pulsar-950 overflow-hidden"
+        className="md:hidden fixed bottom-12 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] bg-pulsar-950 overflow-hidden"
         style={{
           boxShadow: '0 -8px 40px rgba(5, 47, 74, 0.20)',
           transform: painelMobileAberto
@@ -255,7 +252,7 @@ export default function MapaPage() {
       {/* FAB: botão flutuante para abrir o drawer (visível quando fechado) */}
       {!painelMobileAberto && !regiaoSelecionada && (
         <button
-          className="md:hidden fixed z-[600] right-4 bottom-[4.5rem] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
+          className="md:hidden fixed z-[600] right-4 bottom-[7rem] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
           onClick={() => setPainelMobileAberto(true)}
           aria-label="Ver regiões"
         >

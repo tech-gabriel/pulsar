@@ -59,6 +59,9 @@ public class HistoricoController : ControllerBase
                 VentoKmH = l.VentoKmH,
                 VisibilidadeKm = l.VisibilidadeKm,
                 IndiceUv = l.IndiceUv,
+                TemperaturaC = l.TemperaturaC,
+                SensacaoTermica = l.SensacaoTermica,
+                Umidade = l.Umidade,
                 Timestamp = l.Timestamp,
                 Score = score is null ? null : new ScoreDto
                 {

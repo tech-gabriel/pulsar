@@ -2,28 +2,39 @@ import { useState, useEffect } from 'react';
 import type { GeoJsonObject } from 'geojson';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers, LogOut } from 'lucide-react';
 import MapaBase from '../components/mapa/MapaBase';
+import LayerControl from '../components/mapa/LayerControl';
+import MapLegend from '../components/mapa/MapLegend';
 import PainelLateral from '../components/painel/PainelLateral';
 import DetalheRegiao from '../components/painel/DetalheRegiao';
 import ErrorBanner from '../components/ui/ErrorBanner';
+import Header from '../components/ui/Header';
+import type { Camada } from '../utils/camadas';
 import { useAuth } from '../contexts/AuthContext';
 import { useRegioes } from '../hooks/useRegioes';
+import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { useIsMobile } from '../hooks/useIsMobile';
+import type { SubprefeituraMapaDto } from '../types';
 
 export default function MapaPage() {
   const { usuario, logout } = useAuth();
   const { regioes, carregando, erro, recarregar, ultimaAtualizacao } = useRegioes();
+  const subprefeituras = useSubprefeituras(regioes);
   const { isFavorito, toggleFavorito } = useFavoritos(usuario?.id ?? null);
   const isMobile = useIsMobile(768);
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
   const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(null);
+  const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
   const [sidebarColapsada, setSidebarColapsada] = useState(false);
+  const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');
 
   const regiaoSelecionada = regioes.find(
     (r) => r.nome.toLowerCase() === regiaoSelecionadaNome?.toLowerCase()
   ) ?? null;
+
+  const alertasAtivos = regioes.filter((r) => r.faixaRisco === 'ALTO').length;
 
   useEffect(() => {
     fetch('/subprefeituras_wgs84.geojson')
@@ -32,13 +43,30 @@ export default function MapaPage() {
       .catch(() => console.warn('GeoJSON não encontrado'));
   }, []);
 
+  // Trava o scroll do body enquanto o mapa está montado (evita pull-to-refresh /
+  // bounce no mobile). Páginas com scroll (histórico, auth) não usam esta classe.
+  useEffect(() => {
+    document.body.classList.add('mapa-lock');
+    return () => document.body.classList.remove('mapa-lock');
+  }, []);
+
   function fecharDetalhe() {
     setRegiaoSelecionadaNome(null);
+    setSubSelecionada(null);
   }
 
-  function handleSelecionarRegiao(nome: string) {
-    setRegiaoSelecionadaNome(nome);
+  // Clique em um label/polígono de subprefeitura: abre o detalhe da região e
+  // marca a subprefeitura selecionada (highlight do polígono + centralização).
+  function handleSelecionarSub(sub: SubprefeituraMapaDto) {
+    setSubSelecionada(sub);
+    setRegiaoSelecionadaNome(sub.regiaoNome);
     if (isMobile) setPainelMobileAberto(false);
+  }
+
+  // Seleção via lista lateral (por nome de região) — sem subprefeitura específica.
+  function selecionarRegiaoPorNome(nome: string) {
+    setRegiaoSelecionadaNome(nome);
+    setSubSelecionada(null);
   }
 
   const painelProps = {
@@ -50,6 +78,8 @@ export default function MapaPage() {
     ultimaAtualizacao,
     onLogout: logout,
     nomeUsuario: usuario?.nome ?? '',
+    isFavorito,
+    onToggleFavorito: toggleFavorito,
   };
 
   // Classes do mapa: offset lateral conforme sidebar (tablet esquerda / desktop direita)
@@ -58,24 +88,41 @@ export default function MapaPage() {
     : 'md:left-80 lg:left-0 lg:right-[350px]';
 
   return (
-    <div className="relative h-screen overflow-hidden bg-slate-900">
+    <div className="relative h-screen overflow-hidden bg-pulsar-950">
+
+      {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
+      <Header alertasAtivos={alertasAtivos} />
 
       {/* ══════════════════════════════════════════
           MAPA — camada de fundo absoluta
-          Recua margem conforme sidebar visível
+          Abaixo do header (48px mobile / 64px desktop); no mobile termina
+          acima da tab bar inferior (48px).
       ══════════════════════════════════════════ */}
-      <div className={`absolute inset-0 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
+      <div className={`absolute left-0 right-0 bottom-12 md:bottom-0 top-12 md:top-16 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
         <MapaBase
           geojson={geojson}
-          regioes={regioes}
-          regiaoSelecionada={regiaoSelecionadaNome}
-          onSelecionarRegiao={handleSelecionarRegiao}
+          subprefeituras={subprefeituras}
+          subSelecionada={subSelecionada}
+          onSelecionarSub={handleSelecionarSub}
+          camadaAtiva={camadaAtiva}
+          regiaoSelecionadaNome={regiaoSelecionadaNome}
+          subSelecionadaAtiva={!!subSelecionada}
         />
+
+        {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
+        <LayerControl
+          camadaAtiva={camadaAtiva}
+          onChange={setCamadaAtiva}
+          isMobile={isMobile}
+        />
+
+        {/* Legenda dinâmica (ETAPA 6.1/6.2): muda conforme a camada ativa */}
+        <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} />
       </div>
 
       {/* Banner de erro sobre o mapa */}
       {erro && !regiaoSelecionada && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
+        <div className="absolute top-14 md:top-20 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
           <div className="pointer-events-auto">
             <ErrorBanner mensagem={erro} onRetry={recarregar} />
           </div>
@@ -89,8 +136,8 @@ export default function MapaPage() {
       ══════════════════════════════════════════ */}
       <aside
         className={[
-          "hidden md:flex flex-col absolute top-0 bottom-0 z-[200]",
-          "bg-white border-slate-200 shadow-xl overflow-hidden",
+          "hidden md:flex flex-col absolute top-16 bottom-0 z-[200]",
+          "bg-pulsar-950 border-pulsar-800/40 shadow-xl overflow-hidden",
           "transition-[width] duration-300 ease-out",
           // Tablet: lado esquerdo
           "md:left-0 md:border-r",
@@ -105,16 +152,16 @@ export default function MapaPage() {
           className={[
             "lg:hidden absolute top-1/2 -translate-y-1/2 z-10",
             sidebarColapsada ? "right-0" : "-right-3",
-            "w-6 h-10 bg-white border border-slate-200 shadow",
+            "w-6 h-10 bg-pulsar-900 border border-pulsar-800 shadow",
             "flex items-center justify-center rounded-r-lg",
-            "hover:bg-pulsar-50 active:bg-pulsar-100 transition-colors",
+            "hover:bg-pulsar-800 active:bg-pulsar-700 transition-colors",
           ].join(" ")}
           onClick={() => setSidebarColapsada((v) => !v)}
           title={sidebarColapsada ? "Expandir painel" : "Recolher painel"}
         >
           {sidebarColapsada
-            ? <ChevronRight size={12} className="text-slate-500" />
-            : <ChevronLeft size={12} className="text-slate-500" />
+            ? <ChevronRight size={12} className="text-pulsar-300" />
+            : <ChevronLeft size={12} className="text-pulsar-300" />
           }
         </button>
 
@@ -138,7 +185,7 @@ export default function MapaPage() {
           ) : (
             <PainelLateral
               {...painelProps}
-              onSelecionarRegiao={setRegiaoSelecionadaNome}
+              onSelecionarRegiao={selecionarRegiaoPorNome}
             />
           )
         )}
@@ -150,7 +197,7 @@ export default function MapaPage() {
           Altura: 72vh. Fechado: 3.5rem visíveis.
       ══════════════════════════════════════════ */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] bg-white overflow-hidden"
+        className="md:hidden fixed bottom-12 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] bg-pulsar-950 overflow-hidden"
         style={{
           boxShadow: '0 -8px 40px rgba(5, 47, 74, 0.20)',
           transform: painelMobileAberto
@@ -168,7 +215,9 @@ export default function MapaPage() {
           <div className="absolute top-[9px] left-1/2 -translate-x-1/2 w-9 h-[3px] bg-white/20 rounded-full" />
 
           <span className="flex-1 text-sm font-semibold text-white mt-1 text-left truncate">
-            Regiões de São Paulo
+            {alertasAtivos > 0
+              ? `${alertasAtivos} ${alertasAtivos === 1 ? 'alerta ativo' : 'alertas ativos'}`
+              : 'Tudo tranquilo em São Paulo'}
           </span>
 
           {/* Botão Sair dentro do handle */}
@@ -192,7 +241,7 @@ export default function MapaPage() {
           <PainelLateral
             {...painelProps}
             onSelecionarRegiao={(nome) => {
-              setRegiaoSelecionadaNome(nome);
+              selecionarRegiaoPorNome(nome);
               setPainelMobileAberto(false);
             }}
             hideHeader
@@ -203,7 +252,7 @@ export default function MapaPage() {
       {/* FAB: botão flutuante para abrir o drawer (visível quando fechado) */}
       {!painelMobileAberto && !regiaoSelecionada && (
         <button
-          className="md:hidden fixed z-[600] right-4 bottom-[4.5rem] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
+          className="md:hidden fixed z-[600] right-4 bottom-[7rem] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
           onClick={() => setPainelMobileAberto(true)}
           aria-label="Ver regiões"
         >
@@ -216,7 +265,7 @@ export default function MapaPage() {
           Aparece ao selecionar uma região no mobile
       ══════════════════════════════════════════ */}
       {regiaoSelecionada && isMobile && (
-        <div className="fixed inset-0 z-[700] flex flex-col bg-white animate-slide-up">
+        <div className="fixed inset-0 z-[1100] flex flex-col bg-pulsar-950 animate-slide-up">
           <DetalheRegiao
             key={regiaoSelecionada.id}
             regiaoId={regiaoSelecionada.id}

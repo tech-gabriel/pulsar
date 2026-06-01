@@ -89,11 +89,20 @@ namespace Pulsar.API.Migrations
                     b.Property<double>("IndiceUv")
                         .HasColumnType("REAL");
 
+                    b.Property<double>("SensacaoTermica")
+                        .HasColumnType("REAL");
+
                     b.Property<Guid>("SubprefeituraId")
                         .HasColumnType("TEXT");
 
+                    b.Property<double>("TemperaturaC")
+                        .HasColumnType("REAL");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("TEXT");
+
+                    b.Property<double>("Umidade")
+                        .HasColumnType("REAL");
 
                     b.Property<double>("VentoKmH")
                         .HasColumnType("REAL");
@@ -1197,7 +1206,7 @@ namespace Pulsar.API.Migrations
                     b.HasOne("Pulsar.API.Domain.Entities.ScorePerigo", "Score")
                         .WithMany()
                         .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Regiao");
@@ -1240,7 +1249,7 @@ namespace Pulsar.API.Migrations
                     b.HasOne("Pulsar.API.Domain.Entities.LeituraClimatica", "Leitura")
                         .WithMany()
                         .HasForeignKey("LeituraId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")

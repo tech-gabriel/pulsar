@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Activity } from 'lucide-react';
+import { Eye, EyeOff, Activity, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import GlassCard from '../components/ui/GlassCard';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -29,8 +30,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pulsar-950 via-pulsar-900 to-pulsar-800 px-4 py-8">
-      <div className="w-full max-w-[400px]">
+    <div className="theme-dark-scope auth-bg min-h-screen flex items-center justify-center px-4 py-8">
+      <div className="relative w-full max-w-[400px]">
 
         {/* Logo */}
         <div className="text-center mb-7">
@@ -38,32 +39,33 @@ export default function LoginPage() {
             <Activity size={30} className="text-pulsar-400" />
           </div>
           <h1
-            className="text-3xl font-bold text-white tracking-tight"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            className="text-pulsar-50 tracking-tight text-[24px] sm:text-[28px]"
+            style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, textShadow: '0 0 30px rgba(0, 188, 255, 0.4)' }}
           >
             PULSAR
           </h1>
-          <p className="text-pulsar-300 text-sm mt-1.5">O mapa vivo da sua segurança</p>
+          <p className="text-pulsar-300 mt-1.5" style={{ fontSize: 13 }}>O mapa vivo da sua segurança</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl px-6 py-7 sm:px-7">
+        <GlassCard hover={false} padding="lg" className="!px-5 !py-6 sm:!px-8 sm:!py-8">
           <h2
-            className="text-xl font-semibold text-slate-800 mb-6"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            className="text-pulsar-50 mb-6"
+            style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 20 }}
           >
             Entrar na conta
           </h2>
 
           {erro && (
-            <div className="mb-5 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
-              {erro}
+            <div className="erro-glass mb-5">
+              <XCircle size={16} className="flex-shrink-0" />
+              <span>{erro}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>
                 E-mail
               </label>
               <input
@@ -73,13 +75,12 @@ export default function LoginPage() {
                 required
                 autoComplete="email"
                 placeholder="seu@email.com"
-                /* text-base (16px) previne zoom no iOS */
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pulsar-500 focus:border-transparent transition bg-slate-50 focus:bg-white"
+                className="input-glass"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>
                 Senha
               </label>
               <div className="relative">
@@ -90,12 +91,12 @@ export default function LoginPage() {
                   required
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pulsar-500 focus:border-transparent transition bg-slate-50 focus:bg-white pr-12"
+                  className="input-glass pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setMostrarSenha((v) => !v)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-pulsar-300 hover:text-pulsar-100 transition-colors"
                   tabIndex={-1}
                 >
                   {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -106,19 +107,19 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={enviando}
-              className="w-full bg-pulsar-600 hover:bg-pulsar-700 active:bg-pulsar-800 disabled:opacity-60 text-white font-semibold rounded-xl py-3.5 text-base transition-all duration-150 active:scale-[0.98] mt-1 shadow-sm"
+              className="btn-gradient w-full py-3 mt-1 min-h-[48px]"
             >
               {enviando ? 'Entrando…' : 'Entrar'}
             </button>
           </form>
 
-          <p className="text-center text-sm text-slate-500 mt-5">
-            Não tem conta?{' '}
-            <Link to="/cadastro" className="text-pulsar-600 hover:text-pulsar-700 font-semibold">
+          <p className="text-center mt-5" style={{ fontSize: 13 }}>
+            <span className="text-pulsar-300">Não tem conta? </span>
+            <Link to="/cadastro" className="text-pulsar-400 hover:underline font-semibold">
               Cadastre-se
             </Link>
           </p>
-        </div>
+        </GlassCard>
       </div>
     </div>
   );

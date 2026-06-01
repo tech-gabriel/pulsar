@@ -29,6 +29,81 @@
   --font-mono:    "JetBrains Mono", monospace;
 }
 
+/* ── Tema Dark + Glassmorphism — variáveis globais (ETAPA 5.1) ──────────────────*/
+:root {
+  /* Backgrounds */
+  --bg-primary: #052F4A;
+  --bg-secondary: rgba(0, 89, 138, 0.15);
+  --bg-elevated: rgba(0, 105, 168, 0.10);
+  --bg-glass: rgba(5, 47, 74, 0.6);
+  --bg-glass-hover: rgba(0, 89, 138, 0.18);
+  --bg-input: rgba(0, 89, 138, 0.2);
+
+  /* Borders */
+  --border-glass: rgba(0, 188, 255, 0.12);
+  --border-glass-hover: rgba(0, 188, 255, 0.25);
+  --border-subtle: rgba(0, 188, 255, 0.06);
+
+  /* Text */
+  --text-primary: #F0F9FF;
+  --text-secondary: #B8E6FE;
+  --text-muted: rgba(184, 230, 254, 0.5);
+  --text-accent: #00BCFF;
+
+  /* Glow effects */
+  --glow-cyan: 0 0 20px rgba(0, 188, 255, 0.3);
+  --glow-green: 0 0 12px rgba(34, 197, 94, 0.4);
+  --glow-yellow: 0 0 12px rgba(234, 179, 8, 0.4);
+  --glow-red: 0 0 12px rgba(239, 68, 68, 0.4);
+
+  /* Glassmorphism */
+  --glass-blur: blur(16px) saturate(180%);
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Tema Light (ETAPA B.2) — sobrescreve as variáveis em html.light ───────────*/
+html.light {
+  --bg-primary: #F8FAFC;
+  --bg-secondary: rgba(0, 132, 209, 0.06);
+  --bg-elevated: rgba(0, 132, 209, 0.04);
+  --bg-glass: rgba(255, 255, 255, 0.75);
+  --bg-glass-hover: rgba(0, 132, 209, 0.08);
+  --bg-input: rgba(0, 89, 138, 0.06);
+  --border-glass: rgba(0, 105, 168, 0.15);
+  --border-glass-hover: rgba(0, 105, 168, 0.3);
+  --border-subtle: rgba(0, 105, 168, 0.08);
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: rgba(71, 85, 105, 0.6);
+  --text-accent: #0084D1;
+  --glow-cyan: 0 0 12px rgba(0, 132, 209, 0.15);
+  --glass-blur: blur(12px) saturate(120%);
+  --glass-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/*
+ * Escopo "sempre dark": telas legadas construídas só para o dark (login,
+ * cadastro e o detalhe de histórico) re-declaram as variáveis dark localmente,
+ * permanecendo legíveis mesmo com o tema light ativo.
+ */
+.theme-dark-scope {
+  --bg-primary: #052F4A;
+  --bg-secondary: rgba(0, 89, 138, 0.15);
+  --bg-elevated: rgba(0, 105, 168, 0.10);
+  --bg-glass: rgba(5, 47, 74, 0.6);
+  --bg-glass-hover: rgba(0, 89, 138, 0.18);
+  --bg-input: rgba(0, 89, 138, 0.2);
+  --border-glass: rgba(0, 188, 255, 0.12);
+  --border-glass-hover: rgba(0, 188, 255, 0.25);
+  --border-subtle: rgba(0, 188, 255, 0.06);
+  --text-primary: #F0F9FF;
+  --text-secondary: #B8E6FE;
+  --text-muted: rgba(184, 230, 254, 0.5);
+  --text-accent: #00BCFF;
+  --glass-blur: blur(16px) saturate(180%);
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -40,9 +115,14 @@ html, body, #root {
   font-family: var(--font-body);
 }
 
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  /* Transição suave ao trocar de tema (ETAPA B.2.4) */
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -65,6 +145,104 @@ body {
   animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
+/* Slide do detalhe entrando pela direita — LISTA → DETALHE (ETAPA 4.6) */
+@keyframes slide-left {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.animate-slide-left {
+  animation: slide-left 0.3s ease-out forwards;
+}
+
+/* ── Painel dark glass (ETAPA 4.1/4.3) ─────────────────────────────────────────*/
+.painel-glass {
+  background: linear-gradient(180deg, rgba(5, 47, 74, 0.97) 0%, rgba(2, 37, 58, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.painel-card-glass {
+  background: rgba(0, 89, 138, 0.1);
+  border: 1px solid rgba(0, 188, 255, 0.08);
+}
+.painel-separador {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--color-pulsar-400) 50%, transparent 100%);
+  opacity: 0.5;
+}
+
+/* Scrollbar customizada do painel (width 4px, thumb pulsar-700) */
+.painel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-pulsar-700) transparent;
+}
+.painel-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.painel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.painel-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-pulsar-700);
+  border-radius: 4px;
+}
+
+/* Ícone Activity pulsante no header (ETAPA 4.1) */
+@keyframes activity-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.activity-pulse {
+  animation: activity-pulse 1.8s ease-in-out infinite;
+}
+
+/* ── RegiaoCard (ETAPA 4.2) ────────────────────────────────────────────────────*/
+.regiao-card {
+  display: block;
+  background: rgba(0, 89, 138, 0.1);
+  border: 1px solid rgba(0, 188, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  transition: all 200ms;
+  cursor: pointer;
+}
+.regiao-card:hover {
+  border-color: rgba(0, 188, 255, 0.25);
+  background: rgba(0, 89, 138, 0.18);
+}
+.regiao-card-ativa {
+  border-color: rgba(0, 188, 255, 0.4);
+  background: rgba(0, 89, 138, 0.22);
+}
+
+/* Card de sugestão de segurança (ETAPA 4.5) */
+.sugestao-card {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 3px solid rgba(239, 68, 68, 0.5);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+/* Barra de progresso das subprefeituras: cresce 500ms ease-out (ETAPA 4.4/4.6) */
+@keyframes barra-cresce {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.barra-progresso {
+  transform-origin: left;
+  animation: barra-cresce 0.5s ease-out both;
+}
+
+/* Polígono da região selecionada: borda branca pulsante (ETAPA 4.7) */
+@keyframes regiao-pulse {
+  0%, 100% { stroke-opacity: 0.55; }
+  50%      { stroke-opacity: 1; }
+}
+.poligono-regiao {
+  animation: regiao-pulse 1.4s ease-in-out infinite;
+}
+
 /* Leaflet overrides — garantir que o mapa renderize corretamente */
 .leaflet-container {
   height: 100%;
@@ -75,4 +253,451 @@ body {
 .leaflet-popup-content-wrapper {
   border-radius: 8px;
   font-family: var(--font-body);
+}
+
+/* ── Label de score circular sobre cada subprefeitura (ETAPA 2.4/2.7) ──────────
+   O divIcon tem tamanho 0; o círculo é centralizado via transform. */
+.pulsar-score-label {
+  background: none;
+  border: none;
+  pointer-events: none; /* label puramente visual: hover/click vão ao polígono (ETAPA 3.5) */
+}
+/* Container coluna: círculo de score + nome abreviado abaixo (ETAPA 2.1) */
+.pulsar-label-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.pulsar-score-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+.pulsar-score-circle.selecionado {
+  border-color: rgba(255, 255, 255, 0.95);
+}
+/* Nome da subprefeitura abaixo do círculo (ETAPA 2.1) */
+.pulsar-sub-nome {
+  margin-top: 2px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: #f0f9ff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+/* Pulse no glow para score alto (> 60) */
+@keyframes score-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+  50%      { box-shadow: 0 0 20px rgba(239, 68, 68, 0.7); }
+}
+.pulsar-score-circle.pulsa {
+  animation: score-pulse 1.6s ease-in-out infinite;
+}
+
+/* ── Polígono selecionado: borda branca tracejada animada (marching ants) ──────*/
+@keyframes marching-ants {
+  to { stroke-dashoffset: -16; }
+}
+.poligono-selecionado {
+  animation: marching-ants 0.7s linear infinite;
+}
+
+/* ── Tooltip dark do mapa (ETAPA 2.5/2.6) ──────────────────────────────────────*/
+.pulsar-tooltip {
+  background: rgba(5, 47, 74, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 188, 255, 0.2);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  color: #f0f9ff;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 12px 16px;
+  min-width: 180px;
+  max-width: 240px;
+  white-space: normal;
+}
+.pulsar-tooltip::before {
+  display: none; /* setinha oculta: tooltip sticky segue o mouse (ETAPA 3) */
+}
+.pulsar-tooltip .pt-titulo {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+.pulsar-tooltip .pt-linha {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-pulsar-100);
+}
+.pulsar-tooltip .pt-mono {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* Tooltip: variável da camada ativa em destaque; demais menores (ETAPA 3.5) */
+.pulsar-tooltip .pt-destaque {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-pulsar-50);
+  margin-bottom: 2px;
+}
+.pulsar-tooltip .pt-sec {
+  font-size: 11px;
+  color: var(--color-pulsar-200);
+  opacity: 0.85;
+}
+
+/* ── Sidebar de camadas — LayerControl (ETAPA 3.1/3.6) ─────────────────────────*/
+.layer-btn {
+  transition: all 200ms;
+  cursor: pointer;
+}
+.layer-btn:not(.ativo):hover {
+  background: rgba(0, 89, 138, 0.3) !important;
+  color: var(--color-pulsar-50) !important;
+}
+
+/* Esconde a scrollbar da barra horizontal de camadas no mobile */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fade ao trocar de camada: o label re-monta e reaparece suavemente (ETAPA 3.3) */
+@keyframes camada-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.pulsar-score-circle {
+  animation: camada-fade 0.3s ease-out;
+}
+.pulsar-score-circle.pulsa {
+  animation: camada-fade 0.3s ease-out, score-pulse 1.6s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ETAPA 5 — Dark Mode + Glassmorphism global
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Scrollbar global customizada (ETAPA 5.7) */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(0, 105, 168, 0.4);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 105, 168, 0.6);
+}
+
+/* GlassCard (ETAPA 5.2) */
+.glass-card {
+  background: var(--bg-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  box-shadow: var(--glass-shadow);
+}
+.glass-card-hover {
+  transition: all 200ms ease;
+}
+.glass-card-hover:hover {
+  border-color: var(--border-glass-hover);
+  background: var(--bg-glass-hover);
+}
+
+/* Fundo das páginas de auth com grid pattern sutil (ETAPA 5.3) */
+.auth-bg {
+  position: relative;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+.auth-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 188, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 188, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* Input dark glass (ETAPA 5.3) */
+.input-glass {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px; /* >=16px evita zoom no iOS */
+  transition: all 200ms;
+}
+.input-glass::placeholder {
+  color: var(--text-muted);
+}
+.input-glass:focus {
+  outline: none;
+  border-color: #00BCFF;
+  box-shadow: 0 0 0 3px rgba(0, 188, 255, 0.15);
+}
+
+/* Botão principal com gradiente (ETAPA 5.3) */
+.btn-gradient {
+  background: linear-gradient(135deg, #0084D1, #00A6F4);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 200ms;
+}
+.btn-gradient:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 16px rgba(0, 132, 209, 0.4);
+}
+.btn-gradient:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.btn-gradient:disabled {
+  opacity: 0.6;
+}
+
+/* Mensagem de erro dark (ETAPA 5.3/5.6) */
+.erro-glass {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #FCA5A5;
+  font-size: 13px;
+}
+
+/* Dot verde pulsante do header (ETAPA 5.4) */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.dot-pulse {
+  animation: dot-pulse 1.8s ease-in-out infinite;
+}
+
+/* Skeleton loader dark (ETAPA 5.6) */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+.skeleton-block {
+  background: rgba(0, 89, 138, 0.15);
+  border-radius: 6px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ETAPA 6 — Legenda dinâmica + responsividade / touch
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Fade ao trocar a camada na legenda (200ms, spec 6.1) */
+@keyframes legend-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.legend-fade {
+  animation: legend-fade 200ms ease-out;
+}
+
+/* Altura confiável no mobile (dvh) + sem bounce/pull-to-refresh (spec 6.8) */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+@supports (height: 100dvh) {
+  html, body, #root {
+    height: 100dvh;
+  }
+}
+
+/* Trava o scroll do body apenas na tela do mapa (toggle via MapaPage) */
+body.mapa-lock {
+  overflow: hidden;
+}
+
+/* Remove o flash cinza de toque em toda a app (spec 6.7) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Evita double-tap zoom em elementos clicáveis (spec 6.8) */
+button, a, [role="button"], [role="radio"] {
+  touch-action: manipulation;
+}
+
+/* O container do mapa gerencia o próprio gesto (sem pull-to-refresh, spec 6.8) */
+.leaflet-container {
+  touch-action: none;
+}
+
+/* Feedback de toque nos cards do painel: scale 0.98 em 100ms (spec 6.7) */
+.regiao-card {
+  transition: border-color 200ms, background 200ms, transform 100ms ease;
+}
+.regiao-card:active {
+  transform: scale(0.98);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ETAPA B — Header de navegação + ajustes do tema Light
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Header / barra de navegação glass (variáveis de tema) */
+.app-header {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border-glass);
+}
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: all 200ms;
+  cursor: pointer;
+}
+.nav-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+.nav-tab.ativa {
+  color: var(--text-accent);
+  font-weight: 600;
+  border-bottom-color: var(--text-accent);
+}
+
+/* Tab bar inferior (mobile) */
+.tabbar-mobile {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid var(--border-glass);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--text-muted);
+  font-size: 10px;
+  transition: color 200ms;
+}
+.tabbar-item.ativa {
+  color: var(--text-accent);
+}
+
+/* Badge pulsante do sino de notificações */
+@keyframes bell-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.25); opacity: 0.6; }
+}
+.bell-badge {
+  animation: bell-pulse 1.6s ease-in-out infinite;
+}
+
+/* Toggle de tema: rotaciona + fade ao trocar */
+@keyframes theme-spin {
+  from { transform: rotate(-180deg); opacity: 0; }
+  to   { transform: rotate(0); opacity: 1; }
+}
+.theme-icon-anim {
+  animation: theme-spin 300ms ease-out;
+}
+
+/* ── Ajustes específicos do tema Light (ETAPA B.2.3) ───────────────────────────*/
+html.light body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Nome da subprefeitura no mapa light: texto escuro com halo branco */
+html.light .pulsar-sub-nome {
+  color: #0F172A;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+/* Tooltip do mapa no tema light */
+html.light .pulsar-tooltip {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 105, 168, 0.15);
+  color: #0F172A;
+}
+
+/* Scrollbar no tema light */
+html.light *::-webkit-scrollbar-thumb {
+  background: rgba(0, 105, 168, 0.2);
+}
+html.light *::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 105, 168, 0.35);
+}
+
+/* Switch de tema na página de configurações */
+.theme-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  transition: background 200ms;
+  flex-shrink: 0;
+}
+.theme-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-accent);
+  transition: transform 200ms ease;
+}
+.theme-switch.on .theme-switch-knob {
+  transform: translateX(22px);
 }

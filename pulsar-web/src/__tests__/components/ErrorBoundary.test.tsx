@@ -6,7 +6,7 @@ function BomComponente() {
   return <p>Componente OK</p>;
 }
 
-function ComponenteQueLanca() {
+function ComponenteQueLanca(): never {
   throw new Error('Erro de render');
 }
 

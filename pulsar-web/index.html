@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
     <!-- Viewport mobile: trava o zoom (inputs 16px já evitam zoom no iOS) — ETAPA 6.8 -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
@@ -16,6 +18,9 @@
     <meta property="og:title" content="Pulsar — O mapa vivo da sua segurança" />
     <meta property="og:description" content="Monitoramento climático em tempo real para as 32 subprefeituras de São Paulo." />
     <meta property="og:type" content="website" />
+    <!-- Caminho relativo; ao publicar, troque por URL absoluta (https://.../og-image.png) para os scrapers resolverem -->
+    <meta property="og:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body style="background-color:#052F4A">
     <div id="root"></div>

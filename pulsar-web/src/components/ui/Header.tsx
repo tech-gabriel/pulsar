@@ -3,6 +3,7 @@ import { Map, History, BarChart3, Newspaper, Settings, Bell, Sun, Moon, LogOut }
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
+import iconePulsar from '../../assets/logos/pulsar-icone.svg';
 
 // Abas de navegação principal (ETAPA B.1.2)
 const TABS: { to: string; label: string; curto: string; Icon: LucideIcon; end?: boolean }[] = [
@@ -32,19 +33,27 @@ export default function Header({ alertasAtivos = 0 }: Props) {
     <>
       {/* ── TOP BAR ─────────────────────────────────────────────────────────── */}
       <header className="app-header fixed top-0 left-0 right-0 z-[1000] flex items-center justify-between h-12 md:h-16 px-4 md:px-6">
-        {/* Esquerda: marca + slogan */}
-        <div className="flex flex-col justify-center leading-none">
-          <span
-            style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', textShadow: 'var(--glow-cyan)' }}
-          >
-            PULSAR
-          </span>
-          <span
-            className="hidden md:block mt-0.5"
-            style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 11, color: 'var(--text-secondary)' }}
-          >
-            O mapa vivo da sua segurança
-          </span>
+        {/* Esquerda: marca (ícone + slogan) */}
+        <div className="flex items-center gap-2.5">
+          <img
+            src={iconePulsar}
+            alt="Pulsar"
+            className="w-8 h-8 md:w-9 md:h-9 flex-shrink-0"
+            style={{ filter: 'drop-shadow(var(--glow-cyan))' }}
+          />
+          <div className="flex flex-col justify-center leading-none">
+            <span
+              style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', textShadow: 'var(--glow-cyan)' }}
+            >
+              PULSAR
+            </span>
+            <span
+              className="hidden md:block mt-0.5"
+              style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 11, color: 'var(--text-secondary)' }}
+            >
+              O mapa vivo da sua segurança
+            </span>
+          </div>
         </div>
 
         {/* Centro: abas (md+) — absolutamente centradas */}

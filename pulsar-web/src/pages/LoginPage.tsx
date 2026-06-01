@@ -30,7 +30,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="auth-bg min-h-screen flex items-center justify-center px-4 py-8">
+    <div className="theme-dark-scope auth-bg min-h-screen flex items-center justify-center px-4 py-8">
       <div className="relative w-full max-w-[400px]">
 
         {/* Logo */}

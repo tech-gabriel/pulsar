@@ -14,7 +14,6 @@ import {
 import { ArrowLeft, CloudRain, Wind, Eye, Sun, BarChart3 } from 'lucide-react';
 import { useHistorico } from '../hooks/useHistorico';
 import { useIsMobile } from '../hooks/useIsMobile';
-import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
 import BadgeRisco from '../components/ui/BadgeRisco';
@@ -72,7 +71,6 @@ export default function HistoricoPage() {
   const location = useLocation();
   const state = location.state as LocationState | null;
   const isMobile = useIsMobile(768);
-  const { usuario, logout } = useAuth();
 
   const { historico, carregando, erro } = useHistorico(subprefeituraId ?? null);
 
@@ -106,10 +104,10 @@ export default function HistoricoPage() {
     : { angle: 0, textAnchor: 'middle' as const, height: 20, tick: { fontSize: 11, fill: AXIS_MUTED } };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
-      <Header nomeUsuario={usuario?.nome} onLogout={logout} />
+    <div className="theme-dark-scope min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
+      <Header />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-3 sm:px-4 pb-8 flex flex-col gap-5 sm:gap-6" style={{ paddingTop: 72 }}>
+      <main className="flex-1 max-w-5xl mx-auto w-full px-3 sm:px-4 pb-20 md:pb-8 flex flex-col gap-5 sm:gap-6" style={{ paddingTop: 72 }}>
 
         {/* Header da página */}
         <GlassCard hover={false} padding="lg" className="flex items-center gap-3 sm:gap-4">

@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Activity, XCircle } from 'lucide-react';
+import { Eye, EyeOff, XCircle, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import GlassCard from '../components/ui/GlassCard';
+import { useToast } from '../contexts/ToastContext';
+import AuthLayout from '../components/auth/AuthLayout';
+import SocialAuthButtons from '../components/auth/SocialAuthButtons';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { showToast } = useToast();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -30,97 +33,99 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="theme-dark-scope auth-bg min-h-screen flex items-center justify-center px-4 py-8">
-      <div className="relative w-full max-w-[400px]">
+    <AuthLayout>
+      {/* Cabeçalho */}
+      <div className="mb-7">
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 26, color: 'var(--text-primary)' }}>
+          Bem-vindo de volta
+        </h1>
+        <p className="mt-1.5" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+          Entre para acompanhar o clima da sua região
+        </p>
+      </div>
 
-        {/* Logo */}
-        <div className="text-center mb-7">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-pulsar-500/15 border border-pulsar-400/20 mb-5">
-            <Activity size={30} className="text-pulsar-400" />
+      {erro && (
+        <div className="erro-glass mb-5">
+          <XCircle size={16} className="flex-shrink-0" />
+          <span>{erro}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* E-mail */}
+        <div>
+          <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>
+            E-mail
+          </label>
+          <div className="relative">
+            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-pulsar-300 pointer-events-none" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              placeholder="seu@email.com"
+              className="input-glass !pl-11"
+            />
           </div>
-          <h1
-            className="text-pulsar-50 tracking-tight text-[24px] sm:text-[28px]"
-            style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, textShadow: '0 0 30px rgba(0, 188, 255, 0.4)' }}
-          >
-            PULSAR
-          </h1>
-          <p className="text-pulsar-300 mt-1.5" style={{ fontSize: 13 }}>O mapa vivo da sua segurança</p>
         </div>
 
-        {/* Card */}
-        <GlassCard hover={false} padding="lg" className="!px-5 !py-6 sm:!px-8 sm:!py-8">
-          <h2
-            className="text-pulsar-50 mb-6"
-            style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 20 }}
-          >
-            Entrar na conta
-          </h2>
-
-          {erro && (
-            <div className="erro-glass mb-5">
-              <XCircle size={16} className="flex-shrink-0" />
-              <span>{erro}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>
-                E-mail
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                placeholder="seu@email.com"
-                className="input-glass"
-              />
-            </div>
-
-            <div>
-              <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>
-                Senha
-              </label>
-              <div className="relative">
-                <input
-                  type={mostrarSenha ? 'text' : 'password'}
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  className="input-glass pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setMostrarSenha((v) => !v)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-pulsar-300 hover:text-pulsar-100 transition-colors"
-                  tabIndex={-1}
-                >
-                  {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
+        {/* Senha */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-pulsar-200" style={{ fontSize: 13, fontWeight: 500 }}>
+              Senha
+            </label>
             <button
-              type="submit"
-              disabled={enviando}
-              className="btn-gradient w-full py-3 mt-1 min-h-[48px]"
+              type="button"
+              onClick={() => showToast('Recuperação de senha chega em breve!', 'info')}
+              className="text-pulsar-400 hover:underline"
+              style={{ fontSize: 12.5 }}
+              tabIndex={-1}
             >
-              {enviando ? 'Entrando…' : 'Entrar'}
+              Esqueci minha senha
             </button>
-          </form>
+          </div>
+          <div className="relative">
+            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-pulsar-300 pointer-events-none" />
+            <input
+              type={mostrarSenha ? 'text' : 'password'}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              required
+              autoComplete="current-password"
+              placeholder="••••••••"
+              className="input-glass !pl-11 pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setMostrarSenha((v) => !v)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-pulsar-300 hover:text-pulsar-100 transition-colors"
+              tabIndex={-1}
+              aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+            >
+              {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
 
-          <p className="text-center mt-5" style={{ fontSize: 13 }}>
-            <span className="text-pulsar-300">Não tem conta? </span>
-            <Link to="/cadastro" className="text-pulsar-400 hover:underline font-semibold">
-              Cadastre-se
-            </Link>
-          </p>
-        </GlassCard>
+        <button type="submit" disabled={enviando} className="btn-gradient w-full py-3 mt-1 min-h-[48px]">
+          {enviando ? 'Entrando…' : 'Entrar'}
+        </button>
+      </form>
+
+      {/* Login social */}
+      <div className="mt-6">
+        <SocialAuthButtons acao="Entrar" />
       </div>
-    </div>
+
+      <p className="text-center mt-7" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+        Não tem conta?{' '}
+        <Link to="/cadastro" className="text-pulsar-400 hover:underline font-semibold">
+          Cadastre-se
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

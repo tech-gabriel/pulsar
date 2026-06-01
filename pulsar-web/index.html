@@ -1,13 +1,23 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" style="background-color:#052F4A">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Pulsar — Monitoramento climático em tempo real para São Paulo" />
-    <title>Pulsar — O mapa vivo da sua segurança</title>
+
+    <!-- Viewport mobile: trava o zoom (inputs 16px já evitam zoom no iOS) — ETAPA 6.8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#052F4A" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- SEO + compartilhamento — ETAPA 6.10 -->
+    <title>Pulsar — Monitoramento Climático em Tempo Real</title>
+    <meta name="description" content="Monitoramento climático em tempo real para São Paulo. Score de Perigo por subprefeitura, alertas e sugestões de segurança." />
+    <meta property="og:title" content="Pulsar — O mapa vivo da sua segurança" />
+    <meta property="og:description" content="Monitoramento climático em tempo real para as 32 subprefeituras de São Paulo." />
+    <meta property="og:type" content="website" />
   </head>
-  <body>
+  <body style="background-color:#052F4A">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

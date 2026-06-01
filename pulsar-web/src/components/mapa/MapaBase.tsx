@@ -6,6 +6,7 @@ import type { SubprefeituraMapaDto } from '../../types';
 import type { Camada } from '../../utils/camadas';
 import { centroideRegiao } from '../../utils/geo';
 import { normalizarNome } from '../../utils/texto';
+import { useTheme } from '../../hooks/useTheme';
 import RegioesLayer from './RegioesLayer';
 import ScoreLabel from './ScoreLabel';
 
@@ -13,19 +14,20 @@ import ScoreLabel from './ScoreLabel';
 const SP_CENTER: [number, number] = [-23.5505, -46.6333];
 const SP_ZOOM = 10;
 
-// Tile layer: MapTiler Dataviz Dark se houver key; senão, fallback CartoDB Dark Matter.
+// Tile layer: MapTiler (dataviz dark/light) se houver key; senão, fallback CartoDB.
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
+const ATTRIB_MAPTILER = '© MapTiler © OpenStreetMap contributors';
+const ATTRIB_CARTO =
+  '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-const TILE_CONFIG = MAPTILER_KEY
-  ? {
-      url: `https://api.maptiler.com/maps/dataviz-dark/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`,
-      attribution: '© MapTiler © OpenStreetMap contributors',
-    }
-  : {
-      url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      attribution:
-        '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    };
+function tileConfig(theme: 'dark' | 'light') {
+  if (MAPTILER_KEY) {
+    const estilo = theme === 'light' ? 'dataviz-light' : 'dataviz-dark';
+    return { url: `https://api.maptiler.com/maps/${estilo}/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, attribution: ATTRIB_MAPTILER };
+  }
+  const base = theme === 'light' ? 'light_all' : 'dark_all';
+  return { url: `https://basemaps.cartocdn.com/${base}/{z}/{x}/{y}{r}.png`, attribution: ATTRIB_CARTO };
+}
 
 interface Props {
   geojson: GeoJsonObject | null;
@@ -82,6 +84,8 @@ export default function MapaBase({
   regiaoSelecionadaNome,
   subSelecionadaAtiva,
 }: Props) {
+  const { theme } = useTheme();
+  const tile = tileConfig(theme);
   return (
     <MapContainer
       center={SP_CENTER}
@@ -91,9 +95,9 @@ export default function MapaBase({
       zoomControl
     >
       <TileLayer
-        key={TILE_CONFIG.url}
-        attribution={TILE_CONFIG.attribution}
-        url={TILE_CONFIG.url}
+        key={tile.url}
+        attribution={tile.attribution}
+        url={tile.url}
       />
       <MapController
         subprefeituras={subprefeituras}

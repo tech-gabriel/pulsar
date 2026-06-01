@@ -15,8 +15,8 @@ function fmt(valor: number | null | undefined, casas: number, sufixo = ''): stri
 
 function linha(emoji: string, label: string, valor: string): string {
   return `<div style="display:flex;justify-content:space-between;font-size:12px;gap:12px;">
-    <span style="color:#B8E6FE;">${emoji} ${label}</span>
-    <span style="color:#F0F9FF;font-family:'JetBrains Mono',monospace;">${valor}</span>
+    <span style="color:var(--text-secondary);">${emoji} ${label}</span>
+    <span style="color:var(--text-primary);font-family:'JetBrains Mono',monospace;">${valor}</span>
   </div>`;
 }
 
@@ -26,12 +26,12 @@ export function tooltipSubprefeituraHtml(
 ): string {
   const nome = sub?.nome ?? nomeFallback ?? 'Subprefeitura';
 
-  const cabecalho = `<div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:14px;color:#F0F9FF;margin-bottom:4px;">${nome}</div>`;
+  const cabecalho = `<div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:14px;color:var(--text-primary);margin-bottom:4px;">${nome}</div>`;
 
   if (!sub) {
     return `<div style="font-family:'DM Sans',sans-serif;">
       ${cabecalho}
-      <div style="font-size:12px;color:#B8E6FE;">Sem dados no momento</div>
+      <div style="font-size:12px;color:var(--text-secondary);">Sem dados no momento</div>
     </div>`;
   }
 
@@ -41,10 +41,10 @@ export function tooltipSubprefeituraHtml(
 
   return `<div style="font-family:'DM Sans',sans-serif;">
     ${cabecalho}
-    <div style="font-size:11px;color:#B8E6FE;margin-bottom:8px;">Região ${sub.regiaoNome}</div>
-    <div style="height:1px;background:linear-gradient(to right, transparent, rgba(0,188,255,0.2), transparent);margin-bottom:8px;"></div>
+    <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Região ${sub.regiaoNome}</div>
+    <div style="height:1px;background:linear-gradient(to right, transparent, var(--border-glass-hover), transparent);margin-bottom:8px;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-      <span style="color:#B8E6FE;font-size:12px;">Score</span>
+      <span style="color:var(--text-secondary);font-size:12px;">Score</span>
       <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:${cor};">${score}</span>
     </div>
     <div style="display:flex;flex-direction:column;gap:3px;">

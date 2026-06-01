@@ -61,6 +61,49 @@
   --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
+/* ── Tema Light (ETAPA B.2) — sobrescreve as variáveis em html.light ───────────*/
+html.light {
+  --bg-primary: #F8FAFC;
+  --bg-secondary: rgba(0, 132, 209, 0.06);
+  --bg-elevated: rgba(0, 132, 209, 0.04);
+  --bg-glass: rgba(255, 255, 255, 0.75);
+  --bg-glass-hover: rgba(0, 132, 209, 0.08);
+  --bg-input: rgba(0, 89, 138, 0.06);
+  --border-glass: rgba(0, 105, 168, 0.15);
+  --border-glass-hover: rgba(0, 105, 168, 0.3);
+  --border-subtle: rgba(0, 105, 168, 0.08);
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: rgba(71, 85, 105, 0.6);
+  --text-accent: #0084D1;
+  --glow-cyan: 0 0 12px rgba(0, 132, 209, 0.15);
+  --glass-blur: blur(12px) saturate(120%);
+  --glass-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/*
+ * Escopo "sempre dark": telas legadas construídas só para o dark (login,
+ * cadastro e o detalhe de histórico) re-declaram as variáveis dark localmente,
+ * permanecendo legíveis mesmo com o tema light ativo.
+ */
+.theme-dark-scope {
+  --bg-primary: #052F4A;
+  --bg-secondary: rgba(0, 89, 138, 0.15);
+  --bg-elevated: rgba(0, 105, 168, 0.10);
+  --bg-glass: rgba(5, 47, 74, 0.6);
+  --bg-glass-hover: rgba(0, 89, 138, 0.18);
+  --bg-input: rgba(0, 89, 138, 0.2);
+  --border-glass: rgba(0, 188, 255, 0.12);
+  --border-glass-hover: rgba(0, 188, 255, 0.25);
+  --border-subtle: rgba(0, 188, 255, 0.06);
+  --text-primary: #F0F9FF;
+  --text-secondary: #B8E6FE;
+  --text-muted: rgba(184, 230, 254, 0.5);
+  --text-accent: #00BCFF;
+  --glass-blur: blur(16px) saturate(180%);
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -75,6 +118,8 @@ html, body, #root {
 html, body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  /* Transição suave ao trocar de tema (ETAPA B.2.4) */
+  transition: background-color 300ms ease, color 300ms ease;
 }
 
 body {
@@ -529,4 +574,130 @@ button, a, [role="button"], [role="radio"] {
 }
 .regiao-card:active {
   transform: scale(0.98);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ETAPA B — Header de navegação + ajustes do tema Light
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Header / barra de navegação glass (variáveis de tema) */
+.app-header {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border-glass);
+}
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: all 200ms;
+  cursor: pointer;
+}
+.nav-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+.nav-tab.ativa {
+  color: var(--text-accent);
+  font-weight: 600;
+  border-bottom-color: var(--text-accent);
+}
+
+/* Tab bar inferior (mobile) */
+.tabbar-mobile {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid var(--border-glass);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--text-muted);
+  font-size: 10px;
+  transition: color 200ms;
+}
+.tabbar-item.ativa {
+  color: var(--text-accent);
+}
+
+/* Badge pulsante do sino de notificações */
+@keyframes bell-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.25); opacity: 0.6; }
+}
+.bell-badge {
+  animation: bell-pulse 1.6s ease-in-out infinite;
+}
+
+/* Toggle de tema: rotaciona + fade ao trocar */
+@keyframes theme-spin {
+  from { transform: rotate(-180deg); opacity: 0; }
+  to   { transform: rotate(0); opacity: 1; }
+}
+.theme-icon-anim {
+  animation: theme-spin 300ms ease-out;
+}
+
+/* ── Ajustes específicos do tema Light (ETAPA B.2.3) ───────────────────────────*/
+html.light body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Nome da subprefeitura no mapa light: texto escuro com halo branco */
+html.light .pulsar-sub-nome {
+  color: #0F172A;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+/* Tooltip do mapa no tema light */
+html.light .pulsar-tooltip {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 105, 168, 0.15);
+  color: #0F172A;
+}
+
+/* Scrollbar no tema light */
+html.light *::-webkit-scrollbar-thumb {
+  background: rgba(0, 105, 168, 0.2);
+}
+html.light *::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 105, 168, 0.35);
+}
+
+/* Switch de tema na página de configurações */
+.theme-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  transition: background 200ms;
+  flex-shrink: 0;
+}
+.theme-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-accent);
+  transition: transform 200ms ease;
+}
+.theme-switch.on .theme-switch-knob {
+  transform: translateX(22px);
 }

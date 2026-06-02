@@ -120,3 +120,14 @@ export interface FavoritoDto {
 export interface AdicionarFavoritoRequestDto {
   regiaoId: string;
 }
+
+// ── Notícias ──────────────────────────────────────────────────────────────────
+
+/** Retornado por GET /api/noticias (feed do CGE-SP) */
+export interface NoticiaDto {
+  titulo: string;
+  resumo: string;
+  link: string;
+  publicadoEm: string;
+  fonte: string;
+}

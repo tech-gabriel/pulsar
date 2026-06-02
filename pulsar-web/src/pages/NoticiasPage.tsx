@@ -2,22 +2,12 @@ import { Newspaper, ExternalLink, Clock, RefreshCw } from 'lucide-react';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
 import ErrorBanner from '../components/ui/ErrorBanner';
+import FonteBadge from '../components/ui/FonteBadge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useNoticias } from '../hooks/useNoticias';
+import { tempoRelativo, dataCompleta } from '../utils/data';
 
-const formatadorData = new Intl.DateTimeFormat('pt-BR', {
-  day: '2-digit',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
-
-function formatarData(iso: string): string {
-  const data = new Date(iso);
-  return Number.isNaN(data.getTime()) ? '' : formatadorData.format(data);
-}
-
-/** Feed de notícias climáticas do CGE-SP (Centro de Gerenciamento de Emergências). */
+/** Feed de notícias climáticas de São Paulo (atualmente CGE-SP; extensível a outras fontes). */
 export default function NoticiasPage() {
   const { noticias, carregando, erro, recarregar, ultimaAtualizacao } = useNoticias();
 
@@ -46,9 +36,11 @@ export default function NoticiasPage() {
           </button>
         </div>
         <p className="mb-5" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-          Fonte: CGE-SP — Centro de Gerenciamento de Emergências da Prefeitura de São Paulo
+          Alertas e boletins climáticos de São Paulo
           {ultimaAtualizacao && (
-            <span style={{ color: 'var(--text-muted)' }}> · atualizado {formatarData(ultimaAtualizacao.toISOString())}</span>
+            <span style={{ color: 'var(--text-muted)' }} title={dataCompleta(ultimaAtualizacao.toISOString())}>
+              {' '}· atualizado {tempoRelativo(ultimaAtualizacao.toISOString())}
+            </span>
           )}
         </p>
 
@@ -110,11 +102,13 @@ export default function NoticiasPage() {
                   </p>
                 )}
 
-                <div className="mt-3 flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  <Clock size={13} />
-                  <span>{formatarData(noticia.publicadoEm)}</span>
+                <div className="mt-3 flex items-center gap-2 flex-wrap" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  <FonteBadge fonte={noticia.fonte} fonteUrl={noticia.fonteUrl} size={15} />
                   <span>·</span>
-                  <span>{noticia.fonte}</span>
+                  <span className="inline-flex items-center gap-1" title={dataCompleta(noticia.publicadoEm)}>
+                    <Clock size={13} />
+                    {tempoRelativo(noticia.publicadoEm)}
+                  </span>
                 </div>
               </GlassCard>
             </a>

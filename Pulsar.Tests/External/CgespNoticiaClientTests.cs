@@ -45,6 +45,7 @@ public class CgespNoticiaClientTests
 
         noticia.Titulo.Should().Be("Sol entre nuvens e sensação de frio na manhã paulistana");
         noticia.Fonte.Should().Be("CGE-SP");
+        noticia.FonteUrl.Should().Be("https://www.cgesp.org/");
     }
 
     [Fact]

@@ -130,4 +130,5 @@ export interface NoticiaDto {
   link: string;
   publicadoEm: string;
   fonte: string;
+  fonteUrl: string;
 }

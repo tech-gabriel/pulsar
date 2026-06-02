@@ -80,6 +80,17 @@ builder.Services.AddHttpClient("openweathermap", (sp, client) =>
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
+builder.Services.AddHttpClient("cgesp", client =>
+{
+    client.BaseAddress = new Uri("https://www.cgesp.org/v3/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+    // Alguns servidores rejeitam requisições sem User-Agent.
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
+});
+
+// --- Cache ---
+builder.Services.AddMemoryCache();
+
 // --- Repositories ---
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IRegiaoRepository, RegiaoRepository>();
@@ -91,6 +102,8 @@ builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();
 
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
+builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
+builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IClimateService, ClimateService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();

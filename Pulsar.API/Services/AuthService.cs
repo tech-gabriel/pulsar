@@ -31,10 +31,49 @@ public class AuthService : IAuthService
         {
             Nome = request.Nome,
             Email = request.Email,
+            Perfil = request.Perfil,
             SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.Senha)
         };
 
         await _usuarioRepository.AdicionarAsync(usuario);
+        await _usuarioRepository.SalvarAsync();
+
+        return new LoginResponseDto
+        {
+            Token = GerarToken(usuario),
+            Usuario = MapearUsuarioDto(usuario)
+        };
+    }
+
+    public async Task<LoginResponseDto> AtualizarPerfilAsync(Guid usuarioId, AtualizarPerfilRequestDto request)
+    {
+        var usuario = await _usuarioRepository.ObterPorIdAsync(usuarioId)
+            ?? throw new KeyNotFoundException("Usuário não encontrado.");
+
+        // E-mail novo não pode pertencer a outro usuário.
+        if (!string.Equals(usuario.Email, request.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var existente = await _usuarioRepository.ObterPorEmailAsync(request.Email);
+            if (existente is not null && existente.Id != usuario.Id)
+                throw new InvalidOperationException("E-mail já em uso por outra conta.");
+        }
+
+        // Troca de senha (opcional): exige a senha atual correta.
+        if (!string.IsNullOrEmpty(request.NovaSenha))
+        {
+            if (string.IsNullOrEmpty(request.SenhaAtual)
+                || !BCrypt.Net.BCrypt.Verify(request.SenhaAtual, usuario.SenhaHash))
+                throw new UnauthorizedAccessException("Senha atual incorreta.");
+
+            ValidarSenha(request.NovaSenha);
+            usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
+        }
+
+        usuario.Nome = request.Nome;
+        usuario.Email = request.Email;
+        usuario.Perfil = request.Perfil;
+
+        await _usuarioRepository.AtualizarAsync(usuario);
         await _usuarioRepository.SalvarAsync();
 
         return new LoginResponseDto
@@ -72,6 +111,7 @@ public class AuthService : IAuthService
             new Claim(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, usuario.Email),
             new Claim(JwtRegisteredClaimNames.Name, usuario.Nome),
+            new Claim("perfil", usuario.Perfil.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
@@ -102,6 +142,7 @@ public class AuthService : IAuthService
     {
         Id = usuario.Id,
         Nome = usuario.Nome,
-        Email = usuario.Email
+        Email = usuario.Email,
+        Perfil = usuario.Perfil
     };
 }

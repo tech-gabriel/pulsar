@@ -1,3 +1,5 @@
+using Pulsar.API.Domain.Enums;
+
 namespace Pulsar.API.Domain.Entities;
 
 public class Usuario
@@ -6,6 +8,7 @@ public class Usuario
     public string Nome { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string SenhaHash { get; set; } = string.Empty;
+    public TipoPerfil Perfil { get; set; } = TipoPerfil.CIDADAO;
     public IList<UsuarioRegiao> Favoritos { get; set; } = new List<UsuarioRegiao>();
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }

@@ -1,3 +1,5 @@
+using Pulsar.API.Domain.Enums;
+
 namespace Pulsar.API.DTOs;
 
 public class UsuarioDto
@@ -5,4 +7,5 @@ public class UsuarioDto
     public Guid Id { get; set; }
     public string Nome { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public TipoPerfil Perfil { get; set; }
 }

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using Pulsar.API.Domain.Enums;
 
 namespace Pulsar.API.DTOs;
 
@@ -31,4 +32,9 @@ public class CadastroRequestDto
     [Description("Senha com mínimo 8 chars, 2 números e 1 especial")]
     [DefaultValue("Senha@123")]
     public string Senha { get; set; } = string.Empty;
+
+    /// <summary>Persona do usuário (opcional; padrão CIDADAO).</summary>
+    [Description("Persona do usuário para personalização")]
+    [DefaultValue(TipoPerfil.CIDADAO)]
+    public TipoPerfil Perfil { get; set; } = TipoPerfil.CIDADAO;
 }

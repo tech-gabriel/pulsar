@@ -14,6 +14,8 @@ public partial class CgespNoticiaClient : INoticiaClient
 {
     private const string FeedPath = "feed_rss.jsp";
     private const string BaseSite = "https://www.cgesp.org/v3/";
+    private const string FonteNome = "CGE-SP";
+    private const string FonteUrl = "https://www.cgesp.org/";
     private const int ResumoMaxLength = 240;
 
     private readonly IHttpClientFactory _httpClientFactory;
@@ -53,7 +55,8 @@ public partial class CgespNoticiaClient : INoticiaClient
                 Resumo = LimparResumo(item.Element("description")?.Value),
                 Link = ResolverLink(item.Element("link")?.Value),
                 PublicadoEm = ParsePubDate(item.Element("pubDate")?.Value),
-                Fonte = "CGE-SP"
+                Fonte = FonteNome,
+                FonteUrl = FonteUrl
             })
             .Where(n => !string.IsNullOrWhiteSpace(n.Titulo))
             .OrderByDescending(n => n.PublicadoEm)

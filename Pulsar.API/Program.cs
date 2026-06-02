@@ -11,6 +11,7 @@ using Pulsar.API.Repositories.Interfaces;
 using Scalar.AspNetCore;
 using Pulsar.API.Scheduler;
 using Pulsar.API.Services;
+using Pulsar.API.Services.Email;
 using Pulsar.API.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,6 +91,14 @@ builder.Services.AddHttpClient("cgesp", client =>
 
 // --- Cache ---
 builder.Services.AddMemoryCache();
+
+// --- E-mail ---
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+var emailProvider = builder.Configuration[$"{EmailOptions.SectionName}:Provider"] ?? "Log";
+if (string.Equals(emailProvider, "Smtp", StringComparison.OrdinalIgnoreCase))
+    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+else
+    builder.Services.AddScoped<IEmailSender, LogEmailSender>();
 
 // --- Repositories ---
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();

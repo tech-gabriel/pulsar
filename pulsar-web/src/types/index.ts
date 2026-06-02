@@ -1,11 +1,14 @@
 export type FaixaRisco = 'BAIXO' | 'MODERADO' | 'ALTO';
 
+export type TipoPerfil = 'CIDADAO' | 'MOTORISTA' | 'CICLISTA' | 'DEFESA_CIVIL';
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface UsuarioDto {
   id: string;
   nome: string;
   email: string;
+  perfil: TipoPerfil;
 }
 
 export interface LoginRequestDto {
@@ -17,6 +20,15 @@ export interface CadastroRequestDto {
   nome: string;
   email: string;
   senha: string;
+  perfil?: TipoPerfil;
+}
+
+export interface AtualizarPerfilRequestDto {
+  nome: string;
+  email: string;
+  perfil: TipoPerfil;
+  senhaAtual?: string;
+  novaSenha?: string;
 }
 
 export interface LoginResponseDto {

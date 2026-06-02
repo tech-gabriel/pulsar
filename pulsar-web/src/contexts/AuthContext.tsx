@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import api from '../api/client';
 import type {
+  AtualizarPerfilRequestDto,
   CadastroRequestDto,
   LoginRequestDto,
   LoginResponseDto,
@@ -12,6 +13,7 @@ interface AuthContextValue {
   token: string | null;
   login: (dto: LoginRequestDto) => Promise<void>;
   cadastrar: (dto: CadastroRequestDto) => Promise<void>;
+  atualizarPerfil: (dto: AtualizarPerfilRequestDto) => Promise<void>;
   logout: () => void;
   estaAutenticado: boolean;
 }
@@ -51,6 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     salvarSessao(data);
   }, [salvarSessao]);
 
+  const atualizarPerfil = useCallback(async (dto: AtualizarPerfilRequestDto) => {
+    if (!usuario) throw new Error('Nenhum usuário autenticado.');
+    const { data } = await api.put<LoginResponseDto>(`/usuarios/${usuario.id}`, dto);
+    salvarSessao(data);
+  }, [usuario, salvarSessao]);
+
   const logout = useCallback(() => {
     api.post('/auth/logout').catch(() => {});
     localStorage.removeItem('pulsar_token');
@@ -66,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         login,
         cadastrar,
+        atualizarPerfil,
         logout,
         estaAutenticado: !!token,
       }}

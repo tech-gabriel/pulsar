@@ -685,7 +685,7 @@ html.light *::-webkit-scrollbar-thumb:hover {
   border-radius: 999px;
   background: var(--bg-input);
   border: 1px solid var(--border-glass);
-  transition: background 200ms;
+  transition: background 200ms ease, border-color 200ms ease;
   flex-shrink: 0;
 }
 .theme-switch-knob {
@@ -695,11 +695,18 @@ html.light *::-webkit-scrollbar-thumb:hover {
   width: 20px;
   height: 20px;
   border-radius: 50%;
+  background: var(--text-muted);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 200ms ease, background 200ms ease;
+}
+/* Estado LIGADO: trilha preenchida na cor de destaque + knob branco */
+.theme-switch.on {
   background: var(--text-accent);
-  transition: transform 200ms ease;
+  border-color: var(--text-accent);
 }
 .theme-switch.on .theme-switch-knob {
   transform: translateX(22px);
+  background: #fff;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════

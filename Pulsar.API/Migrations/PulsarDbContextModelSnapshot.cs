@@ -1158,6 +1158,9 @@ namespace Pulsar.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Perfil")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("SenhaHash")
                         .IsRequired()
                         .HasColumnType("TEXT");

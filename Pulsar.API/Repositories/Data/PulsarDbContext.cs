@@ -17,6 +17,7 @@ public class PulsarDbContext : DbContext
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioRegiao> UsuarioRegioes => Set<UsuarioRegiao>();
     public DbSet<AlertaSugestao> AlertaSugestoes => Set<AlertaSugestao>();
+    public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -125,6 +126,17 @@ public class PulsarDbContext : DbContext
              .WithMany(s => s.AlertaSugestoes)
              .HasForeignKey(ase => ase.SugestaoId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TokenRecuperacaoSenha>(e =>
+        {
+            e.HasKey(t => t.Id);
+            e.Property(t => t.TokenHash).IsRequired().HasMaxLength(64);
+            e.HasIndex(t => t.TokenHash);
+            e.HasOne(t => t.Usuario)
+             .WithMany()
+             .HasForeignKey(t => t.UsuarioId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         SeedData(modelBuilder);

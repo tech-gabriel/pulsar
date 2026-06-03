@@ -1136,6 +1136,41 @@ namespace Pulsar.API.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.TokenRecuperacaoSenha", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiraEm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UsadoEm")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("TokensRecuperacaoSenha");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1275,6 +1310,17 @@ namespace Pulsar.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Regiao");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.TokenRecuperacaoSenha", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.UsuarioRegiao", b =>

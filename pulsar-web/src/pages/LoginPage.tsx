@@ -2,14 +2,12 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, XCircle, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
 import AuthLayout from '../components/auth/AuthLayout';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { showToast } = useToast();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -77,15 +75,14 @@ export default function LoginPage() {
             <label className="block text-pulsar-200" style={{ fontSize: 13, fontWeight: 500 }}>
               Senha
             </label>
-            <button
-              type="button"
-              onClick={() => showToast('Recuperação de senha chega em breve!', 'info')}
+            <Link
+              to="/esqueci-senha"
               className="text-pulsar-400 hover:underline"
               style={{ fontSize: 12.5 }}
               tabIndex={-1}
             >
               Esqueci minha senha
-            </button>
+            </Link>
           </div>
           <div className="relative">
             <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-pulsar-300 pointer-events-none" />

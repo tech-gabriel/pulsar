@@ -78,7 +78,7 @@ public class FavoritosController : ControllerBase
             RegiaoId = request.RegiaoId
         };
 
-        usuario.Favoritos.Add(favorito);
+        await _usuarioRepository.AdicionarFavoritoAsync(favorito);
         await _usuarioRepository.SalvarAsync();
 
         var dto = new FavoritoDto { RegiaoId = regiao.Id, RegiaoNome = regiao.Nome };

@@ -1,9 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { ToastProvider } from './contexts/ToastContext';
-import { ThemeProvider } from './hooks/useTheme';
+import { AuthProvider } from './contexts/AuthProvider';
+import { ToastProvider } from './contexts/ToastProvider';
+import { ThemeProvider } from './hooks/ThemeProvider';
 import ToastContainer from './components/ui/ToastContainer';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import './index.css';

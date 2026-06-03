@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
+import EsqueciSenhaPage from './pages/EsqueciSenhaPage';
+import RedefinirSenhaPage from './pages/RedefinirSenhaPage';
 import MapaPage from './pages/MapaPage';
 import HistoricoPage from './pages/HistoricoPage';
 import HistoricoListPage from './pages/HistoricoListPage';
@@ -31,6 +33,8 @@ export default function App() {
 
       <Route path="/login" element={<RotaPublica><LoginPage /></RotaPublica>} />
       <Route path="/cadastro" element={<RotaPublica><CadastroPage /></RotaPublica>} />
+      <Route path="/esqueci-senha" element={<RotaPublica><EsqueciSenhaPage /></RotaPublica>} />
+      <Route path="/redefinir-senha" element={<RotaPublica><RedefinirSenhaPage /></RotaPublica>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -5,7 +5,7 @@ namespace Pulsar.API.Services.Email;
 /// <summary>
 /// Remetente de desenvolvimento: em vez de enviar de verdade, registra o e-mail
 /// no log. Permite desenvolver/testar fluxos (ex.: recuperação de senha) sem
-/// configurar SMTP. Selecionado quando Email:Provider != "Smtp".
+/// configurar o Resend. Selecionado quando Email:Provider != "Resend".
 /// </summary>
 public class LogEmailSender : IEmailSender
 {

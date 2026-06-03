@@ -13,6 +13,7 @@ using Pulsar.API.Scheduler;
 using Pulsar.API.Services;
 using Pulsar.API.Services.Email;
 using Pulsar.API.Services.Interfaces;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,8 +96,12 @@ builder.Services.AddMemoryCache();
 // --- E-mail ---
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
 var emailProvider = builder.Configuration[$"{EmailOptions.SectionName}:Provider"] ?? "Log";
-if (string.Equals(emailProvider, "Smtp", StringComparison.OrdinalIgnoreCase))
-    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+if (string.Equals(emailProvider, "Resend", StringComparison.OrdinalIgnoreCase))
+{
+    var apiKey = builder.Configuration[$"{EmailOptions.SectionName}:ApiKey"] ?? string.Empty;
+    builder.Services.AddResend(o => o.ApiToken = apiKey);
+    builder.Services.AddScoped<IEmailSender, ResendEmailSender>();
+}
 else
     builder.Services.AddScoped<IEmailSender, LogEmailSender>();
 

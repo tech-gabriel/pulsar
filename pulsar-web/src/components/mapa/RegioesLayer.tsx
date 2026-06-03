@@ -31,15 +31,18 @@ export default function RegioesLayer({
   const map = useMap();
   const layerRef = useRef<L.GeoJSON | null>(null);
 
-  // Refs para os handlers (hover/click) sempre lerem dados atuais.
+  // Refs para os handlers (hover/click) sempre lerem dados atuais. A
+  // sincronização ocorre após o commit (em effect), não durante o render.
   const subsRef = useRef(subprefeituras);
   const selRef = useRef(subSelecionada);
   const camadaRef = useRef(camadaAtiva);
   const regiaoRef = useRef(regiaoSelecionadaNome);
-  subsRef.current = subprefeituras;
-  selRef.current = subSelecionada;
-  camadaRef.current = camadaAtiva;
-  regiaoRef.current = regiaoSelecionadaNome;
+  useEffect(() => {
+    subsRef.current = subprefeituras;
+    selRef.current = subSelecionada;
+    camadaRef.current = camadaAtiva;
+    regiaoRef.current = regiaoSelecionadaNome;
+  });
 
   // True quando a subprefeitura pertence à região atualmente selecionada (4.7).
   function naRegiaoAtiva(sub: SubprefeituraMapaDto | undefined): boolean {

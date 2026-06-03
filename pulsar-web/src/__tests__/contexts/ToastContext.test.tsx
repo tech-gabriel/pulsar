@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ToastProvider, useToast } from '../../contexts/ToastContext';
+import { ToastProvider } from '../../contexts/ToastProvider';
+import { useToast } from '../../contexts/ToastContext';
 import ToastContainer from '../../components/ui/ToastContainer';
 
 function BotoesToast() {

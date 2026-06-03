@@ -105,6 +105,9 @@ if (string.Equals(emailProvider, "Resend", StringComparison.OrdinalIgnoreCase))
 else
     builder.Services.AddScoped<IEmailSender, LogEmailSender>();
 
+builder.Services.Configure<RecuperacaoSenhaOptions>(
+    builder.Configuration.GetSection(RecuperacaoSenhaOptions.SectionName));
+
 // --- Repositories ---
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IRegiaoRepository, RegiaoRepository>();
@@ -113,12 +116,14 @@ builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
 builder.Services.AddScoped<ISugestaoRepository, SugestaoRepository>();
 builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();
+builder.Services.AddScoped<ITokenRecuperacaoSenhaRepository, TokenRecuperacaoSenhaRepository>();
 
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
 builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IClimateService, ClimateService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<ISugestaoService, SugestaoService>();

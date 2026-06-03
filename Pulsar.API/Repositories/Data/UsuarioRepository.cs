@@ -28,6 +28,9 @@ public class UsuarioRepository : IUsuarioRepository
                 .ThenInclude(f => f.Regiao)
             .FirstOrDefaultAsync(u => u.Id == id);
 
+    public async Task AdicionarFavoritoAsync(UsuarioRegiao favorito)
+        => await _context.UsuarioRegioes.AddAsync(favorito);
+
     public async Task AdicionarAsync(Usuario entidade)
         => await _context.Usuarios.AddAsync(entidade);
 

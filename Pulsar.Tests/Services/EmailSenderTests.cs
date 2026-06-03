@@ -1,6 +1,5 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using MimeKit;
 using Pulsar.API.Services.Email;
 
 namespace Pulsar.Tests.Services;
@@ -9,49 +8,51 @@ public class EmailSenderTests
 {
     private static EmailOptions OpcoesPadrao() => new()
     {
-        Host = "smtp.gmail.com",
-        Port = 587,
+        ApiKey = "re_teste",
         FromName = "Pulsar",
         FromEmail = "pulsar@exemplo.com"
     };
 
-    // ── SmtpEmailSender.MontarMensagem ──────────────────────────────
+    // ── ResendEmailSender.MontarMensagem ────────────────────────────
 
     [Fact]
-    public void MontarMensagem_DefineRemetenteDestinatarioEAssunto()
+    public void Resend_MontarMensagem_DefineRemetenteComNomeEDestinatario()
     {
-        var msg = SmtpEmailSender.MontarMensagem(OpcoesPadrao(), "user@teste.com", "Recuperação de senha", "<p>Olá</p>");
+        var msg = ResendEmailSender.MontarMensagem(OpcoesPadrao(), "user@teste.com", "Recuperação de senha", "<p>Olá</p>");
 
-        msg.From.Mailboxes.Should().ContainSingle()
-            .Which.Should().BeEquivalentTo(new { Name = "Pulsar", Address = "pulsar@exemplo.com" });
-        msg.To.Mailboxes.Should().ContainSingle().Which.Address.Should().Be("user@teste.com");
+        msg.From.DisplayName.Should().Be("Pulsar");
+        msg.From.Email.Should().Be("pulsar@exemplo.com");
+        msg.To.Should().ContainSingle().Which.Email.Should().Be("user@teste.com");
         msg.Subject.Should().Be("Recuperação de senha");
     }
 
     [Fact]
-    public void MontarMensagem_IncluiCorpoHtml()
+    public void Resend_MontarMensagem_IncluiHtmlEFallbackTexto()
     {
-        var msg = SmtpEmailSender.MontarMensagem(OpcoesPadrao(), "user@teste.com", "Assunto", "<p>Conteúdo <b>rico</b></p>");
+        var msg = ResendEmailSender.MontarMensagem(OpcoesPadrao(), "user@teste.com", "Assunto", "<p>Clique <a href='x'>aqui</a>.</p>");
 
-        msg.HtmlBody.Should().Contain("<b>rico</b>");
-    }
-
-    [Fact]
-    public void MontarMensagem_GeraFallbackTextoSemTags()
-    {
-        var msg = SmtpEmailSender.MontarMensagem(OpcoesPadrao(), "user@teste.com", "Assunto", "<p>Clique <a href='x'>aqui</a>.</p>");
-
+        msg.HtmlBody.Should().Contain("<a href='x'>aqui</a>");
         msg.TextBody.Should().NotContain("<");
         msg.TextBody.Should().Contain("Clique");
         msg.TextBody.Should().Contain("aqui");
     }
 
-    [Fact]
-    public void MontarMensagem_MensagemEhMultipartAlternative()
-    {
-        var msg = SmtpEmailSender.MontarMensagem(OpcoesPadrao(), "user@teste.com", "Assunto", "<p>Oi</p>");
+    // ── EmailHtml.ParaTexto ─────────────────────────────────────────
 
-        msg.Body.Should().BeOfType<MultipartAlternative>();
+    [Theory]
+    [InlineData("", "")]
+    [InlineData("   ", "")]
+    public void ParaTexto_EntradaVazia_RetornaVazio(string html, string esperado)
+    {
+        EmailHtml.ParaTexto(html).Should().Be(esperado);
+    }
+
+    [Fact]
+    public void ParaTexto_RemoveTagsDecodificaEntidadesENormalizaEspacos()
+    {
+        var texto = EmailHtml.ParaTexto("<p>Ol&aacute;,&nbsp;&nbsp;<b>mundo</b>!</p>");
+
+        texto.Should().Be("Olá, mundo !");
     }
 
     // ── LogEmailSender ──────────────────────────────────────────────

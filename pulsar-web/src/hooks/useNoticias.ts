@@ -33,7 +33,9 @@ export function useNoticias(): UseNoticiasResult {
   }, []);
 
   useEffect(() => {
-    buscar();
+    void (async () => {
+      await buscar();
+    })();
     const id = setInterval(buscar, POLL_INTERVAL_MS);
     return () => clearInterval(id);
   }, [buscar]);

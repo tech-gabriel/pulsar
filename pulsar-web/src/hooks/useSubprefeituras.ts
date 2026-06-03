@@ -13,21 +13,20 @@ export function useSubprefeituras(regioes: RegiaoDto[]): SubprefeituraMapaDto[] 
   const [subprefeituras, setSubprefeituras] = useState<SubprefeituraMapaDto[]>([]);
 
   useEffect(() => {
-    if (regioes.length === 0) {
-      setSubprefeituras([]);
-      return;
-    }
-
     let cancelado = false;
-
-    Promise.all(
-      regioes.map((regiao) =>
-        api
-          .get<RegiaoDetalheDto>(`/regioes/${regiao.id}`)
-          .then(({ data }) => ({ regiao, detalhe: data }))
-      )
-    )
-      .then((resultados) => {
+    void (async () => {
+      if (regioes.length === 0) {
+        setSubprefeituras([]);
+        return;
+      }
+      try {
+        const resultados = await Promise.all(
+          regioes.map((regiao) =>
+            api
+              .get<RegiaoDetalheDto>(`/regioes/${regiao.id}`)
+              .then(({ data }) => ({ regiao, detalhe: data }))
+          )
+        );
         if (cancelado) return;
         const flat: SubprefeituraMapaDto[] = [];
         for (const { regiao, detalhe } of resultados) {
@@ -36,10 +35,10 @@ export function useSubprefeituras(regioes: RegiaoDto[]): SubprefeituraMapaDto[] 
           }
         }
         setSubprefeituras(flat);
-      })
-      .catch(() => {
+      } catch {
         if (!cancelado) setSubprefeituras([]);
-      });
+      }
+    })();
 
     return () => {
       cancelado = true;

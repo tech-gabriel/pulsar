@@ -11,7 +11,9 @@ using Pulsar.API.Repositories.Interfaces;
 using Scalar.AspNetCore;
 using Pulsar.API.Scheduler;
 using Pulsar.API.Services;
+using Pulsar.API.Services.Email;
 using Pulsar.API.Services.Interfaces;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +93,21 @@ builder.Services.AddHttpClient("cgesp", client =>
 // --- Cache ---
 builder.Services.AddMemoryCache();
 
+// --- E-mail ---
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+var emailProvider = builder.Configuration[$"{EmailOptions.SectionName}:Provider"] ?? "Log";
+if (string.Equals(emailProvider, "Resend", StringComparison.OrdinalIgnoreCase))
+{
+    var apiKey = builder.Configuration[$"{EmailOptions.SectionName}:ApiKey"] ?? string.Empty;
+    builder.Services.AddResend(o => o.ApiToken = apiKey);
+    builder.Services.AddScoped<IEmailSender, ResendEmailSender>();
+}
+else
+    builder.Services.AddScoped<IEmailSender, LogEmailSender>();
+
+builder.Services.Configure<RecuperacaoSenhaOptions>(
+    builder.Configuration.GetSection(RecuperacaoSenhaOptions.SectionName));
+
 // --- Repositories ---
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IRegiaoRepository, RegiaoRepository>();
@@ -99,12 +116,14 @@ builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
 builder.Services.AddScoped<ISugestaoRepository, SugestaoRepository>();
 builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();
+builder.Services.AddScoped<ITokenRecuperacaoSenhaRepository, TokenRecuperacaoSenhaRepository>();
 
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
 builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IClimateService, ClimateService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<ISugestaoService, SugestaoService>();

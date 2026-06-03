@@ -25,7 +25,7 @@ public class AuthService : IAuthService
         if (await _usuarioRepository.EmailExisteAsync(request.Email))
             throw new InvalidOperationException("E-mail já em uso. Tente fazer login.");
 
-        ValidarSenha(request.Senha);
+        PoliticaSenha.Validar(request.Senha);
 
         var usuario = new Usuario
         {
@@ -65,7 +65,7 @@ public class AuthService : IAuthService
                 || !BCrypt.Net.BCrypt.Verify(request.SenhaAtual, usuario.SenhaHash))
                 throw new UnauthorizedAccessException("Senha atual incorreta.");
 
-            ValidarSenha(request.NovaSenha);
+            PoliticaSenha.Validar(request.NovaSenha);
             usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
         }
 
@@ -124,18 +124,6 @@ public class AuthService : IAuthService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    private static void ValidarSenha(string senha)
-    {
-        if (senha.Length < 8)
-            throw new ArgumentException("A senha deve ter no mínimo 8 caracteres.");
-
-        if (senha.Count(char.IsDigit) < 2)
-            throw new ArgumentException("A senha deve conter ao mínimo 2 números.");
-
-        if (!senha.Any(c => !char.IsLetterOrDigit(c)))
-            throw new ArgumentException("A senha deve conter ao mínimo 1 caractere especial.");
     }
 
     private static UsuarioDto MapearUsuarioDto(Usuario usuario) => new()

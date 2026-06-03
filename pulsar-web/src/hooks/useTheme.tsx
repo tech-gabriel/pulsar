@@ -1,42 +1,16 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext } from 'react';
 
-// Sistema de temas (ETAPA B.2). Persiste em localStorage, aplica a classe
-// `light` no <html> e atualiza a meta theme-color. Default: dark.
+// Sistema de temas (ETAPA B.2): contexto + hook. O provider vive em
+// ThemeProvider.tsx (separado para o Fast Refresh funcionar neste arquivo).
 
-type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'light';
 
-interface ThemeContextType {
+export interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | null>(null);
-const STORAGE_KEY = 'pulsar-theme';
-
-function lerTemaInicial(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  return localStorage.getItem(STORAGE_KEY) === 'light' ? 'light' : 'dark';
-}
-
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(lerTemaInicial);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle('light', theme === 'light');
-    localStorage.setItem(STORAGE_KEY, theme);
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#052F4A' : '#F8FAFC');
-  }, [theme]);
-
-  const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), []);
-
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
+export const ThemeContext = createContext<ThemeContextType | null>(null);
 
 export function useTheme(): ThemeContextType {
   const ctx = useContext(ThemeContext);

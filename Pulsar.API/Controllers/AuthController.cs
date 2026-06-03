@@ -9,8 +9,13 @@ namespace Pulsar.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IPasswordResetService _passwordResetService;
 
-    public AuthController(IAuthService authService) => _authService = authService;
+    public AuthController(IAuthService authService, IPasswordResetService passwordResetService)
+    {
+        _authService = authService;
+        _passwordResetService = passwordResetService;
+    }
 
     /// <summary>Cadastra um novo usuário.</summary>
     [HttpPost("cadastro")]
@@ -56,4 +61,30 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult Logout()
         => Ok(new { mensagem = "Logout realizado com sucesso." });
+
+    /// <summary>Solicita o e-mail de recuperação de senha. Resposta genérica (não revela se o e-mail existe).</summary>
+    [HttpPost("esqueci-senha")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> EsqueciSenha([FromBody] EsqueciSenhaRequestDto request)
+    {
+        await _passwordResetService.SolicitarResetAsync(request);
+        return Ok(new { mensagem = "Se o e-mail estiver cadastrado, enviaremos instruções de recuperação." });
+    }
+
+    /// <summary>Redefine a senha usando o token recebido por e-mail.</summary>
+    [HttpPost("redefinir-senha")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaRequestDto request)
+    {
+        try
+        {
+            await _passwordResetService.RedefinirSenhaAsync(request);
+            return Ok(new { mensagem = "Senha redefinida com sucesso. Faça login com a nova senha." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+    }
 }

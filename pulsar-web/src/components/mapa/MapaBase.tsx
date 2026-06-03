@@ -56,7 +56,9 @@ function MapController({
 }) {
   const map = useMap();
   const subSelRef = useRef(subSelecionadaAtiva);
-  subSelRef.current = subSelecionadaAtiva;
+  useEffect(() => {
+    subSelRef.current = subSelecionadaAtiva;
+  });
 
   useEffect(() => {
     if (!regiaoSelecionadaNome) {

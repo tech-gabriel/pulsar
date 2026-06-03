@@ -17,22 +17,21 @@ export function useHistorico(subprefeituraId: string | null, horas = 24): UseHis
     if (!subprefeituraId) return;
 
     let cancelado = false;
-    setCarregando(true);
-    setErro(null);
-
-    api
-      .get<HistoricoDto>(`/subprefeituras/${subprefeituraId}/historico`, {
-        params: { horas },
-      })
-      .then(({ data }) => {
+    void (async () => {
+      setCarregando(true);
+      setErro(null);
+      try {
+        const { data } = await api.get<HistoricoDto>(
+          `/subprefeituras/${subprefeituraId}/historico`,
+          { params: { horas } },
+        );
         if (!cancelado) setHistorico(data);
-      })
-      .catch(() => {
+      } catch {
         if (!cancelado) setErro('Não foi possível carregar o histórico.');
-      })
-      .finally(() => {
+      } finally {
         if (!cancelado) setCarregando(false);
-      });
+      }
+    })();
 
     return () => {
       cancelado = true;

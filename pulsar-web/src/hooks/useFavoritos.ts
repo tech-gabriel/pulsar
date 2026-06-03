@@ -17,12 +17,21 @@ export function useFavoritos(usuarioId: string | null): UseFavoritosResult {
 
   useEffect(() => {
     if (!usuarioId) return;
-    setCarregando(true);
-    api
-      .get<FavoritoDto[]>(`/usuarios/${usuarioId}/favoritos`)
-      .then(({ data }) => setFavoritos(data))
-      .catch(() => {})
-      .finally(() => setCarregando(false));
+    let cancelado = false;
+    void (async () => {
+      setCarregando(true);
+      try {
+        const { data } = await api.get<FavoritoDto[]>(`/usuarios/${usuarioId}/favoritos`);
+        if (!cancelado) setFavoritos(data);
+      } catch {
+        /* mantém os favoritos atuais em caso de falha */
+      } finally {
+        if (!cancelado) setCarregando(false);
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
   }, [usuarioId]);
 
   const isFavorito = useCallback(

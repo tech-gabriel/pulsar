@@ -14,27 +14,24 @@ export function useRegiaoDetalhe(regiaoId: string | null): UseRegiaoDetalheResul
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!regiaoId) {
-      setRegiao(null);
-      return;
-    }
-
     let cancelado = false;
-    setCarregando(true);
-    setErro(null);
-    setRegiao(null);
-
-    api
-      .get<RegiaoDetalheDto>(`/regioes/${regiaoId}`)
-      .then(({ data }) => {
+    void (async () => {
+      if (!regiaoId) {
+        setRegiao(null);
+        return;
+      }
+      setCarregando(true);
+      setErro(null);
+      setRegiao(null);
+      try {
+        const { data } = await api.get<RegiaoDetalheDto>(`/regioes/${regiaoId}`);
         if (!cancelado) setRegiao(data);
-      })
-      .catch(() => {
+      } catch {
         if (!cancelado) setErro('Não foi possível carregar os detalhes da região.');
-      })
-      .finally(() => {
+      } finally {
         if (!cancelado) setCarregando(false);
-      });
+      }
+    })();
 
     return () => {
       cancelado = true;

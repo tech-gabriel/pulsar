@@ -1,10 +1,12 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.External.Clients;
 using Pulsar.API.External.Interfaces;
+using Pulsar.API.Health;
 using Pulsar.API.OpenApi;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Repositories.Interfaces;
@@ -93,6 +95,10 @@ builder.Services.AddHttpClient("cgesp", client =>
 // --- Cache ---
 builder.Services.AddMemoryCache();
 
+// --- Health Checks ---
+builder.Services.AddHealthChecks()
+    .AddCheck<ColetaHealthCheck>("coleta", tags: new[] { "db", "coleta" });
+
 // --- E-mail ---
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
 var emailProvider = builder.Configuration[$"{EmailOptions.SectionName}:Provider"] ?? "Log";
@@ -160,6 +166,10 @@ if (!app.Environment.IsEnvironment("Test"))
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = HealthResponseWriter.WriteAsync
+});
 
 app.Run();
 

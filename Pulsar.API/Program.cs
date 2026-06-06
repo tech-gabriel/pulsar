@@ -1,6 +1,8 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.External.Clients;
@@ -30,19 +32,45 @@ builder.Services.AddOpenApi(options =>
 });
 
 // --- CORS ---
+// Origens permitidas vêm de config (Cors:AllowedOrigins). Em desenvolvimento,
+// caímos para os defaults locais quando a chave não está presente.
 var frontendOrigins = "_frontendOrigins";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+if (allowedOrigins is null || allowedOrigins.Length == 0)
+{
+    allowedOrigins = new[]
+    {
+        "http://localhost:5173",  // Vite dev server
+        "http://localhost:3000"   // fallback CRA / outros
+    };
+}
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(frontendOrigins, policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",  // Vite dev server
-                "http://localhost:3000"   // fallback CRA / outros
-            )
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
+});
+
+// --- Rate Limiting ---
+// Protege os endpoints sensíveis de autenticação (login, cadastro, reset de
+// senha) contra brute-force/abuso. Particionado por IP de origem.
+const string authRateLimit = "auth";
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(authRateLimit, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 // --- JWT Authentication ---
@@ -156,7 +184,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors(frontendOrigins);
 if (!app.Environment.IsEnvironment("Test"))
+{
     app.UseHttpsRedirection();
+    app.UseRateLimiter();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

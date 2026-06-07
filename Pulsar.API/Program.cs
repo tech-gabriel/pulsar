@@ -1,10 +1,14 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.External.Clients;
 using Pulsar.API.External.Interfaces;
+using Pulsar.API.Health;
 using Pulsar.API.OpenApi;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Repositories.Interfaces;
@@ -30,19 +34,45 @@ builder.Services.AddOpenApi(options =>
 });
 
 // --- CORS ---
+// Origens permitidas vêm de config (Cors:AllowedOrigins). Em desenvolvimento,
+// caímos para os defaults locais quando a chave não está presente.
 var frontendOrigins = "_frontendOrigins";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+if (allowedOrigins is null || allowedOrigins.Length == 0)
+{
+    allowedOrigins = new[]
+    {
+        "http://localhost:5173",  // Vite dev server
+        "http://localhost:3000"   // fallback CRA / outros
+    };
+}
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(frontendOrigins, policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",  // Vite dev server
-                "http://localhost:3000"   // fallback CRA / outros
-            )
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
+});
+
+// --- Rate Limiting ---
+// Protege os endpoints sensíveis de autenticação (login, cadastro, reset de
+// senha) contra brute-force/abuso. Particionado por IP de origem.
+const string authRateLimit = "auth";
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(authRateLimit, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 // --- JWT Authentication ---
@@ -69,7 +99,7 @@ builder.Services.AddAuthorization();
 
 // --- Database ---
 builder.Services.AddDbContext<PulsarDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // --- HTTP Clients ---
 builder.Services.AddHttpClient("openweathermap", (sp, client) =>
@@ -92,6 +122,10 @@ builder.Services.AddHttpClient("cgesp", client =>
 
 // --- Cache ---
 builder.Services.AddMemoryCache();
+
+// --- Health Checks ---
+builder.Services.AddHealthChecks()
+    .AddCheck<ColetaHealthCheck>("coleta", tags: new[] { "db", "coleta" });
 
 // --- E-mail ---
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
@@ -139,8 +173,12 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PulsarDbContext>();
-    try { db.Database.Migrate(); }
-    catch (InvalidOperationException) { db.Database.EnsureCreated(); }
+    // Testes usam SQLite in-memory (sem migrations Npgsql): cria o schema a
+    // partir do modelo. Produção/dev aplica as migrations Postgres.
+    if (app.Environment.IsEnvironment("Test"))
+        db.Database.EnsureCreated();
+    else
+        db.Database.Migrate();
 }
 
 // --- Middleware Pipeline ---
@@ -156,10 +194,17 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors(frontendOrigins);
 if (!app.Environment.IsEnvironment("Test"))
+{
     app.UseHttpsRedirection();
+    app.UseRateLimiter();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = HealthResponseWriter.WriteAsync
+});
 
 app.Run();
 

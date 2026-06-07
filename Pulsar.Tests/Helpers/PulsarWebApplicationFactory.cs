@@ -40,11 +40,23 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Substituir DbContext SQLite por SQLite in-memory (mesma conexão)
-            var dbDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<PulsarDbContext>));
-            if (dbDescriptor is not null)
-                services.Remove(dbDescriptor);
+            // O app registra o provider Npgsql; aqui trocamos por SQLite in-memory.
+            // É preciso remover TODOS os descritores do provider Npgsql (opções,
+            // configuração e serviços do provider) — senão os dois providers
+            // coexistem no mesmo container e o EF Core recusa a inicialização.
+            static bool EhNpgsql(ServiceDescriptor d) =>
+                (d.ServiceType.FullName?.Contains("Npgsql", StringComparison.Ordinal) ?? false)
+                || (d.ImplementationType?.FullName?.Contains("Npgsql", StringComparison.Ordinal) ?? false)
+                || (d.ImplementationInstance?.GetType().FullName?.Contains("Npgsql", StringComparison.Ordinal) ?? false);
+
+            var paraRemover = services.Where(d =>
+                d.ServiceType == typeof(DbContextOptions<PulsarDbContext>)
+                || d.ServiceType == typeof(DbContextOptions)
+                || d.ServiceType == typeof(PulsarDbContext)
+                || d.ServiceType == typeof(Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptionsConfiguration<PulsarDbContext>)
+                || EhNpgsql(d)).ToList();
+            foreach (var d in paraRemover)
+                services.Remove(d);
 
             services.AddDbContext<PulsarDbContext>(options =>
                 options.UseSqlite(_connection));

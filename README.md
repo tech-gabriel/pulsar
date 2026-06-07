@@ -27,7 +27,7 @@ Pulsar é uma aplicação web de monitoramento climático em tempo real para a c
 | Camada | Tecnologia |
 |---|---|
 | Backend | C# / ASP.NET Core (.NET 10) |
-| Banco de dados | SQLite via Entity Framework Core |
+| Banco de dados | PostgreSQL (Supabase) via Entity Framework Core / Npgsql |
 | Autenticação | JWT + BCrypt |
 | Frontend | React 19 + TypeScript |
 | Estilização | Tailwind CSS v4 |
@@ -45,6 +45,7 @@ Antes de começar, instale as ferramentas abaixo na sua máquina:
 2. [**Node.js**](https://nodejs.org) — versão 20 ou superior (já inclui o npm)
 3. [**Git**](https://git-scm.com) — para clonar o repositório
 4. Uma **chave de API gratuita** do [OpenWeatherMap](https://openweathermap.org/api) — crie uma conta, acesse *API keys* e copie a chave padrão
+5. Um **banco PostgreSQL**: um projeto no [Supabase](https://supabase.com) (recomendado — escolha a região *South America (São Paulo)*) ou um Postgres local. Você vai precisar da connection string.
 
 > Para verificar se o .NET está instalado corretamente, abra o terminal e execute `dotnet --version`. O resultado deve ser `10.x.x` ou superior.
 
@@ -70,11 +71,24 @@ cd Pulsar.API
 
 dotnet user-secrets set "OpenWeatherMap:ApiKey" "SUA_CHAVE_OPENWEATHERMAP_AQUI"
 dotnet user-secrets set "Jwt:SecretKey" "uma-senha-longa-e-segura-qualquer-com-mais-de-32-caracteres"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=db.SEU-PROJETO.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=SUA_SENHA"
 ```
 
 > A chave JWT pode ser qualquer texto longo e aleatório. Ela é usada apenas para assinar os tokens de autenticação internamente.
+>
+> **Connection string do Supabase:** use a porta **5432 (session mode)** do pooler — o transaction mode (6543) não suporta os *prepared statements* do Npgsql/EF Core. Pegue-a em *Project Settings → Database → Connection string*. Em produção, prefira a variável de ambiente `ConnectionStrings__DefaultConnection`.
 
-### 3. Execute o backend
+### 3. Aplique o schema ao banco
+
+Ainda dentro da pasta `Pulsar.API`, crie as tabelas e os dados iniciais aplicando as migrations:
+
+```bash
+dotnet ef database update
+```
+
+> Alternativa: cole o conteúdo de [`docs/database/pulsar_supabase_init.sql`](docs/database/pulsar_supabase_init.sql) no *SQL Editor* do Supabase. O script é idempotente e cria as 10 tabelas + as 5 regiões, 32 subprefeituras e 45 sugestões.
+
+### 4. Execute o backend
 
 Ainda dentro da pasta `Pulsar.API`, execute:
 
@@ -82,7 +96,7 @@ Ainda dentro da pasta `Pulsar.API`, execute:
 dotnet run
 ```
 
-Na primeira execução, o sistema cria automaticamente o banco de dados SQLite e insere os dados iniciais das 32 subprefeituras e das 5 regiões de São Paulo. Aguarde até aparecer a mensagem:
+O backend conecta ao Postgres, e o coletor passa a popular as leituras a cada 15 minutos. Aguarde até aparecer a mensagem:
 
 ```
 Now listening on: http://localhost:5245
@@ -90,7 +104,7 @@ Now listening on: http://localhost:5245
 
 > A documentação completa da API fica disponível em `http://localhost:5245/scalar` enquanto o backend estiver rodando.
 
-### 4. Execute o frontend
+### 5. Execute o frontend
 
 Abra um **segundo terminal** na raiz do projeto e execute:
 
@@ -106,7 +120,7 @@ Aguarde até aparecer:
 Local: http://localhost:5173/
 ```
 
-### 5. Acesse o sistema
+### 6. Acesse o sistema
 
 Abra o navegador e acesse `http://localhost:5173`.
 

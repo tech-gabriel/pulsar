@@ -8,7 +8,7 @@ Coleta dados das 32 subprefeituras, calcula Score de Perigo (0-100) e exibe mapa
 ## Stack
 
 - **Backend:** C# / ASP.NET Core (.NET 10 LTS)
-- **ORM:** Entity Framework Core + SQLite
+- **ORM:** Entity Framework Core + PostgreSQL (Supabase) via Npgsql (testes usam SQLite in-memory)
 - **Auth:** JWT + BCrypt
 - **Frontend:** React + Tailwind CSS + Leaflet.js + Recharts
 - **Icons:** Lucide React
@@ -57,7 +57,7 @@ Cada variável normalizada para [0, 100]. Score final: Math.Clamp(0, 100).
 
 **5 regiões:** Centro (6 subpref.), Norte (6), Sul (6), Leste (11), Oeste (3).
 
-## Banco de Dados — SQLite + EF Core (Code-First)
+## Banco de Dados — PostgreSQL (Supabase) + EF Core (Code-First)
 
 **Tabelas:** Usuario, Regiao, Subprefeitura, LeituraClimatica, ScorePerigo,
 Alerta, Sugestao, UsuarioRegiao (N:N favoritos), AlertaSugestao (N:N).
@@ -65,8 +65,12 @@ Alerta, Sugestao, UsuarioRegiao (N:N favoritos), AlertaSugestao (N:N).
 **Regras:** Todas as entidades têm CriadoEm e AtualizadoEm automáticos.
 Guid como PK. Histórico limitado a 24h por subprefeitura.
 
-**Connection string:** em appsettings.json apontando para arquivo local .db.
+**Connection string:** Postgres do Supabase — em User Secrets / env var
+`ConnectionStrings__DefaultConnection` (NUNCA commitada). Usar porta 5432
+(session mode) do pooler; 6543 (transaction mode) não suporta prepared statements.
 **API Key OpenWeatherMap:** em User Secrets (NUNCA no código).
+**Produção:** `dotnet ef database update` (ou `docs/database/pulsar_supabase_init.sql`).
+Testes: SQLite in-memory via `EnsureCreated()` (sem Docker → sem Testcontainers).
 
 ## Coleta de Dados
 

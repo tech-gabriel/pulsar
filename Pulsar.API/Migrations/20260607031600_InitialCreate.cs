@@ -17,10 +17,10 @@ namespace Pulsar.API.Migrations
                 name: "Regioes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Nome = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    AtualizadoEm = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Nome = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -31,14 +31,14 @@ namespace Pulsar.API.Migrations
                 name: "Sugestoes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Categoria = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    FaixaRisco = table.Column<int>(type: "INTEGER", nullable: false),
-                    Titulo = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Descricao = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
-                    Ativa = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    AtualizadoEm = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Categoria = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    FaixaRisco = table.Column<int>(type: "integer", nullable: false),
+                    Titulo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Descricao = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    Ativa = table.Column<bool>(type: "boolean", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -49,12 +49,13 @@ namespace Pulsar.API.Migrations
                 name: "Usuarios",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Nome = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    SenhaHash = table.Column<string>(type: "TEXT", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    AtualizadoEm = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Nome = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    SenhaHash = table.Column<string>(type: "text", nullable: false),
+                    Perfil = table.Column<int>(type: "integer", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -65,14 +66,14 @@ namespace Pulsar.API.Migrations
                 name: "Subprefeituras",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    RegiaoId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Nome = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Latitude = table.Column<double>(type: "REAL", nullable: false),
-                    Longitude = table.Column<double>(type: "REAL", nullable: false),
-                    Ativa = table.Column<bool>(type: "INTEGER", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    AtualizadoEm = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RegiaoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Nome = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Latitude = table.Column<double>(type: "double precision", nullable: false),
+                    Longitude = table.Column<double>(type: "double precision", nullable: false),
+                    Ativa = table.Column<bool>(type: "boolean", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -86,13 +87,36 @@ namespace Pulsar.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TokensRecuperacaoSenha",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TokenHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    ExpiraEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UsadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TokensRecuperacaoSenha", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TokensRecuperacaoSenha_Usuarios_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "Usuarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UsuarioRegioes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    UsuarioId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    RegiaoId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UsuarioId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RegiaoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -115,14 +139,17 @@ namespace Pulsar.API.Migrations
                 name: "LeiturasClimaticas",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    SubprefeituraId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ChuvaMmH = table.Column<double>(type: "REAL", nullable: false),
-                    VentoKmH = table.Column<double>(type: "REAL", nullable: false),
-                    VisibilidadeKm = table.Column<double>(type: "REAL", nullable: false),
-                    IndiceUv = table.Column<double>(type: "REAL", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubprefeituraId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ChuvaMmH = table.Column<double>(type: "double precision", nullable: false),
+                    VentoKmH = table.Column<double>(type: "double precision", nullable: false),
+                    VisibilidadeKm = table.Column<double>(type: "double precision", nullable: false),
+                    IndiceUv = table.Column<double>(type: "double precision", nullable: false),
+                    TemperaturaC = table.Column<double>(type: "double precision", nullable: false),
+                    SensacaoTermica = table.Column<double>(type: "double precision", nullable: false),
+                    Umidade = table.Column<double>(type: "double precision", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -139,13 +166,13 @@ namespace Pulsar.API.Migrations
                 name: "ScoresPerigo",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    SubprefeituraId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    LeituraId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Valor = table.Column<double>(type: "REAL", nullable: false),
-                    Faixa = table.Column<int>(type: "INTEGER", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubprefeituraId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LeituraId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Valor = table.Column<double>(type: "double precision", nullable: false),
+                    Faixa = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -155,7 +182,7 @@ namespace Pulsar.API.Migrations
                         column: x => x.LeituraId,
                         principalTable: "LeiturasClimaticas",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_ScoresPerigo_Subprefeituras_SubprefeituraId",
                         column: x => x.SubprefeituraId,
@@ -168,12 +195,12 @@ namespace Pulsar.API.Migrations
                 name: "Alertas",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    RegiaoId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ScoreId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Mensagem = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CriadoEm = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RegiaoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ScoreId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Mensagem = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CriadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -189,17 +216,17 @@ namespace Pulsar.API.Migrations
                         column: x => x.ScoreId,
                         principalTable: "ScoresPerigo",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
                 name: "AlertaSugestoes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    AlertaId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    SugestaoId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Ordem = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    AlertaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SugestaoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Ordem = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -368,6 +395,16 @@ namespace Pulsar.API.Migrations
                 columns: new[] { "Categoria", "FaixaRisco" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_TokensRecuperacaoSenha_TokenHash",
+                table: "TokensRecuperacaoSenha",
+                column: "TokenHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TokensRecuperacaoSenha_UsuarioId",
+                table: "TokensRecuperacaoSenha",
+                column: "UsuarioId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UsuarioRegioes_RegiaoId",
                 table: "UsuarioRegioes",
                 column: "RegiaoId");
@@ -390,6 +427,9 @@ namespace Pulsar.API.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AlertaSugestoes");
+
+            migrationBuilder.DropTable(
+                name: "TokensRecuperacaoSenha");
 
             migrationBuilder.DropTable(
                 name: "UsuarioRegioes");

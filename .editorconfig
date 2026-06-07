@@ -1,0 +1,102 @@
+# EditorConfig — Pulsar
+# Estilo unificado para backend C# e frontend React/TypeScript.
+# https://editorconfig.org
+root = true
+
+# --- Defaults para todos os arquivos ---
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# --- Frontend e arquivos de config (2 espaços) ---
+[*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,css,scss,html,yml,yaml}]
+indent_size = 2
+quote_type = single
+
+# --- Markdown (preserva espaços finais usados em quebras de linha) ---
+[*.md]
+trim_trailing_whitespace = false
+
+# --- Arquivos de projeto MSBuild ---
+[*.{csproj,props,targets}]
+indent_size = 2
+
+# ============================================================
+#  Convenções de C# (.NET)
+# ============================================================
+[*.cs]
+indent_size = 4
+
+# Organização de usings
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Namespaces file-scoped (padrão já usado no projeto)
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Não qualificar membros com "this."
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+
+# Usar palavras-chave de linguagem (int) em vez de tipos do BCL (Int32)
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+dotnet_style_predefined_type_for_member_access = true:suggestion
+
+# var quando o tipo é evidente
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# Expression-bodied members
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_accessors = true:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_expression_bodied_lambdas = true:suggestion
+
+# Recursos modernos
+csharp_prefer_braces = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+dotnet_style_null_propagation = true:suggestion
+dotnet_style_coalesce_expression = true:suggestion
+dotnet_style_object_initializer = true:suggestion
+dotnet_style_collection_initializer = true:suggestion
+
+# Posicionamento de chaves (estilo Allman, já usado no projeto)
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# Indentação
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+
+# --- Convenções de nomenclatura ---
+
+# Campos privados: _camelCase (padrão já usado no projeto)
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_prefix
+dotnet_naming_rule.private_fields_underscore.severity = suggestion
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.underscore_prefix.capitalization = camel_case
+dotnet_naming_style.underscore_prefix.required_prefix = _
+
+# Tipos e membros públicos: PascalCase
+dotnet_naming_rule.public_members_pascal.symbols = public_symbols
+dotnet_naming_rule.public_members_pascal.style = pascal_case
+dotnet_naming_rule.public_members_pascal.severity = suggestion
+
+dotnet_naming_symbols.public_symbols.applicable_kinds = class,struct,interface,enum,property,method,event,delegate
+dotnet_naming_symbols.public_symbols.applicable_accessibilities = public,internal,protected
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case

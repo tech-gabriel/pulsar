@@ -99,7 +99,7 @@ builder.Services.AddAuthorization();
 
 // --- Database ---
 builder.Services.AddDbContext<PulsarDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // --- HTTP Clients ---
 builder.Services.AddHttpClient("openweathermap", (sp, client) =>
@@ -173,8 +173,12 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PulsarDbContext>();
-    try { db.Database.Migrate(); }
-    catch (InvalidOperationException) { db.Database.EnsureCreated(); }
+    // Testes usam SQLite in-memory (sem migrations Npgsql): cria o schema a
+    // partir do modelo. Produção/dev aplica as migrations Postgres.
+    if (app.Environment.IsEnvironment("Test"))
+        db.Database.EnsureCreated();
+    else
+        db.Database.Migrate();
 }
 
 // --- Middleware Pipeline ---

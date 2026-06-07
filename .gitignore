@@ -20,6 +20,9 @@ appsettings.Production.json
 *.pfx
 *.p12
 secrets.json
+.env
+.env.*
+!.env.example
 
 ## Database files
 *.db
@@ -42,8 +45,9 @@ Thumbs.db
 ## Claude Code (configs internas, não versionar)
 .claude/
 
-## Vite cache
+## Vite cache + build output
 pulsar-web/.vite/
+pulsar-web/dist/
 
 ## Node modules
 pulsar-web/node_modules/

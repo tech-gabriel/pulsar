@@ -188,6 +188,20 @@ docker run -p 8080:8080 \
 > Variáveis de ambiente usam `__` (duplo underscore) no lugar de `:` para seções de configuração.
 > A plataforma de deploy deve terminar o TLS e encaminhar HTTP para a `8080`.
 
+### Testar o frontend contra a API em container
+
+O proxy do Vite aponta por padrão para o backend local (`dotnet run`, porta 5245). Para apontar à API em container (porta 8080), defina `VITE_API_TARGET` antes de subir o dev server:
+
+```bash
+# na pasta pulsar-web
+VITE_API_TARGET=http://localhost:8080 npm run dev
+```
+
+```powershell
+# PowerShell (Windows)
+$env:VITE_API_TARGET = "http://localhost:8080"; npm run dev
+```
+
 ---
 
 ## Licença

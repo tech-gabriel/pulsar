@@ -159,6 +159,37 @@ Pulsar/
 
 ---
 
+## Executar com Docker
+
+O backend é empacotado num `Dockerfile` multi-stage (imagem runtime ASP.NET enxuta, usuário não-root, porta `8080`).
+
+### Opção A — Tudo local com `docker compose` (inclui um Postgres)
+
+Sobe a API + um Postgres local, sem depender do Supabase:
+
+```bash
+OPENWEATHERMAP_APIKEY=sua_chave docker compose up --build
+```
+
+A API fica em `http://localhost:8080`. As migrations são aplicadas automaticamente na inicialização.
+
+### Opção B — Apenas a imagem da API (apontando ao Supabase)
+
+```bash
+docker build -t pulsar-api .
+
+docker run -p 8080:8080 \
+  -e ConnectionStrings__DefaultConnection="Host=db.SEU-PROJETO.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=SUA_SENHA" \
+  -e Jwt__SecretKey="uma-chave-longa-e-segura-com-mais-de-32-caracteres" \
+  -e OpenWeatherMap__ApiKey="sua_chave_openweathermap" \
+  pulsar-api
+```
+
+> Variáveis de ambiente usam `__` (duplo underscore) no lugar de `:` para seções de configuração.
+> A plataforma de deploy deve terminar o TLS e encaminhar HTTP para a `8080`.
+
+---
+
 ## Licença
 
 Este projeto está protegido por uma licença proprietária. Consulte o arquivo [LICENSE](LICENSE) para os termos completos.

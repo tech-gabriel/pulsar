@@ -1,0 +1,32 @@
+# Artefatos de build (evita copiar binários do host para a imagem)
+**/bin/
+**/obj/
+**/out/
+
+# Dependências e build do frontend (não entram na imagem do backend)
+pulsar-web/
+
+# Projeto de testes (não necessário em produção)
+Pulsar.Tests/
+
+# Controle de versão e CI
+.git/
+.gitignore
+.github/
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+.editorconfig
+
+# Documentação e planos
+docs/
+*.md
+
+# Bancos SQLite locais e segredos
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/.env
+**/secrets.json

@@ -2,6 +2,9 @@ export type FaixaRisco = 'BAIXO' | 'MODERADO' | 'ALTO';
 
 export type TipoPerfil = 'CIDADAO' | 'MOTORISTA' | 'CICLISTA' | 'DEFESA_CIVIL';
 
+/** Papel de acesso (autorização), distinto de TipoPerfil (persona de UX). */
+export type RoleAcesso = 'USUARIO' | 'SUPORTE' | 'ADMIN';
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface UsuarioDto {
@@ -9,6 +12,7 @@ export interface UsuarioDto {
   nome: string;
   email: string;
   perfil: TipoPerfil;
+  role: RoleAcesso;
 }
 
 export interface LoginRequestDto {
@@ -34,6 +38,18 @@ export interface AtualizarPerfilRequestDto {
 export interface LoginResponseDto {
   token: string;
   usuario: UsuarioDto;
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export interface UsuarioAdminDto {
+  id: string;
+  nome: string;
+  email: string;
+  perfil: TipoPerfil;
+  role: RoleAcesso;
+  ativo: boolean;
+  criadoEm: string;
 }
 
 // ── Score / Leitura ───────────────────────────────────────────────────────────

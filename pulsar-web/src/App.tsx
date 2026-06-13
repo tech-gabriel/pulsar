@@ -10,10 +10,19 @@ import HistoricoListPage from './pages/HistoricoListPage';
 import DashboardPage from './pages/DashboardPage';
 import NoticiasPage from './pages/NoticiasPage';
 import ConfiguracoesPage from './pages/ConfiguracoesPage';
+import UsuariosAdminPage from './pages/admin/UsuariosAdminPage';
 
 function RotaProtegida({ children }: { children: React.ReactNode }) {
   const { estaAutenticado } = useAuth();
   return estaAutenticado ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+/** Exige autenticação + role administrativa (ADMIN ou SUPORTE). */
+function RotaAdmin({ children }: { children: React.ReactNode }) {
+  const { estaAutenticado, usuario } = useAuth();
+  if (!estaAutenticado) return <Navigate to="/login" replace />;
+  const ehAdmin = usuario?.role === 'ADMIN' || usuario?.role === 'SUPORTE';
+  return ehAdmin ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 function RotaPublica({ children }: { children: React.ReactNode }) {
@@ -30,6 +39,7 @@ export default function App() {
       <Route path="/dashboard" element={<RotaProtegida><DashboardPage /></RotaProtegida>} />
       <Route path="/noticias" element={<RotaProtegida><NoticiasPage /></RotaProtegida>} />
       <Route path="/configuracoes" element={<RotaProtegida><ConfiguracoesPage /></RotaProtegida>} />
+      <Route path="/admin/usuarios" element={<RotaAdmin><UsuariosAdminPage /></RotaAdmin>} />
 
       <Route path="/login" element={<RotaPublica><LoginPage /></RotaPublica>} />
       <Route path="/cadastro" element={<RotaPublica><CadastroPage /></RotaPublica>} />

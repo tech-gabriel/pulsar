@@ -13,8 +13,13 @@ namespace Pulsar.API.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
+    private readonly ISistemaService _sistemaService;
 
-    public AdminController(IAdminService adminService) => _adminService = adminService;
+    public AdminController(IAdminService adminService, ISistemaService sistemaService)
+    {
+        _adminService = adminService;
+        _sistemaService = sistemaService;
+    }
 
     /// <summary>Lista todos os usuários do sistema. Acessível a ADMIN e SUPORTE (leitura).</summary>
     [HttpGet("usuarios")]
@@ -148,6 +153,32 @@ public class AdminController : ControllerBase
             return Conflict(new { mensagem = ex.Message });
         }
     }
+
+    // ── Painel de sistema + métricas ───────────────────────────
+
+    /// <summary>Status da coleta de dados climáticos. ADMIN e SUPORTE.</summary>
+    [HttpGet("sistema/status")]
+    [ProducesResponseType(typeof(SistemaStatusDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ObterStatus()
+        => Ok(await _sistemaService.ObterStatusAsync());
+
+    /// <summary>Métricas agregadas do sistema. ADMIN e SUPORTE.</summary>
+    [HttpGet("metricas")]
+    [ProducesResponseType(typeof(MetricasDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ObterMetricas()
+        => Ok(await _sistemaService.ObterMetricasAsync());
+
+    /// <summary>Dispara uma coleta manual (clima → scores → alertas). Apenas ADMIN.</summary>
+    [HttpPost("sistema/coletar")]
+    [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(typeof(ColetaResultadoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ForcarColeta(CancellationToken ct)
+        => Ok(await _sistemaService.ForcarColetaAsync(ct));
 
     private Guid UsuarioAtualId()
     {

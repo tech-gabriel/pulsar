@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Pulsar.API.External.Interfaces;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Scheduler;
 
@@ -71,6 +72,14 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
                 d => d.ImplementationType == typeof(DataCollectionJob));
             if (jobDescriptor is not null)
                 services.Remove(jobDescriptor);
+
+            // Substituir o cliente de clima real por um fake determinístico, para que a
+            // coleta manual (POST /api/admin/sistema/coletar) rode offline nos testes.
+            var weatherDescriptors = services
+                .Where(d => d.ServiceType == typeof(IWeatherClient)).ToList();
+            foreach (var d in weatherDescriptors)
+                services.Remove(d);
+            services.AddScoped<IWeatherClient, FakeWeatherClient>();
 
             // Sobrescrever JWT validation para usar secret/issuer/audience de teste.
             // Program.cs captura builder.Configuration em tempo de registro; o

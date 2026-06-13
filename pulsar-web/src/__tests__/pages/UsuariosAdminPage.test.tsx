@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import type { RoleAcesso, UsuarioAdminDto, UsuarioDto } from '../../types';
 
 // Header depende de tema/auth/router; stub para isolar a página.
@@ -40,7 +41,7 @@ beforeEach(() => {
 describe('UsuariosAdminPage', () => {
   it('SUPORTE vê em modo somente leitura, sem controles de edição', () => {
     authState.usuario = usuarioDto('SUPORTE');
-    render(<UsuariosAdminPage />);
+    render(<MemoryRouter><UsuariosAdminPage /></MemoryRouter>);
 
     expect(screen.getByText('Somente leitura')).toBeInTheDocument();
     expect(screen.getByText('Bob')).toBeInTheDocument();
@@ -50,7 +51,7 @@ describe('UsuariosAdminPage', () => {
 
   it('ADMIN vê o seletor de role para outros usuários', () => {
     authState.usuario = usuarioDto('ADMIN');
-    render(<UsuariosAdminPage />);
+    render(<MemoryRouter><UsuariosAdminPage /></MemoryRouter>);
 
     expect(screen.queryByText('Somente leitura')).not.toBeInTheDocument();
     // O usuário "Bob" (outro) é editável → há ao menos um seletor de role.

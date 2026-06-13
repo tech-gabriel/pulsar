@@ -72,6 +72,83 @@ public class AdminController : ControllerBase
         }
     }
 
+    // ── Catálogo de Sugestões ──────────────────────────────────
+
+    /// <summary>Lista todas as sugestões do catálogo (inclui inativas). ADMIN e SUPORTE.</summary>
+    [HttpGet("sugestoes")]
+    [ProducesResponseType(typeof(IReadOnlyList<SugestaoAdminDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ListarSugestoes()
+        => Ok(await _adminService.ListarSugestoesAsync());
+
+    /// <summary>Cria uma nova sugestão. Apenas ADMIN.</summary>
+    [HttpPost("sugestoes")]
+    [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(typeof(SugestaoAdminDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> CriarSugestao([FromBody] SalvarSugestaoRequestDto request)
+    {
+        try
+        {
+            var criada = await _adminService.CriarSugestaoAsync(request);
+            return StatusCode(StatusCodes.Status201Created, criada);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+    }
+
+    /// <summary>Atualiza uma sugestão existente. Apenas ADMIN.</summary>
+    [HttpPut("sugestoes/{id:guid}")]
+    [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(typeof(SugestaoAdminDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AtualizarSugestao(Guid id, [FromBody] SalvarSugestaoRequestDto request)
+    {
+        try
+        {
+            var atualizada = await _adminService.AtualizarSugestaoAsync(id, request);
+            return Ok(atualizada);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
+    }
+
+    /// <summary>Exclui uma sugestão. Apenas ADMIN. Retorna 409 se vinculada a alertas.</summary>
+    [HttpDelete("sugestoes/{id:guid}")]
+    [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RemoverSugestao(Guid id)
+    {
+        try
+        {
+            await _adminService.RemoverSugestaoAsync(id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { mensagem = ex.Message });
+        }
+    }
+
     private Guid UsuarioAtualId()
     {
         var subClaim = User.FindFirstValue(ClaimTypes.NameIdentifier)

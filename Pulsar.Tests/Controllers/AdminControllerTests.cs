@@ -156,6 +156,129 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
         login.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    // ── Catálogo de Sugestões ──────────────────────────────────
+
+    [Fact]
+    public async Task GetSugestoes_SemToken_Retorna401()
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/api/admin/sugestoes");
+        var response = await _client.SendAsync(req);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetSugestoes_UsuarioComum_Retorna403()
+    {
+        var token = (await CadastrarAsync($"comum_{Guid.NewGuid()}@test.com", "Senha@123")).Token;
+        var response = await EnviarComTokenAsync(HttpMethod.Get, "/api/admin/sugestoes", token);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetSugestoes_Admin_Retorna200ComCatalogo()
+    {
+        var token = await TokenAdminAsync();
+        var response = await EnviarComTokenAsync(HttpMethod.Get, "/api/admin/sugestoes", token);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var sugestoes = await response.Content.ReadFromJsonAsync<List<SugestaoAdminDto>>(JsonOpts);
+        // O seed traz 45 sugestões (5 categorias × 3 faixas × 3).
+        sugestoes.Should().NotBeNull();
+        sugestoes!.Should().HaveCountGreaterThanOrEqualTo(45);
+    }
+
+    [Fact]
+    public async Task CriarSugestao_Admin_Retorna201()
+    {
+        var token = await TokenAdminAsync();
+        var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", token,
+            new SalvarSugestaoRequestDto { Categoria = "geral", FaixaRisco = FaixaRisco.BAIXO, Titulo = "Nova", Descricao = "Desc", Ativa = true });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var criada = await response.Content.ReadFromJsonAsync<SugestaoAdminDto>(JsonOpts);
+        criada!.Categoria.Should().Be("GERAL");
+        criada.Id.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task CriarSugestao_UsuarioComum_Retorna403()
+    {
+        var token = (await CadastrarAsync($"comum_{Guid.NewGuid()}@test.com", "Senha@123")).Token;
+        var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", token,
+            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "X", Descricao = "Y" });
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task CriarSugestao_TituloVazio_Retorna400()
+    {
+        var token = await TokenAdminAsync();
+        var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", token,
+            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "   ", Descricao = "Y" });
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task AtualizarSugestao_Admin_Retorna200()
+    {
+        var token = await TokenAdminAsync();
+        var criada = await CriarSugestaoAsync(token);
+
+        var response = await EnviarComTokenAsync(HttpMethod.Put, $"/api/admin/sugestoes/{criada.Id}", token,
+            new SalvarSugestaoRequestDto { Categoria = "VENTO", FaixaRisco = FaixaRisco.ALTO, Titulo = "Editada", Descricao = "Nova desc", Ativa = false });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var atualizada = await response.Content.ReadFromJsonAsync<SugestaoAdminDto>(JsonOpts);
+        atualizada!.Titulo.Should().Be("Editada");
+        atualizada.Categoria.Should().Be("VENTO");
+        atualizada.Ativa.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task AtualizarSugestao_Inexistente_Retorna404()
+    {
+        var token = await TokenAdminAsync();
+        var response = await EnviarComTokenAsync(HttpMethod.Put, $"/api/admin/sugestoes/{Guid.NewGuid()}", token,
+            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "X", Descricao = "Y" });
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task RemoverSugestao_Admin_Retorna204()
+    {
+        var token = await TokenAdminAsync();
+        var criada = await CriarSugestaoAsync(token);
+
+        var response = await EnviarComTokenAsync(HttpMethod.Delete, $"/api/admin/sugestoes/{criada.Id}", token);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task Suporte_LeSugestoesMasNaoCria()
+    {
+        var email = $"suporte_sug_{Guid.NewGuid()}@test.com";
+        var suporte = await CadastrarAsync(email, "Senha@123");
+        var adminToken = await TokenAdminAsync();
+        await EnviarComTokenAsync(HttpMethod.Put, $"/api/admin/usuarios/{suporte.Usuario.Id}/role", adminToken,
+            new AlterarRoleRequestDto { Role = RoleAcesso.SUPORTE });
+        var suporteToken = await LoginAsync(email, "Senha@123");
+
+        var leitura = await EnviarComTokenAsync(HttpMethod.Get, "/api/admin/sugestoes", suporteToken);
+        leitura.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var escrita = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", suporteToken,
+            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "X", Descricao = "Y" });
+        escrita.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    private async Task<SugestaoAdminDto> CriarSugestaoAsync(string adminToken)
+    {
+        var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", adminToken,
+            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "Base", Descricao = "Base desc", Ativa = true });
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<SugestaoAdminDto>(JsonOpts))!;
+    }
+
     // ── Helpers ────────────────────────────────────────────────
 
     private async Task<LoginResponseDto> CadastrarAsync(string email, string senha)

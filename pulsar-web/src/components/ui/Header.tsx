@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Map, History, BarChart3, Newspaper, Settings, Bell, Sun, Moon, LogOut } from 'lucide-react';
+import { Map, History, BarChart3, Newspaper, Settings, Bell, Sun, Moon, LogOut, ShieldCheck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
@@ -28,6 +28,12 @@ export default function Header({ alertasAtivos = 0 }: Props) {
   const { usuario, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const temAlertas = alertasAtivos > 0;
+
+  // Aba administrativa visível apenas para ADMIN e SUPORTE.
+  const ehAdmin = usuario?.role === 'ADMIN' || usuario?.role === 'SUPORTE';
+  const tabs = ehAdmin
+    ? [...TABS, { to: '/admin/usuarios', label: 'Admin', curto: 'Admin', Icon: ShieldCheck }]
+    : TABS;
 
   return (
     <>
@@ -58,7 +64,7 @@ export default function Header({ alertasAtivos = 0 }: Props) {
 
         {/* Centro: abas (md+) — absolutamente centradas */}
         <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-          {TABS.map(({ to, label, Icon, end }) => (
+          {tabs.map(({ to, label, Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => ['nav-tab', isActive ? 'ativa' : ''].join(' ')}>
               <Icon size={18} />
               <span>{label}</span>
@@ -117,7 +123,7 @@ export default function Header({ alertasAtivos = 0 }: Props) {
 
       {/* ── TAB BAR INFERIOR (mobile) ───────────────────────────────────────── */}
       <nav className="tabbar-mobile md:hidden fixed bottom-0 left-0 right-0 z-[1000] flex items-stretch h-12">
-        {TABS.map(({ to, curto, Icon, end }) => (
+        {tabs.map(({ to, curto, Icon, end }) => (
           <NavLink
             key={to}
             to={to}

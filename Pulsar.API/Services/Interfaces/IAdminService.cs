@@ -22,4 +22,21 @@ public interface IAdminService
     /// Ativa/desativa um usuário. Impede que o admin desative a si mesmo.
     /// </summary>
     Task<UsuarioAdminDto> AlterarAtivoAsync(Guid adminId, Guid alvoId, bool ativo);
+
+    // ── Catálogo de Sugestões ──────────────────────────────────
+
+    /// <summary>Lista todas as sugestões do catálogo, incluindo inativas (ADMIN e SUPORTE).</summary>
+    Task<IReadOnlyList<SugestaoAdminDto>> ListarSugestoesAsync();
+
+    /// <summary>Cria uma nova sugestão no catálogo.</summary>
+    Task<SugestaoAdminDto> CriarSugestaoAsync(SalvarSugestaoRequestDto request);
+
+    /// <summary>Atualiza uma sugestão existente.</summary>
+    Task<SugestaoAdminDto> AtualizarSugestaoAsync(Guid id, SalvarSugestaoRequestDto request);
+
+    /// <summary>
+    /// Remove uma sugestão. Lança <see cref="InvalidOperationException"/> se ela estiver
+    /// vinculada a alertas (FK Restrict) — nesse caso oriente desativar em vez de excluir.
+    /// </summary>
+    Task RemoverSugestaoAsync(Guid id);
 }

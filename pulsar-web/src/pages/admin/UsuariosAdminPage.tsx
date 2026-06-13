@@ -3,6 +3,7 @@ import Header from '../../components/ui/Header';
 import GlassCard from '../../components/ui/GlassCard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import AdminSubnav from '../../components/admin/AdminSubnav';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsuariosAdmin } from '../../hooks/useUsuariosAdmin';
 import { perfilMeta } from '../../utils/perfil';
@@ -36,6 +37,7 @@ export default function UsuariosAdminPage() {
     <div style={{ background: 'var(--bg-primary)', minHeight: '100dvh' }}>
       <Header />
       <main className="mx-auto w-full px-4" style={{ maxWidth: 900, paddingTop: 80, paddingBottom: 80 }}>
+        <AdminSubnav />
         <div className="mb-5 flex items-center gap-2.5">
           <Users size={22} style={{ color: 'var(--text-accent)' }} />
           <h1 style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 22, color: 'var(--text-primary)' }}>

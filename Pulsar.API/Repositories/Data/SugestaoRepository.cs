@@ -27,6 +27,13 @@ public class SugestaoRepository : ISugestaoRepository
             .Where(s => s.Ativa && s.FaixaRisco == faixa)
             .ToListAsync();
 
+    public async Task<IEnumerable<Sugestao>> ListarTodasAsync()
+        => await _context.Sugestoes
+            .OrderBy(s => s.Categoria)
+            .ThenBy(s => s.FaixaRisco)
+            .ThenBy(s => s.Titulo)
+            .ToListAsync();
+
     public async Task AdicionarAsync(Sugestao entidade)
         => await _context.Sugestoes.AddAsync(entidade);
 

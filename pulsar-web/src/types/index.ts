@@ -52,6 +52,25 @@ export interface UsuarioAdminDto {
   criadoEm: string;
 }
 
+export interface SugestaoAdminDto {
+  id: string;
+  categoria: string;
+  faixaRisco: FaixaRisco;
+  titulo: string;
+  descricao: string;
+  ativa: boolean;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+export interface SalvarSugestaoRequest {
+  categoria: string;
+  faixaRisco: FaixaRisco;
+  titulo: string;
+  descricao: string;
+  ativa: boolean;
+}
+
 // ── Score / Leitura ───────────────────────────────────────────────────────────
 
 export interface ScoreDto {

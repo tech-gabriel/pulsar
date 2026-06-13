@@ -1,6 +1,4 @@
-using Pulsar.API.Repositories.Data;
 using Pulsar.API.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace Pulsar.API.Scheduler;
 
@@ -30,47 +28,13 @@ public class DataCollectionJob : BackgroundService
 
     private async Task ExecutarCicloAsync(CancellationToken ct)
     {
-        _logger.LogInformation("Iniciando ciclo de coleta: {Hora}", DateTime.UtcNow);
-
+        // O BackgroundService é singleton; o runner é scoped → criamos um escopo por ciclo.
         using var scope = _scopeFactory.CreateScope();
-        var climateService = scope.ServiceProvider.GetRequiredService<IClimateService>();
-        var scoreService = scope.ServiceProvider.GetRequiredService<IScoreService>();
-        var alertaService = scope.ServiceProvider.GetRequiredService<IAlertaService>();
-        var db = scope.ServiceProvider.GetRequiredService<PulsarDbContext>();
+        var runner = scope.ServiceProvider.GetRequiredService<IColetaRunner>();
 
         try
         {
-            await climateService.ColetarTodasAsync(ct);
-
-            var subprefeituras = await db.Subprefeituras.Where(s => s.Ativa).ToListAsync(ct);
-            foreach (var sub in subprefeituras)
-            {
-                if (ct.IsCancellationRequested) break;
-                try
-                {
-                    await scoreService.CalcularEPersistirAsync(sub.Id, ct);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Falha ao calcular score da subprefeitura {Nome}.", sub.Nome);
-                }
-            }
-
-            var regioes = await db.Regioes.ToListAsync(ct);
-            foreach (var regiao in regioes)
-            {
-                if (ct.IsCancellationRequested) break;
-                try
-                {
-                    await alertaService.GerarAlertaAsync(regiao.Id, ct);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Falha ao gerar alerta para região {Nome}.", regiao.Nome);
-                }
-            }
-
-            _logger.LogInformation("Ciclo de coleta concluído.");
+            await runner.ExecutarCicloAsync(ct);
         }
         catch (OperationCanceledException)
         {

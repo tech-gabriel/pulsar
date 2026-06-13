@@ -271,6 +271,89 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
         escrita.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    // ── Painel de sistema + métricas ───────────────────────────
+
+    [Fact]
+    public async Task GetStatus_SemToken_Retorna401()
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/api/admin/sistema/status");
+        var response = await _client.SendAsync(req);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetStatus_Admin_Retorna200ComSubprefeituras()
+    {
+        var token = await TokenAdminAsync();
+        var response = await EnviarComTokenAsync(HttpMethod.Get, "/api/admin/sistema/status", token);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var status = await response.Content.ReadFromJsonAsync<SistemaStatusDto>(JsonOpts);
+        // O seed traz 32 subprefeituras ativas.
+        status!.SubprefeiturasAtivas.Should().Be(32);
+        status.Subprefeituras.Should().HaveCount(32);
+    }
+
+    [Fact]
+    public async Task GetMetricas_UsuarioComum_Retorna403()
+    {
+        var token = (await CadastrarAsync($"comum_{Guid.NewGuid()}@test.com", "Senha@123")).Token;
+        var response = await EnviarComTokenAsync(HttpMethod.Get, "/api/admin/metricas", token);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetMetricas_Admin_Retorna200()
+    {
+        var token = await TokenAdminAsync();
+        var response = await EnviarComTokenAsync(HttpMethod.Get, "/api/admin/metricas", token);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var metricas = await response.Content.ReadFromJsonAsync<MetricasDto>(JsonOpts);
+        metricas!.TotalUsuarios.Should().BeGreaterThan(0);
+        metricas.TotalSugestoes.Should().BeGreaterThanOrEqualTo(45);
+    }
+
+    [Fact]
+    public async Task ForcarColeta_SemToken_Retorna401()
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, "/api/admin/sistema/coletar");
+        var response = await _client.SendAsync(req);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task ForcarColeta_Suporte_Retorna403()
+    {
+        var email = $"suporte_sis_{Guid.NewGuid()}@test.com";
+        var suporte = await CadastrarAsync(email, "Senha@123");
+        var adminToken = await TokenAdminAsync();
+        await EnviarComTokenAsync(HttpMethod.Put, $"/api/admin/usuarios/{suporte.Usuario.Id}/role", adminToken,
+            new AlterarRoleRequestDto { Role = RoleAcesso.SUPORTE });
+        var suporteToken = await LoginAsync(email, "Senha@123");
+
+        var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sistema/coletar", suporteToken);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task ForcarColeta_Admin_Retorna200ECriaLeituras()
+    {
+        var token = await TokenAdminAsync();
+
+        var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sistema/coletar", token);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var resultado = await response.Content.ReadFromJsonAsync<ColetaResultadoDto>(JsonOpts);
+        resultado!.SubprefeiturasProcessadas.Should().Be(32);
+
+        // Após a coleta (fake weather client), todas as subprefeituras têm leitura.
+        var status = await EnviarComTokenAsync(HttpMethod.Get, "/api/admin/sistema/status", token);
+        var statusDto = await status.Content.ReadFromJsonAsync<SistemaStatusDto>(JsonOpts);
+        statusDto!.SubprefeiturasComLeitura.Should().Be(32);
+        statusDto.LeiturasUltimas24h.Should().BeGreaterThan(0);
+    }
+
     private async Task<SugestaoAdminDto> CriarSugestaoAsync(string adminToken)
     {
         var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", adminToken,

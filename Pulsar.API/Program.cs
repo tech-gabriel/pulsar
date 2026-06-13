@@ -162,6 +162,8 @@ builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ISistemaService, SistemaService>();
+builder.Services.AddScoped<IColetaRunner, ColetaRunner>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IClimateService, ClimateService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();

@@ -12,6 +12,7 @@ import NoticiasPage from './pages/NoticiasPage';
 import ConfiguracoesPage from './pages/ConfiguracoesPage';
 import UsuariosAdminPage from './pages/admin/UsuariosAdminPage';
 import SugestoesAdminPage from './pages/admin/SugestoesAdminPage';
+import SistemaAdminPage from './pages/admin/SistemaAdminPage';
 
 function RotaProtegida({ children }: { children: React.ReactNode }) {
   const { estaAutenticado } = useAuth();
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/configuracoes" element={<RotaProtegida><ConfiguracoesPage /></RotaProtegida>} />
       <Route path="/admin/usuarios" element={<RotaAdmin><UsuariosAdminPage /></RotaAdmin>} />
       <Route path="/admin/sugestoes" element={<RotaAdmin><SugestoesAdminPage /></RotaAdmin>} />
+      <Route path="/admin/sistema" element={<RotaAdmin><SistemaAdminPage /></RotaAdmin>} />
 
       <Route path="/login" element={<RotaPublica><LoginPage /></RotaPublica>} />
       <Route path="/cadastro" element={<RotaPublica><CadastroPage /></RotaPublica>} />

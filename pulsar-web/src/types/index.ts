@@ -2,6 +2,9 @@ export type FaixaRisco = 'BAIXO' | 'MODERADO' | 'ALTO';
 
 export type TipoPerfil = 'CIDADAO' | 'MOTORISTA' | 'CICLISTA' | 'DEFESA_CIVIL';
 
+/** Papel de acesso (autorização), distinto de TipoPerfil (persona de UX). */
+export type RoleAcesso = 'USUARIO' | 'SUPORTE' | 'ADMIN';
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface UsuarioDto {
@@ -9,6 +12,7 @@ export interface UsuarioDto {
   nome: string;
   email: string;
   perfil: TipoPerfil;
+  role: RoleAcesso;
 }
 
 export interface LoginRequestDto {
@@ -34,6 +38,69 @@ export interface AtualizarPerfilRequestDto {
 export interface LoginResponseDto {
   token: string;
   usuario: UsuarioDto;
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export interface UsuarioAdminDto {
+  id: string;
+  nome: string;
+  email: string;
+  perfil: TipoPerfil;
+  role: RoleAcesso;
+  ativo: boolean;
+  criadoEm: string;
+}
+
+export interface SugestaoAdminDto {
+  id: string;
+  categoria: string;
+  faixaRisco: FaixaRisco;
+  titulo: string;
+  descricao: string;
+  ativa: boolean;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+export interface SalvarSugestaoRequest {
+  categoria: string;
+  faixaRisco: FaixaRisco;
+  titulo: string;
+  descricao: string;
+  ativa: boolean;
+}
+
+export interface SubprefeituraStatusDto {
+  nome: string;
+  ultimaLeitura: string | null;
+}
+
+export interface SistemaStatusDto {
+  subprefeiturasAtivas: number;
+  subprefeiturasComLeitura: number;
+  ultimaColeta: string | null;
+  leiturasUltimas24h: number;
+  intervaloColetaMinutos: number;
+  subprefeituras: SubprefeituraStatusDto[];
+}
+
+export interface MetricasDto {
+  totalUsuarios: number;
+  usuariosAtivos: number;
+  admins: number;
+  suportes: number;
+  totalSugestoes: number;
+  sugestoesAtivas: number;
+  alertasUltimas24h: number;
+  leiturasUltimas24h: number;
+}
+
+export interface ColetaResultadoDto {
+  subprefeiturasProcessadas: number;
+  scoresCalculados: number;
+  alertasGerados: number;
+  concluidoEm: string;
 }
 
 // ── Score / Leitura ───────────────────────────────────────────────────────────

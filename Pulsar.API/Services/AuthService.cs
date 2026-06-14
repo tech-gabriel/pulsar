@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.Domain.Entities;
+using Pulsar.API.Domain.Enums;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services.Interfaces;
@@ -32,6 +33,8 @@ public class AuthService : IAuthService
             Nome = request.Nome,
             Email = request.Email,
             Perfil = request.Perfil,
+            // Bootstrap: e-mails listados em Admin:Emails nascem como ADMIN.
+            Role = EhEmailAdmin(request.Email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
             SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.Senha)
         };
 
@@ -90,11 +93,34 @@ public class AuthService : IAuthService
         if (usuario is null || !BCrypt.Net.BCrypt.Verify(request.Senha, usuario.SenhaHash))
             throw new UnauthorizedAccessException("E-mail ou senha incorretos.");
 
+        if (!usuario.Ativo)
+            throw new UnauthorizedAccessException("Conta desativada. Entre em contato com o suporte.");
+
+        // Auto-heal do bootstrap: se o e-mail está na lista de admins mas a conta
+        // ainda não é ADMIN (ex.: criada antes da configuração), promove agora.
+        if (EhEmailAdmin(usuario.Email) && usuario.Role != RoleAcesso.ADMIN)
+        {
+            usuario.Role = RoleAcesso.ADMIN;
+            await _usuarioRepository.AtualizarAsync(usuario);
+            await _usuarioRepository.SalvarAsync();
+        }
+
         return new LoginResponseDto
         {
             Token = GerarToken(usuario),
             Usuario = MapearUsuarioDto(usuario)
         };
+    }
+
+    /// <summary>
+    /// Indica se o e-mail consta na lista <c>Admin:Emails</c> da configuração
+    /// (comparação case-insensitive). Usado para o bootstrap do primeiro admin.
+    /// </summary>
+    private bool EhEmailAdmin(string email)
+    {
+        var emails = _configuration.GetSection("Admin:Emails").Get<string[]>();
+        return emails is not null
+            && emails.Any(e => string.Equals(e, email, StringComparison.OrdinalIgnoreCase));
     }
 
     private string GerarToken(Usuario usuario)
@@ -112,6 +138,7 @@ public class AuthService : IAuthService
             new Claim(JwtRegisteredClaimNames.Email, usuario.Email),
             new Claim(JwtRegisteredClaimNames.Name, usuario.Nome),
             new Claim("perfil", usuario.Perfil.ToString()),
+            new Claim(ClaimTypes.Role, usuario.Role.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
@@ -131,6 +158,7 @@ public class AuthService : IAuthService
         Id = usuario.Id,
         Nome = usuario.Nome,
         Email = usuario.Email,
-        Perfil = usuario.Perfil
+        Perfil = usuario.Perfil,
+        Role = usuario.Role
     };
 }

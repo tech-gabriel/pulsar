@@ -30,6 +30,8 @@ public class PulsarDbContext : DbContext
             e.Property(u => u.Nome).IsRequired().HasMaxLength(200);
             e.Property(u => u.Email).IsRequired().HasMaxLength(200);
             e.Property(u => u.SenhaHash).IsRequired();
+            e.Property(u => u.Ativo).HasDefaultValue(true);
+            e.HasIndex(u => u.Role);
         });
 
         modelBuilder.Entity<Regiao>(e =>

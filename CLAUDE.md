@@ -69,6 +69,10 @@ Guid como PK. Histórico limitado a 24h por subprefeitura.
 `ConnectionStrings__DefaultConnection` (NUNCA commitada). Usar porta 5432
 (session mode) do pooler; 6543 (transaction mode) não suporta prepared statements.
 **API Key OpenWeatherMap:** em User Secrets (NUNCA no código).
+**Roles de acesso (Admin/Suporte):** `Usuario.Role` (`RoleAcesso`: USUARIO/SUPORTE/ADMIN)
+é distinto de `TipoPerfil` (persona de UX). Bootstrap do 1º admin via `Admin:Emails`
+(User Secrets / env `Admin__Emails__0`, ...): e-mails listados viram ADMIN no cadastro/login.
+Endpoints `/api/admin/*` exigem `[Authorize(Roles=...)]`; SUPORTE é somente leitura.
 **Produção:** `dotnet ef database update` (ou `docs/database/pulsar_supabase_init.sql`).
 Testes: SQLite in-memory via `EnsureCreated()` (sem Docker → sem Testcontainers).
 

@@ -69,6 +69,9 @@ Guid como PK. Histórico limitado a 24h por subprefeitura.
 `ConnectionStrings__DefaultConnection` (NUNCA commitada). Usar porta 5432
 (session mode) do pooler; 6543 (transaction mode) não suporta prepared statements.
 **API Key OpenWeatherMap:** em User Secrets (NUNCA no código).
+**API Key MapTiler (geocoding):** em User Secrets / env `MapTiler__ApiKey` (NUNCA commitada).
+Usada pela busca de endereços (`GET /api/busca/enderecos`, proxy via `IGeocodingClient`).
+Sem a chave, a busca degrada para lista vazia. Trocável por Google futuramente (nova impl. da interface).
 **Roles de acesso (Admin/Suporte):** `Usuario.Role` (`RoleAcesso`: USUARIO/SUPORTE/ADMIN)
 é distinto de `TipoPerfil` (persona de UX). Bootstrap do 1º admin via `Admin:Emails`
 (User Secrets / env `Admin__Emails__0`, ...): e-mails listados viram ADMIN no cadastro/login.

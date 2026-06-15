@@ -44,10 +44,13 @@ const ATTRIB_CARTO =
 
 function tileConfig(theme: 'dark' | 'light') {
   if (MAPTILER_KEY) {
-    const estilo = theme === 'light' ? 'dataviz-light' : 'dataviz-dark';
+    // streets-v2: nomes de ruas, parques (áreas verdes) e POIs legíveis, mantendo
+    // contraste com os polígonos de score por cima (fillOpacity baixa).
+    const estilo = theme === 'light' ? 'streets-v2' : 'streets-v2-dark';
     return { url: `https://api.maptiler.com/maps/${estilo}/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, attribution: ATTRIB_MAPTILER };
   }
-  const base = theme === 'light' ? 'light_all' : 'dark_all';
+  // Fallback sem chave: Voyager (CARTO) é mais detalhado que o dark/light_all e mostra ruas/parques.
+  const base = theme === 'light' ? 'rastertiles/voyager' : 'rastertiles/voyager_labels_under';
   return { url: `https://basemaps.cartocdn.com/${base}/{z}/{x}/{y}{r}.png`, attribution: ATTRIB_CARTO };
 }
 

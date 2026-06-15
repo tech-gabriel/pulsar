@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import type { GeoJsonObject } from 'geojson';
+import type { GeoJsonObject, FeatureCollection } from 'geojson';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers, LogOut } from 'lucide-react';
-import MapaBase from '../components/mapa/MapaBase';
+import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
+import BuscaEndereco from '../components/mapa/BuscaEndereco';
 import LayerControl from '../components/mapa/LayerControl';
 import MapLegend from '../components/mapa/MapLegend';
 import PainelLateral from '../components/painel/PainelLateral';
@@ -14,7 +15,9 @@ import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { useIsMobile } from '../hooks/useIsMobile';
-import type { SubprefeituraMapaDto } from '../types';
+import { resolverRegiaoPorPonto } from '../utils/geo';
+import { normalizarNome } from '../utils/texto';
+import type { SubprefeituraMapaDto, EnderecoBusca } from '../types';
 
 export default function MapaPage() {
   const { usuario, logout } = useAuth();
@@ -29,6 +32,8 @@ export default function MapaPage() {
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
   const [sidebarColapsada, setSidebarColapsada] = useState(false);
   const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');
+  const [pontoBusca, setPontoBusca] = useState<PontoBusca | null>(null);
+  const [avisoBusca, setAvisoBusca] = useState<string | null>(null);
 
   const regiaoSelecionada = regioes.find(
     (r) => r.nome.toLowerCase() === regiaoSelecionadaNome?.toLowerCase()
@@ -53,6 +58,38 @@ export default function MapaPage() {
   function fecharDetalhe() {
     setRegiaoSelecionadaNome(null);
     setSubSelecionada(null);
+    setPontoBusca(null);
+    setAvisoBusca(null);
+  }
+
+  // Seleção de um endereço na busca: marca o ponto no mapa, voa até ele e resolve
+  // a subprefeitura/região correspondente (point-in-polygon sobre o GeoJSON já
+  // carregado), abrindo o painel de detalhe. Fora dos polígonos → aviso.
+  function handleSelecionarEndereco(endereco: EnderecoBusca) {
+    setPontoBusca({ lat: endereco.latitude, lon: endereco.longitude });
+    const resolvido = resolverRegiaoPorPonto(
+      endereco.latitude,
+      endereco.longitude,
+      geojson as FeatureCollection | null,
+    );
+    if (!resolvido) {
+      setRegiaoSelecionadaNome(null);
+      setSubSelecionada(null);
+      setAvisoBusca('Esse endereço está fora da área coberta (São Paulo capital).');
+      return;
+    }
+    setAvisoBusca(null);
+    const sub = subprefeituras.find(
+      (s) => normalizarNome(s.nome) === normalizarNome(resolvido.subprefeituraNome),
+    );
+    if (sub) {
+      setSubSelecionada(sub);
+      setRegiaoSelecionadaNome(sub.regiaoNome);
+    } else {
+      setSubSelecionada(null);
+      setRegiaoSelecionadaNome(resolvido.regiaoNome);
+    }
+    if (isMobile) setPainelMobileAberto(false);
   }
 
   // Clique em um label/polígono de subprefeitura: abre o detalhe da região e
@@ -107,7 +144,18 @@ export default function MapaPage() {
           camadaAtiva={camadaAtiva}
           regiaoSelecionadaNome={regiaoSelecionadaNome}
           subSelecionadaAtiva={!!subSelecionada}
+          pontoBusca={pontoBusca}
         />
+
+        {/* Busca de rua/endereço sobreposta ao mapa */}
+        <BuscaEndereco onSelecionar={handleSelecionarEndereco} isMobile={isMobile} />
+
+        {/* Aviso quando o endereço cai fora da área coberta */}
+        {avisoBusca && (
+          <div className="absolute left-1/2 -translate-x-1/2 z-[1200] bottom-[7.5rem] md:bottom-6 max-w-[calc(100%-1.5rem)] px-4 py-2.5 rounded-xl bg-pulsar-900/90 border border-pulsar-700 text-xs text-pulsar-100 shadow-xl backdrop-blur-md">
+            {avisoBusca}
+          </div>
+        )}
 
         {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
         <LayerControl

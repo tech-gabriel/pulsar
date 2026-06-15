@@ -64,7 +64,7 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
       aria-label="Camada do mapa"
       className={
         isMobile
-          ? 'absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex flex-row max-w-[calc(100%-1.5rem)] overflow-x-auto no-scrollbar'
+          ? 'absolute top-16 left-1/2 -translate-x-1/2 z-[1000] flex flex-row max-w-[calc(100%-1.5rem)] overflow-x-auto no-scrollbar'
           : 'absolute left-3 top-1/2 -translate-y-1/2 z-[1000] flex flex-col'
       }
       style={isMobile ? CARD_MOBILE : CARD_DESKTOP}

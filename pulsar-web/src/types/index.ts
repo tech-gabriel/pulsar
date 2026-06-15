@@ -158,6 +158,13 @@ export interface SubprefeituraMapaDto extends SubprefeituraDto {
   regiaoNome: string;
 }
 
+/** Endereço retornado pela busca de geocoding (GET /api/busca/enderecos). */
+export interface EnderecoBusca {
+  descricao: string;
+  latitude: number;
+  longitude: number;
+}
+
 // ── Histórico ─────────────────────────────────────────────────────────────────
 
 export interface LeituraComScoreDto {

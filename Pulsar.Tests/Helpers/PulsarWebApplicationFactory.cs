@@ -81,6 +81,14 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
                 services.Remove(d);
             services.AddScoped<IWeatherClient, FakeWeatherClient>();
 
+            // Substituir o geocoding real (MapTiler) por um fake determinístico, para
+            // testar GET /api/busca/enderecos sem chave/quota nem rede.
+            var geocodingDescriptors = services
+                .Where(d => d.ServiceType == typeof(IGeocodingClient)).ToList();
+            foreach (var d in geocodingDescriptors)
+                services.Remove(d);
+            services.AddScoped<IGeocodingClient, FakeGeocodingClient>();
+
             // Sobrescrever JWT validation para usar secret/issuer/audience de teste.
             // Program.cs captura builder.Configuration em tempo de registro; o
             // PostConfigure garante que os valores de teste prevalecem em runtime.

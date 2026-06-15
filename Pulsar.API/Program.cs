@@ -62,6 +62,7 @@ builder.Services.AddCors(options =>
 // Protege os endpoints sensíveis de autenticação (login, cadastro, reset de
 // senha) contra brute-force/abuso. Particionado por IP de origem.
 const string authRateLimit = "auth";
+const string buscaRateLimit = "busca";
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -71,6 +72,17 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    // Busca de endereços: autocomplete gera muitas chamadas; limitamos por IP
+    // para proteger a quota do provedor de geocoding (MapTiler).
+    options.AddPolicy(buscaRateLimit, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
@@ -124,6 +136,13 @@ builder.Services.AddHttpClient("cgesp", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
 });
 
+builder.Services.AddHttpClient("maptiler", client =>
+{
+    client.BaseAddress = new Uri("https://api.maptiler.com/geocoding/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
+});
+
 // --- Cache ---
 builder.Services.AddMemoryCache();
 
@@ -160,6 +179,8 @@ builder.Services.AddScoped<ITokenRecuperacaoSenhaRepository, TokenRecuperacaoSen
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
 builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
+builder.Services.AddScoped<IGeocodingClient, MapTilerGeocodingClient>();
+builder.Services.AddScoped<IBuscaService, BuscaService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ISistemaService, SistemaService>();

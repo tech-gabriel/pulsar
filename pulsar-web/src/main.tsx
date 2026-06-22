@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { MotionConfig } from 'motion/react';
 import { AuthProvider } from './contexts/AuthProvider';
 import { ToastProvider } from './contexts/ToastProvider';
 import { ThemeProvider } from './hooks/ThemeProvider';
@@ -13,14 +14,16 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <BrowserRouter>
-        <ThemeProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <App />
-              <ToastContainer />
-            </AuthProvider>
-          </ToastProvider>
-        </ThemeProvider>
+        <MotionConfig reducedMotion="user">
+          <ThemeProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <App />
+                <ToastContainer />
+              </AuthProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </MotionConfig>
       </BrowserRouter>
     </ErrorBoundary>
   </StrictMode>,

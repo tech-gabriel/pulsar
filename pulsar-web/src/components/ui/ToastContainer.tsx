@@ -1,5 +1,7 @@
 import { CheckCircle, XCircle, Info, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useToast, type Toast, type ToastType } from '../../contexts/ToastContext';
+import { subirSuave } from '../../motion/presets';
 
 const config: Record<ToastType, { icon: typeof Info; border: string; icon_color: string }> = {
   success: { icon: CheckCircle, border: 'rgba(34, 197, 94, 0.4)',  icon_color: 'text-emerald-400' },
@@ -13,7 +15,7 @@ function ToastItem({ toast }: { toast: Toast }) {
 
   return (
     <div
-      className="flex items-start gap-3 px-4 py-3 rounded-xl max-w-sm w-full animate-slide-up"
+      className="flex items-start gap-3 px-4 py-3 rounded-xl max-w-sm w-full"
       style={{
         background: 'rgba(5, 47, 74, 0.9)',
         backdropFilter: 'var(--glass-blur)',
@@ -39,15 +41,23 @@ function ToastItem({ toast }: { toast: Toast }) {
 export default function ToastContainer() {
   const { toasts } = useToast();
 
-  if (toasts.length === 0) return null;
-
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center pointer-events-none">
-      {toasts.map((t) => (
-        <div key={t.id} className="pointer-events-auto">
-          <ToastItem toast={t} />
-        </div>
-      ))}
+      <AnimatePresence initial={false}>
+        {toasts.map((t) => (
+          <motion.div
+            key={t.id}
+            layout
+            variants={subirSuave}
+            initial="inicial"
+            animate="animar"
+            exit="sair"
+            className="pointer-events-auto"
+          >
+            <ToastItem toast={t} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

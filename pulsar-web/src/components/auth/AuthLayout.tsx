@@ -4,7 +4,7 @@ import logoLockup from '../../assets/logos/pulsar-lockup-escuro.svg';
 
 const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
   { Icon: Activity, title: 'Monitoramento em tempo real', desc: 'Dados climáticos atualizados a cada 15 minutos' },
-  { Icon: MapPin, title: '32 subprefeituras', desc: 'Cobertura completa de toda a cidade de São Paulo' },
+  { Icon: MapPin, title: '32 subprefeituras', desc: 'Toda São Paulo no mapa, do centro às bordas' },
   { Icon: BellRing, title: 'Alertas de risco', desc: 'Score de perigo e sugestões de segurança' },
 ];
 
@@ -40,7 +40,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             sua segurança
           </h2>
           <p className="mt-3 max-w-sm" style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Acompanhe o risco climático de São Paulo em tempo real e antecipe-se aos perigos.
+            Veja o risco climático de São Paulo em tempo real e não seja pego de surpresa pela chuva.
           </p>
 
           <div className="flex flex-col gap-5 mt-9">

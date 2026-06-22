@@ -290,7 +290,7 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
                 Subprefeituras
               </h3>
               {subsOrdenadas.length === 0 ? (
-                <p className="text-sm text-pulsar-300 py-2">Dados não disponíveis para esta zona</p>
+                <p className="text-sm text-pulsar-300 py-2">Ainda não temos dados para esta região.</p>
               ) : (
                 <div className="divide-y divide-[rgba(0,188,255,0.06)]">
                   {subsOrdenadas.map((sub, i) => (

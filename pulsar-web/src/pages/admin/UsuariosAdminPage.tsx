@@ -3,6 +3,7 @@ import Header from '../../components/ui/Header';
 import GlassCard from '../../components/ui/GlassCard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import EmptyState from '../../components/ui/EmptyState';
 import AdminSubnav from '../../components/admin/AdminSubnav';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsuariosAdmin } from '../../hooks/useUsuariosAdmin';
@@ -59,6 +60,8 @@ export default function UsuariosAdminPage() {
           </div>
         ) : erro ? (
           <ErrorBanner mensagem="Não foi possível carregar os usuários." onRetry={recarregar} />
+        ) : usuarios.length === 0 ? (
+          <EmptyState Icon={Users} mensagem="Nenhum usuário cadastrado por aqui ainda." />
         ) : (
           <GlassCard hover={false} padding="lg">
             <div className="flex flex-col divide-y" style={{ borderColor: 'var(--border-subtle)' }}>

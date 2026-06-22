@@ -30,6 +30,7 @@ import GlassCard from '../components/ui/GlassCard';
 import BadgeRisco from '../components/ui/BadgeRisco';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorBanner from '../components/ui/ErrorBanner';
+import EmptyState from '../components/ui/EmptyState';
 import KpiCard from '../components/dashboard/KpiCard';
 import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
@@ -220,7 +221,7 @@ export default function DashboardPage() {
                   Distribuição por risco
                 </h2>
                 {totalSubs === 0 ? (
-                  <p className="text-sm py-10 text-center" style={{ color: 'var(--text-muted)' }}>Sem dados de subprefeituras.</p>
+                  <EmptyState card={false} Icon={Gauge} mensagem="Sem dados de subprefeituras por enquanto." />
                 ) : (
                   <div className="relative">
                     <ResponsiveContainer width="100%" height={210}>
@@ -288,7 +289,7 @@ export default function DashboardPage() {
                 </h2>
                 <div className="flex flex-col gap-2">
                   {m.topSubs.length === 0 && (
-                    <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>Sem leituras disponíveis.</p>
+                    <EmptyState card={false} Icon={AlertTriangle} mensagem="Sem leituras disponíveis no momento." />
                   )}
                   {m.topSubs.map((s, i) => (
                     <button

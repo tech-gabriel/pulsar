@@ -318,14 +318,20 @@ body {
 }
 
 /* ── Tooltip dark do mapa (ETAPA 2.5/2.6) ──────────────────────────────────────*/
-.pulsar-tooltip {
-  background: rgba(5, 47, 74, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 188, 255, 0.2);
+/* Combina .leaflet-tooltip + .pulsar-tooltip para vencer o default do Leaflet
+   (.leaflet-tooltip { background:#fff; color:#222 }), que tem especificidade
+   igual e é carregado depois no bundle — senão o tooltip dark fica branco. */
+.leaflet-tooltip.pulsar-tooltip {
+  background: #06182a;
+  border: 1px solid rgba(0, 188, 255, 0.35);
   border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  color: #f0f9ff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  /* O tooltip é sempre dark: fixa as variáveis de texto em alto contraste,
+     independentemente do tema ativo (sobrescrito só no html.light abaixo). */
+  --text-primary: #ffffff;
+  --text-secondary: #cfeaff;
+  --border-glass-hover: rgba(0, 188, 255, 0.4);
   font-family: var(--font-body);
   font-size: 13px;
   line-height: 1.5;
@@ -663,10 +669,13 @@ html.light .pulsar-sub-nome {
 }
 
 /* Tooltip do mapa no tema light */
-html.light .pulsar-tooltip {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(0, 105, 168, 0.15);
+html.light .leaflet-tooltip.pulsar-tooltip {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 105, 168, 0.18);
   color: #0F172A;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --border-glass-hover: rgba(0, 105, 168, 0.3);
 }
 
 /* Scrollbar no tema light */

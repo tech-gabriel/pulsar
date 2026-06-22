@@ -64,7 +64,7 @@ export default function CadastroPage() {
           Criar sua conta
         </h1>
         <p className="mt-1.5" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-          Comece a monitorar sua segurança agora
+          Crie sua conta e acompanhe o clima da sua região de pertinho.
         </p>
       </div>
 

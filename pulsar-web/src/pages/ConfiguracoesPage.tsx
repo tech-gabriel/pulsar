@@ -113,7 +113,7 @@ export default function ConfiguracoesPage() {
   const notifs: { chave: keyof NotificacoesPrefs; titulo: string; descricao: string }[] = [
     { chave: 'alertaAlto', titulo: 'Alertas de risco alto', descricao: 'Avisar quando uma região entrar em risco alto' },
     { chave: 'alertaModerado', titulo: 'Alertas de risco moderado', descricao: 'Avisar já a partir da faixa moderada' },
-    { chave: 'resumoDiario', titulo: 'Resumo diário', descricao: 'Um panorama das condições uma vez por dia' },
+    { chave: 'resumoDiario', titulo: 'Resumo diário', descricao: 'Um resumo do clima da sua região, uma vez por dia' },
   ];
 
   return (

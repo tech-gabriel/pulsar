@@ -47,7 +47,7 @@ export default function SocialAuthButtons({ acao }: Props) {
 
   function handleSelect(provider: string) {
     // TODO: trocar pelo fluxo OAuth real quando houver credenciais.
-    showToast(`Login com ${provider} chega em breve! 🚀`, 'info');
+    showToast(`Login com ${provider} está chegando! Por enquanto, entre com seu e-mail.`, 'info');
   }
 
   return (

@@ -70,7 +70,7 @@ export default function NoticiasPage() {
           <GlassCard hover={false} padding="lg" className="text-center !py-12">
             <Newspaper size={48} className="mx-auto" style={{ color: 'var(--text-muted)' }} />
             <p className="mt-3" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-              Nenhuma notícia disponível no momento.
+              Ainda não há notícias por aqui. Volte mais tarde para conferir as novidades do clima.
             </p>
           </GlassCard>
         )}

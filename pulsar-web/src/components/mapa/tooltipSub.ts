@@ -48,7 +48,7 @@ export function tooltipSubprefeituraHtml(
   if (!sub) {
     return `<div style="font-family:'DM Sans',sans-serif;">
       ${cabecalho}
-      <div style="font-size:12px;color:var(--text-secondary);">Sem dados no momento</div>
+      <div style="font-size:12px;color:var(--text-secondary);">Ainda sem dados</div>
     </div>`;
   }
 

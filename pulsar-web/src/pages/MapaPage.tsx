@@ -15,6 +15,8 @@ import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useOnboarding } from '../hooks/useOnboarding';
+import OnboardingModal from '../components/onboarding/OnboardingModal';
 import { resolverRegiaoPorPonto } from '../utils/geo';
 import { normalizarNome } from '../utils/texto';
 import type { SubprefeituraMapaDto, EnderecoBusca } from '../types';
@@ -25,6 +27,7 @@ export default function MapaPage() {
   const subprefeituras = useSubprefeituras(regioes);
   const { isFavorito, toggleFavorito } = useFavoritos(usuario?.id ?? null);
   const isMobile = useIsMobile(768);
+  const { aberto: onboardingAberto, concluir: concluirOnboarding } = useOnboarding();
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
   const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(null);
@@ -126,6 +129,9 @@ export default function MapaPage() {
 
   return (
     <div className="relative h-screen overflow-hidden bg-pulsar-950">
+
+      {/* Onboarding de boas-vindas — só na 1ª visita */}
+      {onboardingAberto && <OnboardingModal onConcluir={concluirOnboarding} />}
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header alertasAtivos={alertasAtivos} />

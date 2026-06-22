@@ -55,7 +55,7 @@ export default function HistoricoListPage() {
 
         {vazio && (
           <p className="text-center py-12" style={{ color: 'var(--text-secondary)' }}>
-            Nenhuma subprefeitura disponível no momento.
+            Ainda não há subprefeituras para mostrar aqui.
           </p>
         )}
 

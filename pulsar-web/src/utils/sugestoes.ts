@@ -78,5 +78,5 @@ export function gerarSugestoes(subs: SubprefeituraDto[]): Sugestao[] {
 export function resumoSugestao(subs: SubprefeituraDto[]): string {
   const sugestoes = gerarSugestoes(subs);
   if (sugestoes.length > 0) return sugestoes[0].titulo;
-  return 'Condições severas — confira as recomendações.';
+  return 'Condições severas por aí. Confira as recomendações.';
 }

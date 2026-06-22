@@ -39,7 +39,7 @@ describe('tooltipSubprefeituraHtml', () => {
   it('usa o nome de fallback e mensagem vazia quando não há subprefeitura', () => {
     const html = tooltipSubprefeituraHtml(undefined, 'Vila Mariana');
     expect(html).toContain('Vila Mariana');
-    expect(html).toContain('Sem dados no momento');
+    expect(html).toContain('Ainda sem dados');
   });
 
   it('mostra traço para variáveis quando não há leitura', () => {

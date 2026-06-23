@@ -379,7 +379,7 @@ namespace Pulsar.API.Migrations
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Latitude = -23.495421,
                             Longitude = -46.437505000000002,
-                            Nome = "São Miguel Paulista",
+                            Nome = "São Miguel",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000002")
                         },
                         new

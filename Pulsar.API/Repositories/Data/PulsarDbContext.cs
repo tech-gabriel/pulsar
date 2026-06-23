@@ -211,7 +211,7 @@ public class PulsarDbContext : DbContext
             new { Id = new Guid("20000000-0000-0000-0000-000000000009"), RegiaoId = idLeste,  Nome = "Penha",                       Latitude = -23.521186, Longitude = -46.516174, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
             new { Id = new Guid("20000000-0000-0000-0000-000000000010"), RegiaoId = idLeste,  Nome = "Sapopemba",                   Latitude = -23.605570, Longitude = -46.509548, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
             new { Id = new Guid("20000000-0000-0000-0000-000000000011"), RegiaoId = idLeste,  Nome = "São Mateus",                  Latitude = -23.613550, Longitude = -46.450006, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = new Guid("20000000-0000-0000-0000-000000000012"), RegiaoId = idLeste,  Nome = "São Miguel Paulista",         Latitude = -23.495421, Longitude = -46.437505, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = new Guid("20000000-0000-0000-0000-000000000012"), RegiaoId = idLeste,  Nome = "São Miguel",                  Latitude = -23.495421, Longitude = -46.437505, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
             new { Id = new Guid("20000000-0000-0000-0000-000000000013"), RegiaoId = idLeste,  Nome = "Vila Prudente",               Latitude = -23.593597, Longitude = -46.558054, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
             // Norte (7)
             new { Id = new Guid("20000000-0000-0000-0000-000000000014"), RegiaoId = idNorte,  Nome = "Casa Verde-Limão-Cachoeirinha", Latitude = -23.476931, Longitude = -46.664169, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate },

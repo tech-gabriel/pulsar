@@ -15,6 +15,8 @@ import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useOnboarding } from '../hooks/useOnboarding';
+import OnboardingModal from '../components/onboarding/OnboardingModal';
 import { resolverRegiaoPorPonto } from '../utils/geo';
 import { normalizarNome } from '../utils/texto';
 import type { SubprefeituraMapaDto, EnderecoBusca } from '../types';
@@ -25,6 +27,7 @@ export default function MapaPage() {
   const subprefeituras = useSubprefeituras(regioes);
   const { isFavorito, toggleFavorito } = useFavoritos(usuario?.id ?? null);
   const isMobile = useIsMobile(768);
+  const { aberto: onboardingAberto, concluir: concluirOnboarding } = useOnboarding();
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
   const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(null);
@@ -125,7 +128,10 @@ export default function MapaPage() {
     : 'md:left-80 lg:left-0 lg:right-[350px]';
 
   return (
-    <div className="relative h-screen overflow-hidden bg-pulsar-950">
+    <div className="relative h-screen overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+
+      {/* Onboarding de boas-vindas — só na 1ª visita */}
+      {onboardingAberto && <OnboardingModal onConcluir={concluirOnboarding} />}
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header alertasAtivos={alertasAtivos} />
@@ -183,9 +189,10 @@ export default function MapaPage() {
           Desktop: sidebar direita, 350px fixa
       ══════════════════════════════════════════ */}
       <aside
+        style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-glass)' }}
         className={[
           "hidden md:flex flex-col absolute top-16 bottom-0 z-[200]",
-          "bg-pulsar-950 border-pulsar-800/40 shadow-xl overflow-hidden",
+          "shadow-xl overflow-hidden",
           "transition-[width] duration-300 ease-out",
           // Tablet: lado esquerdo
           "md:left-0 md:border-r",
@@ -245,8 +252,9 @@ export default function MapaPage() {
           Altura: 72vh. Fechado: 3.5rem visíveis.
       ══════════════════════════════════════════ */}
       <div
-        className="md:hidden fixed bottom-12 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] bg-pulsar-950 overflow-hidden"
+        className="md:hidden fixed bottom-12 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
         style={{
+          background: 'var(--bg-primary)',
           boxShadow: '0 -8px 40px rgba(5, 47, 74, 0.20)',
           transform: painelMobileAberto
             ? 'translateY(0)'
@@ -256,13 +264,14 @@ export default function MapaPage() {
       >
         {/* Handle bar */}
         <button
-          className="flex-shrink-0 h-14 flex items-center px-5 bg-pulsar-950 rounded-t-[22px] relative select-none active:bg-pulsar-900 transition-colors"
+          className="flex-shrink-0 h-14 flex items-center px-5 rounded-t-[22px] relative select-none transition-colors"
+          style={{ background: 'var(--bg-primary)' }}
           onClick={() => setPainelMobileAberto((v) => !v)}
         >
           {/* Pílula de arraste */}
-          <div className="absolute top-[9px] left-1/2 -translate-x-1/2 w-9 h-[3px] bg-white/20 rounded-full" />
+          <div className="absolute top-[9px] left-1/2 -translate-x-1/2 w-9 h-[3px] rounded-full" style={{ background: 'var(--border-glass)' }} />
 
-          <span className="flex-1 text-sm font-semibold text-white mt-1 text-left truncate">
+          <span className="flex-1 text-sm font-semibold mt-1 text-left truncate" style={{ color: 'var(--text-primary)' }}>
             {alertasAtivos > 0
               ? `${alertasAtivos} ${alertasAtivos === 1 ? 'alerta ativo' : 'alertas ativos'}`
               : 'Tudo tranquilo em São Paulo'}
@@ -271,7 +280,8 @@ export default function MapaPage() {
           {/* Botão Sair dentro do handle */}
           <button
             onClick={(e) => { e.stopPropagation(); logout(); }}
-            className="mr-3 mt-1 flex items-center gap-1 text-[11px] text-pulsar-300 hover:text-white transition-colors flex-shrink-0"
+            className="mr-3 mt-1 flex items-center gap-1 text-[11px] transition-colors flex-shrink-0"
+            style={{ color: 'var(--text-secondary)' }}
             aria-label="Sair da conta"
           >
             <LogOut size={11} />
@@ -279,8 +289,8 @@ export default function MapaPage() {
           </button>
 
           {painelMobileAberto
-            ? <ChevronDown size={18} className="text-pulsar-300 mt-1 flex-shrink-0" />
-            : <ChevronUp size={18} className="text-pulsar-300 mt-1 flex-shrink-0" />
+            ? <ChevronDown size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
+            : <ChevronUp size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
           }
         </button>
 
@@ -313,7 +323,7 @@ export default function MapaPage() {
           Aparece ao selecionar uma região no mobile
       ══════════════════════════════════════════ */}
       {regiaoSelecionada && isMobile && (
-        <div className="fixed inset-0 z-[1100] flex flex-col bg-pulsar-950 animate-slide-up">
+        <div className="fixed inset-0 z-[1100] flex flex-col animate-slide-up" style={{ background: 'var(--bg-primary)' }}>
           <DetalheRegiao
             key={regiaoSelecionada.id}
             regiaoId={regiaoSelecionada.id}

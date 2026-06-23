@@ -19,6 +19,7 @@ import GlassCard from '../components/ui/GlassCard';
 import BadgeRisco from '../components/ui/BadgeRisco';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorBanner from '../components/ui/ErrorBanner';
+import EmptyState from '../components/ui/EmptyState';
 
 interface LocationState {
   regiaoNome?: string;
@@ -72,7 +73,7 @@ export default function HistoricoPage() {
   const state = location.state as LocationState | null;
   const isMobile = useIsMobile(768);
 
-  const { historico, carregando, erro } = useHistorico(subprefeituraId ?? null);
+  const { historico, carregando, erro, recarregar } = useHistorico(subprefeituraId ?? null);
 
   const dados = historico?.leituras.map((l) => ({
     hora: formatarHora(l.timestamp),
@@ -139,14 +140,14 @@ export default function HistoricoPage() {
 
         {carregando && <LoadingSpinner mensagem="Carregando histórico..." className="h-60" />}
 
-        {erro && <ErrorBanner mensagem={erro} onRetry={() => window.location.reload()} />}
+        {erro && <ErrorBanner mensagem={erro} onRetry={recarregar} />}
 
         {semDados && (
-          <div className="flex flex-col items-center justify-center h-60 gap-3 text-pulsar-300">
-            <BarChart3 size={40} />
-            <p className="text-base font-medium text-pulsar-100">Histórico insuficiente</p>
-            <p className="text-sm text-center">São necessárias pelo menos 2 leituras para exibir o gráfico.</p>
-          </div>
+          <EmptyState
+            Icon={BarChart3}
+            titulo="Histórico insuficiente"
+            mensagem="São necessárias pelo menos 2 leituras para exibir o gráfico. Volte mais tarde para acompanhar a evolução."
+          />
         )}
 
         {/* Cards de variáveis atuais */}

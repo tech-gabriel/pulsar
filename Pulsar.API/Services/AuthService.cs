@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Google.Apis.Auth;
 using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
@@ -103,6 +104,65 @@ public class AuthService : IAuthService
             usuario.Role = RoleAcesso.ADMIN;
             await _usuarioRepository.AtualizarAsync(usuario);
             await _usuarioRepository.SalvarAsync();
+        }
+
+        return new LoginResponseDto
+        {
+            Token = GerarToken(usuario),
+            Usuario = MapearUsuarioDto(usuario)
+        };
+    }
+
+    public async Task<LoginResponseDto> LoginComGoogleAsync(GoogleLoginRequestDto request)
+    {
+        var clientId = _configuration["Authentication:Google:ClientId"];
+        if (string.IsNullOrWhiteSpace(clientId))
+            throw new InvalidOperationException("Login com Google não está configurado.");
+
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                request.IdToken,
+                new GoogleJsonWebSignature.ValidationSettings { Audience = new[] { clientId } });
+        }
+        catch (InvalidJwtException)
+        {
+            throw new UnauthorizedAccessException("Não foi possível validar o login com o Google.");
+        }
+
+        if (!payload.EmailVerified || string.IsNullOrWhiteSpace(payload.Email))
+            throw new UnauthorizedAccessException("E-mail do Google não verificado.");
+
+        var usuario = await _usuarioRepository.ObterPorEmailAsync(payload.Email);
+
+        if (usuario is null)
+        {
+            // Cadastro implícito via Google: conta sem senha utilizável.
+            usuario = new Usuario
+            {
+                Nome = string.IsNullOrWhiteSpace(payload.Name) ? payload.Email : payload.Name,
+                Email = payload.Email,
+                Perfil = TipoPerfil.CIDADAO,
+                Role = EhEmailAdmin(payload.Email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
+                // Sem login por senha: hash aleatório e inutilizável (não corresponde a nenhuma senha).
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N"))
+            };
+            await _usuarioRepository.AdicionarAsync(usuario);
+            await _usuarioRepository.SalvarAsync();
+        }
+        else
+        {
+            if (!usuario.Ativo)
+                throw new UnauthorizedAccessException("Conta desativada. Entre em contato com o suporte.");
+
+            // Auto-heal do bootstrap de admin (mesma regra do login por senha).
+            if (EhEmailAdmin(usuario.Email) && usuario.Role != RoleAcesso.ADMIN)
+            {
+                usuario.Role = RoleAcesso.ADMIN;
+                await _usuarioRepository.AtualizarAsync(usuario);
+                await _usuarioRepository.SalvarAsync();
+            }
         }
 
         return new LoginResponseDto

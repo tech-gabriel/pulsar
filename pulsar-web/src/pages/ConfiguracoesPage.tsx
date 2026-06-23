@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, Mail, LogOut, Pencil, Check, X, Eye, EyeOff,
-  Lock, Star, ChevronRight, Bell,
+  Lock, Star, ChevronRight, Bell, HelpCircle,
 } from 'lucide-react';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
@@ -11,6 +11,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useToast } from '../contexts/ToastContext';
 import { useNotificacoesPrefs, type NotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
 import { useFavoritos } from '../hooks/useFavoritos';
+import { useOnboarding } from '../hooks/useOnboarding';
 import { PERFIS, perfilMeta } from '../utils/perfil';
 import type { TipoPerfil } from '../types';
 
@@ -60,7 +61,14 @@ export default function ConfiguracoesPage() {
   const { showToast } = useToast();
   const { prefs, toggle } = useNotificacoesPrefs();
   const { favoritos } = useFavoritos(usuario?.id ?? null);
+  const { reverNovamente } = useOnboarding();
+  const navigate = useNavigate();
   const dark = theme === 'dark';
+
+  function reverBoasVindas() {
+    reverNovamente();
+    navigate('/');
+  }
 
   const metaAtual = perfilMeta(usuario?.perfil);
 
@@ -324,6 +332,21 @@ export default function ConfiguracoesPage() {
               ))}
             </div>
           )}
+        </GlassCard>
+
+        {/* ── AJUDA ───────────────────────────────────────────────────────── */}
+        <GlassCard hover={false} padding="lg" className="mb-4">
+          <button
+            type="button"
+            onClick={reverBoasVindas}
+            className="w-full flex items-center gap-3 text-left"
+          >
+            <HelpCircle size={18} style={{ color: 'var(--text-accent)' }} className="flex-shrink-0" />
+            <span className="flex-1" style={{ fontSize: 14, color: 'var(--text-primary)' }}>
+              Rever as boas-vindas
+            </span>
+            <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
+          </button>
         </GlassCard>
 
         {/* ── CONTA / SAIR ────────────────────────────────────────────────── */}

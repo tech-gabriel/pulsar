@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import type { HistoricoDto } from '../types';
 
@@ -6,12 +6,16 @@ interface UseHistoricoResult {
   historico: HistoricoDto | null;
   carregando: boolean;
   erro: string | null;
+  recarregar: () => void;
 }
 
 export function useHistorico(subprefeituraId: string | null, horas = 24): UseHistoricoResult {
   const [historico, setHistorico] = useState<HistoricoDto | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [versao, setVersao] = useState(0);
+
+  const recarregar = useCallback(() => setVersao((v) => v + 1), []);
 
   useEffect(() => {
     if (!subprefeituraId) return;
@@ -36,7 +40,7 @@ export function useHistorico(subprefeituraId: string | null, horas = 24): UseHis
     return () => {
       cancelado = true;
     };
-  }, [subprefeituraId, horas]);
+  }, [subprefeituraId, horas, versao]);
 
-  return { historico, carregando, erro };
+  return { historico, carregando, erro, recarregar };
 }

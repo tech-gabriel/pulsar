@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, History, ChevronRight, Thermometer } from 'lucide-react';
+import { Search, History, ChevronRight, Thermometer, SearchX } from 'lucide-react';
 import Header from '../components/ui/Header';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import ErrorBanner from '../components/ui/ErrorBanner';
+import EmptyState from '../components/ui/EmptyState';
 import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { coresParaFaixa, labelFaixa } from '../utils/risco';
@@ -14,7 +16,7 @@ function normalizar(s: string): string {
 /** Lista de todas as subprefeituras com busca; clicar abre o histórico 24h. */
 export default function HistoricoListPage() {
   const navigate = useNavigate();
-  const { regioes, carregando } = useRegioes();
+  const { regioes, carregando, erro, recarregar } = useRegioes();
   const subprefeituras = useSubprefeituras(regioes);
   const [busca, setBusca] = useState('');
 
@@ -25,7 +27,7 @@ export default function HistoricoListPage() {
       .sort((a, b) => (b.scoreAtual?.valor ?? 0) - (a.scoreAtual?.valor ?? 0));
   }, [subprefeituras, busca]);
 
-  const vazio = !carregando && subprefeituras.length === 0;
+  const vazio = !carregando && !erro && subprefeituras.length === 0;
 
   return (
     <div style={{ background: 'var(--bg-primary)', minHeight: '100dvh' }}>
@@ -53,16 +55,21 @@ export default function HistoricoListPage() {
 
         {carregando && <LoadingSpinner mensagem="Carregando subprefeituras..." className="h-60" />}
 
-        {vazio && (
-          <p className="text-center py-12" style={{ color: 'var(--text-secondary)' }}>
-            Ainda não há subprefeituras para mostrar aqui.
-          </p>
+        {erro && !carregando && (
+          <div className="mb-4">
+            <ErrorBanner mensagem={erro} onRetry={recarregar} />
+          </div>
         )}
 
-        {!carregando && lista.length === 0 && subprefeituras.length > 0 && (
-          <p className="text-center py-12" style={{ color: 'var(--text-secondary)' }}>
-            Nenhum resultado para “{busca}”.
-          </p>
+        {vazio && (
+          <EmptyState
+            Icon={History}
+            mensagem="Ainda não há subprefeituras para mostrar aqui. Volte mais tarde para acompanhar o histórico."
+          />
+        )}
+
+        {!carregando && !erro && lista.length === 0 && subprefeituras.length > 0 && (
+          <EmptyState Icon={SearchX} mensagem={`Nenhum resultado para “${busca}”.`} />
         )}
 
         {/* Lista */}

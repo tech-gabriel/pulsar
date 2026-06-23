@@ -37,6 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     salvarSessao(data);
   }, [salvarSessao]);
 
+  const loginGoogle = useCallback(async (idToken: string) => {
+    const { data } = await api.post<LoginResponseDto>('/auth/google', { idToken });
+    salvarSessao(data);
+  }, [salvarSessao]);
+
   const cadastrar = useCallback(async (dto: CadastroRequestDto) => {
     const { data } = await api.post<LoginResponseDto>('/auth/cadastro', dto);
     salvarSessao(data);
@@ -62,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         usuario,
         token,
         login,
+        loginGoogle,
         cadastrar,
         atualizarPerfil,
         logout,

@@ -1,6 +1,8 @@
 import { Activity, RefreshCw, Shield, LogOut } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { RegiaoDto } from '../../types';
 import { SkeletonCard } from '../ui/Skeleton';
+import { containerStagger, itemStagger } from '../../motion/presets';
 import RegiaoCard from './RegiaoCard';
 
 interface Props {
@@ -58,14 +60,15 @@ export default function PainelLateral({
 
   function renderCard(regiao: RegiaoDto) {
     return (
-      <RegiaoCard
-        key={regiao.id}
-        regiao={regiao}
-        ativa={regiao.nome === regiaoSelecionada}
-        favorito={isFavorito(regiao.id)}
-        onSelecionar={() => onSelecionarRegiao(regiao.nome)}
-        onToggleFavorito={() => onToggleFavorito(regiao.id)}
-      />
+      <motion.div key={regiao.id} variants={itemStagger}>
+        <RegiaoCard
+          regiao={regiao}
+          ativa={regiao.nome === regiaoSelecionada}
+          favorito={isFavorito(regiao.id)}
+          onSelecionar={() => onSelecionarRegiao(regiao.nome)}
+          onToggleFavorito={() => onToggleFavorito(regiao.id)}
+        />
+      </motion.div>
     );
   }
 
@@ -122,7 +125,7 @@ export default function PainelLateral({
             ))}
           </div>
         ) : (
-          <>
+          <motion.div variants={containerStagger} initial="inicial" animate="animar">
             {semAlertas && (
               <div className="flex items-center gap-2 px-3 py-2.5 mb-2 rounded-lg bg-emerald-500/10 border border-emerald-400/20">
                 <Shield size={16} className="text-emerald-400 flex-shrink-0" />
@@ -145,7 +148,7 @@ export default function PainelLateral({
             )}
 
             {demais.map(renderCard)}
-          </>
+          </motion.div>
         )}
       </div>
     </div>

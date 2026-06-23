@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import {
   ArrowLeft, Thermometer, CloudRain, Wind, Eye, Droplets, Sun,
   ShieldAlert, History, RefreshCw,
@@ -10,6 +11,7 @@ import { useCountUp } from '../../hooks/useCountUp';
 import { coresParaFaixa, labelFaixa } from '../../utils/risco';
 import { centroideRegiao } from '../../utils/geo';
 import { gerarSugestoes, type CategoriaSugestao } from '../../utils/sugestoes';
+import { DURACAO, EASE_SUAVE, containerStagger, itemStagger } from '../../motion/presets';
 import BotaoFavorito from './BotaoFavorito';
 import { SkeletonCardSubprefeitura } from '../ui/Skeleton';
 
@@ -185,7 +187,12 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
   const sugestoes = regiao ? gerarSugestoes(regiao.subprefeituras) : [];
 
   return (
-    <div className="painel-glass flex flex-col h-full overflow-hidden animate-slide-left">
+    <motion.div
+      className="painel-glass flex flex-col h-full overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: DURACAO.media, ease: EASE_SUAVE }}
+    >
       {/* Header */}
       <div className="px-4 pt-4 pb-3 flex items-start gap-2 flex-shrink-0">
         <button
@@ -230,18 +237,18 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
         )}
 
         {regiao && cores && (
-          <>
+          <motion.div variants={containerStagger} initial="inicial" animate="animar">
             {/* Score em destaque com ring */}
-            <div className="flex flex-col items-center py-4">
+            <motion.div variants={itemStagger} className="flex flex-col items-center py-4">
               <ScoreRing score={score} cor={cores.fill} />
               <span className="mt-2 text-pulsar-100" style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: 13 }}>
                 Risco {labelFaixa(regiao.faixaRisco)}
               </span>
-            </div>
+            </motion.div>
 
             {/* Grid de variáveis climáticas */}
             {clima && (
-              <div className="painel-card-glass px-4 py-1 rounded-[10px]">
+              <motion.div variants={itemStagger} className="painel-card-glass px-4 py-1 rounded-[10px]">
                 <LinhaClima icon={Thermometer} corIcone="var(--color-pulsar-400)" label="Temperatura" valor={clima.temperatura.toFixed(1)} unidade="°C" />
                 <LinhaClima icon={Thermometer} corIcone="var(--color-pulsar-400)" label="Sensação" valor={clima.sensacao.toFixed(1)} unidade="°C" />
                 <LinhaClima icon={CloudRain} corIcone="#3B82F6" label="Chuva" valor={clima.chuva.toFixed(1)} unidade="mm/h" />
@@ -249,12 +256,12 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
                 <LinhaClima icon={Eye} corIcone="#F59E0B" label="Visibilidade" valor={clima.visibilidade.toFixed(1)} unidade="km" />
                 <LinhaClima icon={Droplets} corIcone="#06B6D4" label="Umidade" valor={Math.round(clima.umidade).toString()} unidade="%" />
                 <LinhaClima icon={Sun} corIcone="#EAB308" label="Índice UV" valor={Math.round(clima.uv).toString()} unidade="" />
-              </div>
+              </motion.div>
             )}
 
             {/* Sugestões de segurança / atenção */}
             {score > 60 && sugestoes.length > 0 && (
-              <div className="mt-4">
+              <motion.div variants={itemStagger} className="mt-4">
                 <div className="flex items-center gap-1.5 mb-2">
                   <ShieldAlert size={15} className="text-red-400" />
                   <h3 className="text-pulsar-100" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 14 }}>
@@ -273,19 +280,19 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
                     </div>
                   );
                 })}
-              </div>
+              </motion.div>
             )}
 
             {score > 30 && score <= 60 && (
-              <div className="mt-4 px-3 py-2.5 rounded-lg bg-yellow-400/10 border border-yellow-400/20">
+              <motion.div variants={itemStagger} className="mt-4 px-3 py-2.5 rounded-lg bg-yellow-400/10 border border-yellow-400/20">
                 <p className="text-yellow-200" style={{ fontSize: 12.5 }}>
                   <span className="font-semibold">Atenção:</span> condições moderadas. Acompanhe a evolução do tempo.
                 </p>
-              </div>
+              </motion.div>
             )}
 
             {/* Lista de subprefeituras */}
-            <div className="mt-4">
+            <motion.div variants={itemStagger} className="mt-4">
               <h3 className="text-pulsar-200 mb-1" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 14 }}>
                 Subprefeituras
               </h3>
@@ -305,10 +312,10 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
                   ))}
                 </div>
               )}
-            </div>
-          </>
+            </motion.div>
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

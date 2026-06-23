@@ -4,6 +4,7 @@ import Header from '../../components/ui/Header';
 import GlassCard from '../../components/ui/GlassCard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import EmptyState from '../../components/ui/EmptyState';
 import BadgeRisco from '../../components/ui/BadgeRisco';
 import AdminSubnav from '../../components/admin/AdminSubnav';
 import { useAuth } from '../../contexts/AuthContext';
@@ -101,7 +102,7 @@ export default function SugestoesAdminPage() {
         ) : erro ? (
           <ErrorBanner mensagem="Não foi possível carregar as sugestões." onRetry={recarregar} />
         ) : filtradas.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Nenhuma sugestão nesta categoria.</p>
+          <EmptyState Icon={Lightbulb} mensagem="Nenhuma sugestão nesta categoria ainda." />
         ) : (
           <div className="flex flex-col gap-3">
             {filtradas.map((s) => (

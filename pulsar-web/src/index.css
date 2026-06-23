@@ -63,7 +63,7 @@
 
 /* ── Tema Light (ETAPA B.2) — sobrescreve as variáveis em html.light ───────────*/
 html.light {
-  --bg-primary: #F8FAFC;
+  --bg-primary: #EFF6FB;
   --bg-secondary: rgba(0, 132, 209, 0.06);
   --bg-elevated: rgba(0, 132, 209, 0.04);
   --bg-glass: rgba(255, 255, 255, 0.75);
@@ -223,6 +223,44 @@ body {
   padding: 10px 12px;
   margin-bottom: 6px;
 }
+
+/* ── Tema Light no painel do mapa ──────────────────────────────────────────────
+   O painel foi desenhado para o escuro (fundos e textos fixos). No tema claro
+   clareamos as superfícies e remapeamos os tons pulsar (claros) para os tokens
+   semânticos de texto, sem precisar editar cada classe inline. */
+html.light .painel-glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 251, 0.96) 100%);
+}
+html.light .painel-card-glass {
+  background: rgba(0, 132, 209, 0.05);
+  border-color: rgba(0, 132, 209, 0.12);
+}
+html.light .regiao-card {
+  background: rgba(0, 132, 209, 0.05);
+  border-color: rgba(0, 132, 209, 0.12);
+}
+html.light .regiao-card:hover {
+  background: rgba(0, 132, 209, 0.10);
+  border-color: rgba(0, 132, 209, 0.28);
+}
+html.light .regiao-card-ativa {
+  background: rgba(0, 132, 209, 0.14);
+  border-color: rgba(0, 132, 209, 0.45);
+}
+/* Remapeia o texto do painel para tons escuros legíveis no tema claro.
+   `!important` + cor explícita para vencer as utilities text-pulsar-* do Tailwind
+   sem depender de precedência de layer nem da resolução de var. */
+html.light .painel-glass .text-pulsar-50,
+html.light .painel-glass .text-pulsar-100 { color: #0F172A !important; }
+html.light .painel-glass .text-pulsar-200 { color: #334155 !important; }
+html.light .painel-glass .text-pulsar-300 { color: #475569 !important; }
+html.light .painel-glass .text-pulsar-400 { color: #0084D1 !important; }
+/* Textos coloridos dos banners (verde "tudo tranquilo", aviso amarelo, alerta
+   vermelho): tons claros viram tons escuros legíveis sobre o fundo claro. */
+html.light .painel-glass .text-emerald-200 { color: #047857 !important; }
+html.light .painel-glass .text-yellow-200 { color: #92400E !important; }
+html.light .painel-glass .text-red-200,
+html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 
 /* Barra de progresso das subprefeituras: cresce 500ms ease-out (ETAPA 4.4/4.6) */
 @keyframes barra-cresce {

@@ -18,6 +18,7 @@ using Pulsar.API.Scheduler;
 using Pulsar.API.Services;
 using Pulsar.API.Services.Email;
 using Pulsar.API.Services.Interfaces;
+using Pulsar.API.Services.Push;
 using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -174,6 +175,7 @@ builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
 builder.Services.AddScoped<ISugestaoRepository, SugestaoRepository>();
 builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();
 builder.Services.AddScoped<ITokenRecuperacaoSenhaRepository, TokenRecuperacaoSenhaRepository>();
+builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>();
 
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
@@ -190,6 +192,12 @@ builder.Services.AddScoped<IClimateService, ClimateService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<ISugestaoService, SugestaoService>();
 builder.Services.AddScoped<IAlertaService, AlertaService>();
+
+// --- Web Push (notificações) ---
+// Gated por config: sem chaves VAPID (Push:PublicKey/PrivateKey) o serviço fica
+// inerte e o frontend esconde o opt-in. Chave privada só em User Secrets/env var.
+builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.SectionName));
+builder.Services.AddScoped<IPushNotificationService, WebPushNotificationService>();
 
 // --- Scheduler ---
 builder.Services.AddHostedService<DataCollectionJob>();

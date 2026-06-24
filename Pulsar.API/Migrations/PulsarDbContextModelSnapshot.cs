@@ -79,6 +79,53 @@ namespace Pulsar.API.Migrations
                     b.ToTable("AlertaSugestoes");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AssinaturaPush", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AlertaAlto")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AlertaModerado")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("P256dh")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("ResumoDiario")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Endpoint")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("AssinaturasPush");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.LeituraClimatica", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1284,6 +1331,17 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Alerta");
 
                     b.Navigation("Sugestao");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AssinaturaPush", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.LeituraClimatica", b =>

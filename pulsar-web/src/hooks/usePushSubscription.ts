@@ -65,8 +65,12 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
   const [ocupado, setOcupado] = useState(false);
   const chaveRef = useRef<string | null>(null);
   // Mantém as prefs atuais acessíveis dentro dos callbacks sem recriá-los.
+  // Atualizado em efeito (não no render) — escrever ref durante o render é
+  // proibido pela regra react-hooks.
   const prefsRef = useRef(prefs);
-  prefsRef.current = prefs;
+  useEffect(() => {
+    prefsRef.current = prefs;
+  }, [prefs]);
   // Última versão de prefs efetivamente enviada ao backend — evita re-POST
   // redundante no efeito de sincronização quando nada mudou.
   const prefsSincronizadasRef = useRef<string>(JSON.stringify(prefs));

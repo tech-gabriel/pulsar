@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, Mail, LogOut, Pencil, Check, X, Eye, EyeOff,
-  Lock, Star, ChevronRight, Bell, HelpCircle,
+  Lock, Star, ChevronRight, Bell, BellRing, HelpCircle, Smartphone,
 } from 'lucide-react';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { useToast } from '../contexts/ToastContext';
 import { useNotificacoesPrefs, type NotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
+import { usePushSubscription } from '../hooks/usePushSubscription';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { PERFIS, perfilMeta } from '../utils/perfil';
@@ -60,6 +61,7 @@ export default function ConfiguracoesPage() {
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useToast();
   const { prefs, toggle } = useNotificacoesPrefs();
+  const push = usePushSubscription(prefs);
   const { favoritos } = useFavoritos(usuario?.id ?? null);
   const { reverNovamente } = useOnboarding();
   const navigate = useNavigate();
@@ -300,9 +302,51 @@ export default function ConfiguracoesPage() {
               <SwitchRow key={n.chave} titulo={n.titulo} descricao={n.descricao} ligado={prefs[n.chave]} onToggle={() => toggle(n.chave)} />
             ))}
           </div>
-          <p className="mt-2" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
-            Preferências salvas neste dispositivo. O envio de notificações chega numa próxima etapa.
-          </p>
+
+          {/* Ativação do push neste dispositivo (Web Push) */}
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+            {push.estado === 'ativo' ? (
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 min-w-0">
+                  <BellRing size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
+                  <span className="min-w-0">
+                    <span className="block" style={{ fontSize: 13.5, color: 'var(--text-primary)' }}>Notificações ativas neste dispositivo</span>
+                    <span className="block" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Você receberá os alertas das suas regiões favoritas.</span>
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void push.desativar()}
+                  disabled={push.ocupado}
+                  className="flex-shrink-0 px-3 py-2 rounded-lg"
+                  style={{ fontSize: 13, color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}
+                >
+                  {push.ocupado ? '…' : 'Desativar'}
+                </button>
+              </div>
+            ) : push.estado === 'inativo' ? (
+              <button
+                type="button"
+                onClick={() => void push.ativar()}
+                disabled={push.ocupado}
+                className="btn-gradient w-full flex items-center justify-center gap-2 py-2.5 min-h-[44px]"
+                style={{ fontSize: 14 }}
+              >
+                <Smartphone size={16} />
+                {push.ocupado ? 'Ativando…' : 'Ativar notificações neste dispositivo'}
+              </button>
+            ) : push.estado === 'negado' ? (
+              <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                As notificações estão bloqueadas para este site. Reative a permissão nas configurações do navegador para receber alertas.
+              </p>
+            ) : push.estado === 'indisponivel' ? (
+              <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                Preferências salvas neste dispositivo. As notificações push não estão disponíveis aqui no momento.
+              </p>
+            ) : (
+              <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Verificando notificações…</p>
+            )}
+          </div>
         </GlassCard>
 
         {/* ── FAVORITOS ───────────────────────────────────────────────────── */}

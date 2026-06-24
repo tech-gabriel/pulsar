@@ -209,6 +209,13 @@ builder.Services.AddScoped<IPushNotificationService, WebPushNotificationService>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Confia em UM ÚNICO salto (o proxy da plataforma). O Render anexa o IP real
+    // do cliente como a última entrada do X-Forwarded-For; com ForwardLimit=1 o
+    // ASP.NET usa essa entrada e ignora qualquer valor que o cliente tenha
+    // injetado à esquerda — fecha a evasão de rate limit por header forjado.
+    options.ForwardLimit = 1;
+    // KnownProxies/KnownIPNetworks ficam vazios porque o IP do proxy é dinâmico
+    // em PaaS; o ForwardLimit=1 é o que limita a confiança (ver docs/DEPLOY.md).
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });

@@ -113,10 +113,13 @@ Render tiver dado outro nome/URL ao backend, edite a regra de rewrite do
   coleta + gera cold starts). O plano Starter mantém o serviço ligado.
 - **`X-Forwarded-For` / segurança**: atrás do proxy, o app confia no
   `X-Forwarded-For` (via `UseForwardedHeaders`) para o rate limiter ver o IP real.
-  Como o IP do proxy é dinâmico, `KnownProxies`/`KnownIPNetworks` ficam vazios —
-  um cliente poderia, em tese, forjar o header para escapar do rate limit. É um
-  risco baixo aceitável para este app; se virar problema, fixe as faixas de IP do
-  Render como proxies conhecidos.
+  Como o IP do proxy é dinâmico em PaaS, `KnownProxies`/`KnownIPNetworks` ficam
+  vazios; a confiança é limitada por **`ForwardLimit = 1`** — só o último salto
+  (o proxy do Render, que anexa o IP real do cliente) é usado, então um
+  `X-Forwarded-For` forjado pelo cliente fica à esquerda e é ignorado. Isso
+  fecha a evasão de rate limit. **Premissa**: a plataforma sempre anexa o IP de
+  conexão ao `X-Forwarded-For` (Render faz). Se trocar de plataforma, confirme
+  esse comportamento ou fixe as faixas de IP do proxy em `KnownIPNetworks`.
 - **Alternativa de menor custo**: servir o frontend pelo próprio backend (um único
   serviço, 100% same-origin, sem o site estático). Mais barato, mas acopla os
   deploys e engorda a imagem — não adotado aqui em favor da separação.

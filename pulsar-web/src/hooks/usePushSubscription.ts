@@ -40,6 +40,23 @@ function urlBase64ParaUint8Array(base64: string): Uint8Array<ArrayBuffer> {
 }
 
 /**
+ * A inscrição existente usa a mesma chave VAPID atual? Se a chave do servidor
+ * mudou (ex.: chave de teste → produção), a inscrição antiga fica presa à chave
+ * velha e o envio falha — então é preciso refazê-la. Quando a chave da inscrição
+ * não é legível, assumimos que está OK (não força re-inscrição à toa).
+ */
+function mesmaChave(sub: PushSubscription, chaveAtual: Uint8Array): boolean {
+  const aplicada = sub.options?.applicationServerKey;
+  if (!aplicada) return true;
+  const bytes = new Uint8Array(aplicada);
+  if (bytes.length !== chaveAtual.length) return false;
+  for (let i = 0; i < bytes.length; i++) {
+    if (bytes[i] !== chaveAtual[i]) return false;
+  }
+  return true;
+}
+
+/**
  * Gerencia a inscrição de Web Push do dispositivo: descobre suporte/estado,
  * permite ativar/desativar e mantém as preferências sincronizadas com o backend.
  */
@@ -50,6 +67,9 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
   // Mantém as prefs atuais acessíveis dentro dos callbacks sem recriá-los.
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
+  // Última versão de prefs efetivamente enviada ao backend — evita re-POST
+  // redundante no efeito de sincronização quando nada mudou.
+  const prefsSincronizadasRef = useRef<string>(JSON.stringify(prefs));
 
   const enviarAoBackend = useCallback(async (sub: PushSubscription) => {
     const json = sub.toJSON();
@@ -62,6 +82,7 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
       alertaAlto: p.alertaAlto,
       resumoDiario: p.resumoDiario,
     });
+    prefsSincronizadasRef.current = JSON.stringify(p);
   }, []);
 
   // Descoberta inicial: suporte → permissão → servidor habilitado → inscrição existente.
@@ -86,7 +107,11 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
         chaveRef.current = data.chavePublica;
         const reg = await navigator.serviceWorker.ready;
         const sub = await reg.pushManager.getSubscription();
-        if (!cancelado) setEstado(sub ? 'ativo' : 'inativo');
+        if (cancelado) return;
+        // Inscrição presa a uma chave VAPID antiga conta como inativa: o botão
+        // "Ativar" reaparece e a refaz com a chave atual.
+        const ativa = sub !== null && mesmaChave(sub, urlBase64ParaUint8Array(data.chavePublica));
+        setEstado(ativa ? 'ativo' : 'inativo');
       } catch {
         if (!cancelado) setEstado('indisponivel');
       }
@@ -106,12 +131,18 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
         return;
       }
       const reg = await navigator.serviceWorker.ready;
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ParaUint8Array(chaveRef.current),
-        }));
+      const chaveAtual = urlBase64ParaUint8Array(chaveRef.current);
+      let sub = await reg.pushManager.getSubscription();
+      // Descarta inscrição amarrada a uma chave VAPID antiga antes de refazer —
+      // subscribe() lançaria InvalidStateError se a chave fosse diferente.
+      if (sub && !mesmaChave(sub, chaveAtual)) {
+        await sub.unsubscribe();
+        sub = null;
+      }
+      sub ??= await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: chaveAtual,
+      });
       await enviarAoBackend(sub);
       setEstado('ativo');
     } catch {
@@ -141,8 +172,11 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
   }, []);
 
   // Reenvia as preferências ao backend sempre que mudarem com inscrição ativa.
+  // Pula quando nada mudou desde o último envio (ex.: transição para 'ativo' no
+  // carregamento, sem alteração de preferência) para não repetir o POST.
   useEffect(() => {
     if (estado !== 'ativo') return;
+    if (JSON.stringify(prefs) === prefsSincronizadasRef.current) return;
     void (async () => {
       try {
         const reg = await navigator.serviceWorker.ready;

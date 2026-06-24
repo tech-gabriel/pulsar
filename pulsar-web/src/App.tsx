@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
+import TitleManager from './components/TitleManager';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
 import EsqueciSenhaPage from './pages/EsqueciSenhaPage';
@@ -34,23 +35,26 @@ function RotaPublica({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<RotaProtegida><MapaPage /></RotaProtegida>} />
-      <Route path="/historico" element={<RotaProtegida><HistoricoListPage /></RotaProtegida>} />
-      <Route path="/historico/:subprefeituraId" element={<RotaProtegida><HistoricoPage /></RotaProtegida>} />
-      <Route path="/dashboard" element={<RotaProtegida><DashboardPage /></RotaProtegida>} />
-      <Route path="/noticias" element={<RotaProtegida><NoticiasPage /></RotaProtegida>} />
-      <Route path="/configuracoes" element={<RotaProtegida><ConfiguracoesPage /></RotaProtegida>} />
-      <Route path="/admin/usuarios" element={<RotaAdmin><UsuariosAdminPage /></RotaAdmin>} />
-      <Route path="/admin/sugestoes" element={<RotaAdmin><SugestoesAdminPage /></RotaAdmin>} />
-      <Route path="/admin/sistema" element={<RotaAdmin><SistemaAdminPage /></RotaAdmin>} />
+    <>
+      <TitleManager />
+      <Routes>
+        <Route path="/" element={<RotaProtegida><MapaPage /></RotaProtegida>} />
+        <Route path="/historico" element={<RotaProtegida><HistoricoListPage /></RotaProtegida>} />
+        <Route path="/historico/:subprefeituraId" element={<RotaProtegida><HistoricoPage /></RotaProtegida>} />
+        <Route path="/dashboard" element={<RotaProtegida><DashboardPage /></RotaProtegida>} />
+        <Route path="/noticias" element={<RotaProtegida><NoticiasPage /></RotaProtegida>} />
+        <Route path="/configuracoes" element={<RotaProtegida><ConfiguracoesPage /></RotaProtegida>} />
+        <Route path="/admin/usuarios" element={<RotaAdmin><UsuariosAdminPage /></RotaAdmin>} />
+        <Route path="/admin/sugestoes" element={<RotaAdmin><SugestoesAdminPage /></RotaAdmin>} />
+        <Route path="/admin/sistema" element={<RotaAdmin><SistemaAdminPage /></RotaAdmin>} />
 
-      <Route path="/login" element={<RotaPublica><LoginPage /></RotaPublica>} />
-      <Route path="/cadastro" element={<RotaPublica><CadastroPage /></RotaPublica>} />
-      <Route path="/esqueci-senha" element={<RotaPublica><EsqueciSenhaPage /></RotaPublica>} />
-      <Route path="/redefinir-senha" element={<RotaPublica><RedefinirSenhaPage /></RotaPublica>} />
+        <Route path="/login" element={<RotaPublica><LoginPage /></RotaPublica>} />
+        <Route path="/cadastro" element={<RotaPublica><CadastroPage /></RotaPublica>} />
+        <Route path="/esqueci-senha" element={<RotaPublica><EsqueciSenhaPage /></RotaPublica>} />
+        <Route path="/redefinir-senha" element={<RotaPublica><RedefinirSenhaPage /></RotaPublica>} />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }

@@ -5,11 +5,11 @@ const MARCA = 'Pulsar';
 /** Título institucional completo, usado em rotas sem nome próprio. */
 const TITULO_PADRAO = 'Pulsar — Monitoramento Climático em Tempo Real';
 
-/** Nome de cada rota exata → vira "Nome · Pulsar". */
+// Nome de cada rota exata → vira "Pulsar · Nome". A home (/) fica de fora de
+// propósito: usa o título institucional completo (TITULO_PADRAO).
 const TITULOS_EXATOS: Record<string, string> = {
-  '/': 'Mapa',
   '/historico': 'Histórico',
-  '/dashboard': 'Painel',
+  '/dashboard': 'Dashboard',
   '/noticias': 'Notícias',
   '/configuracoes': 'Configurações',
   '/admin/usuarios': 'Usuários · Admin',
@@ -44,7 +44,7 @@ export default function TitleManager() {
 
   useEffect(() => {
     const titulo = resolverTitulo(pathname, state);
-    document.title = titulo ? `${titulo} · ${MARCA}` : TITULO_PADRAO;
+    document.title = titulo ? `${MARCA} · ${titulo}` : TITULO_PADRAO;
   }, [pathname, state]);
 
   return null;

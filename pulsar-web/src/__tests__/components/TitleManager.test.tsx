@@ -12,29 +12,29 @@ function renderEm(pathname: string, state?: unknown) {
 }
 
 describe('TitleManager', () => {
-  it('define o título da rota exata', () => {
+  it('define o título da rota exata (marca primeiro)', () => {
     renderEm('/configuracoes');
-    expect(document.title).toBe('Configurações · Pulsar');
+    expect(document.title).toBe('Pulsar · Configurações');
   });
 
-  it('usa "Mapa" na home', () => {
+  it('home usa o título institucional', () => {
     renderEm('/');
-    expect(document.title).toBe('Mapa · Pulsar');
+    expect(document.title).toBe('Pulsar — Monitoramento Climático em Tempo Real');
   });
 
   it('rotas de admin levam o sufixo Admin', () => {
     renderEm('/admin/usuarios');
-    expect(document.title).toBe('Usuários · Admin · Pulsar');
+    expect(document.title).toBe('Pulsar · Usuários · Admin');
   });
 
   it('detalhe de histórico usa o nome da subprefeitura vindo no state', () => {
     renderEm('/historico/qualquer-id', { subNome: 'Sé' });
-    expect(document.title).toBe('Histórico de Sé · Pulsar');
+    expect(document.title).toBe('Pulsar · Histórico de Sé');
   });
 
   it('detalhe de histórico sem state cai no genérico', () => {
     renderEm('/historico/qualquer-id');
-    expect(document.title).toBe('Histórico · Pulsar');
+    expect(document.title).toBe('Pulsar · Histórico');
   });
 
   it('rota desconhecida usa o título institucional', () => {

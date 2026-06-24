@@ -1,0 +1,85 @@
+# Render Blueprint (infra como código) — Pulsar
+# Sobe DOIS serviços a partir deste repositório:
+#   1. pulsar-api  — backend .NET 10 (Docker), always-on (plano Starter)
+#   2. pulsar-web  — frontend Vite (Static Site, grátis) que faz proxy /api → backend
+#
+# O banco é o Supabase (externo) — NÃO é provisionado aqui.
+#
+# Como usar: no painel do Render → New → Blueprint → conectar este repo. O Render
+# lê este arquivo e pede os valores marcados com `sync: false` (segredos).
+#
+# IMPORTANTE: o destino do rewrite usa a URL pública do backend
+# (https://pulsar-api.onrender.com). Se o Render renomear o serviço (nome já em
+# uso), ajuste a URL na regra de rewrite abaixo após o 1º deploy.
+
+services:
+  # ── Backend (.NET API) ─────────────────────────────────────────────────────
+  - type: web
+    name: pulsar-api
+    runtime: docker
+    plan: starter            # always-on — necessário p/ o DataCollectionJob (15 min)
+    region: virginia         # us-east, região mais próxima do Brasil no Render
+    branch: master
+    autoDeploy: true         # redeploy a cada push em master (CI é o gate antes do merge)
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Email__Provider
+        value: Resend
+      - key: Email__FromName
+        value: Pulsar
+      # Gera um segredo aleatório forte no 1º deploy (JWT).
+      - key: Jwt__SecretKey
+        generateValue: true
+      # --- Segredos / valores de ambiente (preenchidos no painel) ---
+      - key: ConnectionStrings__DefaultConnection   # Supabase, porta 5432 (session mode)
+        sync: false
+      - key: OpenWeatherMap__ApiKey
+        sync: false
+      - key: MapTiler__ApiKey
+        sync: false
+      - key: Email__ApiKey                          # token Resend (re_...)
+        sync: false
+      - key: Email__FromEmail                       # remetente em domínio verificado no Resend
+        sync: false
+      - key: Authentication__Google__ClientId       # mesmo valor do VITE_GOOGLE_CLIENT_ID
+        sync: false
+      - key: Push__PublicKey                         # VAPID (npx web-push generate-vapid-keys)
+        sync: false
+      - key: Push__PrivateKey
+        sync: false
+      - key: Push__Subject                           # ex.: mailto:contato@seudominio.com
+        sync: false
+      - key: Cors__AllowedOrigins__0                 # URL pública do frontend
+        sync: false
+      - key: RecuperacaoSenha__UrlBaseFrontend       # URL pública do frontend (links de reset)
+        sync: false
+
+  # ── Frontend (SPA estática + proxy /api) ───────────────────────────────────
+  - type: web
+    name: pulsar-web
+    runtime: static
+    branch: master
+    autoDeploy: true
+    buildCommand: cd pulsar-web && npm ci && npm run build
+    staticPublishPath: pulsar-web/dist            # relativo à raiz do repo
+    pullRequestPreviewsEnabled: false
+    envVars:
+      # Embutidas no bundle em build-time (precisam estar setadas ANTES do build).
+      - key: VITE_MAPTILER_KEY
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID                  # mesmo valor do Authentication__Google__ClientId
+        sync: false
+    routes:
+      # 1) Proxy same-origin: /api/* → backend (mantém baseURL:'/api', dispensa CORS).
+      #    Ajuste a URL se o nome do serviço backend mudar no Render.
+      - type: rewrite
+        source: /api/*
+        destination: https://pulsar-api.onrender.com/api/*
+      # 2) Fallback do roteamento SPA: tudo que não for arquivo real → index.html.
+      - type: rewrite
+        source: /*
+        destination: /index.html

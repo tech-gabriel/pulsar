@@ -5,6 +5,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.External.Clients;
@@ -199,6 +200,26 @@ builder.Services.AddScoped<IAlertaService, AlertaService>();
 builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.SectionName));
 builder.Services.AddScoped<IPushNotificationService, WebPushNotificationService>();
 
+// --- Forwarded Headers ---
+// Em produção o app roda atrás do proxy da plataforma (Render/Railway/etc.), que
+// termina o TLS e encaminha o IP e o esquema originais via X-Forwarded-For/Proto.
+// Sem isso, o rate limiter particiona por IP do proxy (throttle global) e o app
+// "acha" que a requisição é HTTP. KnownNetworks/KnownProxies ficam vazios porque
+// o IP do proxy é dinâmico em PaaS (ver nota de segurança em docs/DEPLOY.md).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Confia em UM ÚNICO salto (o proxy da plataforma). O Render anexa o IP real
+    // do cliente como a última entrada do X-Forwarded-For; com ForwardLimit=1 o
+    // ASP.NET usa essa entrada e ignora qualquer valor que o cliente tenha
+    // injetado à esquerda — fecha a evasão de rate limit por header forjado.
+    options.ForwardLimit = 1;
+    // KnownProxies/KnownIPNetworks ficam vazios porque o IP do proxy é dinâmico
+    // em PaaS; o ForwardLimit=1 é o que limita a confiança (ver docs/DEPLOY.md).
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // --- Scheduler ---
 builder.Services.AddHostedService<DataCollectionJob>();
 
@@ -231,6 +252,9 @@ if (app.Environment.IsDevelopment())
 app.UseCors(frontendOrigins);
 if (!app.Environment.IsEnvironment("Test"))
 {
+    // Antes de HttpsRedirection/RateLimiter para que ambos enxerguem o esquema e
+    // o IP reais do cliente (e não os do proxy da plataforma).
+    app.UseForwardedHeaders();
     app.UseHttpsRedirection();
     app.UseRateLimiter();
 }

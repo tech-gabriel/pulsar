@@ -5,6 +5,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.External.Clients;
@@ -199,6 +200,19 @@ builder.Services.AddScoped<IAlertaService, AlertaService>();
 builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOptions.SectionName));
 builder.Services.AddScoped<IPushNotificationService, WebPushNotificationService>();
 
+// --- Forwarded Headers ---
+// Em produção o app roda atrás do proxy da plataforma (Render/Railway/etc.), que
+// termina o TLS e encaminha o IP e o esquema originais via X-Forwarded-For/Proto.
+// Sem isso, o rate limiter particiona por IP do proxy (throttle global) e o app
+// "acha" que a requisição é HTTP. KnownNetworks/KnownProxies ficam vazios porque
+// o IP do proxy é dinâmico em PaaS (ver nota de segurança em docs/DEPLOY.md).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // --- Scheduler ---
 builder.Services.AddHostedService<DataCollectionJob>();
 
@@ -231,6 +245,9 @@ if (app.Environment.IsDevelopment())
 app.UseCors(frontendOrigins);
 if (!app.Environment.IsEnvironment("Test"))
 {
+    // Antes de HttpsRedirection/RateLimiter para que ambos enxerguem o esquema e
+    // o IP reais do cliente (e não os do proxy da plataforma).
+    app.UseForwardedHeaders();
     app.UseHttpsRedirection();
     app.UseRateLimiter();
 }

@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Interfaces;
@@ -76,7 +77,16 @@ public class NotificacoesController : ControllerBase
             await _assinaturaRepo.AtualizarAsync(existente);
         }
 
-        await _assinaturaRepo.SalvarAsync();
+        try
+        {
+            await _assinaturaRepo.SalvarAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Corrida: outra requisição concorrente inscreveu o mesmo endpoint
+            // (índice único). O resultado desejado já está persistido — idempotente.
+        }
+
         return NoContent();
     }
 

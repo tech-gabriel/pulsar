@@ -8,10 +8,11 @@ namespace Pulsar.API.Services;
 
 public class AlertaService : IAlertaService
 {
-    // Janela de deduplicação de notificações: durante um período sustentado de
-    // risco ALTO, o ciclo de coleta gera um alerta a cada 15 min, mas só
-    // notificamos uma vez por região dentro desta janela para não virar spam.
-    private static readonly TimeSpan JanelaNotificacao = TimeSpan.FromHours(1);
+    // Janela de deduplicação de notificações (em horas): durante um período
+    // sustentado de risco ALTO, o ciclo de coleta gera um alerta a cada 15 min,
+    // mas só notificamos uma vez por região dentro desta janela para não virar
+    // spam. Inteiro porque o repositório consulta por horas inteiras.
+    private const int JanelaNotificacaoHoras = 1;
 
     private readonly IScoreRepository _scoreRepo;
     private readonly ISugestaoRepository _sugestaoRepo;
@@ -68,7 +69,7 @@ public class AlertaService : IAlertaService
         if (_push.Habilitado)
         {
             var recentes = await _alertaRepo.ObterRecentesPorRegiaoAsync(
-                regiaoId, (int)JanelaNotificacao.TotalHours);
+                regiaoId, JanelaNotificacaoHoras);
             jaNotificadoRecentemente = recentes.Any();
         }
 

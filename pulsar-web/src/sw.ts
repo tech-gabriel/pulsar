@@ -21,14 +21,22 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+const PUSH_FALLBACK: PushPayload = {
+  titulo: 'Pulsar',
+  corpo: 'Novo alerta de risco na sua região.',
+};
+
 self.addEventListener('push', (event) => {
-  let dados: PushPayload;
+  // userVisibleOnly exige SEMPRE exibir uma notificação. Se o payload faltar ou
+  // não for JSON válido, caímos num texto genérico (em vez de o navegador mostrar
+  // o aviso padrão "site atualizado em segundo plano").
+  let dados: PushPayload = PUSH_FALLBACK;
   try {
-    dados = event.data?.json() as PushPayload;
+    const parsed = event.data?.json() as PushPayload | undefined;
+    if (parsed?.titulo) dados = parsed;
   } catch {
-    dados = { titulo: 'Pulsar', corpo: 'Novo alerta de risco na sua região.' };
+    /* mantém o fallback */
   }
-  if (!dados?.titulo) return;
 
   const url = dados.url ?? '/';
   event.waitUntil(

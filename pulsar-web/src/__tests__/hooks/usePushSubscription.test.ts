@@ -92,6 +92,28 @@ describe('usePushSubscription', () => {
     expect(mockedApi.post).not.toHaveBeenCalled();
   });
 
+  it('detecta inscrição presa a chave VAPID antiga e a refaz ao ativar', async () => {
+    const subAntiga = {
+      endpoint: 'https://push.example/antiga',
+      options: { applicationServerKey: new Uint8Array([9, 9, 9]).buffer },
+      toJSON: () => ({ keys: { p256dh: 'X', auth: 'Y' } }),
+      unsubscribe: vi.fn().mockResolvedValue(true),
+    };
+    // Inscrição existente, mas com chave diferente da que o servidor devolve.
+    getSubscription.mockResolvedValue(subAntiga);
+
+    const { result } = renderHook(() => usePushSubscription(prefs));
+    // Chave divergente → tratado como inativo (botão "Ativar" reaparece).
+    await waitFor(() => expect(result.current.estado).toBe('inativo'));
+
+    await act(async () => { await result.current.ativar(); });
+
+    expect(subAntiga.unsubscribe).toHaveBeenCalled(); // descartou a antiga
+    expect(subscribe).toHaveBeenCalled();              // refez com a chave atual
+    expect(mockedApi.post).toHaveBeenCalled();
+    expect(result.current.estado).toBe('ativo');
+  });
+
   it('desativar() remove a inscrição no backend e no navegador', async () => {
     getSubscription.mockResolvedValue(assinaturaFalsa);
     const { result } = renderHook(() => usePushSubscription(prefs));

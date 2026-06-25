@@ -249,6 +249,24 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// --- Cabeçalhos de segurança ---
+// Defense-in-depth nas respostas da API (JSON). O frontend (static site) tem CSP
+// e headers próprios no render.yaml; aqui blindamos o backend caso seja acessado
+// direto pela URL pública. CSP restrita: a API nunca serve documento navegável.
+var isDev = app.Environment.IsDevelopment();
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "no-referrer";
+    // CSP restrita só fora de Development: em dev o Scalar UI é servido pelo
+    // backend e precisa de scripts/estilos próprios (default-src 'none' o quebra).
+    if (!isDev)
+        headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
+    await next();
+});
+
 app.UseCors(frontendOrigins);
 if (!app.Environment.IsEnvironment("Test"))
 {

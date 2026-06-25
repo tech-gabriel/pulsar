@@ -111,6 +111,22 @@ Render tiver dado outro nome/URL ao backend, edite a regra de rewrite do
 
 - **Always-on**: não use o free tier do backend (hiberna em ~15 min e quebra a
   coleta + gera cold starts). O plano Starter mantém o serviço ligado.
+- **Headers de segurança**: o frontend (`pulsar-web`) envia `X-Content-Type-Options`,
+  `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` e uma **CSP**
+  (definidos em `render.yaml → headers`). A CSP libera só as origens externas usadas:
+  Google Fonts, tiles do mapa (`api.maptiler.com`, `*.basemaps.cartocdn.com`),
+  favicons de notícias (`www.google.com`) e o login Google (`accounts.google.com`).
+  Ao adicionar um provedor externo novo (outro CDN de fontes/mapa, analytics, etc.),
+  **atualize a CSP** ou o recurso será bloqueado pelo navegador. O backend também
+  manda `nosniff`/`X-Frame-Options`/`Referrer-Policy` e uma CSP `default-src 'none'`
+  (em produção) nas respostas da API.
+  > **Validação no smoke test**: confirme que o mapa carrega os tiles, o login com
+  > Google abre, as fontes aplicam e os favicons das notícias aparecem. Erros de CSP
+  > saem no console do navegador (`Refused to load …`).
+- **`AllowedHosts` (hardening opcional)**: hoje é `*`. Não é crítico (os links de
+  reset usam `RecuperacaoSenha__UrlBaseFrontend`, não o header `Host`), mas após o
+  provisionamento dá para fixar o host do backend definindo a env var `AllowedHosts`
+  (ex.: `pulsar-api.onrender.com`) no serviço `pulsar-api`.
 - **`X-Forwarded-For` / segurança**: atrás do proxy, o app confia no
   `X-Forwarded-For` (via `UseForwardedHeaders`) para o rate limiter ver o IP real.
   Como o IP do proxy é dinâmico em PaaS, `KnownProxies`/`KnownIPNetworks` ficam

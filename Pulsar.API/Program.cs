@@ -255,6 +255,10 @@ if (!app.Environment.IsEnvironment("Test"))
     // Antes de HttpsRedirection/RateLimiter para que ambos enxerguem o esquema e
     // o IP reais do cliente (e não os do proxy da plataforma).
     app.UseForwardedHeaders();
+    // HSTS só fora de Development: instrui o navegador a só falar HTTPS com a API.
+    // O proxy da plataforma já termina o TLS; isto reforça via cabeçalho.
+    if (!app.Environment.IsDevelopment())
+        app.UseHsts();
     app.UseHttpsRedirection();
     app.UseRateLimiter();
 }

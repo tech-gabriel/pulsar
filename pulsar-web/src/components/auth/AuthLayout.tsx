@@ -27,7 +27,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Topo: logo */}
-        <img src={logoLockup} alt="Pulsar" className="relative z-10 w-[190px] h-auto" />
+        <img src={logoLockup} alt="Pulsar" className="relative z-10 w-[300px] h-auto" />
 
         {/* Meio: headline + benefícios */}
         <div className="relative z-10">
@@ -71,7 +71,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <img
             src={logoLockup}
             alt="Pulsar"
-            className="lg:hidden mx-auto w-[210px] h-auto mb-8"
+            className="lg:hidden mx-auto w-[290px] h-auto mb-8"
             style={{ filter: 'drop-shadow(0 0 30px rgba(0, 188, 255, 0.4))' }}
           />
           {children}

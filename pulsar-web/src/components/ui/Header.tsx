@@ -44,7 +44,7 @@ export default function Header({ alertasAtivos = 0 }: Props) {
           <img
             src={iconePulsar}
             alt="Pulsar"
-            className="w-8 h-8 md:w-9 md:h-9 flex-shrink-0"
+            className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0"
             style={{ filter: 'drop-shadow(var(--glow-cyan))' }}
           />
           <div className="flex flex-col justify-center leading-none">

@@ -13,7 +13,7 @@ function renderEm(pathname: string, state?: unknown) {
 
 describe('TitleManager', () => {
   it('define o título da rota exata (marca primeiro)', () => {
-    renderEm('/configuracoes');
+    renderEm('/app/configuracoes');
     expect(document.title).toBe('Pulsar · Configurações');
   });
 
@@ -23,17 +23,17 @@ describe('TitleManager', () => {
   });
 
   it('rotas de admin levam o sufixo Admin', () => {
-    renderEm('/admin/usuarios');
+    renderEm('/app/admin/usuarios');
     expect(document.title).toBe('Pulsar · Usuários · Admin');
   });
 
   it('detalhe de histórico usa o nome da subprefeitura vindo no state', () => {
-    renderEm('/historico/qualquer-id', { subNome: 'Sé' });
+    renderEm('/app/historico/qualquer-id', { subNome: 'Sé' });
     expect(document.title).toBe('Pulsar · Histórico de Sé');
   });
 
   it('detalhe de histórico sem state cai no genérico', () => {
-    renderEm('/historico/qualquer-id');
+    renderEm('/app/historico/qualquer-id');
     expect(document.title).toBe('Pulsar · Histórico');
   });
 

@@ -7,7 +7,7 @@ import Reveal from './Reveal';
 const PERGUNTAS: { q: string; a: string }[] = [
   {
     q: 'O Pulsar é gratuito?',
-    a: 'Sim. Criar uma conta e acompanhar o mapa de risco, o painel e os alertas não custa nada — e não pedimos cartão de crédito.',
+    a: 'Sim. Criar uma conta e acompanhar o mapa de risco, o painel e os alertas não custa nada, e não pedimos cartão de crédito.',
   },
   {
     q: 'De onde vêm os dados?',

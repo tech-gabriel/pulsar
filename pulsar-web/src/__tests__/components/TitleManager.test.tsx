@@ -19,7 +19,7 @@ describe('TitleManager', () => {
 
   it('home usa o título institucional', () => {
     renderEm('/');
-    expect(document.title).toBe('Pulsar — Monitoramento Climático em Tempo Real');
+    expect(document.title).toBe('Pulsar · Monitoramento Climático em Tempo Real');
   });
 
   it('rotas de admin levam o sufixo Admin', () => {
@@ -39,6 +39,6 @@ describe('TitleManager', () => {
 
   it('rota desconhecida usa o título institucional', () => {
     renderEm('/rota-inexistente');
-    expect(document.title).toBe('Pulsar — Monitoramento Climático em Tempo Real');
+    expect(document.title).toBe('Pulsar · Monitoramento Climático em Tempo Real');
   });
 });

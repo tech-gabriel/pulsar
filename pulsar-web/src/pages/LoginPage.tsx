@@ -21,7 +21,7 @@ export default function LoginPage() {
     setEnviando(true);
     try {
       await login({ email, senha });
-      navigate('/');
+      navigate('/app');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setErro(msg ?? 'E-mail ou senha incorretos.');

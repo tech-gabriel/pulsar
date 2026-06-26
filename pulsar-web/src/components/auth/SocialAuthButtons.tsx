@@ -33,7 +33,7 @@ export default function SocialAuthButtons({ acao }: Props) {
     onCredential.current = async (resp: CredentialResponse) => {
       try {
         await loginGoogle(resp.credential);
-        navigate('/');
+        navigate('/app');
       } catch {
         showToast('Não foi possível entrar com o Google. Tente novamente.', 'error');
       }

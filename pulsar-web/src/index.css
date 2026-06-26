@@ -912,3 +912,170 @@ html.light *::-webkit-scrollbar-thumb:hover {
 .req-item.ok {
   color: #4ADE80;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LANDING — Página pública/promocional (tema escuro fixo via .theme-dark-scope)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Wrapper raiz: herda o fundo grid de .auth-bg e garante a rolagem vertical. */
+.landing-root {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Barra de navegação fixa no topo, glass translúcido. */
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  background: rgba(5, 47, 74, 0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+/* Ritmo vertical das seções (container central). */
+.landing-section {
+  position: relative;
+  z-index: 1;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 88px 24px;
+}
+@media (max-width: 640px) {
+  .landing-section { padding: 60px 20px; }
+}
+
+/* Texto de destaque com gradiente da marca. */
+.landing-gradient-text {
+  background: linear-gradient(120deg, #00BCFF 0%, #74D4FF 55%, #00A6F4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Botão CTA primário (reaproveita o gradiente dos forms de auth). */
+.landing-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: 10px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  background: linear-gradient(135deg, #0084D1, #00A6F4);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(0, 132, 209, 0.35);
+  transition: filter 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+.landing-cta:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 22px rgba(0, 132, 209, 0.45);
+}
+.landing-cta:active { transform: scale(0.98); }
+
+/* Botão CTA secundário (contorno glass). */
+.landing-cta-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: 10px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass-hover);
+  transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
+}
+.landing-cta-ghost:hover {
+  border-color: var(--text-accent);
+  background: var(--bg-glass-hover);
+}
+.landing-cta-ghost:active { transform: scale(0.98); }
+
+/* Moldura de "print" do produto: glass com brilho ciano. */
+.landing-shot {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid var(--border-glass-hover);
+  background: var(--bg-glass);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 40px rgba(0, 188, 255, 0.12);
+  overflow: hidden;
+}
+.landing-shot img { display: block; width: 100%; height: auto; }
+
+/* Placeholder enquanto o PNG real não chega (TODO: trocar por <img>). */
+.landing-shot-placeholder {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  color: var(--text-muted);
+  font-size: 13px;
+  background:
+    radial-gradient(120% 120% at 20% 10%, rgba(0, 132, 209, 0.22) 0%, transparent 50%),
+    radial-gradient(110% 110% at 90% 90%, rgba(0, 188, 255, 0.14) 0%, transparent 55%),
+    linear-gradient(160deg, #052F4A 0%, #03263B 60%, #021C2C 100%);
+}
+
+/* Card genérico de feature/passo/fonte. */
+.landing-card {
+  background: var(--bg-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 22px;
+  transition: border-color 200ms ease, transform 200ms ease, background 200ms ease;
+}
+.landing-card:hover {
+  border-color: var(--border-glass-hover);
+  background: var(--bg-glass-hover);
+  transform: translateY(-3px);
+}
+
+/* Ícone em "chip" ciano (mesma linguagem do .auth-feature-ic). */
+.landing-card-ic {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(0, 188, 255, 0.10);
+  border: 1px solid rgba(0, 188, 255, 0.18);
+  color: var(--text-accent);
+  margin-bottom: 14px;
+}
+
+/* Numeral grande dos passos "como funciona". */
+.landing-step-num {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1;
+  color: var(--text-accent);
+  text-shadow: var(--glow-cyan);
+}
+
+/* Tag/pill de credibilidade na seção de fontes. */
+.landing-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+}

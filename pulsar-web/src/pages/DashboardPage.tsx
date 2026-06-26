@@ -294,7 +294,7 @@ export default function DashboardPage() {
                   {m.topSubs.map((s, i) => (
                     <button
                       key={s.id}
-                      onClick={() => navigate(`/historico/${s.id}`, { state: { subNome: s.nome, regiaoNome: s.regiaoNome } })}
+                      onClick={() => navigate(`/app/historico/${s.id}`, { state: { subNome: s.nome, regiaoNome: s.regiaoNome } })}
                       className="regiao-card flex items-center gap-3 text-left"
                       style={{ marginBottom: 0 }}
                     >

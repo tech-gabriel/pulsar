@@ -8,13 +8,13 @@ import LandingCta from '../components/landing/LandingCta';
 import LandingFooter from '../components/landing/LandingFooter';
 
 /**
- * Landing page pública/promocional do Pulsar (rota `/`). Tema escuro fixo via
- * `.theme-dark-scope` + fundo grid de `.auth-bg`, no mesmo idioma visual das
- * telas de autenticação. Visitante autenticado é redirecionado em `RotaLanding`.
+ * Landing page pública/promocional do Pulsar (rota `/`). Respeita o tema global
+ * (claro/escuro) do `ThemeProvider` — o `LandingNav` traz o toggle. Fundo grid
+ * de `.auth-bg`. Visitante autenticado é redirecionado em `RotaLanding`.
  */
 export default function LandingPage() {
   return (
-    <div className="theme-dark-scope auth-bg landing-root">
+    <div className="auth-bg landing-root">
       <LandingNav />
       <main className="relative z-[1]">
         <LandingHero />

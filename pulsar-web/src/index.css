@@ -1219,3 +1219,39 @@ html.light *::-webkit-scrollbar-thumb:hover {
 }
 .landing-prose a:hover { filter: brightness(1.15); }
 .landing-prose strong { color: var(--text-primary); font-weight: 600; }
+
+/* ── Banner do CTA final (reage ao tema claro/escuro) ──────────────────────── */
+.landing-cta-band {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px solid var(--border-glass-hover);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(0, 132, 209, 0.28) 0%, transparent 55%),
+    linear-gradient(160deg, #052F4A 0%, #03263B 70%, #021C2C 100%);
+}
+@media (min-width: 640px) {
+  .landing-cta-band { padding: 64px 24px; }
+}
+html.light .landing-cta-band {
+  border-color: rgba(0, 105, 168, 0.25);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(0, 166, 244, 0.20) 0%, transparent 55%),
+    linear-gradient(160deg, #E2F1FB 0%, #D3E9F8 70%, #C3DEF2 100%);
+}
+
+/* ── Transição de tema: revelação circular via View Transitions API ────────── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* O tema novo é desenhado por cima e revelado pelo clip-path animado no JS. */
+::view-transition-new(root) {
+  z-index: 1;
+}
+::view-transition-old(root) {
+  z-index: 0;
+}

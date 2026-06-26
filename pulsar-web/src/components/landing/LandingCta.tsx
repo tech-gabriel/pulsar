@@ -6,14 +6,7 @@ export default function LandingCta() {
   return (
     <section className="landing-section">
       <Reveal>
-        <div
-          className="relative overflow-hidden rounded-2xl text-center px-6 py-14 sm:py-16"
-          style={{
-            border: '1px solid var(--border-glass-hover)',
-            background:
-              'radial-gradient(120% 140% at 50% 0%, rgba(0, 132, 209, 0.28) 0%, transparent 55%), linear-gradient(160deg, #052F4A 0%, #03263B 70%, #021C2C 100%)',
-          }}
-        >
+        <div className="landing-cta-band">
           <h2
             className="mx-auto max-w-2xl leading-tight"
             style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 42px)', color: 'var(--text-primary)' }}

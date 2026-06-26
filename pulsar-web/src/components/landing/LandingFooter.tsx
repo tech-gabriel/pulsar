@@ -31,12 +31,18 @@ export default function LandingFooter() {
           </div>
         </div>
 
-        <nav className="flex items-center gap-5" style={{ fontSize: 14 }}>
+        <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5" style={{ fontSize: 14 }}>
+          <Link to="/sobre" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
+            Sobre
+          </Link>
+          <Link to="/privacidade" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
+            Privacidade
+          </Link>
+          <Link to="/termos" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
+            Termos
+          </Link>
           <Link to="/login" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
             Entrar
-          </Link>
-          <Link to="/cadastro" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
-            Criar conta
           </Link>
           <a
             href={REPO_URL}

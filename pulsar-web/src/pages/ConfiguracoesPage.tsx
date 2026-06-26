@@ -69,7 +69,7 @@ export default function ConfiguracoesPage() {
 
   function reverBoasVindas() {
     reverNovamente();
-    navigate('/');
+    navigate('/app');
   }
 
   const metaAtual = perfilMeta(usuario?.perfil);
@@ -358,14 +358,14 @@ export default function ConfiguracoesPage() {
           {favoritos.length === 0 ? (
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
               Você ainda não favoritou nenhuma região.{' '}
-              <Link to="/" className="text-pulsar-400 hover:underline">Explorar o mapa</Link>
+              <Link to="/app" className="text-pulsar-400 hover:underline">Explorar o mapa</Link>
             </p>
           ) : (
             <div className="flex flex-col gap-2">
               {favoritos.map((f) => (
                 <Link
                   key={f.regiaoId}
-                  to="/"
+                  to="/app"
                   className="regiao-card flex items-center gap-3"
                   style={{ marginBottom: 0 }}
                 >

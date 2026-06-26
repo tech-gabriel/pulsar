@@ -8,13 +8,16 @@ const TITULO_PADRAO = 'Pulsar — Monitoramento Climático em Tempo Real';
 // Nome de cada rota exata → vira "Pulsar · Nome". A home (/) fica de fora de
 // propósito: usa o título institucional completo (TITULO_PADRAO).
 const TITULOS_EXATOS: Record<string, string> = {
-  '/historico': 'Histórico',
-  '/dashboard': 'Dashboard',
-  '/noticias': 'Notícias',
-  '/configuracoes': 'Configurações',
-  '/admin/usuarios': 'Usuários · Admin',
-  '/admin/sugestoes': 'Sugestões · Admin',
-  '/admin/sistema': 'Sistema · Admin',
+  '/app/historico': 'Histórico',
+  '/app/dashboard': 'Dashboard',
+  '/app/noticias': 'Notícias',
+  '/app/configuracoes': 'Configurações',
+  '/app/admin/usuarios': 'Usuários · Admin',
+  '/app/admin/sugestoes': 'Sugestões · Admin',
+  '/app/admin/sistema': 'Sistema · Admin',
+  '/sobre': 'Sobre',
+  '/privacidade': 'Política de Privacidade',
+  '/termos': 'Termos de Uso',
   '/login': 'Entrar',
   '/cadastro': 'Criar conta',
   '/esqueci-senha': 'Recuperar senha',
@@ -27,7 +30,7 @@ function resolverTitulo(pathname: string, state: unknown): string | null {
 
   // Detalhe de histórico: usa o nome da subprefeitura quando veio na navegação
   // (a lista passa `state.subNome`); senão cai no genérico.
-  if (pathname.startsWith('/historico/')) {
+  if (pathname.startsWith('/app/historico/')) {
     const subNome = (state as { subNome?: string } | null)?.subNome;
     return subNome ? `Histórico de ${subNome}` : 'Histórico';
   }

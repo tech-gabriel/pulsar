@@ -1,6 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import TitleManager from './components/TitleManager';
+import LandingPage from './pages/LandingPage';
+import SobrePage from './pages/SobrePage';
+import PrivacidadePage from './pages/PrivacidadePage';
+import TermosPage from './pages/TermosPage';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
 import EsqueciSenhaPage from './pages/EsqueciSenhaPage';
@@ -25,12 +29,18 @@ function RotaAdmin({ children }: { children: React.ReactNode }) {
   const { estaAutenticado, usuario } = useAuth();
   if (!estaAutenticado) return <Navigate to="/login" replace />;
   const ehAdmin = usuario?.role === 'ADMIN' || usuario?.role === 'SUPORTE';
-  return ehAdmin ? <>{children}</> : <Navigate to="/" replace />;
+  return ehAdmin ? <>{children}</> : <Navigate to="/app" replace />;
 }
 
 function RotaPublica({ children }: { children: React.ReactNode }) {
   const { estaAutenticado } = useAuth();
-  return estaAutenticado ? <Navigate to="/" replace /> : <>{children}</>;
+  return estaAutenticado ? <Navigate to="/app" replace /> : <>{children}</>;
+}
+
+/** Landing pública: quem já está autenticado é levado direto ao app. */
+function RotaLanding({ children }: { children: React.ReactNode }) {
+  const { estaAutenticado } = useAuth();
+  return estaAutenticado ? <Navigate to="/app" replace /> : <>{children}</>;
 }
 
 export default function App() {
@@ -38,15 +48,19 @@ export default function App() {
     <>
       <TitleManager />
       <Routes>
-        <Route path="/" element={<RotaProtegida><MapaPage /></RotaProtegida>} />
-        <Route path="/historico" element={<RotaProtegida><HistoricoListPage /></RotaProtegida>} />
-        <Route path="/historico/:subprefeituraId" element={<RotaProtegida><HistoricoPage /></RotaProtegida>} />
-        <Route path="/dashboard" element={<RotaProtegida><DashboardPage /></RotaProtegida>} />
-        <Route path="/noticias" element={<RotaProtegida><NoticiasPage /></RotaProtegida>} />
-        <Route path="/configuracoes" element={<RotaProtegida><ConfiguracoesPage /></RotaProtegida>} />
-        <Route path="/admin/usuarios" element={<RotaAdmin><UsuariosAdminPage /></RotaAdmin>} />
-        <Route path="/admin/sugestoes" element={<RotaAdmin><SugestoesAdminPage /></RotaAdmin>} />
-        <Route path="/admin/sistema" element={<RotaAdmin><SistemaAdminPage /></RotaAdmin>} />
+        <Route path="/" element={<RotaLanding><LandingPage /></RotaLanding>} />
+        <Route path="/sobre" element={<SobrePage />} />
+        <Route path="/privacidade" element={<PrivacidadePage />} />
+        <Route path="/termos" element={<TermosPage />} />
+        <Route path="/app" element={<RotaProtegida><MapaPage /></RotaProtegida>} />
+        <Route path="/app/historico" element={<RotaProtegida><HistoricoListPage /></RotaProtegida>} />
+        <Route path="/app/historico/:subprefeituraId" element={<RotaProtegida><HistoricoPage /></RotaProtegida>} />
+        <Route path="/app/dashboard" element={<RotaProtegida><DashboardPage /></RotaProtegida>} />
+        <Route path="/app/noticias" element={<RotaProtegida><NoticiasPage /></RotaProtegida>} />
+        <Route path="/app/configuracoes" element={<RotaProtegida><ConfiguracoesPage /></RotaProtegida>} />
+        <Route path="/app/admin/usuarios" element={<RotaAdmin><UsuariosAdminPage /></RotaAdmin>} />
+        <Route path="/app/admin/sugestoes" element={<RotaAdmin><SugestoesAdminPage /></RotaAdmin>} />
+        <Route path="/app/admin/sistema" element={<RotaAdmin><SistemaAdminPage /></RotaAdmin>} />
 
         <Route path="/login" element={<RotaPublica><LoginPage /></RotaPublica>} />
         <Route path="/cadastro" element={<RotaPublica><CadastroPage /></RotaPublica>} />

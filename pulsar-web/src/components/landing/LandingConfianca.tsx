@@ -17,7 +17,7 @@ const PILARES = [
   {
     Icon: HeartHandshake,
     title: 'Feito para a cidade',
-    desc: 'Um projeto independente, sem anúncios e sem vender seus dados. Você é o usuário, não o produto.',
+    desc: 'Um projeto independente, pensado para ajudar quem vive em São Paulo a se proteger melhor no dia a dia.',
   },
 ];
 

@@ -12,7 +12,7 @@ export default function LandingNav() {
 
   return (
     <nav className="landing-nav">
-      <Link to="/" className="flex items-center gap-2.5" aria-label="Pulsar — início">
+      <Link to="/" className="flex items-center gap-2.5" aria-label="Pulsar, página inicial">
         <img
           src={iconePulsar}
           alt=""

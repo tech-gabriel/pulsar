@@ -1,9 +1,12 @@
 import LandingNav from '../components/landing/LandingNav';
 import LandingHero from '../components/landing/LandingHero';
+import LandingStats from '../components/landing/LandingStats';
 import LandingProblema from '../components/landing/LandingProblema';
 import LandingFeatures from '../components/landing/LandingFeatures';
 import LandingComoFunciona from '../components/landing/LandingComoFunciona';
+import LandingConfianca from '../components/landing/LandingConfianca';
 import LandingFontes from '../components/landing/LandingFontes';
+import LandingFaq from '../components/landing/LandingFaq';
 import LandingCta from '../components/landing/LandingCta';
 import LandingFooter from '../components/landing/LandingFooter';
 
@@ -18,10 +21,13 @@ export default function LandingPage() {
       <LandingNav />
       <main className="relative z-[1]">
         <LandingHero />
+        <LandingStats />
         <LandingProblema />
         <LandingFeatures />
         <LandingComoFunciona />
+        <LandingConfianca />
         <LandingFontes />
+        <LandingFaq />
         <LandingCta />
       </main>
       <LandingFooter />

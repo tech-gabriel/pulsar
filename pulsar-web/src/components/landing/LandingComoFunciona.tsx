@@ -1,6 +1,5 @@
 import Reveal from './Reveal';
-// TODO: quando o usuário enviar o print, importar e usar no lugar do placeholder:
-// import dashboardShot from '../../assets/landing/dashboard.png';
+import dashboardShot from '../../assets/landing/dashboard.jpg';
 
 const PASSOS = [
   {
@@ -60,8 +59,7 @@ export default function LandingComoFunciona() {
         {/* Visual: print do painel/dashboard */}
         <Reveal delay={0.1}>
           <div className="landing-shot">
-            {/* TODO: trocar pelo print real — <img src={dashboardShot} alt="Painel do Pulsar" /> */}
-            <div className="landing-shot-placeholder">Painel — Score por região</div>
+            <img src={dashboardShot} alt="Painel do Pulsar — distribuição de risco e score por região de São Paulo" />
           </div>
         </Reveal>
       </div>

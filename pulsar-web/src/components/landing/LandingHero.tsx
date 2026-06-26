@@ -3,8 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import logoLockup from '../../assets/logos/pulsar-lockup-escuro.svg';
-// TODO: quando o usuário enviar o print, descomentar e usar no lugar do placeholder:
-// import mapaShot from '../../assets/landing/mapa.png';
+import mapaShot from '../../assets/landing/mapa.jpg';
 
 export default function LandingHero() {
   return (
@@ -60,8 +59,7 @@ export default function LandingHero() {
         </div>
 
         <div className="landing-shot">
-          {/* TODO: trocar pelo print real — <img src={mapaShot} alt="Mapa de risco do Pulsar" /> */}
-          <div className="landing-shot-placeholder">Mapa de risco — São Paulo</div>
+          <img src={mapaShot} alt="Mapa de risco do Pulsar — Score de Perigo por subprefeitura de São Paulo" />
         </div>
       </motion.div>
     </header>

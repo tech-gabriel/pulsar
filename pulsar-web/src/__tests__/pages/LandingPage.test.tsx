@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { ThemeProvider } from '../../hooks/ThemeProvider';
 
 // Auth mutável: alterna entre visitante deslogado e usuário autenticado.
 const authState = { estaAutenticado: false, usuario: null as unknown };
@@ -15,9 +16,11 @@ import App from '../../App';
 
 function renderApp(path: string) {
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <App />
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <App />
+      </MemoryRouter>
+    </ThemeProvider>,
   );
 }
 

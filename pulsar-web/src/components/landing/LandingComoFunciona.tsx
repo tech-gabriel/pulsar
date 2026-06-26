@@ -15,7 +15,7 @@ const PASSOS = [
   {
     num: '03',
     title: 'Você acompanha e é avisado',
-    desc: 'Veja tudo no mapa e no painel — e receba alertas quando a sua região mudar de patamar.',
+    desc: 'Veja tudo no mapa e no painel, e receba alertas quando a sua região mudar de patamar.',
   },
 ];
 
@@ -59,7 +59,7 @@ export default function LandingComoFunciona() {
         {/* Visual: print do painel/dashboard */}
         <Reveal delay={0.1}>
           <div className="landing-shot">
-            <img src={dashboardShot} alt="Painel do Pulsar — distribuição de risco e score por região de São Paulo" />
+            <img src={dashboardShot} alt="Painel do Pulsar: distribuição de risco e score por região de São Paulo" />
           </div>
         </Reveal>
       </div>

@@ -14,7 +14,7 @@ export default function SobrePage() {
     >
       <h2>Por que o Pulsar existe</h2>
       <p>
-        Em São Paulo, o tempo muda rápido — e muda de bairro para bairro. Um temporal que
+        Em São Paulo, o tempo muda rápido, e muda de bairro para bairro. Um temporal que
         alaga uma região pode mal molhar a vizinha. Mas os avisos que a maioria de nós recebe
         falam da cidade inteira, em média, e quase sempre chegam quando o transtorno já começou.
       </p>

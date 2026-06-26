@@ -59,7 +59,7 @@ export default function LandingHero() {
         </div>
 
         <div className="landing-shot">
-          <img src={mapaShot} alt="Mapa de risco do Pulsar — Score de Perigo por subprefeitura de São Paulo" />
+          <img src={mapaShot} alt="Mapa de risco do Pulsar: Score de Perigo por subprefeitura de São Paulo" />
         </div>
       </motion.div>
     </header>

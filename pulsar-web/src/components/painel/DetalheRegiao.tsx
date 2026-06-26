@@ -306,7 +306,7 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
                       sub={sub}
                       indice={i}
                       onVerHistorico={() =>
-                        navigate(`/historico/${sub.id}`, { state: { regiaoNome: regiao.nome, subNome: sub.nome } })
+                        navigate(`/app/historico/${sub.id}`, { state: { regiaoNome: regiao.nome, subNome: sub.nome } })
                       }
                     />
                   ))}

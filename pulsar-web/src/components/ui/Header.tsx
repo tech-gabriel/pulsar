@@ -7,11 +7,11 @@ import iconePulsar from '../../assets/logos/pulsar-icone.svg';
 
 // Abas de navegação principal (ETAPA B.1.2)
 const TABS: { to: string; label: string; curto: string; Icon: LucideIcon; end?: boolean }[] = [
-  { to: '/', label: 'Mapa', curto: 'Mapa', Icon: Map, end: true },
-  { to: '/historico', label: 'Histórico', curto: 'Hist.', Icon: History },
-  { to: '/dashboard', label: 'Dashboard', curto: 'Dash', Icon: BarChart3 },
-  { to: '/noticias', label: 'Notícias', curto: 'News', Icon: Newspaper },
-  { to: '/configuracoes', label: 'Configurações', curto: 'Config', Icon: Settings },
+  { to: '/app', label: 'Mapa', curto: 'Mapa', Icon: Map, end: true },
+  { to: '/app/historico', label: 'Histórico', curto: 'Hist.', Icon: History },
+  { to: '/app/dashboard', label: 'Dashboard', curto: 'Dash', Icon: BarChart3 },
+  { to: '/app/noticias', label: 'Notícias', curto: 'News', Icon: Newspaper },
+  { to: '/app/configuracoes', label: 'Configurações', curto: 'Config', Icon: Settings },
 ];
 
 interface Props {
@@ -32,7 +32,7 @@ export default function Header({ alertasAtivos = 0 }: Props) {
   // Aba administrativa visível apenas para ADMIN e SUPORTE.
   const ehAdmin = usuario?.role === 'ADMIN' || usuario?.role === 'SUPORTE';
   const tabs = ehAdmin
-    ? [...TABS, { to: '/admin/usuarios', label: 'Admin', curto: 'Admin', Icon: ShieldCheck }]
+    ? [...TABS, { to: '/app/admin/usuarios', label: 'Admin', curto: 'Admin', Icon: ShieldCheck }]
     : TABS;
 
   return (

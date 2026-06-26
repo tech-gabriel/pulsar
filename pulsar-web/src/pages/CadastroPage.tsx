@@ -43,7 +43,7 @@ export default function CadastroPage() {
     setEnviando(true);
     try {
       await cadastrar({ nome, email, senha });
-      navigate('/');
+      navigate('/app');
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
       if (status?.status === 409) {

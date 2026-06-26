@@ -27,7 +27,7 @@ export default defineConfig({
         short_name: 'Pulsar',
         description: 'Monitoramento climático em tempo real para São Paulo, com alertas de risco por região.',
         lang: 'pt-BR',
-        start_url: '/',
+        start_url: '/app',
         display: 'standalone',
         theme_color: '#052F4A',
         background_color: '#052F4A',

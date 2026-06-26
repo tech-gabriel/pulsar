@@ -82,7 +82,7 @@ export default function HistoricoListPage() {
               <button
                 key={sub.id}
                 type="button"
-                onClick={() => navigate(`/historico/${sub.id}`, { state: { regiaoNome: sub.regiaoNome, subNome: sub.nome } })}
+                onClick={() => navigate(`/app/historico/${sub.id}`, { state: { regiaoNome: sub.regiaoNome, subNome: sub.nome } })}
                 className="glass-card glass-card-hover w-full text-left flex items-center gap-3 px-4 py-3 active:scale-[0.99] transition-transform"
               >
                 {/* Score pill */}

@@ -1,13 +1,11 @@
-import { Code2, ShieldCheck, HeartHandshake, ArrowUpRight } from 'lucide-react';
+import { Scale, ShieldCheck, HeartHandshake, ArrowRight } from 'lucide-react';
 import Reveal from './Reveal';
-
-const REPO_URL = 'https://github.com/tech-gabriel/Pulsar';
 
 const PILARES = [
   {
-    Icon: Code2,
-    title: 'Código aberto',
-    desc: 'Todo o Pulsar é público no GitHub. Qualquer pessoa pode auditar como o risco é calculado.',
+    Icon: Scale,
+    title: 'Método claro',
+    desc: 'O Score sai de variáveis objetivas, com pesos definidos para cada fator. Nada de achismo.',
   },
   {
     Icon: ShieldCheck,
@@ -34,21 +32,15 @@ export default function LandingConfianca() {
             className="mt-3 leading-tight"
             style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(26px, 3.5vw, 38px)', color: 'var(--text-primary)' }}
           >
-            Construído <span className="landing-gradient-text">à vista de todos</span>
+            Sem caixa-preta no que <span className="landing-gradient-text">importa</span>
           </h2>
           <p className="mt-5 max-w-xl" style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.65 }}>
-            Informação de risco só vale se você puder confiar nela. Por isso o Pulsar
-            não é uma caixa-preta: o cálculo, as fontes e o código estão abertos para
-            qualquer um verificar.
+            Informação de risco só vale se você puder confiar nela. Por isso deixamos claro
+            como o Score de Perigo é calculado e de quais fontes oficiais cada número vem.
           </p>
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="landing-cta-ghost mt-8"
-          >
-            Ver o projeto no GitHub
-            <ArrowUpRight size={18} />
+          <a href="#faq" className="landing-cta-ghost mt-8">
+            Ver como o Score é calculado
+            <ArrowRight size={18} />
           </a>
         </Reveal>
 

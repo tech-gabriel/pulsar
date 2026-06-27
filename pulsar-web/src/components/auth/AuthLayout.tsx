@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Activity, MapPin, BellRing, type LucideIcon } from 'lucide-react';
+import { useTheme } from '../../hooks/useTheme';
 import logoLockup from '../../assets/logos/pulsar-lockup-escuro.svg';
+import logoLockupClaro from '../../assets/logos/pulsar-lockup-claro.svg';
 
 const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
   { Icon: Activity, title: 'Monitoramento em tempo real', desc: 'Dados climáticos atualizados a cada 15 minutos' },
@@ -14,10 +16,15 @@ const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
  * formulário recebe um logo compacto no topo.
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
+  const { theme } = useTheme();
+  // O hero é um painel de marca sempre escuro (escopo dark local). O lado do
+  // formulário segue o tema global, então seu logo compacto troca de variante.
+  const logoForm = theme === 'light' ? logoLockupClaro : logoLockup;
+
   return (
-    <div className="theme-dark-scope auth-bg auth-split">
-      {/* ── HERO (marca) — lg+ ─────────────────────────────────────────────── */}
-      <aside className="auth-hero">
+    <div className="auth-bg auth-split">
+      {/* ── HERO (marca) — lg+ — sempre escuro (branded) ───────────────────── */}
+      <aside className="auth-hero theme-dark-scope">
         {/* Radar decorativo */}
         <div className="auth-radar" aria-hidden="true">
           <span className="auth-radar-ring" />
@@ -69,7 +76,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="w-full max-w-[400px]">
           {/* Logo compacto (apenas mobile, onde o hero está oculto) */}
           <img
-            src={logoLockup}
+            src={logoForm}
             alt="Pulsar"
             className="lg:hidden mx-auto w-[290px] h-auto mb-8"
             style={{ filter: 'drop-shadow(0 0 30px rgba(0, 188, 255, 0.4))' }}

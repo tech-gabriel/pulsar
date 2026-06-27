@@ -142,8 +142,8 @@ export default function ConfiguracoesPage() {
               <button
                 type="button"
                 onClick={abrirEdicao}
-                className="flex items-center gap-1.5 text-pulsar-400 hover:underline"
-                style={{ fontSize: 13, fontWeight: 600 }}
+                className="flex items-center gap-1.5 hover:underline"
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)' }}
               >
                 <Pencil size={14} /> Editar
               </button>
@@ -243,21 +243,21 @@ export default function ConfiguracoesPage() {
 
               {/* Troca de senha (opcional) */}
               {!trocarSenha ? (
-                <button type="button" onClick={() => setTrocarSenha(true)} className="self-start flex items-center gap-1.5 text-pulsar-400 hover:underline" style={{ fontSize: 13 }}>
+                <button type="button" onClick={() => setTrocarSenha(true)} className="self-start flex items-center gap-1.5 hover:underline" style={{ fontSize: 13, color: 'var(--text-accent)' }}>
                   <Lock size={14} /> Alterar senha
                 </button>
               ) : (
                 <div className="flex flex-col gap-3 rounded-xl p-3" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-glass)' }}>
                   <div className="flex items-center justify-between">
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Alterar senha</span>
-                    <button type="button" onClick={() => { setTrocarSenha(false); setSenhaAtual(''); setNovaSenha(''); }} className="text-pulsar-300 hover:text-pulsar-100" aria-label="Cancelar troca de senha">
+                    <button type="button" onClick={() => { setTrocarSenha(false); setSenhaAtual(''); setNovaSenha(''); }} className="hover:text-[var(--text-primary)]" style={{ color: 'var(--text-muted)' }} aria-label="Cancelar troca de senha">
                       <X size={15} />
                     </button>
                   </div>
                   <input className="input-glass" type={mostrarSenha ? 'text' : 'password'} placeholder="Senha atual" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} autoComplete="current-password" />
                   <div className="relative">
                     <input className="input-glass pr-12" type={mostrarSenha ? 'text' : 'password'} placeholder="Nova senha (8+ chars, 2 nº, 1 especial)" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} autoComplete="new-password" />
-                    <button type="button" onClick={() => setMostrarSenha((v) => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-pulsar-300 hover:text-pulsar-100" tabIndex={-1} aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}>
+                    <button type="button" onClick={() => setMostrarSenha((v) => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 hover:text-[var(--text-primary)]" style={{ color: 'var(--text-muted)' }} tabIndex={-1} aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}>
                       {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
@@ -358,7 +358,7 @@ export default function ConfiguracoesPage() {
           {favoritos.length === 0 ? (
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
               Você ainda não favoritou nenhuma região.{' '}
-              <Link to="/app" className="text-pulsar-400 hover:underline">Explorar o mapa</Link>
+              <Link to="/app" className="hover:underline" style={{ color: 'var(--text-accent)' }}>Explorar o mapa</Link>
             </p>
           ) : (
             <div className="flex flex-col gap-2">

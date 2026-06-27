@@ -19,7 +19,11 @@ const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: 'O que é o Score de Perigo?',
-    a: 'É um índice de 0 a 100 calculado por subprefeitura a partir dos dados climáticos mais recentes (chuva, vento, temperatura e outros). Quanto maior, maior a atenção recomendada para aquela região naquele momento.',
+    a: 'É um índice de 0 a 100 calculado por subprefeitura a partir dos dados climáticos mais recentes. Quanto maior, maior a atenção recomendada para aquela região naquele momento. Até 30 é risco baixo, até 60 moderado e acima disso, alto.',
+  },
+  {
+    q: 'Como o Score de Perigo é calculado?',
+    a: 'A partir das condições atuais de cada subprefeitura, combinando quatro fatores com pesos diferentes: chuva (35%), vento (30%), visibilidade/neblina (20%) e índice UV (15%). Cada fator é normalizado numa escala de 0 a 100 e ponderado, resultando no Score final de 0 a 100. Os pesos refletem o impacto de cada condição no risco do dia a dia da cidade.',
   },
   {
     q: 'Como recebo os alertas?',

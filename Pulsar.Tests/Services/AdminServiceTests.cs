@@ -34,6 +34,57 @@ public class AdminServiceTests
         await acao.Should().ThrowAsync<InvalidOperationException>();
     }
 
+    // ── Exclusão de usuários ───────────────────────────────────
+
+    [Fact]
+    public async Task ExcluirUsuarioAsync_PropriaConta_LancaInvalidOperation()
+    {
+        var sut = CriarService();
+        var id = Guid.NewGuid();
+
+        var acao = () => sut.ExcluirUsuarioAsync(id, id);
+
+        await acao.Should().ThrowAsync<InvalidOperationException>();
+        _usuarioRepoMock.Verify(r => r.RemoverAsync(It.IsAny<Usuario>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExcluirUsuarioAsync_Inexistente_LancaKeyNotFound()
+    {
+        _usuarioRepoMock.Setup(r => r.ObterPorIdAsync(It.IsAny<Guid>())).ReturnsAsync((Usuario?)null);
+        var sut = CriarService();
+
+        var acao = () => sut.ExcluirUsuarioAsync(Guid.NewGuid(), Guid.NewGuid());
+
+        await acao.Should().ThrowAsync<KeyNotFoundException>();
+    }
+
+    [Fact]
+    public async Task ExcluirUsuarioAsync_AlvoAdmin_LancaInvalidOperation()
+    {
+        var alvo = new Usuario { Id = Guid.NewGuid(), Email = "a@a.com", Role = RoleAcesso.ADMIN };
+        _usuarioRepoMock.Setup(r => r.ObterPorIdAsync(alvo.Id)).ReturnsAsync(alvo);
+        var sut = CriarService();
+
+        var acao = () => sut.ExcluirUsuarioAsync(Guid.NewGuid(), alvo.Id);
+
+        await acao.Should().ThrowAsync<InvalidOperationException>();
+        _usuarioRepoMock.Verify(r => r.RemoverAsync(It.IsAny<Usuario>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExcluirUsuarioAsync_UsuarioComum_RemoveESalva()
+    {
+        var alvo = new Usuario { Id = Guid.NewGuid(), Email = "u@u.com", Role = RoleAcesso.USUARIO };
+        _usuarioRepoMock.Setup(r => r.ObterPorIdAsync(alvo.Id)).ReturnsAsync(alvo);
+        var sut = CriarService();
+
+        await sut.ExcluirUsuarioAsync(Guid.NewGuid(), alvo.Id);
+
+        _usuarioRepoMock.Verify(r => r.RemoverAsync(alvo), Times.Once);
+        _usuarioRepoMock.Verify(r => r.SalvarAsync(), Times.Once);
+    }
+
     // ── Sugestões: criação/validação ───────────────────────────
 
     [Fact]

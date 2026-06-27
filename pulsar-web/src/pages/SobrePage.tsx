@@ -14,7 +14,7 @@ export default function SobrePage() {
     >
       <h2>Por que o Pulsar existe</h2>
       <p>
-        Em São Paulo, o tempo muda rápido — e muda de bairro para bairro. Um temporal que
+        Em São Paulo, o tempo muda rápido, e muda de bairro para bairro. Um temporal que
         alaga uma região pode mal molhar a vizinha. Mas os avisos que a maioria de nós recebe
         falam da cidade inteira, em média, e quase sempre chegam quando o transtorno já começou.
       </p>
@@ -34,16 +34,16 @@ export default function SobrePage() {
       <h2>No que acreditamos</h2>
       <ul>
         <li>
-          <strong>Transparência.</strong> O cálculo, as fontes e o código são abertos. Informação
-          de risco só vale se você puder confiar nela.
+          <strong>Transparência.</strong> Deixamos claro como o Score é calculado e de quais fontes
+          oficiais cada número vem. Informação de risco só vale se você puder confiar nela.
         </li>
         <li>
           <strong>Clareza acima de tudo.</strong> Dado bruto não ajuda ninguém na correria. Nosso
           trabalho é transformar números em uma leitura que cabe num olhar.
         </li>
         <li>
-          <strong>Gente em primeiro lugar.</strong> Sem anúncios e sem vender seus dados. Você é o
-          usuário, não o produto.
+          <strong>Gente em primeiro lugar.</strong> Tudo é pensado para ser claro, útil e fácil de
+          usar no momento em que você precisa.
         </li>
       </ul>
 

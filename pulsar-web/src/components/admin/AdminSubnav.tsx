@@ -3,9 +3,9 @@ import { Users, Lightbulb, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const ITENS: { to: string; label: string; Icon: LucideIcon }[] = [
-  { to: '/admin/usuarios', label: 'Usuários', Icon: Users },
-  { to: '/admin/sugestoes', label: 'Sugestões', Icon: Lightbulb },
-  { to: '/admin/sistema', label: 'Sistema', Icon: Activity },
+  { to: '/app/admin/usuarios', label: 'Usuários', Icon: Users },
+  { to: '/app/admin/sugestoes', label: 'Sugestões', Icon: Lightbulb },
+  { to: '/app/admin/sistema', label: 'Sistema', Icon: Activity },
 ];
 
 /** Navegação entre as seções da área administrativa. */

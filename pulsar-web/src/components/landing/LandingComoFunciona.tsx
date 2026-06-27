@@ -1,5 +1,7 @@
 import Reveal from './Reveal';
+import { useTheme } from '../../hooks/useTheme';
 import dashboardShot from '../../assets/landing/dashboard.jpg';
+import dashboardShotClaro from '../../assets/landing/dashboard-claro.jpg';
 
 const PASSOS = [
   {
@@ -15,11 +17,14 @@ const PASSOS = [
   {
     num: '03',
     title: 'Você acompanha e é avisado',
-    desc: 'Veja tudo no mapa e no painel — e receba alertas quando a sua região mudar de patamar.',
+    desc: 'Veja tudo no mapa e no painel, e receba alertas quando a sua região mudar de patamar.',
   },
 ];
 
 export default function LandingComoFunciona() {
+  const { theme } = useTheme();
+  const dashboard = theme === 'light' ? dashboardShotClaro : dashboardShot;
+
   return (
     <section className="landing-section">
       <div className="grid lg:grid-cols-[1fr_1.05fr] gap-12 lg:gap-16 items-center">
@@ -59,7 +64,7 @@ export default function LandingComoFunciona() {
         {/* Visual: print do painel/dashboard */}
         <Reveal delay={0.1}>
           <div className="landing-shot">
-            <img src={dashboardShot} alt="Painel do Pulsar — distribuição de risco e score por região de São Paulo" />
+            <img src={dashboard} alt="Painel do Pulsar: distribuição de risco e score por região de São Paulo" />
           </div>
         </Reveal>
       </div>

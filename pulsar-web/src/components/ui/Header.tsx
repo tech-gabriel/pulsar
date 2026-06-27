@@ -1,8 +1,13 @@
-import { NavLink } from 'react-router-dom';
-import { Map, History, BarChart3, Newspaper, Settings, Bell, Sun, Moon, LogOut, ShieldCheck } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Map, History, BarChart3, Newspaper, Settings, Bell, Sun, Moon, LogOut, ShieldCheck, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAlertas } from '../../contexts/AlertasContext';
 import { useTheme } from '../../hooks/useTheme';
+import { DURACAO, EASE_SUAVE } from '../../motion/presets';
+import BadgeRisco from './BadgeRisco';
 import iconePulsar from '../../assets/logos/pulsar-icone.svg';
 
 // Abas de navegação principal (ETAPA B.1.2)
@@ -14,26 +19,50 @@ const TABS: { to: string; label: string; curto: string; Icon: LucideIcon; end?: 
   { to: '/app/configuracoes', label: 'Configurações', curto: 'Config', Icon: Settings },
 ];
 
-interface Props {
-  /** Nº de regiões em risco ALTO — exibe badge pulsante no sino. */
-  alertasAtivos?: number;
-}
-
 /**
  * Header de navegação principal (ETAPA B.1). No desktop/tablet é uma barra única
  * (logo + abas centrais + ações). No mobile divide-se em top bar (logo + ações)
- * e uma tab bar fixa no rodapé.
+ * e uma tab bar fixa no rodapé. O sino abre um painel ao vivo com as regiões em
+ * risco alto (alimentado pelo AlertasProvider, global a todas as páginas).
  */
-export default function Header({ alertasAtivos = 0 }: Props) {
+export default function Header() {
   const { usuario, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const temAlertas = alertasAtivos > 0;
+  const { alertas } = useAlertas();
+  const navigate = useNavigate();
+
+  const [painelAberto, setPainelAberto] = useState(false);
+  const sinoRef = useRef<HTMLDivElement>(null);
+
+  const temAlertas = alertas.length > 0;
+
+  // Fecha o painel ao clicar fora ou pressionar Esc.
+  useEffect(() => {
+    if (!painelAberto) return;
+    function aoClicarFora(e: MouseEvent) {
+      if (sinoRef.current && !sinoRef.current.contains(e.target as Node)) setPainelAberto(false);
+    }
+    function aoTeclar(e: KeyboardEvent) {
+      if (e.key === 'Escape') setPainelAberto(false);
+    }
+    document.addEventListener('mousedown', aoClicarFora);
+    document.addEventListener('keydown', aoTeclar);
+    return () => {
+      document.removeEventListener('mousedown', aoClicarFora);
+      document.removeEventListener('keydown', aoTeclar);
+    };
+  }, [painelAberto]);
 
   // Aba administrativa visível apenas para ADMIN e SUPORTE.
   const ehAdmin = usuario?.role === 'ADMIN' || usuario?.role === 'SUPORTE';
   const tabs = ehAdmin
     ? [...TABS, { to: '/app/admin/usuarios', label: 'Admin', curto: 'Admin', Icon: ShieldCheck }]
     : TABS;
+
+  function irParaRegiao() {
+    setPainelAberto(false);
+    navigate('/app');
+  }
 
   return (
     <>
@@ -74,28 +103,7 @@ export default function Header({ alertasAtivos = 0 }: Props) {
 
         {/* Direita: ações */}
         <div className="flex items-center gap-3">
-          {/* Sino de notificações */}
-          <button
-            type="button"
-            className="relative text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            title="Notificações"
-            aria-label="Notificações"
-          >
-            <Bell size={20} />
-            {temAlertas && (
-              <span className="bell-badge absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500" />
-            )}
-          </button>
-
-          {/* Separador + nome (md+) */}
-          <span className="hidden md:block" style={{ width: 1, height: 24, background: 'var(--border-glass)' }} />
-          {usuario?.nome && (
-            <span className="hidden md:inline" style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)' }}>
-              {usuario.nome}
-            </span>
-          )}
-
-          {/* Toggle de tema */}
+          {/* Toggle de tema (longe do logout para evitar cliques acidentais) */}
           <button
             type="button"
             onClick={toggleTheme}
@@ -107,6 +115,86 @@ export default function Header({ alertasAtivos = 0 }: Props) {
               {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </span>
           </button>
+
+          {/* Sino de notificações + painel ao vivo */}
+          <div className="relative" ref={sinoRef}>
+            <button
+              type="button"
+              onClick={() => setPainelAberto((v) => !v)}
+              className="relative text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex"
+              title="Notificações"
+              aria-label={temAlertas ? `Notificações: ${alertas.length} em alerta` : 'Notificações'}
+              aria-haspopup="true"
+              aria-expanded={painelAberto}
+            >
+              <Bell size={20} />
+              {temAlertas && (
+                <span className="notif-badge">{alertas.length > 9 ? '9+' : alertas.length}</span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {painelAberto && (
+                <motion.div
+                  className="notif-panel"
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: DURACAO.media, ease: EASE_SUAVE }}
+                  role="dialog"
+                  aria-label="Painel de notificações"
+                >
+                  <div className="notif-panel-head">
+                    <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
+                      Alertas
+                    </span>
+                    {temAlertas && <span className="notif-count">{alertas.length}</span>}
+                  </div>
+
+                  {!temAlertas ? (
+                    <div className="notif-empty">
+                      <ShieldCheck size={26} style={{ color: '#22c55e' }} />
+                      <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)' }}>
+                        Tudo tranquilo em São Paulo
+                      </p>
+                      <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+                        Nenhuma região em risco alto agora.
+                      </p>
+                    </div>
+                  ) : (
+                    <ul className="notif-list">
+                      {alertas.map((r) => (
+                        <li key={r.id}>
+                          <button type="button" className="notif-item" onClick={irParaRegiao}>
+                            <div className="min-w-0 flex-1 text-left">
+                              <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                                {r.nome}
+                              </p>
+                              <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                                {r.totalSubprefeituras} subprefeituras
+                              </p>
+                            </div>
+                            <BadgeRisco faixa={r.faixaRisco} score={r.scoreAgregado} size="sm" />
+                            <ChevronRight size={16} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Nome (md+) */}
+          {usuario?.nome && (
+            <span className="hidden md:inline" style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)' }}>
+              {usuario.nome}
+            </span>
+          )}
+
+          {/* Separador isolando o botão de sair */}
+          <span style={{ width: 1, height: 24, background: 'var(--border-glass)' }} />
 
           {/* Logout */}
           <button

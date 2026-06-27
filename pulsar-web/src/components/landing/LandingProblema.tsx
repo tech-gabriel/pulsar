@@ -10,7 +10,7 @@ const PONTOS = [
   {
     Icon: TriangleAlert,
     title: 'Aviso que chega tarde',
-    desc: 'Quando o alerta genérico aparece, o transtorno — ou o perigo — muitas vezes já começou na sua região.',
+    desc: 'Quando o alerta genérico aparece, o transtorno (ou o perigo) muitas vezes já começou na sua região.',
   },
   {
     Icon: Clock,
@@ -33,7 +33,7 @@ export default function LandingProblema() {
           className="mt-3 max-w-3xl leading-tight"
           style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(26px, 3.5vw, 38px)', color: 'var(--text-primary)' }}
         >
-          Em São Paulo, o clima muda rápido — e <span className="landing-gradient-text">por região</span>.
+          Em São Paulo, o clima muda rápido, e <span className="landing-gradient-text">por região</span>.
         </h2>
         <p className="mt-4 max-w-2xl" style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
           A média da cidade esconde o que importa: o risco onde você está, agora. O Pulsar

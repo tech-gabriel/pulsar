@@ -14,6 +14,7 @@ import {
 import { ArrowLeft, CloudRain, Wind, Eye, Sun, BarChart3 } from 'lucide-react';
 import { useHistorico } from '../hooks/useHistorico';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useTheme } from '../hooks/useTheme';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
 import BadgeRisco from '../components/ui/BadgeRisco';
@@ -26,37 +27,35 @@ interface LocationState {
   subNome?: string;
 }
 
-const AXIS_MUTED = 'rgba(184, 230, 254, 0.5)';
-const GRID_STROKE = 'rgba(0, 188, 255, 0.06)';
-
 function formatarHora(iso: string): string {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function CustomTooltip({ active, payload, label }: {
+function CustomTooltip({ active, payload, label, isLight }: {
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
   label?: string;
+  isLight?: boolean;
 }) {
   if (!active || !payload?.length) return null;
   return (
     <div
       className="text-xs"
       style={{
-        background: 'rgba(5, 47, 74, 0.9)',
+        background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(5, 47, 74, 0.9)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid var(--border-glass)',
+        border: `1px solid ${isLight ? 'rgba(0, 105, 168, 0.2)' : 'rgba(0, 188, 255, 0.15)'}`,
         borderRadius: 8,
         padding: '10px 14px',
         color: 'var(--text-primary)',
       }}
     >
-      <p className="font-semibold mb-2 text-pulsar-50">{label}</p>
+      <p className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-          <span className="text-pulsar-200">{entry.name}:</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{entry.name}:</span>
           <span className="font-mono font-semibold" style={{ color: entry.color }}>
             {entry.value?.toFixed(1)}
           </span>
@@ -72,6 +71,10 @@ export default function HistoricoPage() {
   const location = useLocation();
   const state = location.state as LocationState | null;
   const isMobile = useIsMobile(768);
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+  const axisMuted = isLight ? 'rgba(71, 85, 105, 0.65)' : 'rgba(184, 230, 254, 0.5)';
+  const gridStroke = isLight ? 'rgba(0, 105, 168, 0.12)' : 'rgba(0, 188, 255, 0.06)';
 
   const { historico, carregando, erro, recarregar } = useHistorico(subprefeituraId ?? null);
 
@@ -101,11 +104,11 @@ export default function HistoricoPage() {
   // Altura e rotação dos labels do eixo X conforme viewport
   const chartHeight = isMobile ? 250 : 360;
   const xAxisProps = isMobile
-    ? { angle: -45, textAnchor: 'end' as const, height: 48, tick: { fontSize: 9, fill: AXIS_MUTED } }
-    : { angle: 0, textAnchor: 'middle' as const, height: 20, tick: { fontSize: 11, fill: AXIS_MUTED } };
+    ? { angle: -45, textAnchor: 'end' as const, height: 48, tick: { fontSize: 9, fill: axisMuted } }
+    : { angle: 0, textAnchor: 'middle' as const, height: 20, tick: { fontSize: 11, fill: axisMuted } };
 
   return (
-    <div className="theme-dark-scope min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
       <Header />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-3 sm:px-4 pb-20 md:pb-8 flex flex-col gap-5 sm:gap-6" style={{ paddingTop: 72 }}>
@@ -114,23 +117,24 @@ export default function HistoricoPage() {
         <GlassCard hover={false} padding="lg" className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="text-pulsar-300 hover:text-pulsar-50 transition-colors flex items-center gap-1.5 flex-shrink-0"
+            className="transition-colors flex items-center gap-1.5 flex-shrink-0 hover:text-[var(--text-primary)]"
+            style={{ color: 'var(--text-secondary)' }}
           >
             <ArrowLeft size={20} />
             <span className="text-sm hidden sm:inline">Voltar</span>
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <BarChart3 size={16} className="text-pulsar-400 flex-shrink-0" />
+              <BarChart3 size={16} className="flex-shrink-0" style={{ color: 'var(--text-accent)' }} />
               <h1
-                className="text-pulsar-50 truncate"
-                style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 18 }}
+                className="truncate"
+                style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 18, color: 'var(--text-primary)' }}
               >
                 {historico?.subprefeituraNome ?? state?.subNome ?? 'Histórico'}
               </h1>
             </div>
             {state?.regiaoNome && (
-              <p className="text-xs text-pulsar-300 mt-0.5 truncate">Região: {state.regiaoNome}</p>
+              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>Região: {state.regiaoNome}</p>
             )}
           </div>
           {ultima?.score && (
@@ -167,10 +171,10 @@ export default function HistoricoPage() {
                   <Icon size={18} style={{ color: cor }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs text-pulsar-300 truncate">{label}</p>
-                  <p className="font-mono text-sm font-semibold text-pulsar-50">
+                  <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                  <p className="font-mono text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {valor.toFixed(1)}{' '}
-                    <span className="text-pulsar-300 font-normal text-xs">{unidade}</span>
+                    <span className="font-normal text-xs" style={{ color: 'var(--text-muted)' }}>{unidade}</span>
                   </p>
                 </div>
               </GlassCard>
@@ -182,8 +186,8 @@ export default function HistoricoPage() {
         {dados.length >= 2 && (
           <GlassCard hover={false} padding="lg">
             <h2
-              className="text-pulsar-200 mb-4"
-              style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15 }}
+              className="mb-4"
+              style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-secondary)' }}
             >
               Histórico das últimas 24 horas
             </h2>
@@ -195,12 +199,12 @@ export default function HistoricoPage() {
                     <stop offset="100%" stopColor="#00A6F4" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
                 <XAxis
                   dataKey="hora"
                   tick={xAxisProps.tick}
                   tickLine={false}
-                  axisLine={{ stroke: GRID_STROKE }}
+                  axisLine={{ stroke: gridStroke }}
                   interval="preserveStartEnd"
                   angle={xAxisProps.angle}
                   textAnchor={xAxisProps.textAnchor}
@@ -208,23 +212,23 @@ export default function HistoricoPage() {
                 />
                 <YAxis
                   domain={[0, 100]}
-                  tick={{ fontSize: 11, fill: AXIS_MUTED }}
+                  tick={{ fontSize: 11, fill: axisMuted }}
                   tickLine={false}
                   axisLine={false}
                   width={28}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,188,255,0.2)' }} />
+                <Tooltip content={<CustomTooltip isLight={isLight} />} cursor={{ stroke: isLight ? 'rgba(0,132,209,0.25)' : 'rgba(0,188,255,0.2)' }} />
                 <ReferenceLine
                   y={30}
                   stroke="rgba(34,197,94,0.4)"
                   strokeDasharray="5 5"
-                  label={{ value: '30', position: 'right', fill: AXIS_MUTED, fontSize: 10 }}
+                  label={{ value: '30', position: 'right', fill: axisMuted, fontSize: 10 }}
                 />
                 <ReferenceLine
                   y={60}
                   stroke="rgba(239,68,68,0.4)"
                   strokeDasharray="5 5"
-                  label={{ value: '60', position: 'right', fill: AXIS_MUTED, fontSize: 10 }}
+                  label={{ value: '60', position: 'right', fill: axisMuted, fontSize: 10 }}
                 />
                 <Area
                   type="monotone"
@@ -254,7 +258,7 @@ export default function HistoricoPage() {
                   <p style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 24, color: cor }}>
                     {valor.toFixed(0)}
                   </p>
-                  <p className="text-pulsar-300" style={{ fontFamily: 'var(--font-body)', fontSize: 12 }}>{label}</p>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-muted)' }}>{label}</p>
                 </div>
               ))}
             </div>
@@ -265,31 +269,31 @@ export default function HistoricoPage() {
         {dados.length >= 2 && (
           <GlassCard hover={false} padding="lg">
             <h2
-              className="text-pulsar-200 mb-4"
-              style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15 }}
+              className="mb-4"
+              style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-secondary)' }}
             >
               Variáveis Climáticas
             </h2>
             <ResponsiveContainer width="100%" height={chartHeight}>
               <ComposedChart data={dados} margin={{ top: 4, right: 8, bottom: xAxisProps.height - 20, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
                 <XAxis
                   dataKey="hora"
                   tick={xAxisProps.tick}
                   tickLine={false}
-                  axisLine={{ stroke: GRID_STROKE }}
+                  axisLine={{ stroke: gridStroke }}
                   interval="preserveStartEnd"
                   angle={xAxisProps.angle}
                   textAnchor={xAxisProps.textAnchor}
                   height={xAxisProps.height}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: AXIS_MUTED }}
+                  tick={{ fontSize: 11, fill: axisMuted }}
                   tickLine={false}
                   axisLine={false}
                   width={28}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,188,255,0.2)' }} />
+                <Tooltip content={<CustomTooltip isLight={isLight} />} cursor={{ stroke: isLight ? 'rgba(0,132,209,0.25)' : 'rgba(0,188,255,0.2)' }} />
                 <Legend iconSize={10} wrapperStyle={{ fontSize: isMobile ? '10px' : '11px', paddingTop: '8px', color: 'var(--text-secondary)' }} />
                 <Line type="monotone" dataKey="chuva"        name="Chuva (mm/h)"  stroke="#3b82f6" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="vento"        name="Vento (km/h)"  stroke="#f59e0b" strokeWidth={2} dot={false} />

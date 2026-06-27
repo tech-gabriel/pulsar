@@ -107,9 +107,9 @@ export default function RedefinirSenhaPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Nova senha */}
         <div>
-          <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>Nova senha</label>
+          <label className="block text-[var(--text-secondary)] mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>Nova senha</label>
           <div className="relative">
-            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-pulsar-300 pointer-events-none" />
+            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
             <input
               type={mostrarSenha ? 'text' : 'password'}
               value={senha}
@@ -122,7 +122,7 @@ export default function RedefinirSenhaPage() {
             <button
               type="button"
               onClick={() => setMostrarSenha((v) => !v)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-pulsar-300 hover:text-pulsar-100 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
               tabIndex={-1}
               aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
             >
@@ -145,9 +145,9 @@ export default function RedefinirSenhaPage() {
 
         {/* Confirmação */}
         <div>
-          <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>Confirmar senha</label>
+          <label className="block text-[var(--text-secondary)] mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>Confirmar senha</label>
           <div className="relative">
-            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-pulsar-300 pointer-events-none" />
+            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
             <input
               type={mostrarSenha ? 'text' : 'password'}
               value={confirmacao}
@@ -170,7 +170,7 @@ export default function RedefinirSenhaPage() {
 
       <Link
         to="/login"
-        className="inline-flex items-center justify-center gap-2 mt-7 w-full text-pulsar-400 hover:underline font-semibold"
+        className="inline-flex items-center justify-center gap-2 mt-7 w-full text-[var(--text-accent)] hover:underline font-semibold"
         style={{ fontSize: 13.5 }}
       >
         <ArrowLeft size={16} /> Voltar para o login

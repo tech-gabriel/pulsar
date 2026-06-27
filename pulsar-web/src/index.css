@@ -547,6 +547,11 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   color: #FCA5A5;
   font-size: 13px;
 }
+/* No tema claro, o vermelho-claro some no fundo branco: usa um tom mais forte. */
+html.light .erro-glass {
+  background: rgba(239, 68, 68, 0.08);
+  color: #B91C1C;
+}
 
 /* Dot verde pulsante do header (ETAPA 5.4) */
 @keyframes dot-pulse {
@@ -683,6 +688,91 @@ button, a, [role="button"], [role="radio"] {
 }
 .bell-badge {
   animation: bell-pulse 1.6s ease-in-out infinite;
+}
+
+/* Badge numérico do sino (contagem de alertas) */
+.notif-badge {
+  position: absolute;
+  top: -7px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--bg-primary);
+  animation: bell-pulse 1.6s ease-in-out infinite;
+}
+
+/* Painel ao vivo de notificações (dropdown do sino) */
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 320px;
+  max-width: calc(100vw - 2rem);
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--bg-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  box-shadow: var(--glass-shadow), 0 12px 40px rgba(0, 0, 0, 0.28);
+  z-index: 1001;
+  transform-origin: top right;
+}
+.notif-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-glass);
+}
+.notif-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 20px;
+  text-align: center;
+}
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+}
+.notif-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 10px;
+  border-radius: 10px;
+  transition: background 160ms ease;
+}
+.notif-item:hover {
+  background: var(--bg-glass-hover);
 }
 
 /* Toggle de tema: rotaciona + fade ao trocar */
@@ -1219,3 +1309,39 @@ html.light *::-webkit-scrollbar-thumb:hover {
 }
 .landing-prose a:hover { filter: brightness(1.15); }
 .landing-prose strong { color: var(--text-primary); font-weight: 600; }
+
+/* ── Banner do CTA final (reage ao tema claro/escuro) ──────────────────────── */
+.landing-cta-band {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px solid var(--border-glass-hover);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(0, 132, 209, 0.28) 0%, transparent 55%),
+    linear-gradient(160deg, #052F4A 0%, #03263B 70%, #021C2C 100%);
+}
+@media (min-width: 640px) {
+  .landing-cta-band { padding: 64px 24px; }
+}
+html.light .landing-cta-band {
+  border-color: rgba(0, 105, 168, 0.25);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(0, 166, 244, 0.20) 0%, transparent 55%),
+    linear-gradient(160deg, #E2F1FB 0%, #D3E9F8 70%, #C3DEF2 100%);
+}
+
+/* ── Transição de tema: revelação circular via View Transitions API ────────── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* O tema novo é desenhado por cima e revelado pelo clip-path animado no JS. */
+::view-transition-new(root) {
+  z-index: 1;
+}
+::view-transition-old(root) {
+  z-index: 0;
+}

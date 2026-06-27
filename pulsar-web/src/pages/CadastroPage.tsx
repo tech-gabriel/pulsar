@@ -78,9 +78,9 @@ export default function CadastroPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Nome */}
         <div>
-          <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>Nome</label>
+          <label className="block text-[var(--text-secondary)] mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>Nome</label>
           <div className="relative">
-            <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-pulsar-300 pointer-events-none" />
+            <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
             <input
               type="text"
               value={nome}
@@ -95,9 +95,9 @@ export default function CadastroPage() {
 
         {/* E-mail */}
         <div>
-          <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>E-mail</label>
+          <label className="block text-[var(--text-secondary)] mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>E-mail</label>
           <div className="relative">
-            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-pulsar-300 pointer-events-none" />
+            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
             <input
               type="email"
               value={email}
@@ -112,9 +112,9 @@ export default function CadastroPage() {
 
         {/* Senha */}
         <div>
-          <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>Senha</label>
+          <label className="block text-[var(--text-secondary)] mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>Senha</label>
           <div className="relative">
-            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-pulsar-300 pointer-events-none" />
+            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
             <input
               type={mostrarSenha ? 'text' : 'password'}
               value={senha}
@@ -127,7 +127,7 @@ export default function CadastroPage() {
             <button
               type="button"
               onClick={() => setMostrarSenha((v) => !v)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-pulsar-300 hover:text-pulsar-100 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
               tabIndex={-1}
               aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
             >
@@ -160,7 +160,7 @@ export default function CadastroPage() {
 
       <p className="text-center mt-7" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
         Já tem conta?{' '}
-        <Link to="/login" className="text-pulsar-400 hover:underline font-semibold">
+        <Link to="/login" className="text-[var(--text-accent)] hover:underline font-semibold">
           Entrar
         </Link>
       </p>

@@ -2,10 +2,15 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
+import { useTheme } from '../../hooks/useTheme';
 import logoLockup from '../../assets/logos/pulsar-lockup-escuro.svg';
 import mapaShot from '../../assets/landing/mapa.jpg';
+import mapaShotClaro from '../../assets/landing/mapa-claro.jpg';
 
 export default function LandingHero() {
+  const { theme } = useTheme();
+  const mapa = theme === 'light' ? mapaShotClaro : mapaShot;
+
   return (
     <header className="landing-section !pt-16 sm:!pt-24 !pb-10 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
       {/* Coluna de texto */}
@@ -59,7 +64,7 @@ export default function LandingHero() {
         </div>
 
         <div className="landing-shot">
-          <img src={mapaShot} alt="Mapa de risco do Pulsar — Score de Perigo por subprefeitura de São Paulo" />
+          <img src={mapa} alt="Mapa de risco do Pulsar: Score de Perigo por subprefeitura de São Paulo" />
         </div>
       </motion.div>
     </header>

@@ -547,6 +547,11 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   color: #FCA5A5;
   font-size: 13px;
 }
+/* No tema claro, o vermelho-claro some no fundo branco: usa um tom mais forte. */
+html.light .erro-glass {
+  background: rgba(239, 68, 68, 0.08);
+  color: #B91C1C;
+}
 
 /* Dot verde pulsante do header (ETAPA 5.4) */
 @keyframes dot-pulse {

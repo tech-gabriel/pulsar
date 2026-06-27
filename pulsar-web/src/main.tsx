@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { MotionConfig } from 'motion/react';
 import { AuthProvider } from './contexts/AuthProvider';
+import { AlertasProvider } from './contexts/AlertasProvider';
 import { ToastProvider } from './contexts/ToastProvider';
 import { ThemeProvider } from './hooks/ThemeProvider';
 import ToastContainer from './components/ui/ToastContainer';
@@ -18,8 +19,10 @@ createRoot(document.getElementById('root')!).render(
           <ThemeProvider>
             <ToastProvider>
               <AuthProvider>
-                <App />
-                <ToastContainer />
+                <AlertasProvider>
+                  <App />
+                  <ToastContainer />
+                </AlertasProvider>
               </AuthProvider>
             </ToastProvider>
           </ThemeProvider>

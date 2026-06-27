@@ -75,7 +75,7 @@ function ChartTooltip({ active, payload, isLight }: {
         color: 'var(--text-primary)',
       }}
     >
-      <span className="text-pulsar-200">{item.payload.nome ?? item.name}: </span>
+      <span style={{ color: 'var(--text-secondary)' }}>{item.payload.nome ?? item.name}: </span>
       <span className="font-mono font-semibold" style={{ color: item.payload.cor ?? 'var(--text-accent)' }}>
         {item.value.toFixed(item.value % 1 === 0 ? 0 : 1)}
       </span>

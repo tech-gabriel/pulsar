@@ -74,6 +74,19 @@ export default function Header({ alertasAtivos = 0 }: Props) {
 
         {/* Direita: ações */}
         <div className="flex items-center gap-3">
+          {/* Toggle de tema (longe do logout para evitar cliques acidentais) */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            aria-label="Alternar tema"
+          >
+            <span key={theme} className="theme-icon-anim inline-flex">
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </span>
+          </button>
+
           {/* Sino de notificações */}
           <button
             type="button"
@@ -87,26 +100,15 @@ export default function Header({ alertasAtivos = 0 }: Props) {
             )}
           </button>
 
-          {/* Separador + nome (md+) */}
-          <span className="hidden md:block" style={{ width: 1, height: 24, background: 'var(--border-glass)' }} />
+          {/* Nome (md+) */}
           {usuario?.nome && (
             <span className="hidden md:inline" style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)' }}>
               {usuario.nome}
             </span>
           )}
 
-          {/* Toggle de tema */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
-            aria-label="Alternar tema"
-          >
-            <span key={theme} className="theme-icon-anim inline-flex">
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </span>
-          </button>
+          {/* Separador isolando o botão de sair */}
+          <span style={{ width: 1, height: 24, background: 'var(--border-glass)' }} />
 
           {/* Logout */}
           <button

@@ -57,6 +57,22 @@ public class AdminService : IAdminService
         return MapearAdminDto(usuario);
     }
 
+    public async Task ExcluirUsuarioAsync(Guid adminId, Guid alvoId)
+    {
+        if (adminId == alvoId)
+            throw new InvalidOperationException("Você não pode excluir a própria conta.");
+
+        var usuario = await _usuarioRepository.ObterPorIdAsync(alvoId)
+            ?? throw new KeyNotFoundException("Usuário não encontrado.");
+
+        if (usuario.Role == RoleAcesso.ADMIN)
+            throw new InvalidOperationException("Não é possível excluir uma conta de administrador.");
+
+        // Favoritos, tokens de recuperação e inscrições de push caem por FK CASCADE.
+        await _usuarioRepository.RemoverAsync(usuario);
+        await _usuarioRepository.SalvarAsync();
+    }
+
     // ── Catálogo de Sugestões ──────────────────────────────────
 
     public async Task<IReadOnlyList<SugestaoAdminDto>> ListarSugestoesAsync()

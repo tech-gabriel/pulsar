@@ -9,6 +9,7 @@ interface UseUsuariosAdminResult {
   erro: boolean;
   alterarRole: (id: string, role: RoleAcesso) => Promise<void>;
   alterarAtivo: (id: string, ativo: boolean) => Promise<void>;
+  excluir: (id: string) => Promise<void>;
   recarregar: () => void;
 }
 
@@ -69,7 +70,21 @@ export function useUsuariosAdmin(): UseUsuariosAdminResult {
     [showToast]
   );
 
-  return { usuarios, carregando, erro, alterarRole, alterarAtivo, recarregar };
+  const excluir = useCallback(
+    async (id: string) => {
+      try {
+        await api.delete(`/admin/usuarios/${id}`);
+        setUsuarios((prev) => prev.filter((u) => u.id !== id));
+        showToast('Conta excluída', 'success');
+      } catch (e) {
+        const msg = extrairMensagem(e) ?? 'Não foi possível excluir a conta';
+        showToast(msg, 'error');
+      }
+    },
+    [showToast]
+  );
+
+  return { usuarios, carregando, erro, alterarRole, alterarAtivo, excluir, recarregar };
 }
 
 /** Extrai a mensagem de erro do backend (`{ mensagem }`), se houver. */

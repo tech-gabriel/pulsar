@@ -134,7 +134,7 @@ export default function MapaPage() {
       {onboardingAberto && <OnboardingModal onConcluir={concluirOnboarding} />}
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
-      <Header alertasAtivos={alertasAtivos} />
+      <Header />
 
       {/* ══════════════════════════════════════════
           MAPA — camada de fundo absoluta

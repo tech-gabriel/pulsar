@@ -31,7 +31,7 @@ export default function EsqueciSenhaPage() {
         <div className="text-center">
           <div
             className="mx-auto mb-5 flex items-center justify-center rounded-full"
-            style={{ width: 64, height: 64, background: 'rgba(0, 188, 255, 0.12)', color: 'var(--pulsar-400, #00bcff)' }}
+            style={{ width: 64, height: 64, background: 'rgba(0, 188, 255, 0.12)', color: 'var(--text-accent)' }}
           >
             <MailCheck size={30} />
           </div>
@@ -47,7 +47,7 @@ export default function EsqueciSenhaPage() {
             <button
               type="button"
               onClick={() => setEnviado(false)}
-              className="text-pulsar-400 hover:underline font-semibold"
+              className="text-[var(--text-accent)] hover:underline font-semibold"
             >
               tente outro e-mail
             </button>
@@ -56,7 +56,7 @@ export default function EsqueciSenhaPage() {
 
           <Link
             to="/login"
-            className="inline-flex items-center justify-center gap-2 mt-7 text-pulsar-400 hover:underline font-semibold"
+            className="inline-flex items-center justify-center gap-2 mt-7 text-[var(--text-accent)] hover:underline font-semibold"
             style={{ fontSize: 14 }}
           >
             <ArrowLeft size={16} /> Voltar para o login
@@ -88,11 +88,11 @@ export default function EsqueciSenhaPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* E-mail */}
         <div>
-          <label className="block text-pulsar-200 mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>
+          <label className="block text-[var(--text-secondary)] mb-1.5" style={{ fontSize: 13, fontWeight: 500 }}>
             E-mail
           </label>
           <div className="relative">
-            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-pulsar-300 pointer-events-none" />
+            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
             <input
               type="email"
               value={email}
@@ -112,7 +112,7 @@ export default function EsqueciSenhaPage() {
 
       <Link
         to="/login"
-        className="inline-flex items-center justify-center gap-2 mt-7 w-full text-pulsar-400 hover:underline font-semibold"
+        className="inline-flex items-center justify-center gap-2 mt-7 w-full text-[var(--text-accent)] hover:underline font-semibold"
         style={{ fontSize: 13.5 }}
       >
         <ArrowLeft size={16} /> Voltar para o login

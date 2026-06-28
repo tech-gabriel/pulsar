@@ -151,6 +151,18 @@ export default function CadastroPage() {
         <button type="submit" disabled={enviando} className="btn-gradient w-full py-3 mt-1 min-h-[48px]">
           {enviando ? 'Criando conta…' : 'Criar conta'}
         </button>
+
+        <p className="text-center" style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+          Ao criar sua conta, você concorda com os{' '}
+          <Link to="/termos" target="_blank" className="text-[var(--text-accent)] hover:underline">
+            Termos de Uso
+          </Link>{' '}
+          e a{' '}
+          <Link to="/privacidade" target="_blank" className="text-[var(--text-accent)] hover:underline">
+            Política de Privacidade
+          </Link>
+          .
+        </p>
       </form>
 
       {/* Cadastro social */}

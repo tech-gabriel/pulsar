@@ -46,12 +46,26 @@ function tileConfig(theme: 'dark' | 'light') {
   if (MAPTILER_KEY) {
     // streets-v2: nomes de ruas, parques (áreas verdes) e POIs legíveis, mantendo
     // contraste com os polígonos de score por cima (fillOpacity baixa).
+    // As tiles raster do MapTiler são 512px nativas: exibi-las com o tileSize
+    // padrão (256) comprime a imagem pela metade e deixa os rótulos minúsculos.
+    // tileSize:512 + zoomOffset:-1 mostra as tiles no tamanho nativo → nomes maiores
+    // e nítidos (integração recomendada pelo MapTiler para Leaflet).
     const estilo = theme === 'light' ? 'streets-v2' : 'streets-v2-dark';
-    return { url: `https://api.maptiler.com/maps/${estilo}/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, attribution: ATTRIB_MAPTILER };
+    return {
+      url: `https://api.maptiler.com/maps/${estilo}/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`,
+      attribution: ATTRIB_MAPTILER,
+      tileSize: 512,
+      zoomOffset: -1,
+    };
   }
   // Fallback sem chave: Voyager (CARTO) é mais detalhado que o dark/light_all e mostra ruas/parques.
   const base = theme === 'light' ? 'rastertiles/voyager' : 'rastertiles/voyager_labels_under';
-  return { url: `https://basemaps.cartocdn.com/${base}/{z}/{x}/{y}{r}.png`, attribution: ATTRIB_CARTO };
+  return {
+    url: `https://basemaps.cartocdn.com/${base}/{z}/{x}/{y}{r}.png`,
+    attribution: ATTRIB_CARTO,
+    tileSize: 256,
+    zoomOffset: 0,
+  };
 }
 
 interface Props {
@@ -134,6 +148,8 @@ export default function MapaBase({
         key={tile.url}
         attribution={tile.attribution}
         url={tile.url}
+        tileSize={tile.tileSize}
+        zoomOffset={tile.zoomOffset}
       />
       <MapController
         subprefeituras={subprefeituras}

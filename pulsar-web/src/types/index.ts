@@ -160,7 +160,12 @@ export interface SubprefeituraMapaDto extends SubprefeituraDto {
 
 /** Endereço retornado pela busca de geocoding (GET /api/busca/enderecos). */
 export interface EnderecoBusca {
+  /** Rótulo principal (ex.: "Shopping Eldorado", "Avenida Paulista"). */
+  nome: string;
+  /** Descrição completa/contexto. */
   descricao: string;
+  /** Categoria do provedor: "poi", "address", "place", "neighbourhood"… */
+  tipo: string;
   latitude: number;
   longitude: number;
 }

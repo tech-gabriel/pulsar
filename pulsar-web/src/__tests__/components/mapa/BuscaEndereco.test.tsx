@@ -23,7 +23,7 @@ vi.mock('../../../hooks/useBuscaEndereco', () => ({
 import BuscaEndereco from '../../../components/mapa/BuscaEndereco';
 
 const resultados: EnderecoBusca[] = [
-  { descricao: 'Av. Paulista, São Paulo', latitude: -23.561, longitude: -46.656 },
+  { nome: 'Av. Paulista', descricao: 'Av. Paulista, São Paulo', tipo: 'address', latitude: -23.561, longitude: -46.656 },
 ];
 
 beforeEach(() => {
@@ -34,12 +34,12 @@ beforeEach(() => {
 describe('BuscaEndereco', () => {
   it('renderiza o campo de busca', () => {
     render(<BuscaEndereco onSelecionar={vi.fn()} isMobile={false} />);
-    expect(screen.getByLabelText('Buscar endereço')).toBeInTheDocument();
+    expect(screen.getByLabelText('Buscar lugar, rua ou bairro')).toBeInTheDocument();
   });
 
   it('chama setTermo ao digitar', () => {
     render(<BuscaEndereco onSelecionar={vi.fn()} isMobile={false} />);
-    fireEvent.change(screen.getByLabelText('Buscar endereço'), {
+    fireEvent.change(screen.getByLabelText('Buscar lugar, rua ou bairro'), {
       target: { value: 'paulista' },
     });
     expect(setTermo).toHaveBeenCalledWith('paulista');
@@ -51,8 +51,8 @@ describe('BuscaEndereco', () => {
     render(<BuscaEndereco onSelecionar={onSelecionar} isMobile={false} />);
 
     // foco abre o dropdown (termo já tem >= 3 chars)
-    fireEvent.focus(screen.getByLabelText('Buscar endereço'));
-    fireEvent.click(screen.getByText('Av. Paulista, São Paulo'));
+    fireEvent.focus(screen.getByLabelText('Buscar lugar, rua ou bairro'));
+    fireEvent.click(screen.getByText('Av. Paulista'));
 
     expect(onSelecionar).toHaveBeenCalledWith(resultados[0]);
   });

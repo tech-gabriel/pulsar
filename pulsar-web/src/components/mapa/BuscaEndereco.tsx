@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, X, MapPin, Loader2 } from 'lucide-react';
+import { Search, X, MapPin, Landmark, Building2, Loader2 } from 'lucide-react';
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
 import type { EnderecoBusca } from '../../types';
 
@@ -18,6 +18,23 @@ const CARD: React.CSSProperties = {
 };
 
 const MIN_CHARS = 3;
+
+// Ícone por categoria do resultado, para o usuário distinguir lugar × rua × bairro.
+function iconePara(tipo: string) {
+  if (tipo === 'poi') return Landmark;
+  if (tipo === 'address') return MapPin;
+  return Building2; // place, neighbourhood, locality, municipal_district…
+}
+
+// Remove o nome repetido do início da descrição, deixando só o contexto.
+function contextoDe(r: EnderecoBusca): string {
+  const nome = r.nome?.trim();
+  const desc = r.descricao?.trim() ?? '';
+  if (nome && desc.toLowerCase().startsWith(nome.toLowerCase())) {
+    return desc.slice(nome.length).replace(/^[,\s]+/, '');
+  }
+  return desc === nome ? '' : desc;
+}
 
 /**
  * Caixa de busca de endereços sobreposta ao mapa, com autocomplete. Resolve o
@@ -41,7 +58,7 @@ export default function BuscaEndereco({ onSelecionar, isMobile }: Props) {
 
   function selecionar(endereco: EnderecoBusca) {
     onSelecionar(endereco);
-    setTermo(endereco.descricao);
+    setTermo(endereco.nome || endereco.descricao);
     setAberto(false);
   }
 
@@ -76,8 +93,8 @@ export default function BuscaEndereco({ onSelecionar, isMobile }: Props) {
           }}
           onFocus={() => setAberto(true)}
           onKeyDown={onKeyDown}
-          placeholder="Buscar rua ou endereço em SP…"
-          aria-label="Buscar endereço"
+          placeholder="Buscar lugar, rua ou bairro em SP…"
+          aria-label="Buscar lugar, rua ou bairro"
           className="flex-1 bg-transparent text-sm text-white placeholder:text-pulsar-300/60 outline-none min-w-0"
         />
         {carregando && (
@@ -103,21 +120,32 @@ export default function BuscaEndereco({ onSelecionar, isMobile }: Props) {
           {erro && <li className="px-3 py-2.5 text-xs text-red-300">{erro}</li>}
           {!erro && !carregando && resultados.length === 0 && (
             <li className="px-3 py-2.5 text-xs text-pulsar-300/70">
-              Nenhum endereço encontrado.
+              Nada encontrado. Tente o nome de um lugar, rua ou bairro.
             </li>
           )}
-          {resultados.map((r, i) => (
-            <li key={`${r.descricao}-${i}`}>
-              <button
-                type="button"
-                onClick={() => selecionar(r)}
-                className="flex w-full items-start gap-2 px-3 py-2.5 text-left transition-colors hover:bg-pulsar-700/40"
-              >
-                <MapPin size={15} className="mt-0.5 flex-shrink-0 text-pulsar-400" />
-                <span className="text-xs leading-snug text-pulsar-100">{r.descricao}</span>
-              </button>
-            </li>
-          ))}
+          {resultados.map((r, i) => {
+            const Icone = iconePara(r.tipo);
+            const contexto = contextoDe(r);
+            return (
+              <li key={`${r.descricao}-${i}`}>
+                <button
+                  type="button"
+                  onClick={() => selecionar(r)}
+                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left transition-colors hover:bg-pulsar-700/40"
+                >
+                  <Icone size={15} className="mt-0.5 flex-shrink-0 text-pulsar-400" />
+                  <span className="min-w-0 leading-snug">
+                    <span className="block truncate text-xs font-medium text-pulsar-50">
+                      {r.nome || r.descricao}
+                    </span>
+                    {contexto && (
+                      <span className="block truncate text-[11px] text-pulsar-300/80">{contexto}</span>
+                    )}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

@@ -23,6 +23,12 @@ public interface IAdminService
     /// </summary>
     Task<UsuarioAdminDto> AlterarAtivoAsync(Guid adminId, Guid alvoId, bool ativo);
 
+    /// <summary>
+    /// Exclui permanentemente um usuário (dependentes caem por FK CASCADE). Bloqueia
+    /// a exclusão da própria conta e de contas ADMIN (anti-lockout / segurança).
+    /// </summary>
+    Task ExcluirUsuarioAsync(Guid adminId, Guid alvoId);
+
     // ── Catálogo de Sugestões ──────────────────────────────────
 
     /// <summary>Lista todas as sugestões do catálogo, incluindo inativas (ADMIN e SUPORTE).</summary>

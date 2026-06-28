@@ -40,10 +40,13 @@ Navegador ──HTTPS──> pulsar-web (Render Static Site)
 - **VAPID** (Web Push): `npx web-push generate-vapid-keys` → guarde `publicKey` e `privateKey`.
 - **JWT**: não precisa gerar — o Blueprint usa `generateValue: true` e o Render cria um forte.
 - **Connection string do Supabase**: Supabase → Project Settings → Database →
-  *Connection string* → **Session mode (porta 5432)**. Formato Npgsql:
-  `Host=db.<ref>.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=<senha>`
-  > Use 5432 (session), **não** 6543 (transaction) — o pooler em transaction mode
-  > não suporta prepared statements do Npgsql/EF Core.
+  *Connection string* → **Session pooler (porta 5432)**. Formato Npgsql:
+  `Host=aws-0-<region>.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.<ref>;Password=<senha>`
+  > Use o **Session pooler** (porta 5432), **não** o Transaction pooler (6543): o
+  > transaction mode não suporta prepared statements do Npgsql/EF Core.
+  > **Importante (IPv4):** prefira o host do *pooler* (`...pooler.supabase.com`) e
+  > não o host direto (`db.<ref>.supabase.co`). O host direto é **IPv6**, e a saída
+  > do Render pode não ter IPv6 — a conexão falharia. O pooler responde em IPv4.
 
 ### 2. Subir o Blueprint no Render
 1. Render → **New → Blueprint** → conecte este repositório.
@@ -61,9 +64,14 @@ Render tiver dado outro nome/URL ao backend, edite a regra de rewrite do
   *Authorized JavaScript origins* → adicione a **URL pública do frontend**
   (ex.: `https://pulsar-web.onrender.com`). Use o **mesmo Client ID** em
   `Authentication__Google__ClientId` (backend) e `VITE_GOOGLE_CLIENT_ID` (frontend).
-- **Resend**: verifique um **domínio próprio** (resend.com/domains) e use um
-  remetente desse domínio em `Email__FromEmail`. Sem domínio verificado, e-mails
-  só chegam à sua própria conta Resend.
+- **Resend (obrigatório para reset de senha funcionar)**: verifique o **domínio
+  próprio** `app-pulsar.com.br` em resend.com/domains. O Resend mostra registros
+  DNS (SPF/DKIM e, opcionalmente, DMARC) para adicionar no registro.br, junto com
+  os do domínio do site. Depois use um remetente desse domínio em `Email__FromEmail`
+  (ex.: `nao-responda@app-pulsar.com.br`).
+  > **Enquanto o domínio não estiver verificado**, o Resend só entrega e-mails para
+  > a sua própria conta. Ou seja, o reset de senha **não chega aos usuários reais**.
+  > Verificar o domínio é pré-requisito para liberar esse fluxo no lançamento.
 
 ### 5. Smoke test
 - [ ] `GET https://<backend>/health` → `Healthy`
@@ -90,9 +98,9 @@ Render tiver dado outro nome/URL ao backend, edite a regra de rewrite do
 | `Authentication__Google__ClientId` | `...apps.googleusercontent.com` | **sim** |
 | `Push__PublicKey` | *(chave VAPID pública)* | **sim** |
 | `Push__PrivateKey` | *(chave VAPID privada)* | **sim** |
-| `Push__Subject` | `mailto:contato@seudominio.com` | **sim** |
-| `Cors__AllowedOrigins__0` | `https://pulsar-web.onrender.com` | **sim** |
-| `RecuperacaoSenha__UrlBaseFrontend` | `https://pulsar-web.onrender.com` | **sim** |
+| `Push__Subject` | `mailto:equipe.app.pulsar@gmail.com` | **sim** |
+| `Cors__AllowedOrigins__0` | `https://app-pulsar.com.br` | **sim** |
+| `RecuperacaoSenha__UrlBaseFrontend` | `https://app-pulsar.com.br` | **sim** |
 
 > Recursos **gated por config**: sem `Push__*` o push fica desligado (e o front
 > esconde o opt-in); sem `Authentication__Google__ClientId` o login Google some;
@@ -139,6 +147,12 @@ Render tiver dado outro nome/URL ao backend, edite a regra de rewrite do
 - **Alternativa de menor custo**: servir o frontend pelo próprio backend (um único
   serviço, 100% same-origin, sem o site estático). Mais barato, mas acopla os
   deploys e engorda a imagem — não adotado aqui em favor da separação.
-- **Domínio próprio**: pode ser adicionado depois nos dois serviços (Render →
-  Settings → Custom Domains); lembre de atualizar as origens do Google e as envs
-  de URL do frontend.
+- **Domínio próprio**: já declarado no `render.yaml` (campo `domains:` do
+  `pulsar-web`): `app-pulsar.com.br` (principal) e `www.app-pulsar.com.br` (redireciona
+  para o apex). O Blueprint provisiona o custom domain; basta criar no registro.br os
+  registros DNS que o Render exibir (apex = registros A; www = CNAME) e aguardar a
+  propagação + emissão do SSL. **Só o frontend usa o domínio**; o backend continua no
+  `pulsar-api.onrender.com` (interno, alcançado pelo rewrite same-origin). As envs de
+  URL do frontend (`Cors__AllowedOrigins__0`, `RecuperacaoSenha__UrlBaseFrontend`) já
+  devem apontar para `https://app-pulsar.com.br`. Ao ativar o login Google no futuro,
+  adicione esse domínio às *Authorized JavaScript origins* no Google Cloud.

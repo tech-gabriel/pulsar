@@ -51,11 +51,11 @@ services:
         sync: false
       - key: Push__PrivateKey
         sync: false
-      - key: Push__Subject                           # ex.: mailto:contato@seudominio.com
+      - key: Push__Subject                           # ex.: mailto:equipe.app.pulsar@gmail.com
         sync: false
-      - key: Cors__AllowedOrigins__0                 # URL pública do frontend
+      - key: Cors__AllowedOrigins__0                 # URL pública do frontend (ex.: https://app-pulsar.com.br)
         sync: false
-      - key: RecuperacaoSenha__UrlBaseFrontend       # URL pública do frontend (links de reset)
+      - key: RecuperacaoSenha__UrlBaseFrontend       # URL pública do frontend (links de reset, ex.: https://app-pulsar.com.br)
         sync: false
 
   # ── Frontend (SPA estática + proxy /api) ───────────────────────────────────
@@ -67,6 +67,13 @@ services:
     buildCommand: cd pulsar-web && npm ci && npm run build
     staticPublishPath: pulsar-web/dist            # relativo à raiz do repo
     pullRequestPreviewsEnabled: false
+    # Domínio próprio (registrado no registro.br). O Render provisiona o custom
+    # domain e emite o SSL após a propagação do DNS. O 1º da lista é o principal;
+    # o www redireciona para o apex. Configure os registros DNS que o Render exibir
+    # (apex = registros A; www = CNAME) no painel do registro.br.
+    domains:
+      - app-pulsar.com.br
+      - www.app-pulsar.com.br
     # Headers de segurança no site estático: anti-MIME-sniffing, anti-clickjacking,
     # Referrer-Policy, Permissions-Policy e CSP.
     headers:

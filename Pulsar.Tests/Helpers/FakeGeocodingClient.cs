@@ -12,7 +12,7 @@ public class FakeGeocodingClient : IGeocodingClient
         => Task.FromResult<IReadOnlyList<EnderecoGeocodificado>>(
         [
             // Coordenadas plausíveis no município de São Paulo.
-            new($"{consulta} — resultado 1, São Paulo", -23.5613, -46.6560),
-            new($"{consulta} — resultado 2, São Paulo", -23.5700, -46.6400),
+            new($"{consulta} — resultado 1, São Paulo", -23.5613, -46.6560, consulta, "poi"),
+            new($"{consulta} — resultado 2, São Paulo", -23.5700, -46.6400, consulta, "address"),
         ]);
 }

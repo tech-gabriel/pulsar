@@ -10,7 +10,7 @@ import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
 const mockedApi = api as unknown as { get: ReturnType<typeof vi.fn> };
 
 const resultados: EnderecoBusca[] = [
-  { descricao: 'Av. Paulista, São Paulo', latitude: -23.561, longitude: -46.656 },
+  { nome: 'Av. Paulista', descricao: 'Av. Paulista, São Paulo', tipo: 'address', latitude: -23.561, longitude: -46.656 },
 ];
 
 beforeEach(() => {

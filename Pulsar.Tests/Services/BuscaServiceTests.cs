@@ -47,13 +47,15 @@ public class BuscaServiceTests
     {
         var stub = new StubGeocodingClient
         {
-            Resultado = [new EnderecoGeocodificado("Av. Paulista, São Paulo", -23.561, -46.656)]
+            Resultado = [new EnderecoGeocodificado("Av. Paulista, São Paulo", -23.561, -46.656, "Av. Paulista", "address")]
         };
         var service = CriarService(stub);
 
         var resultado = await service.BuscarEnderecosAsync("paulista");
 
         resultado.Should().HaveCount(1);
+        resultado[0].Nome.Should().Be("Av. Paulista");
+        resultado[0].Tipo.Should().Be("address");
         resultado[0].Descricao.Should().Be("Av. Paulista, São Paulo");
         resultado[0].Latitude.Should().Be(-23.561);
         resultado[0].Longitude.Should().Be(-46.656);

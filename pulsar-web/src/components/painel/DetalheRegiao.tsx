@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft, Thermometer, CloudRain, Wind, Eye, Droplets, Sun,
-  ShieldAlert, History, RefreshCw,
+  ShieldAlert, History, RefreshCw, ChevronDown,
 } from 'lucide-react';
 import type { SubprefeituraDto, LeituraDto } from '../../types';
 import { useRegiaoDetalhe } from '../../hooks/useRegiaoDetalhe';
@@ -106,7 +106,7 @@ function LinhaClima({
   );
 }
 
-// ── Item de subprefeitura com barra de progresso (ETAPA 4.4) ────────────────────
+// ── Item de subprefeitura: expande para a visão micro (clima da subprefeitura) ──
 function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
   sub: SubprefeituraDto; indice: number; onVerHistorico: () => void;
 }) {
@@ -114,6 +114,7 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
   const score = sub.scoreAtual?.valor ?? 0;
   const cores = coresParaFaixa(sub.faixaRisco);
   const temp = sub.temperaturaAtual ?? sub.ultimaLeitura?.temperaturaC;
+  const l = sub.ultimaLeitura;
 
   return (
     <div className="py-2">
@@ -121,10 +122,16 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
         type="button"
         onClick={() => setAberto((v) => !v)}
         className="w-full text-left"
+        aria-expanded={aberto}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="text-pulsar-50 truncate" style={{ fontFamily: 'var(--font-body)', fontSize: 13 }}>
-            {sub.nome}
+          <span className="text-pulsar-50 truncate flex items-center gap-1.5" style={{ fontFamily: 'var(--font-body)', fontSize: 13 }}>
+            <ChevronDown
+              size={13}
+              className="flex-shrink-0 text-pulsar-300 transition-transform"
+              style={{ transform: aberto ? 'rotate(180deg)' : 'none' }}
+            />
+            <span className="truncate">{sub.nome}</span>
           </span>
           <div className="flex items-center gap-2 flex-shrink-0">
             {temp != null && (
@@ -152,16 +159,43 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
         </div>
       </button>
 
-      {aberto && (
-        <button
-          type="button"
-          onClick={onVerHistorico}
-          className="mt-2 flex items-center gap-1.5 text-xs text-pulsar-300 hover:text-pulsar-100 font-medium transition-colors"
-        >
-          <History size={12} />
-          Ver histórico (24h)
-        </button>
-      )}
+      <AnimatePresence initial={false}>
+        {aberto && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: DURACAO.media, ease: EASE_SUAVE }}
+            style={{ overflow: 'hidden' }}
+          >
+            <span className="block pt-1 pb-0.5 text-[11px] uppercase tracking-wider text-pulsar-300/70" style={{ fontWeight: 600 }}>
+              Risco {labelFaixa(sub.faixaRisco)}
+            </span>
+            {l ? (
+              <div className="mt-1 painel-card-glass px-3 py-1 rounded-[10px]">
+                <LinhaClima icon={Thermometer} corIcone="var(--color-pulsar-400)" label="Temperatura" valor={l.temperaturaC.toFixed(1)} unidade="°C" />
+                <LinhaClima icon={Thermometer} corIcone="var(--color-pulsar-400)" label="Sensação" valor={l.sensacaoTermica.toFixed(1)} unidade="°C" />
+                <LinhaClima icon={CloudRain} corIcone="#3B82F6" label="Chuva" valor={l.chuvaMmH.toFixed(1)} unidade="mm/h" />
+                <LinhaClima icon={Wind} corIcone="#94A3B8" label="Vento" valor={l.ventoKmH.toFixed(1)} unidade="km/h" />
+                <LinhaClima icon={Eye} corIcone="#F59E0B" label="Visibilidade" valor={l.visibilidadeKm.toFixed(1)} unidade="km" />
+                <LinhaClima icon={Droplets} corIcone="#06B6D4" label="Umidade" valor={Math.round(l.umidade).toString()} unidade="%" />
+                <LinhaClima icon={Sun} corIcone="#EAB308" label="Índice UV" valor={Math.round(l.indiceUv).toString()} unidade="" />
+              </div>
+            ) : (
+              <p className="mt-1 text-xs text-pulsar-300 py-1">Sem leitura recente para esta subprefeitura.</p>
+            )}
+
+            <button
+              type="button"
+              onClick={onVerHistorico}
+              className="mt-2 flex items-center gap-1.5 text-xs text-pulsar-300 hover:text-pulsar-100 font-medium transition-colors"
+            >
+              <History size={12} />
+              Ver histórico (24h)
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

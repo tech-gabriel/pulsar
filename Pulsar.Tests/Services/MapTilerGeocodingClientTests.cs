@@ -31,6 +31,46 @@ public class MapTilerGeocodingClientTests
     }
 
     [Fact]
+    public void ParseFeatureCollection_ExtraiNomeETipoDePoi()
+    {
+        const string json = """
+        {
+          "features": [
+            {
+              "text": "Shopping Eldorado",
+              "place_name": "Shopping Eldorado, Avenida Rebouças 3970, São Paulo",
+              "place_type": ["poi"],
+              "center": [-46.6958, -23.5726]
+            }
+          ]
+        }
+        """;
+
+        var resultado = MapTilerGeocodingClient.ParseFeatureCollection(json);
+
+        resultado.Should().HaveCount(1);
+        resultado[0].Nome.Should().Be("Shopping Eldorado");
+        resultado[0].Tipo.Should().Be("poi");
+        resultado[0].Descricao.Should().Be("Shopping Eldorado, Avenida Rebouças 3970, São Paulo");
+    }
+
+    [Fact]
+    public void ParseFeatureCollection_SemTextOuPlaceType_NomeCaiParaDescricaoETipoVazio()
+    {
+        const string json = """
+        { "features": [
+            { "place_name": "Rua Augusta, São Paulo", "center": [-46.66, -23.55] }
+        ] }
+        """;
+
+        var resultado = MapTilerGeocodingClient.ParseFeatureCollection(json);
+
+        resultado.Should().HaveCount(1);
+        resultado[0].Nome.Should().Be("Rua Augusta, São Paulo");
+        resultado[0].Tipo.Should().BeEmpty();
+    }
+
+    [Fact]
     public void ParseFeatureCollection_IgnoraFeatureSemCentroOuNome()
     {
         const string json = """

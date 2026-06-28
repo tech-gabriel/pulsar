@@ -54,3 +54,6 @@ pulsar-web/node_modules/
 
 ## Prompts de etapas (instruções de trabalho, não versionar)
 prompt-etapa*.md
+
+## Documentação interna de trabalho (local, não versionar)
+docs/

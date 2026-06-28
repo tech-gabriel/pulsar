@@ -28,7 +28,7 @@ internal sealed class PulsarDocumentTransformer : IOpenApiDocumentTransformer
             Contact = new OpenApiContact
             {
                 Name = "Equipe Pulsar",
-                Email = "tech.gabrielleite@gmail.com"
+                Email = "equipe.app.pulsar@gmail.com"
             }
         };
 

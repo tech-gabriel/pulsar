@@ -15,6 +15,9 @@ public class MapTilerGeocodingClient : IGeocodingClient
     // Centro de SP em lon,lat — enviesa os resultados por proximidade.
     private const string ProximitySaoPaulo = "-46.6333,-23.5505";
     private const int LimiteResultados = 6;
+    // Inclui POIs (parques, estações, shoppings, museus) além de ruas/endereços e
+    // divisões administrativas. Sem "types", o MapTiler não traz POIs nomeados.
+    private const string TiposBusca = "poi,address,place,neighbourhood,locality,municipal_district,municipality";
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
@@ -44,7 +47,7 @@ public class MapTilerGeocodingClient : IGeocodingClient
             $"{Uri.EscapeDataString(consulta)}.json" +
             $"?key={apiKey}" +
             "&country=br&language=pt&autocomplete=true" +
-            $"&limit={LimiteResultados}" +
+            $"&limit={LimiteResultados}&types={TiposBusca}" +
             $"&bbox={BboxSaoPaulo}&proximity={ProximitySaoPaulo}";
 
         using var response = await client.GetAsync(url, ct);
@@ -84,7 +87,18 @@ public class MapTilerGeocodingClient : IGeocodingClient
 
             var lon = center[0].GetDouble();
             var lat = center[1].GetDouble();
-            resultados.Add(new EnderecoGeocodificado(descricao!, lat, lon));
+
+            // "text" é o rótulo principal (ex.: "Shopping Eldorado"); cai para a
+            // descrição completa se ausente. "place_type" é um array (ex.: ["poi"]).
+            var nome = feature.TryGetProperty("text", out var txt) && txt.ValueKind == JsonValueKind.String
+                ? txt.GetString() ?? descricao!
+                : descricao!;
+            var tipo = feature.TryGetProperty("place_type", out var pt)
+                && pt.ValueKind == JsonValueKind.Array && pt.GetArrayLength() > 0
+                ? pt[0].GetString() ?? string.Empty
+                : string.Empty;
+
+            resultados.Add(new EnderecoGeocodificado(descricao!, lat, lon, nome, tipo));
         }
 
         return resultados;

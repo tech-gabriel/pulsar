@@ -38,7 +38,9 @@ public class BuscaService : IBuscaService
         var dtos = resultados
             .Select(r => new EnderecoBuscaDto
             {
+                Nome = string.IsNullOrWhiteSpace(r.Nome) ? r.Descricao : r.Nome,
                 Descricao = r.Descricao,
+                Tipo = r.Tipo,
                 Latitude = r.Latitude,
                 Longitude = r.Longitude,
             })

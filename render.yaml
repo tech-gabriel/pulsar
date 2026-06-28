@@ -110,10 +110,11 @@ services:
         sync: false
     routes:
       # 1) Proxy same-origin: /api/* → backend (mantém baseURL:'/api', dispensa CORS).
-      #    Ajuste a URL se o nome do serviço backend mudar no Render.
+      #    O Render anexou um sufixo único ao subdomínio do backend (pulsar-api-1v0n).
+      #    Se o backend for recriado com outra URL, ajuste aqui.
       - type: rewrite
         source: /api/*
-        destination: https://pulsar-api.onrender.com/api/*
+        destination: https://pulsar-api-1v0n.onrender.com/api/*
       # 2) Fallback do roteamento SPA: tudo que não for arquivo real → index.html.
       - type: rewrite
         source: /*

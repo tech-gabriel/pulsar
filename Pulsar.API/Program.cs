@@ -205,7 +205,7 @@ builder.Services.AddScoped<IPushNotificationService, WebPushNotificationService>
 // termina o TLS e encaminha o IP e o esquema originais via X-Forwarded-For/Proto.
 // Sem isso, o rate limiter particiona por IP do proxy (throttle global) e o app
 // "acha" que a requisição é HTTP. KnownNetworks/KnownProxies ficam vazios porque
-// o IP do proxy é dinâmico em PaaS (ver nota de segurança em docs/DEPLOY.md).
+// o IP do proxy é dinâmico em PaaS.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -215,7 +215,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     // injetado à esquerda — fecha a evasão de rate limit por header forjado.
     options.ForwardLimit = 1;
     // KnownProxies/KnownIPNetworks ficam vazios porque o IP do proxy é dinâmico
-    // em PaaS; o ForwardLimit=1 é o que limita a confiança (ver docs/DEPLOY.md).
+    // em PaaS; o ForwardLimit=1 é o que limita a confiança.
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });

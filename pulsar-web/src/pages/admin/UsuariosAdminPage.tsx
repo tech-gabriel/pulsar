@@ -1,4 +1,7 @@
-import { ShieldCheck, ShieldAlert, UserCheck, UserX, Users } from 'lucide-react';
+import { useState } from 'react';
+import { ShieldCheck, ShieldAlert, UserCheck, UserX, Users, Trash2, AlertTriangle } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import Header from '../../components/ui/Header';
 import GlassCard from '../../components/ui/GlassCard';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -29,7 +32,8 @@ function dataCurta(iso: string): string {
 
 export default function UsuariosAdminPage() {
   const { usuario } = useAuth();
-  const { usuarios, carregando, erro, alterarRole, alterarAtivo, recarregar } = useUsuariosAdmin();
+  const { usuarios, carregando, erro, alterarRole, alterarAtivo, excluir, recarregar } = useUsuariosAdmin();
+  const [excluindo, setExcluindo] = useState<UsuarioAdminDto | null>(null);
 
   // SUPORTE tem acesso somente leitura; apenas ADMIN edita.
   const podeEditar = usuario?.role === 'ADMIN';
@@ -73,26 +77,128 @@ export default function UsuariosAdminPage() {
                   podeEditar={podeEditar}
                   onRole={(r) => alterarRole(u.id, r)}
                   onAtivo={(a) => alterarAtivo(u.id, a)}
+                  onExcluir={() => setExcluindo(u)}
                 />
               ))}
             </div>
           </GlassCard>
         )}
       </main>
+
+      <AnimatePresence>
+        {excluindo && (
+          <ModalExcluir
+            alvo={excluindo}
+            onCancelar={() => setExcluindo(null)}
+            onConfirmar={async () => {
+              const id = excluindo.id;
+              setExcluindo(null);
+              await excluir(id);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function LinhaUsuario({ u, ehVoce, podeEditar, onRole, onAtivo }: {
+function ModalExcluir({ alvo, onCancelar, onConfirmar }: {
+  alvo: UsuarioAdminDto;
+  onCancelar: () => void;
+  onConfirmar: () => void;
+}) {
+  const [texto, setTexto] = useState('');
+  const confere = texto.trim().toLowerCase() === alvo.email.toLowerCase();
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[1100] grid place-items-center p-4"
+      style={{ background: 'rgba(0, 0, 0, 0.55)' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: DURACAO.rapida }}
+      onClick={onCancelar}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Confirmar exclusão de conta"
+    >
+      <motion.div
+        className="w-full max-w-[420px]"
+        style={{ background: 'var(--bg-glass)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--border-glass)', borderRadius: 16, padding: 22, boxShadow: 'var(--glass-shadow), 0 20px 60px rgba(0,0,0,0.4)' }}
+        initial={{ opacity: 0, y: 12, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 12, scale: 0.97 }}
+        transition={{ duration: DURACAO.media, ease: EASE_SUAVE }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-9 h-9 rounded-full grid place-items-center flex-shrink-0" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
+            <AlertTriangle size={18} />
+          </div>
+          <h3 style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 17, color: 'var(--text-primary)' }}>
+            Excluir conta
+          </h3>
+        </div>
+
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+          Esta ação é <strong style={{ color: 'var(--text-primary)' }}>permanente</strong> e remove a conta de{' '}
+          <strong style={{ color: 'var(--text-primary)' }}>{alvo.nome}</strong> e todos os seus dados (favoritos, alertas e inscrições).
+        </p>
+        <p className="mt-3" style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+          Para confirmar, digite o e-mail da conta:
+        </p>
+        <p className="mt-1 font-mono" style={{ fontSize: 13, color: 'var(--text-accent)', wordBreak: 'break-all' }}>
+          {alvo.email}
+        </p>
+
+        <input
+          className="input-glass mt-2"
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          placeholder="Digite o e-mail para confirmar"
+          autoFocus
+          autoComplete="off"
+          aria-label="E-mail de confirmação"
+        />
+
+        <div className="flex justify-end gap-2.5 mt-5">
+          <button
+            type="button"
+            onClick={onCancelar}
+            className="rounded-lg px-4 py-2 transition-colors"
+            style={{ background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)', fontSize: 13.5, fontWeight: 600 }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirmar}
+            disabled={!confere}
+            className="rounded-lg px-4 py-2 transition-all flex items-center gap-1.5"
+            style={{ background: confere ? '#ef4444' : 'var(--bg-input)', color: confere ? '#fff' : 'var(--text-muted)', border: '1px solid ' + (confere ? '#ef4444' : 'var(--border-glass)'), fontSize: 13.5, fontWeight: 600, cursor: confere ? 'pointer' : 'not-allowed' }}
+          >
+            <Trash2 size={15} /> Excluir conta
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function LinhaUsuario({ u, ehVoce, podeEditar, onRole, onAtivo, onExcluir }: {
   u: UsuarioAdminDto;
   ehVoce: boolean;
   podeEditar: boolean;
   onRole: (role: RoleAcesso) => void;
   onAtivo: (ativo: boolean) => void;
+  onExcluir: () => void;
 }) {
   const meta = perfilMeta(u.perfil);
   // Anti-lockout: o admin não altera a própria role/status pela tela.
   const editavel = podeEditar && !ehVoce;
+  // Exclusão só de contas não-admin (admins são protegidos no back e no front).
+  const podeExcluir = editavel && u.role !== 'ADMIN';
 
   return (
     <div className="flex items-center gap-3 py-3" style={{ opacity: u.ativo ? 1 : 0.55 }}>
@@ -154,6 +260,22 @@ function LinhaUsuario({ u, ehVoce, podeEditar, onRole, onAtivo }: {
         <span className="flex-shrink-0" title={u.ativo ? 'Ativo' : 'Inativo'} style={{ color: u.ativo ? '#22c55e' : '#ef4444' }}>
           {u.ativo ? <UserCheck size={18} /> : <UserX size={18} />}
         </span>
+      )}
+
+      {/* Excluir conta (apenas ADMIN, alvo não-admin e não a própria conta) */}
+      {podeExcluir && (
+        <button
+          type="button"
+          onClick={onExcluir}
+          title="Excluir conta"
+          aria-label={`Excluir conta de ${u.nome}`}
+          className="flex-shrink-0 transition-colors"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+        >
+          <Trash2 size={17} />
+        </button>
       )}
     </div>
   );

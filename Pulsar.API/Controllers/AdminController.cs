@@ -77,6 +77,30 @@ public class AdminController : ControllerBase
         }
     }
 
+    /// <summary>Exclui permanentemente a conta de um usuário. Apenas ADMIN. Não permite excluir a si mesmo nem outro administrador.</summary>
+    [HttpDelete("usuarios/{id:guid}")]
+    [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ExcluirUsuario(Guid id)
+    {
+        try
+        {
+            await _adminService.ExcluirUsuarioAsync(UsuarioAtualId(), id);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
+    }
+
     // ── Catálogo de Sugestões ──────────────────────────────────
 
     /// <summary>Lista todas as sugestões do catálogo (inclui inativas). ADMIN e SUPORTE.</summary>

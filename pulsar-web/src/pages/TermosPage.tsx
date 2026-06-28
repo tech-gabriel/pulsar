@@ -123,7 +123,7 @@ export default function TermosPage() {
       <h2>14. Contato</h2>
       <p>
         Dúvidas sobre estes termos? Fale com a gente em{' '}
-        <a href="mailto:tech.gabrielleite@gmail.com">tech.gabrielleite@gmail.com</a>.
+        <a href="mailto:equipe.app.pulsar@gmail.com">equipe.app.pulsar@gmail.com</a>.
       </p>
     </LandingDocShell>
   );

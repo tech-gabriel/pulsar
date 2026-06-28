@@ -203,7 +203,7 @@ export default function PrivacidadePage() {
       <h2>14. Como falar com a gente</h2>
       <p>
         Dúvidas sobre privacidade ou quer exercer seus direitos? Fale com a gente em{' '}
-        <a href="mailto:tech.gabrielleite@gmail.com">tech.gabrielleite@gmail.com</a>. Respondemos no
+        <a href="mailto:equipe.app.pulsar@gmail.com">equipe.app.pulsar@gmail.com</a>. Respondemos no
         menor prazo possível.
       </p>
     </LandingDocShell>

@@ -28,9 +28,9 @@ function ler(): NotificacoesPrefs {
 }
 
 /**
- * Preferências de notificação persistidas localmente (ainda sem backend de
- * push). Quando houver um serviço de notificações, estas chaves alimentam o
- * opt-in enviado ao servidor.
+ * Preferências de notificação persistidas localmente. Estas chaves alimentam o
+ * opt-in enviado ao backend pelo `usePushSubscription` ao registrar/atualizar a
+ * inscrição de push do dispositivo.
  */
 export function useNotificacoesPrefs() {
   const [prefs, setPrefs] = useState<NotificacoesPrefs>(ler);

@@ -17,6 +17,7 @@ import { useFavoritos } from '../hooks/useFavoritos';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useOnboarding } from '../hooks/useOnboarding';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
+import ConvitePush from '../components/notificacoes/ConvitePush';
 import { resolverRegiaoPorPonto } from '../utils/geo';
 import { normalizarNome } from '../utils/texto';
 import type { SubprefeituraMapaDto, EnderecoBusca } from '../types';
@@ -132,6 +133,9 @@ export default function MapaPage() {
 
       {/* Onboarding de boas-vindas — só na 1ª visita */}
       {onboardingAberto && <OnboardingModal onConcluir={concluirOnboarding} />}
+
+      {/* Convite para ativar notificações push — só após o onboarding fechar */}
+      {!onboardingAberto && <ConvitePush />}
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header />

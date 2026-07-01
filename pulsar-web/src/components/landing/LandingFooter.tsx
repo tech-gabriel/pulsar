@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
+import { AtSign } from 'lucide-react';
 import iconePulsar from '../../assets/logos/pulsar-icone.svg';
+import SeloVersao from '../SeloVersao';
+import { INSTAGRAM_URL } from '../../data/social';
 
 export default function LandingFooter() {
   return (
@@ -21,6 +24,9 @@ export default function LandingFooter() {
         </div>
 
         <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5" style={{ fontSize: 14 }}>
+          <Link to="/novidades" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
+            Novidades
+          </Link>
           <Link to="/sobre" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
             Sobre
           </Link>
@@ -33,12 +39,24 @@ export default function LandingFooter() {
           <Link to="/login" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
             Entrar
           </Link>
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram do Pulsar"
+            className="transition-colors hover:text-[var(--text-primary)]"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            <AtSign size={18} />
+          </a>
         </nav>
       </div>
 
-      <p className="text-center pb-8" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-        © 2026 Pulsar
-      </p>
+      <div className="flex items-center justify-center gap-2 pb-8" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+        <span>© 2026 Pulsar</span>
+        <span aria-hidden="true">·</span>
+        <SeloVersao />
+      </div>
     </footer>
   );
 }

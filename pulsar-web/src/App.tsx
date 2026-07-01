@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage';
 import SobrePage from './pages/SobrePage';
 import PrivacidadePage from './pages/PrivacidadePage';
 import TermosPage from './pages/TermosPage';
+import NovidadesPage from './pages/NovidadesPage';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
 import EsqueciSenhaPage from './pages/EsqueciSenhaPage';
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/sobre" element={<SobrePage />} />
         <Route path="/privacidade" element={<PrivacidadePage />} />
         <Route path="/termos" element={<TermosPage />} />
+        <Route path="/novidades" element={<NovidadesPage />} />
         <Route path="/app" element={<RotaProtegida><MapaPage /></RotaProtegida>} />
         <Route path="/app/historico" element={<RotaProtegida><HistoricoListPage /></RotaProtegida>} />
         <Route path="/app/historico/:subprefeituraId" element={<RotaProtegida><HistoricoPage /></RotaProtegida>} />

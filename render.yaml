@@ -89,7 +89,7 @@ services:
       # Desliga APIs poderosas que o app não usa (defense-in-depth).
       - path: /*
         name: Permissions-Policy
-        value: "geolocation=(), camera=(), microphone=(), usb=(), payment=(), magnetometer=(), gyroscope=(), accelerometer=()"
+        value: "geolocation=(self), camera=(), microphone=(), usb=(), payment=(), magnetometer=(), gyroscope=(), accelerometer=()"
       # Content-Security-Policy. Origens externas levantadas do código:
       #   - Google Fonts: fonts.googleapis.com (CSS) + fonts.gstatic.com (woff2)
       #   - Tiles do mapa (img): api.maptiler.com, *.basemaps.cartocdn.com

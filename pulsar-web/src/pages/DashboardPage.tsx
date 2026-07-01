@@ -27,7 +27,6 @@ import {
 } from 'lucide-react';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
-import AppFooter from '../components/ui/AppFooter';
 import BadgeRisco from '../components/ui/BadgeRisco';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorBanner from '../components/ui/ErrorBanner';
@@ -345,8 +344,6 @@ export default function DashboardPage() {
             </div>
           </>
         )}
-
-        <AppFooter />
       </main>
     </div>
   );

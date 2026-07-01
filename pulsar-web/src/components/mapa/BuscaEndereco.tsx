@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, X, MapPin, Landmark, Building2, Loader2 } from 'lucide-react';
+import { Search, X, MapPin, Landmark, Building2, Loader2, LocateFixed } from 'lucide-react';
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
+import { useDicaLocalizacao } from '../../hooks/useDicaLocalizacao';
 import type { EnderecoBusca } from '../../types';
 
 interface Props {
   onSelecionar: (endereco: EnderecoBusca) => void;
   isMobile: boolean;
+  onUsarLocalizacao?: () => void;
+  localizando?: boolean;
 }
 
 // Glassmorphism alinhado ao LayerControl/legenda do mapa.
@@ -40,10 +43,11 @@ function contextoDe(r: EnderecoBusca): string {
  * Caixa de busca de endereços sobreposta ao mapa, com autocomplete. Resolve o
  * endereço (geocoding via backend) e devolve o ponto selecionado via callback.
  */
-export default function BuscaEndereco({ onSelecionar, isMobile }: Props) {
+export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizacao, localizando = false }: Props) {
   const { termo, setTermo, resultados, carregando, erro, limpar } = useBuscaEndereco();
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { mostrarDica, dispensar } = useDicaLocalizacao();
 
   // Fecha o dropdown ao clicar fora do componente.
   useEffect(() => {
@@ -55,6 +59,11 @@ export default function BuscaEndereco({ onSelecionar, isMobile }: Props) {
     document.addEventListener('mousedown', onClickFora);
     return () => document.removeEventListener('mousedown', onClickFora);
   }, []);
+
+  function usarLocalizacao() {
+    dispensar();
+    onUsarLocalizacao?.();
+  }
 
   function selecionar(endereco: EnderecoBusca) {
     onSelecionar(endereco);
@@ -113,7 +122,38 @@ export default function BuscaEndereco({ onSelecionar, isMobile }: Props) {
             <X size={16} />
           </button>
         )}
+        {onUsarLocalizacao && (
+          <button
+            type="button"
+            onClick={usarLocalizacao}
+            disabled={localizando}
+            aria-label="Usar minha localização"
+            title="Usar minha localização"
+            className={[
+              'flex-shrink-0 transition-colors',
+              localizando ? 'text-pulsar-300 cursor-wait' : 'text-pulsar-300 hover:text-white',
+              mostrarDica ? 'ring-2 ring-pulsar-400/70 rounded-lg animate-pulse' : '',
+            ].join(' ')}
+          >
+            {localizando ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}
+          </button>
+        )}
       </div>
+
+      {onUsarLocalizacao && mostrarDica && (
+        <div className="mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px] text-pulsar-100" style={CARD}>
+          <LocateFixed size={13} className="flex-shrink-0 text-pulsar-300" />
+          <span className="flex-1">Toque no alvo para ver a sua região</span>
+          <button
+            type="button"
+            onClick={dispensar}
+            aria-label="Dispensar dica"
+            className="flex-shrink-0 text-pulsar-300 hover:text-white transition-colors"
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
 
       {mostrarDropdown && (
         <ul className="mt-1.5 max-h-72 overflow-y-auto overflow-x-hidden" style={CARD}>

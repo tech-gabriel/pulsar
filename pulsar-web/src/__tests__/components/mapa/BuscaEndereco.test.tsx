@@ -64,3 +64,19 @@ describe('BuscaEndereco', () => {
     expect(limpar).toHaveBeenCalled();
   });
 });
+
+describe('BuscaEndereco — botão de localização', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('dispara onUsarLocalizacao ao clicar no botão', () => {
+    const onUsar = vi.fn();
+    render(<BuscaEndereco onSelecionar={() => {}} isMobile={false} onUsarLocalizacao={onUsar} />);
+    fireEvent.click(screen.getByRole('button', { name: /usar minha localização/i }));
+    expect(onUsar).toHaveBeenCalledTimes(1);
+  });
+
+  it('desabilita o botão enquanto localizando', () => {
+    render(<BuscaEndereco onSelecionar={() => {}} isMobile={false} onUsarLocalizacao={() => {}} localizando />);
+    expect(screen.getByRole('button', { name: /usar minha localização/i })).toBeDisabled();
+  });
+});

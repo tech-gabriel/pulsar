@@ -1,0 +1,68 @@
+/**
+ * Fonte única da verdade do changelog público e da versão atual do app.
+ * Conteúdo curado: só as novidades que importam pro usuário, mais recente primeiro.
+ * A cada release: adicionar um novo item no topo de CHANGELOG e sincronizar
+ * o campo "version" em package.json.
+ */
+
+export type TipoMudanca = 'novo' | 'melhoria' | 'correcao';
+
+export interface ItemMudanca {
+  tipo: TipoMudanca;
+  titulo: string;
+  descricao: string;
+}
+
+export interface Release {
+  /** SemVer, ex.: "1.1.0" */
+  versao: string;
+  /** ISO, ex.: "2026-06-30" */
+  data: string;
+  /** Linha opcional de contexto do release. */
+  resumo?: string;
+  itens: ItemMudanca[];
+}
+
+export const CHANGELOG: Release[] = [
+  {
+    versao: '1.1.0',
+    data: '2026-06-30',
+    resumo: 'Alertas de risco agora chegam até você, mesmo com o app fechado.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Notificações push',
+        descricao:
+          'Ative as notificações e receba um aviso quando uma região favorita entrar em risco alto. Um convite discreto aparece no mapa para facilitar.',
+      },
+    ],
+  },
+  {
+    versao: '1.0.0',
+    data: '2026-06-28',
+    resumo: 'O Pulsar chegou. Monitoramento climático de São Paulo, no seu bolso.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Mapa de risco climático',
+        descricao:
+          'Veja o nível de risco de cada região de São Paulo em tempo real, com cores que mostram onde a atenção precisa ser maior.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Histórico e alertas',
+        descricao:
+          'Acompanhe a evolução do clima por subprefeitura e receba alertas com sugestões de precaução.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Notícias climáticas',
+        descricao:
+          'Um feed com as notícias e avisos das fontes oficiais, reunidas em um só lugar.',
+      },
+    ],
+  },
+];
+
+/** Versão atual do app. Deriva sempre do release mais recente do changelog. */
+export const APP_VERSION = CHANGELOG[0].versao;

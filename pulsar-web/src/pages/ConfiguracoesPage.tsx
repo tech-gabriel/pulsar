@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
+import AppFooter from '../components/ui/AppFooter';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { useToast } from '../contexts/ToastContext';
@@ -403,6 +404,8 @@ export default function ConfiguracoesPage() {
           <LogOut size={18} />
           <span style={{ fontWeight: 600, fontSize: 14 }}>Sair da conta</span>
         </button>
+
+        <AppFooter />
       </main>
     </div>
   );

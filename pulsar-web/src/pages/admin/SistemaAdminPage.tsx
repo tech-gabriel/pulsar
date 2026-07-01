@@ -8,6 +8,7 @@ import AdminSubnav from '../../components/admin/AdminSubnav';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSistemaAdmin } from '../../hooks/useSistemaAdmin';
 import { dataAbsoluta, tempoRelativo } from '../../utils/data';
+import { APP_VERSION } from '../../data/changelog';
 
 export default function SistemaAdminPage() {
   const { usuario } = useAuth();
@@ -26,6 +27,13 @@ export default function SistemaAdminPage() {
             <h1 style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 22, color: 'var(--text-primary)' }}>
               Sistema
             </h1>
+            <span
+              className="inline-flex items-center rounded-full px-2.5 py-0.5"
+              style={{ background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-muted)', fontSize: 11.5 }}
+              title="Versão do app (frontend)"
+            >
+              v{APP_VERSION}
+            </span>
             {!podeColetar && (
               <span
                 className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5"

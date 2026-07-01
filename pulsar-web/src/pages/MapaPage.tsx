@@ -18,8 +18,9 @@ import { useIsMobile } from '../hooks/useIsMobile';
 import { useOnboarding } from '../hooks/useOnboarding';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
 import ConvitePush from '../components/notificacoes/ConvitePush';
-import { resolverRegiaoPorPonto } from '../utils/geo';
-import { normalizarNome } from '../utils/texto';
+import { useGeolocalizacao, GeoError } from '../hooks/useGeolocalizacao';
+import { resolverSelecao } from '../utils/selecaoPorPonto';
+import { useToast } from '../contexts/ToastContext';
 import type { SubprefeituraMapaDto, EnderecoBusca } from '../types';
 
 export default function MapaPage() {
@@ -29,6 +30,8 @@ export default function MapaPage() {
   const { isFavorito, toggleFavorito } = useFavoritos(usuario?.id ?? null);
   const isMobile = useIsMobile(768);
   const { aberto: onboardingAberto, concluir: concluirOnboarding } = useOnboarding();
+  const { detectar, carregando: localizando } = useGeolocalizacao();
+  const { showToast } = useToast();
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
   const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(null);
@@ -66,34 +69,44 @@ export default function MapaPage() {
     setAvisoBusca(null);
   }
 
+  // Núcleo compartilhado por busca e geolocalização: resolve o ponto para uma
+  // seleção de região (ou aviso) e aplica no estado do mapa.
+  function selecionarPorPonto(lat: number, lon: number, origem: 'busca' | 'localizacao') {
+    setPontoBusca({ lat, lon });
+    const sel = resolverSelecao(lat, lon, geojson as FeatureCollection | null, subprefeituras, origem);
+    if (sel.aviso) {
+      setRegiaoSelecionadaNome(null);
+      setSubSelecionada(null);
+      setAvisoBusca(sel.aviso);
+      return;
+    }
+    setAvisoBusca(null);
+    setSubSelecionada(sel.sub);
+    setRegiaoSelecionadaNome(sel.regiaoNome);
+    if (isMobile) setPainelMobileAberto(false);
+  }
+
   // Seleção de um endereço na busca: marca o ponto no mapa, voa até ele e resolve
   // a subprefeitura/região correspondente (point-in-polygon sobre o GeoJSON já
   // carregado), abrindo o painel de detalhe. Fora dos polígonos → aviso.
   function handleSelecionarEndereco(endereco: EnderecoBusca) {
-    setPontoBusca({ lat: endereco.latitude, lon: endereco.longitude });
-    const resolvido = resolverRegiaoPorPonto(
-      endereco.latitude,
-      endereco.longitude,
-      geojson as FeatureCollection | null,
-    );
-    if (!resolvido) {
-      setRegiaoSelecionadaNome(null);
-      setSubSelecionada(null);
-      setAvisoBusca('Esse endereço está fora da área coberta (São Paulo capital).');
-      return;
+    selecionarPorPonto(endereco.latitude, endereco.longitude, 'busca');
+  }
+
+  // Botão "usar minha localização": detecta o ponto e reusa selecionarPorPonto.
+  async function handleUsarLocalizacao() {
+    try {
+      const { lat, lon } = await detectar();
+      selecionarPorPonto(lat, lon, 'localizacao');
+    } catch (err) {
+      const tipo = err instanceof GeoError ? err.tipo : 'indisponivel';
+      showToast(
+        tipo === 'negado'
+          ? 'Permita o acesso à localização no navegador para ver sua região.'
+          : 'Não consegui te localizar agora. Tente de novo ou busque pelo endereço.',
+        'error',
+      );
     }
-    setAvisoBusca(null);
-    const sub = subprefeituras.find(
-      (s) => normalizarNome(s.nome) === normalizarNome(resolvido.subprefeituraNome),
-    );
-    if (sub) {
-      setSubSelecionada(sub);
-      setRegiaoSelecionadaNome(sub.regiaoNome);
-    } else {
-      setSubSelecionada(null);
-      setRegiaoSelecionadaNome(resolvido.regiaoNome);
-    }
-    if (isMobile) setPainelMobileAberto(false);
   }
 
   // Clique em um label/polígono de subprefeitura: abre o detalhe da região e
@@ -158,7 +171,12 @@ export default function MapaPage() {
         />
 
         {/* Busca de rua/endereço sobreposta ao mapa */}
-        <BuscaEndereco onSelecionar={handleSelecionarEndereco} isMobile={isMobile} />
+        <BuscaEndereco
+          onSelecionar={handleSelecionarEndereco}
+          isMobile={isMobile}
+          onUsarLocalizacao={handleUsarLocalizacao}
+          localizando={localizando}
+        />
 
         {/* Aviso quando o endereço cai fora da área coberta */}
         {avisoBusca && (

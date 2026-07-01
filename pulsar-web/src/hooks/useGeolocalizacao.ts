@@ -4,8 +4,10 @@ export type ErroGeo = 'negado' | 'indisponivel' | 'timeout' | 'sem-suporte';
 
 /** Erro tipado da geolocalização, para a UI escolher a mensagem certa. */
 export class GeoError extends Error {
-  constructor(public readonly tipo: ErroGeo) {
+  readonly tipo: ErroGeo;
+  constructor(tipo: ErroGeo) {
     super(tipo);
+    this.tipo = tipo;
     this.name = 'GeoError';
   }
 }

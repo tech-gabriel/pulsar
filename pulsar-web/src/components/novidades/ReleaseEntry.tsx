@@ -28,7 +28,7 @@ export default function ReleaseEntry({ release }: { release: Release }) {
         </p>
       )}
 
-      <ul className="mt-4 flex flex-col gap-4">
+      <ul className="mt-4 flex flex-col gap-4 list-none pl-0">
         {release.itens.map((item, i) => (
           <li key={i} className="flex flex-col gap-1.5">
             <span className="flex items-center gap-2 flex-wrap">

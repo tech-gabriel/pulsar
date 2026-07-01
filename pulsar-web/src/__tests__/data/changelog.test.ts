@@ -1,10 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { CHANGELOG, APP_VERSION } from '../../data/changelog';
 import { INSTAGRAM_URL } from '../../data/social';
+import pkg from '../../../package.json';
 
 describe('changelog data', () => {
   it('APP_VERSION é a versão do release mais recente', () => {
     expect(APP_VERSION).toBe(CHANGELOG[0].versao);
+  });
+
+  it('package.json version está sincronizado com o release mais recente', () => {
+    expect(pkg.version).toBe(CHANGELOG[0].versao);
   });
 
   it('todo release tem versão SemVer, data ISO e ao menos um item', () => {

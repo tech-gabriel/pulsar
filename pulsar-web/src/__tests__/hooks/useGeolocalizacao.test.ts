@@ -67,11 +67,14 @@ describe('useGeolocalizacao', () => {
     ).rejects.toMatchObject({ tipo: 'indisponivel' });
   });
 
-  it('rejeita com "sem-suporte" quando a API não existe', async () => {
+  it('rejeita com GeoError "sem-suporte" quando a API não existe', async () => {
     Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined });
     const { result } = renderHook(() => useGeolocalizacao());
-    await expect(
-      act(async () => { await result.current.detectar(); }),
-    ).rejects.toBeInstanceOf(GeoError);
+    let erro: unknown;
+    await act(async () => {
+      erro = await result.current.detectar().catch((e) => e);
+    });
+    expect(erro).toBeInstanceOf(GeoError);
+    expect((erro as GeoError).tipo).toBe('sem-suporte');
   });
 });

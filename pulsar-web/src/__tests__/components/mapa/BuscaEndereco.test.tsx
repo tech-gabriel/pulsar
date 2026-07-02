@@ -79,4 +79,17 @@ describe('BuscaEndereco — botão de localização', () => {
     render(<BuscaEndereco onSelecionar={() => {}} isMobile={false} onUsarLocalizacao={() => {}} localizando />);
     expect(screen.getByRole('button', { name: /usar minha localização/i })).toBeDisabled();
   });
+
+  it('mostra a dica na 1ª visita e a esconde ao clicar no botão', () => {
+    render(<BuscaEndereco onSelecionar={() => {}} isMobile={false} onUsarLocalizacao={() => {}} />);
+    expect(screen.getByText('Toque no alvo para ver a sua região')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /usar minha localização/i }));
+    expect(screen.queryByText('Toque no alvo para ver a sua região')).not.toBeInTheDocument();
+  });
+
+  it('não mostra a dica quando ela já foi vista', () => {
+    localStorage.setItem('pulsar-dica-localizacao-vista', '1');
+    render(<BuscaEndereco onSelecionar={() => {}} isMobile={false} onUsarLocalizacao={() => {}} />);
+    expect(screen.queryByText('Toque no alvo para ver a sua região')).not.toBeInTheDocument();
+  });
 });

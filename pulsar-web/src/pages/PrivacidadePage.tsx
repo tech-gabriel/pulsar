@@ -64,9 +64,12 @@ export default function PrivacidadePage() {
         </li>
       </ul>
       <p>
-        O Pulsar <strong>não</strong> coleta a sua localização precisa em segundo plano. Os dados
-        climáticos exibidos vêm de fontes públicas e são organizados por subprefeitura, sem
-        depender do rastreamento do seu dispositivo.
+        O Pulsar <strong>não</strong> coleta a sua localização em segundo plano nem faz
+        rastreamento contínuo. Quando você toca em "usar minha localização" no mapa, o
+        navegador pede sua permissão e usamos as coordenadas apenas naquele momento, no seu
+        dispositivo, para descobrir a sua região. Não guardamos essas coordenadas nos nossos
+        servidores. Os dados climáticos exibidos vêm de fontes públicas e são organizados por
+        subprefeitura.
       </p>
 
       <h2>3. Para que usamos os dados e com qual base legal</h2>

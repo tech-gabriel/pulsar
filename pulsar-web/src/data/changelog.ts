@@ -25,6 +25,19 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.2.0',
+    data: '2026-07-01',
+    resumo: 'Descubra a sua região no mapa com um toque.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Ver minha região',
+        descricao:
+          'Toque no alvo da busca e o app usa a sua localização para abrir a sua região no mapa. As coordenadas são usadas só naquele momento, no seu dispositivo, e não ficam guardadas.',
+      },
+    ],
+  },
+  {
     versao: '1.1.0',
     data: '2026-06-30',
     resumo: 'Alertas de risco agora chegam até você, mesmo com o app fechado.',

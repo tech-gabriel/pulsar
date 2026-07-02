@@ -133,7 +133,7 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
               'flex-shrink-0 transition-colors',
               localizando ? 'text-pulsar-300 cursor-wait' : 'text-pulsar-300 hover:text-white',
               mostrarDica ? 'ring-2 ring-pulsar-400/70 rounded-lg animate-pulse' : '',
-            ].join(' ')}
+            ].filter(Boolean).join(' ')}
           >
             {localizando ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}
           </button>

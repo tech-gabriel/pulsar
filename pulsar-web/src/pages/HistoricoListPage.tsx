@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, History, ChevronRight, Thermometer, SearchX } from 'lucide-react';
 import Header from '../components/ui/Header';
-import AppFooter from '../components/ui/AppFooter';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import EmptyState from '../components/ui/EmptyState';
@@ -115,8 +114,6 @@ export default function HistoricoListPage() {
             );
           })}
         </div>
-
-        <AppFooter />
       </main>
     </div>
   );

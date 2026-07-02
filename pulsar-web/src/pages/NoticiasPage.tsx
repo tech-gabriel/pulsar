@@ -1,7 +1,6 @@
 import { Newspaper, ExternalLink, Clock, RefreshCw } from 'lucide-react';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
-import AppFooter from '../components/ui/AppFooter';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import FonteBadge from '../components/ui/FonteBadge';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -115,8 +114,6 @@ export default function NoticiasPage() {
             </a>
           ))}
         </div>
-
-        <AppFooter />
       </main>
     </div>
   );

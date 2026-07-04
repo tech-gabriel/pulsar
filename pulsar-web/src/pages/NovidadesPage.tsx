@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { AtSign } from 'lucide-react';
 import LandingDocShell from '../components/landing/LandingDocShell';
 import ReleaseEntry from '../components/novidades/ReleaseEntry';
-import { CHANGELOG } from '../data/changelog';
+import { track } from '../analytics';
+import { APP_VERSION, CHANGELOG } from '../data/changelog';
 import { INSTAGRAM_URL } from '../data/social';
 
 /**
@@ -9,6 +11,10 @@ import { INSTAGRAM_URL } from '../data/social';
  * do mais recente pro mais antigo. Reutiliza o molde institucional da landing.
  */
 export default function NovidadesPage() {
+  useEffect(() => {
+    track.viuNovidades(APP_VERSION);
+  }, []);
+
   return (
     <LandingDocShell
       titulo="Novidades"

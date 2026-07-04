@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { track } from '../analytics';
 
 export type ErroGeo = 'negado' | 'indisponivel' | 'timeout' | 'sem-suporte';
 
@@ -31,10 +32,12 @@ export function useGeolocalizacao() {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             setCarregando(false);
+            track.usouGeolocalizacao(true);
             resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
           },
           (err) => {
             setCarregando(false);
+            track.usouGeolocalizacao(false);
             const tipo: ErroGeo =
               err.code === err.PERMISSION_DENIED
                 ? 'negado'

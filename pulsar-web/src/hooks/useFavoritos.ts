@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import type { FavoritoDto } from '../types';
 import { useToast } from '../contexts/ToastContext';
+import { track } from '../analytics';
 
 interface UseFavoritosResult {
   favoritos: FavoritoDto[];
@@ -53,6 +54,7 @@ export function useFavoritos(usuarioId: string | null): UseFavoritosResult {
             { regiaoId }
           );
           setFavoritos((prev) => [...prev, data]);
+          track.favoritouRegiao(regiaoId);
           showToast('Região adicionada aos favoritos', 'success');
         }
       } catch {

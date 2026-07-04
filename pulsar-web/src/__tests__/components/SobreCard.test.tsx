@@ -1,6 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+
+const h = vi.hoisted(() => ({ clicouInstagram: vi.fn() }));
+vi.mock('../../analytics', () => ({ track: { clicouInstagram: h.clicouInstagram } }));
+
 import SobreCard from '../../components/ui/SobreCard';
 import { APP_VERSION } from '../../data/changelog';
 
@@ -13,6 +18,8 @@ function renderSobre() {
 }
 
 describe('SobreCard', () => {
+  beforeEach(() => h.clicouInstagram.mockClear());
+
   it('tem um título "Sobre"', () => {
     renderSobre();
     expect(screen.getByRole('heading', { name: 'Sobre' })).toBeInTheDocument();
@@ -36,5 +43,12 @@ describe('SobreCard', () => {
     expect(
       screen.getByRole('link', { name: new RegExp(`v${APP_VERSION}`) }),
     ).toHaveAttribute('href', '/novidades');
+  });
+
+  it('emite clicou_instagram ao clicar no link do Instagram', async () => {
+    renderSobre();
+    const link = screen.getByRole('link', { name: /instagram/i });
+    await userEvent.click(link);
+    expect(h.clicouInstagram).toHaveBeenCalledWith('sobre');
   });
 });

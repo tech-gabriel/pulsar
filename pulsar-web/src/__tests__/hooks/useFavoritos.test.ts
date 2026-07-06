@@ -13,6 +13,10 @@ vi.mock('../../api/client', () => ({
   default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
 }));
 
+// Mock do analytics: capturamos as chamadas para validar o evento de favoritar.
+const analyticsMock = vi.hoisted(() => ({ favoritouRegiao: vi.fn() }));
+vi.mock('../../analytics', () => ({ track: { favoritouRegiao: analyticsMock.favoritouRegiao } }));
+
 import api from '../../api/client';
 import { useFavoritos } from '../../hooks/useFavoritos';
 
@@ -68,6 +72,16 @@ describe('useFavoritos', () => {
     expect(mockedApi.post).toHaveBeenCalledWith(`/usuarios/${USUARIO}/favoritos`, { regiaoId: 'r9' });
     expect(result.current.isFavorito('r9')).toBe(true);
     expect(showToast).toHaveBeenCalledWith('Região adicionada aos favoritos', 'success');
+  });
+
+  it('emite favoritou_regiao ao adicionar um favorito', async () => {
+    mockedApi.post.mockResolvedValueOnce({ data: fav('r9', 'Sul') });
+    const { result } = renderHook(() => useFavoritos(USUARIO));
+    await waitFor(() => expect(result.current.carregando).toBe(false));
+
+    await act(async () => { await result.current.toggleFavorito('r9'); });
+
+    expect(analyticsMock.favoritouRegiao).toHaveBeenCalledWith('r9');
   });
 
   it('remove dos favoritos quando a região já é favorita', async () => {

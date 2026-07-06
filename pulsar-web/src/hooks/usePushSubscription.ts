@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import api from '../api/client';
+import { track } from '../analytics';
 import type { NotificacoesPrefs } from './useNotificacoesPrefs';
 
 /**
@@ -149,6 +150,7 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
       });
       await enviarAoBackend(sub);
       setEstado('ativo');
+      track.ativouPush();
     } catch {
       setEstado('inativo');
     } finally {

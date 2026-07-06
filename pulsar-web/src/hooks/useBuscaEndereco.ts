@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
+import { track } from '../analytics';
 import type { EnderecoBusca } from '../types';
 
 const DEBOUNCE_MS = 300;
@@ -54,6 +55,7 @@ export function useBuscaEndereco(): UseBuscaEnderecoResult {
         if (!ativo) return;
         setResultados(data);
         setErro(null);
+        track.buscouEndereco();
       } catch {
         if (!ativo) return;
         setErro('Não foi possível buscar endereços agora.');

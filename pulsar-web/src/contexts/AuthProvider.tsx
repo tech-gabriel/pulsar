@@ -1,5 +1,6 @@
 import { useState, useCallback, type ReactNode } from 'react';
 import api from '../api/client';
+import { track } from '../analytics';
 import type {
   AtualizarPerfilRequestDto,
   CadastroRequestDto,
@@ -35,16 +36,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (dto: LoginRequestDto) => {
     const { data } = await api.post<LoginResponseDto>('/auth/login', dto);
     salvarSessao(data);
+    track.login('email');
   }, [salvarSessao]);
 
   const loginGoogle = useCallback(async (idToken: string) => {
     const { data } = await api.post<LoginResponseDto>('/auth/google', { idToken });
     salvarSessao(data);
+    track.login('google');
   }, [salvarSessao]);
 
   const cadastrar = useCallback(async (dto: CadastroRequestDto) => {
     const { data } = await api.post<LoginResponseDto>('/auth/cadastro', dto);
     salvarSessao(data);
+    track.cadastrou('email');
   }, [salvarSessao]);
 
   const atualizarPerfil = useCallback(async (dto: AtualizarPerfilRequestDto) => {

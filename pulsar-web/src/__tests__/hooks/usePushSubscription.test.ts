@@ -5,6 +5,9 @@ vi.mock('../../api/client', () => ({
   default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
 }));
 
+const analyticsMock = vi.hoisted(() => ({ ativouPush: vi.fn() }));
+vi.mock('../../analytics', () => ({ track: { ativouPush: analyticsMock.ativouPush } }));
+
 import api from '../../api/client';
 import { usePushSubscription } from '../../hooks/usePushSubscription';
 import type { NotificacoesPrefs } from '../../hooks/useNotificacoesPrefs';
@@ -79,6 +82,17 @@ describe('usePushSubscription', () => {
       alertaAlto: true,
     }));
     expect(result.current.estado).toBe('ativo');
+  });
+
+  it('emite ativou_push quando a inscrição é criada com sucesso', async () => {
+    analyticsMock.ativouPush.mockClear();
+    const { result } = renderHook(() => usePushSubscription(prefs));
+    await waitFor(() => expect(result.current.estado).toBe('inativo'));
+
+    await act(async () => { await result.current.ativar(); });
+
+    await waitFor(() => expect(result.current.estado).toBe('ativo'));
+    expect(analyticsMock.ativouPush).toHaveBeenCalledTimes(1);
   });
 
   it('ativar() com permissão negada marca estado negado e não envia', async () => {

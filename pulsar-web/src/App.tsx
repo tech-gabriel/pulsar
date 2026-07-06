@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
+import { AnalyticsBridge } from './analytics';
 import TitleManager from './components/TitleManager';
 import LandingPage from './pages/LandingPage';
 import SobrePage from './pages/SobrePage';
@@ -47,6 +48,7 @@ function RotaLanding({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <>
+      <AnalyticsBridge />
       <TitleManager />
       <Routes>
         <Route path="/" element={<RotaLanding><LandingPage /></RotaLanding>} />

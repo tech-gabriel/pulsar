@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Info, Sparkles, AtSign, ChevronRight, ExternalLink } from 'lucide-react';
 import GlassCard from './GlassCard';
+import { track } from '../../analytics';
 import { APP_VERSION } from '../../data/changelog';
 import { INSTAGRAM_URL } from '../../data/social';
 
@@ -37,6 +38,7 @@ export default function SobreCard() {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Instagram do Pulsar"
+          onClick={() => track.clicouInstagram('sobre')}
           className="w-full flex items-center gap-3 py-2.5 text-left"
         >
           <AtSign size={18} style={{ color: 'var(--text-accent)' }} className="flex-shrink-0" />

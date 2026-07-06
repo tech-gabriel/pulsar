@@ -4,6 +4,9 @@ import type { EnderecoBusca } from '../../types';
 
 vi.mock('../../api/client', () => ({ default: { get: vi.fn() } }));
 
+const analyticsMock = vi.hoisted(() => ({ buscouEndereco: vi.fn() }));
+vi.mock('../../analytics', () => ({ track: { buscouEndereco: analyticsMock.buscouEndereco } }));
+
 import api from '../../api/client';
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
 
@@ -79,5 +82,16 @@ describe('useBuscaEndereco', () => {
     act(() => result.current.limpar());
     expect(result.current.termo).toBe('');
     expect(result.current.resultados).toEqual([]);
+  });
+
+  it('emite buscou_endereco quando a busca retorna', async () => {
+    analyticsMock.buscouEndereco.mockClear();
+    mockedApi.get.mockResolvedValue({ data: [] });
+    const { result } = renderHook(() => useBuscaEndereco());
+    act(() => result.current.setTermo('avenida'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    expect(analyticsMock.buscouEndereco).toHaveBeenCalled();
   });
 });

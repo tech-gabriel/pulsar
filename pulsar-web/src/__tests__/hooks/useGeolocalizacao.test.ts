@@ -2,6 +2,9 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGeolocalizacao, GeoError } from '../../hooks/useGeolocalizacao';
 
+const analyticsMock = vi.hoisted(() => ({ usouGeolocalizacao: vi.fn() }));
+vi.mock('../../analytics', () => ({ track: { usouGeolocalizacao: analyticsMock.usouGeolocalizacao } }));
+
 // Códigos padrão do GeolocationPositionError
 const PERMISSION_DENIED = 1;
 const POSITION_UNAVAILABLE = 2;
@@ -76,5 +79,29 @@ describe('useGeolocalizacao', () => {
     });
     expect(erro).toBeInstanceOf(GeoError);
     expect((erro as GeoError).tipo).toBe('sem-suporte');
+  });
+
+  it('emite usou_geolocalizacao(true) no sucesso', async () => {
+    analyticsMock.usouGeolocalizacao.mockClear();
+    mockGeolocation({
+      getCurrentPosition: (success) =>
+        success({ coords: { latitude: -23.55, longitude: -46.63 } } as GeolocationPosition),
+    });
+    const { result } = renderHook(() => useGeolocalizacao());
+    await act(async () => { await result.current.detectar(); });
+    expect(analyticsMock.usouGeolocalizacao).toHaveBeenCalledWith(true);
+  });
+
+  it('emite usou_geolocalizacao(false) na falha', async () => {
+    analyticsMock.usouGeolocalizacao.mockClear();
+    mockGeolocation({
+      getCurrentPosition: (_s, error) =>
+        error?.({ code: 1, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 } as GeolocationPositionError),
+    });
+    const { result } = renderHook(() => useGeolocalizacao());
+    await act(async () => {
+      try { await result.current.detectar(); } catch { /* esperado */ }
+    });
+    expect(analyticsMock.usouGeolocalizacao).toHaveBeenCalledWith(false);
   });
 });

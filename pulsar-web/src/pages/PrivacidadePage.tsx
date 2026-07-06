@@ -157,7 +157,21 @@ export default function PrivacidadePage() {
         buscando parceiros que ofereçam um grau adequado de proteção aos seus dados.
       </p>
 
-      <h2>9. Por quanto tempo guardamos</h2>
+      <h2>9. Ferramenta de analytics</h2>
+      <p>
+        Usamos o PostHog para entender como o Pulsar é usado e melhorar o produto. Registramos
+        ações como visitas, cadastro, favoritar uma região e ativar alertas. Para reconhecer você
+        entre sessões, enviamos seu identificador de conta junto com nome e e-mail ao PostHog.
+        Esse serviço processa os dados em servidores nos Estados Unidos, o que envolve
+        transferência internacional de dados.
+      </p>
+      <p>
+        A finalidade é medir uso e retenção para melhorar o app. A base legal é o legítimo
+        interesse. Não vendemos seus dados. Não gravamos sua sessão nem capturamos o conteúdo que
+        você digita.
+      </p>
+
+      <h2>10. Por quanto tempo guardamos</h2>
       <p>
         Mantemos seus dados enquanto sua conta estiver ativa ou pelo tempo necessário para cumprir
         as finalidades descritas aqui e eventuais obrigações legais. Ao excluir sua conta,
@@ -165,14 +179,14 @@ export default function PrivacidadePage() {
         exigência legal.
       </p>
 
-      <h2>10. Segurança</h2>
+      <h2>11. Segurança</h2>
       <p>
         Adotamos medidas técnicas e organizacionais razoáveis para proteger seus dados, como
         controle de acesso, criptografia das senhas e comunicação por canais seguros. Nenhum
         sistema é totalmente imune a riscos, mas trabalhamos para reduzi-los continuamente.
       </p>
 
-      <h2>11. Seus direitos</h2>
+      <h2>12. Seus direitos</h2>
       <p>Como titular dos dados, você pode, a qualquer momento:</p>
       <ul>
         <li>Confirmar a existência de tratamento e acessar seus dados.</li>
@@ -188,7 +202,7 @@ export default function PrivacidadePage() {
         de Dados (ANPD).
       </p>
 
-      <h2>12. Crianças e adolescentes</h2>
+      <h2>13. Crianças e adolescentes</h2>
       <p>
         O Pulsar não é direcionado a menores de 18 anos. Não coletamos intencionalmente dados de
         crianças e adolescentes sem o consentimento de quem é responsável por eles. Se você é
@@ -196,14 +210,14 @@ export default function PrivacidadePage() {
         removê-los.
       </p>
 
-      <h2>13. Alterações nesta política</h2>
+      <h2>14. Alterações nesta política</h2>
       <p>
         Podemos atualizar esta política para refletir melhorias no serviço ou mudanças legais.
         Quando a alteração for relevante, sinalizaremos no app. A data da última atualização fica
         sempre indicada no topo desta página.
       </p>
 
-      <h2>14. Como falar com a gente</h2>
+      <h2>15. Como falar com a gente</h2>
       <p>
         Dúvidas sobre privacidade ou quer exercer seus direitos? Fale com a gente em{' '}
         <a href="mailto:equipe.app.pulsar@gmail.com">equipe.app.pulsar@gmail.com</a>. Respondemos no

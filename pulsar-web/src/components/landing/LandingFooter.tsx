@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { AtSign } from 'lucide-react';
 import iconePulsar from '../../assets/logos/pulsar-icone.svg';
 import SeloVersao from '../SeloVersao';
+import { track } from '../../analytics';
 import { INSTAGRAM_URL } from '../../data/social';
 
 export default function LandingFooter() {
@@ -44,6 +45,7 @@ export default function LandingFooter() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram do Pulsar"
+            onClick={() => track.clicouInstagram('landing')}
             className="transition-colors hover:text-[var(--text-primary)]"
             style={{ color: 'var(--text-secondary)' }}
           >

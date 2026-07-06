@@ -8,8 +8,11 @@ import { ToastProvider } from './contexts/ToastProvider';
 import { ThemeProvider } from './hooks/ThemeProvider';
 import ToastContainer from './components/ui/ToastContainer';
 import ErrorBoundary from './components/ui/ErrorBoundary';
+import { initAnalytics } from './analytics';
 import './index.css';
 import App from './App';
+
+initAnalytics();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

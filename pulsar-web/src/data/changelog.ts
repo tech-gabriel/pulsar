@@ -25,6 +25,19 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.3.0',
+    data: '2026-07-10',
+    resumo: 'Entrar no Pulsar ficou mais rápido.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Entrar com o Google',
+        descricao:
+          'Agora dá para entrar ou criar sua conta com um toque, usando a sua conta do Google. Sem precisar lembrar de mais uma senha.',
+      },
+    ],
+  },
+  {
     versao: '1.2.0',
     data: '2026-07-01',
     resumo: 'Descubra a sua região no mapa com um toque.',

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+# App autenticado (dinâmico, atrás de login): sem valor de índice.
+Disallow: /app
+
+Sitemap: https://app-pulsar.com.br/sitemap.xml

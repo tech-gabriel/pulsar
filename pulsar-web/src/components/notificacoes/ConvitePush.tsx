@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { BellRing } from 'lucide-react';
+import { BellRing, X } from 'lucide-react';
 import { useNotificacoesPrefs } from '../../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../../hooks/usePushSubscription';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useToast } from '../../contexts/ToastContext';
 
 // Dispensa fica só na sessão: ao clicar "Agora não" o convite some, mas volta no
@@ -28,6 +29,7 @@ export default function ConvitePush() {
   const { prefs } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
   const { showToast } = useToast();
+  const isMobile = useIsMobile(768);
   const [dispensado, setDispensado] = useState(lerDispensado);
   // Marca que a ativação partiu deste banner, para confirmar com um toast só
   // quando a inscrição realmente concluir (e não ao reabrir o mapa já ativo).
@@ -60,6 +62,48 @@ export default function ConvitePush() {
     void push.ativar();
   }
 
+  // Mobile: barra compacta de uma linha, ancorada acima da tab bar (não tapa o mapa).
+  if (isMobile) {
+    return (
+      <div
+        data-variante="mobile-bar"
+        // Acima do handle do drawer (sempre visível em bottom-12) e da safe-area;
+        // right-[4.5rem] deixa o FAB "Ver regiões" livre na direita.
+        className="fixed bottom-[7.5rem] left-3 right-[4.5rem] z-[1200] animate-slide-up flex items-center gap-2.5 rounded-xl px-3 py-2"
+        style={{
+          background: 'var(--bg-primary)',
+          border: '1px solid var(--border-glass, rgba(0,188,255,0.15))',
+          boxShadow: '0 8px 28px rgba(2, 24, 38, 0.35)',
+        }}
+        role="region"
+        aria-label="Ativar notificações"
+      >
+        <BellRing size={18} style={{ color: 'var(--text-accent)' }} className="flex-shrink-0" />
+        <p className="min-w-0 flex-1 truncate" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+          Receba alertas no celular
+        </p>
+        <button
+          type="button"
+          onClick={ativar}
+          disabled={push.ocupado}
+          className="btn-gradient rounded-lg px-3 py-1.5 text-xs font-semibold flex-shrink-0"
+        >
+          {push.ocupado ? 'Ativando…' : 'Ativar'}
+        </button>
+        <button
+          type="button"
+          onClick={dispensar}
+          aria-label="Dispensar"
+          className="flex-shrink-0 p-1"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <X size={16} />
+        </button>
+      </div>
+    );
+  }
+
+  // Desktop/tablet: card completo (inalterado).
   return (
     <div className="absolute left-1/2 -translate-x-1/2 z-[1200] bottom-[7.5rem] md:bottom-6 w-[calc(100%-1.5rem)] max-w-md animate-slide-up">
       <div

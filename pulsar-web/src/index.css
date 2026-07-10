@@ -714,9 +714,7 @@ button, a, [role="button"], [role="radio"] {
 
 /* Tab bar inferior (mobile) */
 .tabbar-mobile {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: var(--bg-primary);
   border-top: 1px solid var(--border-glass);
   padding-bottom: env(safe-area-inset-bottom);
 }

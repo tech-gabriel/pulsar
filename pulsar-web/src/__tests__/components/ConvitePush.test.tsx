@@ -24,6 +24,10 @@ vi.mock('../../contexts/ToastContext', () => ({
   useToast: () => ({ showToast }),
 }));
 
+// Estes casos exercitam a variante desktop (card com "Agora não").
+// A variante mobile (barra compacta) tem cobertura própria em ConvitePush.mobile.test.tsx.
+vi.mock('../../hooks/useIsMobile', () => ({ useIsMobile: () => false }));
+
 import ConvitePush from '../../components/notificacoes/ConvitePush';
 
 describe('ConvitePush', () => {

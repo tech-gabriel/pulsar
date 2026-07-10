@@ -61,7 +61,7 @@ export default function RegiaoCard({ regiao, ativa, favorito, onSelecionar, onTo
       {alto && (
         <div className="flex items-center gap-1.5 mt-2 text-pulsar-200" style={{ fontSize: 12 }}>
           <AlertTriangle size={13} className="text-red-400 flex-shrink-0" />
-          <span className="truncate">Condições severas — confira as recomendações.</span>
+          <span className="truncate">Condições severas, confira as recomendações.</span>
         </div>
       )}
     </button>

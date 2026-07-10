@@ -50,7 +50,7 @@ export default function LandingNav() {
         >
           Entrar
         </Link>
-        <Link to="/cadastro" className="landing-cta !px-4 !py-2 !text-sm">
+        <Link to="/cadastro" className="landing-cta whitespace-nowrap !px-4 !py-2 !text-sm">
           Criar conta
         </Link>
       </div>

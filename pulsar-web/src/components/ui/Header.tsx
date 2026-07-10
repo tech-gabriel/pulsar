@@ -53,11 +53,8 @@ export default function Header() {
     };
   }, [painelAberto]);
 
-  // Aba administrativa visível apenas para ADMIN e SUPORTE.
+  // Acesso administrativo (ADMIN/SUPORTE) vive no top bar, não na tab bar inferior.
   const ehAdmin = usuario?.role === 'ADMIN' || usuario?.role === 'SUPORTE';
-  const tabs = ehAdmin
-    ? [...TABS, { to: '/app/admin/usuarios', label: 'Admin', curto: 'Admin', Icon: ShieldCheck }]
-    : TABS;
 
   function irParaRegiao() {
     setPainelAberto(false);
@@ -93,7 +90,7 @@ export default function Header() {
 
         {/* Centro: abas (md+) — absolutamente centradas */}
         <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-          {tabs.map(({ to, label, Icon, end }) => (
+          {TABS.map(({ to, label, Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => ['nav-tab', isActive ? 'ativa' : ''].join(' ')}>
               <Icon size={18} />
               <span>{label}</span>
@@ -103,6 +100,18 @@ export default function Header() {
 
         {/* Direita: ações */}
         <div className="flex items-center gap-3">
+          {/* Acesso ao painel admin (só ADMIN/SUPORTE) — fica no topo, fora da tab bar */}
+          {ehAdmin && (
+            <NavLink
+              to="/app/admin/usuarios"
+              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex"
+              title="Painel administrativo"
+              aria-label="Admin"
+            >
+              <ShieldCheck size={20} />
+            </NavLink>
+          )}
+
           {/* Toggle de tema (longe do logout para evitar cliques acidentais) */}
           <button
             type="button"
@@ -211,7 +220,7 @@ export default function Header() {
 
       {/* ── TAB BAR INFERIOR (mobile) ───────────────────────────────────────── */}
       <nav className="tabbar-mobile md:hidden fixed bottom-0 left-0 right-0 z-[1000] flex items-stretch h-12">
-        {tabs.map(({ to, curto, Icon, end }) => (
+        {TABS.map(({ to, curto, Icon, end }) => (
           <NavLink
             key={to}
             to={to}

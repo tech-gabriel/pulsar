@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Activity, Thermometer, CloudRain, Wind, Sun, ChevronDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Camada } from '../../utils/camadas';
@@ -60,13 +60,31 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
   const iconSize = isMobile ? 18 : 20;
   const [aberto, setAberto] = useState(false);
   const ativa = ITENS.find((i) => i.id === camadaAtiva) ?? ITENS[0];
+  const mobileRef = useRef<HTMLDivElement>(null);
+
+  // Fecha o popover mobile ao clicar fora ou pressionar Esc.
+  useEffect(() => {
+    if (!aberto) return;
+    function aoClicarFora(e: PointerEvent) {
+      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) setAberto(false);
+    }
+    function aoTeclar(e: KeyboardEvent) {
+      if (e.key === 'Escape') setAberto(false);
+    }
+    document.addEventListener('pointerdown', aoClicarFora);
+    document.addEventListener('keydown', aoTeclar);
+    return () => {
+      document.removeEventListener('pointerdown', aoClicarFora);
+      document.removeEventListener('keydown', aoTeclar);
+    };
+  }, [aberto]);
 
   // ─── Mobile: botão único "Camadas" que abre o seletor ───
   // Ancorado à esquerda, abaixo da faixa de busca+dica (que ocupam o topo em
   // largura total) para não colidir com elas.
   if (isMobile) {
     return (
-      <div className="absolute top-[6.5rem] left-3 z-[1000] flex flex-col items-start gap-2">
+      <div ref={mobileRef} className="absolute top-[6.5rem] left-3 z-[1000] flex flex-col items-start gap-2">
         <button
           type="button"
           onClick={() => setAberto((v) => !v)}

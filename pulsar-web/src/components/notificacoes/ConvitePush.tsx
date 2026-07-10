@@ -67,7 +67,9 @@ export default function ConvitePush() {
     return (
       <div
         data-variante="mobile-bar"
-        className="fixed bottom-14 left-3 right-3 z-[1200] animate-slide-up flex items-center gap-2.5 rounded-xl px-3 py-2"
+        // Acima do handle do drawer (sempre visível em bottom-12) e da safe-area;
+        // right-[4.5rem] deixa o FAB "Ver regiões" livre na direita.
+        className="fixed bottom-[7.5rem] left-3 right-[4.5rem] z-[1200] animate-slide-up flex items-center gap-2.5 rounded-xl px-3 py-2"
         style={{
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-glass, rgba(0,188,255,0.15))',

@@ -62,9 +62,11 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
   const ativa = ITENS.find((i) => i.id === camadaAtiva) ?? ITENS[0];
 
   // ─── Mobile: botão único "Camadas" que abre o seletor ───
+  // Ancorado à esquerda, abaixo da faixa de busca+dica (que ocupam o topo em
+  // largura total) para não colidir com elas.
   if (isMobile) {
     return (
-      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2">
+      <div className="absolute top-[6.5rem] left-3 z-[1000] flex flex-col items-start gap-2">
         <button
           type="button"
           onClick={() => setAberto((v) => !v)}

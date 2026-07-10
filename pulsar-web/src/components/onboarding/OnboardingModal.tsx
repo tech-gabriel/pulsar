@@ -35,7 +35,7 @@ function EscalaRisco() {
           <div key={f} className="flex items-center gap-2.5">
             <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: cor, boxShadow: `0 0 8px ${cor}66` }} />
             <span style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--text-primary)' }}>{labelFaixa(f)}</span>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>— {DESCRICAO_FAIXA[f]}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{DESCRICAO_FAIXA[f]}</span>
           </div>
         );
       })}
@@ -60,7 +60,7 @@ const PASSOS: Passo[] = [
       <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
         O Pulsar acompanha as condições climáticas de São Paulo em tempo real e traduz
         tudo em um <strong style={{ color: 'var(--text-primary)' }}>score de risco</strong> por
-        região — para você saber, num olhar, onde redobrar a atenção.
+        região, para você saber num olhar onde redobrar a atenção.
       </p>
     ),
   },

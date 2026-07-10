@@ -16,4 +16,20 @@ describe('LayerControl (mobile)', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Chuva' }));
     expect(onChange).toHaveBeenCalledWith('chuva');
   });
+
+  it('fecha o seletor ao pressionar Escape', () => {
+    render(<LayerControl camadaAtiva="score" onChange={vi.fn()} isMobile />);
+    fireEvent.click(screen.getByRole('button', { name: /camadas/i }));
+    expect(screen.getByRole('radio', { name: 'Chuva' })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('radio', { name: 'Chuva' })).toBeNull();
+  });
+
+  it('fecha o seletor ao tocar fora', () => {
+    render(<LayerControl camadaAtiva="score" onChange={vi.fn()} isMobile />);
+    fireEvent.click(screen.getByRole('button', { name: /camadas/i }));
+    expect(screen.getByRole('radio', { name: 'Chuva' })).toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole('radio', { name: 'Chuva' })).toBeNull();
+  });
 });

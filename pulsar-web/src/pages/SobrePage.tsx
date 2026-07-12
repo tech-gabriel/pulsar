@@ -1,12 +1,19 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import LandingDocShell from '../components/landing/LandingDocShell';
+import { useSeoHead } from '../hooks/useSeoHead';
 
 /**
  * Página institucional "Sobre" (rota pública `/sobre`). Conta o porquê do
  * projeto e como ele funciona, em tom humano e direto.
  */
 export default function SobrePage() {
+  useSeoHead({
+    title: 'Pulsar · Sobre',
+    descricao: 'Por que o Pulsar existe e como ele calcula o risco climático de São Paulo, subprefeitura por subprefeitura.',
+    path: '/sobre',
+  });
+
   return (
     <LandingDocShell
       titulo="Sobre o Pulsar"

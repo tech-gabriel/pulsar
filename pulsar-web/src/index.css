@@ -108,7 +108,7 @@ html.light {
   box-sizing: border-box;
 }
 
-html, body, #root {
+html, body, #app {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -645,7 +645,7 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 @supports (height: 100dvh) {
-  html, body, #root {
+  html, body, #app {
     height: 100dvh;
   }
 }

@@ -115,7 +115,24 @@ services:
       - type: rewrite
         source: /api/*
         destination: https://pulsar-api-1v0n.onrender.com/api/*
-      # 2) Fallback do roteamento SPA: tudo que não for arquivo real → index.html.
+      # 2) Páginas públicas pré-renderizadas (SSG): a URL limpa serve o HTML real
+      #    daquela página. SEM estas regras, /sobre cairia no fallback SPA (3) e
+      #    receberia o index.html da landing → mismatch de hidratação (o servidor
+      #    manda a landing, o cliente renderiza a página). A home (/) já é o
+      #    index.html raiz, então não precisa de regra própria.
+      - type: rewrite
+        source: /sobre
+        destination: /sobre/index.html
+      - type: rewrite
+        source: /privacidade
+        destination: /privacidade/index.html
+      - type: rewrite
+        source: /termos
+        destination: /termos/index.html
+      - type: rewrite
+        source: /novidades
+        destination: /novidades/index.html
+      # 3) Fallback do roteamento SPA: tudo que não for arquivo real → index.html.
       - type: rewrite
         source: /*
         destination: /index.html

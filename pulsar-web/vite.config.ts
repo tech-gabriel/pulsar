@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import reactSsg from 'vite-plugin-react-ssg'
 
 // Alvo do backend para o proxy /api. Padrão: o `dotnet run` local (5245).
 // Para testar contra o backend em container (docker compose), rode:
@@ -12,6 +13,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     react(),
+    reactSsg(),
     VitePWA({
       // Service worker próprio (src/sw.ts) para tratar push/notificationclick.
       // injectionPoint undefined = sem precache do Workbox; o SW é focado em push.

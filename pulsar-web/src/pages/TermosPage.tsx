@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import LandingDocShell from '../components/landing/LandingDocShell';
+import { useSeoHead } from '../hooks/useSeoHead';
 
 /**
  * Termos de Uso (rota pública `/termos`). Texto base launch-ready, já preparado
@@ -8,6 +9,12 @@ import LandingDocShell from '../components/landing/LandingDocShell';
  * este texto não constitui aconselhamento jurídico.
  */
 export default function TermosPage() {
+  useSeoHead({
+    title: 'Pulsar · Termos de Uso',
+    descricao: 'As regras de uso do Pulsar: responsabilidades, limites do serviço e condições de acesso.',
+    path: '/termos',
+  });
+
   return (
     <LandingDocShell
       titulo="Termos de Uso"

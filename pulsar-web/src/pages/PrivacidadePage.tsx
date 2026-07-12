@@ -1,4 +1,5 @@
 import LandingDocShell from '../components/landing/LandingDocShell';
+import { useSeoHead } from '../hooks/useSeoHead';
 
 /**
  * Política de Privacidade (rota pública `/privacidade`). Texto base alinhado à
@@ -7,6 +8,12 @@ import LandingDocShell from '../components/landing/LandingDocShell';
  * lançamento público; este texto não constitui aconselhamento jurídico.
  */
 export default function PrivacidadePage() {
+  useSeoHead({
+    title: 'Pulsar · Política de Privacidade',
+    descricao: 'Como o Pulsar coleta, usa e protege seus dados pessoais, em conformidade com a LGPD.',
+    path: '/privacidade',
+  });
+
   return (
     <LandingDocShell
       titulo="Política de Privacidade"

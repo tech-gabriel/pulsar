@@ -37,19 +37,22 @@ function RotaLanding() {
   return estaAutenticado ? <Navigate to="/app" replace /> : <Outlet />;
 }
 
+// As 5 rotas públicas de conteúdo, compartilhadas entre o router do app e a
+// árvore do SSG. Definidas uma única vez para não divergir.
+export const rotasPublicas: RouteObject[] = [
+  { element: <RotaLanding />, children: [{ index: true, element: <LandingPage /> }] },
+  { path: 'sobre', element: <SobrePage /> },
+  { path: 'privacidade', element: <PrivacidadePage /> },
+  { path: 'termos', element: <TermosPage /> },
+  { path: 'novidades', element: <NovidadesPage /> },
+];
+
 export const routes: RouteObject[] = [
   {
     element: <RootLayout />,
     children: [
       // Públicas de conteúdo (prerenderizadas) — eager.
-      {
-        element: <RotaLanding />,
-        children: [{ index: true, element: <LandingPage /> }],
-      },
-      { path: 'sobre', element: <SobrePage /> },
-      { path: 'privacidade', element: <PrivacidadePage /> },
-      { path: 'termos', element: <TermosPage /> },
-      { path: 'novidades', element: <NovidadesPage /> },
+      ...rotasPublicas,
 
       // Auth (CSR, lazy).
       {
@@ -87,5 +90,14 @@ export const routes: RouteObject[] = [
 
       { path: '*', element: <Navigate to="/" replace /> },
     ],
+  },
+];
+
+// Árvore podada para o SSG: RootLayout + só as públicas (sem auth/app/lazy).
+// O plugin auto-descobre os paths desta árvore, gerando exatamente 5 arquivos.
+export const routesSSG: RouteObject[] = [
+  {
+    element: <RootLayout />,
+    children: rotasPublicas,
   },
 ];

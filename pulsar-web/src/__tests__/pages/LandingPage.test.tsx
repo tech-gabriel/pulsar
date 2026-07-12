@@ -1,26 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { ThemeProvider } from '../../hooks/ThemeProvider';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { createHead, UnheadProvider } from '@unhead/react/client';
 
 // Auth mutável: alterna entre visitante deslogado e usuário autenticado.
+// Mantém o `AuthContext` real (importOriginal) porque o AuthProvider de
+// verdade é renderizado via RootLayout/routes e precisa dele para montar o
+// Provider; só o hook `useAuth` é substituído para controlar o estado no teste.
 const authState = { estaAutenticado: false, usuario: null as unknown };
-vi.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => authState,
-}));
+vi.mock('../../contexts/AuthContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../contexts/AuthContext')>();
+  return {
+    ...actual,
+    useAuth: () => authState,
+  };
+});
 
 // O alvo de redirect (/app) é o mapa, que depende de Leaflet — stub leve.
 vi.mock('../../pages/MapaPage', () => ({ default: () => <div>MAPA_APP</div> }));
 
-import App from '../../App';
+import { routes } from '../../routes';
 
 function renderApp(path: string) {
+  const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(
-    <ThemeProvider>
-      <MemoryRouter initialEntries={[path]}>
-        <App />
-      </MemoryRouter>
-    </ThemeProvider>,
+    <UnheadProvider head={createHead()}>
+      <RouterProvider router={router} />
+    </UnheadProvider>,
   );
 }
 
@@ -44,11 +50,12 @@ describe('LandingPage / RotaLanding', () => {
     expect(screen.queryByText('MAPA_APP')).not.toBeInTheDocument();
   });
 
-  it('usuário autenticado é redirecionado de / para /app', () => {
+  it('usuário autenticado é redirecionado de / para /app', async () => {
     authState.estaAutenticado = true;
     renderApp('/');
 
-    expect(screen.getByText('MAPA_APP')).toBeInTheDocument();
+    // A rota /app é `lazy` (import dinâmico) — precisa esperar resolver.
+    expect(await screen.findByText('MAPA_APP')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Acessar o Pulsar/i })).not.toBeInTheDocument();
   });
 });

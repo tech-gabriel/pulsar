@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { createHead, UnheadProvider } from '@unhead/react/client';
 import { ThemeProvider } from '../../hooks/ThemeProvider';
 
 const h = vi.hoisted(() => ({ viuNovidades: vi.fn() }));
@@ -14,11 +15,13 @@ describe('NovidadesPage analytics', () => {
 
   it('emite viu_novidades com a versão ao montar', () => {
     render(
-      <ThemeProvider>
-        <MemoryRouter>
-          <NovidadesPage />
-        </MemoryRouter>
-      </ThemeProvider>,
+      <UnheadProvider head={createHead()}>
+        <ThemeProvider>
+          <MemoryRouter>
+            <NovidadesPage />
+          </MemoryRouter>
+        </ThemeProvider>
+      </UnheadProvider>,
     );
     expect(h.viuNovidades).toHaveBeenCalledWith(APP_VERSION);
   });

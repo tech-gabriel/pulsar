@@ -5,12 +5,19 @@ import ReleaseEntry from '../components/novidades/ReleaseEntry';
 import { track } from '../analytics';
 import { APP_VERSION, CHANGELOG } from '../data/changelog';
 import { INSTAGRAM_URL } from '../data/social';
+import { useSeoHead } from '../hooks/useSeoHead';
 
 /**
  * Página pública de novidades (rota `/novidades`). Changelog curado por versão,
  * do mais recente pro mais antigo. Reutiliza o molde institucional da landing.
  */
 export default function NovidadesPage() {
+  useSeoHead({
+    title: 'Pulsar · Novidades',
+    descricao: 'As últimas atualizações e melhorias do Pulsar, versão por versão.',
+    path: '/novidades',
+  });
+
   useEffect(() => {
     track.viuNovidades(APP_VERSION);
   }, []);

@@ -12,6 +12,14 @@
 # (https://pulsar-api.onrender.com). Se o Render renomear o serviço (nome já em
 # uso), ajuste a URL na regra de rewrite abaixo após o 1º deploy.
 
+# Preview environments (efêmeros) por Blueprint. `manual`: só cria preview
+# quando a PR tem `[render preview]` no título (evita subir preview em toda PR).
+# Ressalva: o preview copia env vars EXCETO segredos (sync:false) — no preview o
+# backend não sobe com DB/keys e o frontend builda sem VITE_* → mapa/login ficam
+# degradados, mas as 5 páginas públicas SSG (o que queremos validar) renderizam.
+previews:
+  generation: manual
+
 services:
   # ── Backend (.NET API) ─────────────────────────────────────────────────────
   - type: web
@@ -66,7 +74,6 @@ services:
     autoDeploy: true
     buildCommand: cd pulsar-web && npm ci && npm run build
     staticPublishPath: pulsar-web/dist            # relativo à raiz do repo
-    pullRequestPreviewsEnabled: false
     # Domínio próprio (registrado no registro.br). O Render provisiona o custom
     # domain e emite o SSL após a propagação do DNS. O 1º da lista é o principal;
     # o www redireciona para o apex. Configure os registros DNS que o Render exibir
@@ -115,7 +122,24 @@ services:
       - type: rewrite
         source: /api/*
         destination: https://pulsar-api-1v0n.onrender.com/api/*
-      # 2) Fallback do roteamento SPA: tudo que não for arquivo real → index.html.
+      # 2) Páginas públicas pré-renderizadas (SSG): a URL limpa serve o HTML real
+      #    daquela página. SEM estas regras, /sobre cairia no fallback SPA (3) e
+      #    receberia o index.html da landing → mismatch de hidratação (o servidor
+      #    manda a landing, o cliente renderiza a página). A home (/) já é o
+      #    index.html raiz, então não precisa de regra própria.
+      - type: rewrite
+        source: /sobre
+        destination: /sobre/index.html
+      - type: rewrite
+        source: /privacidade
+        destination: /privacidade/index.html
+      - type: rewrite
+        source: /termos
+        destination: /termos/index.html
+      - type: rewrite
+        source: /novidades
+        destination: /novidades/index.html
+      # 3) Fallback do roteamento SPA: tudo que não for arquivo real → index.html.
       - type: rewrite
         source: /*
         destination: /index.html

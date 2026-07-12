@@ -12,14 +12,6 @@
 # (https://pulsar-api.onrender.com). Se o Render renomear o serviço (nome já em
 # uso), ajuste a URL na regra de rewrite abaixo após o 1º deploy.
 
-# Preview environments (efêmeros) por Blueprint. `manual`: só cria preview
-# quando a PR tem `[render preview]` no título (evita subir preview em toda PR).
-# Ressalva: o preview copia env vars EXCETO segredos (sync:false) — no preview o
-# backend não sobe com DB/keys e o frontend builda sem VITE_* → mapa/login ficam
-# degradados, mas as 5 páginas públicas SSG (o que queremos validar) renderizam.
-previews:
-  generation: manual
-
 services:
   # ── Backend (.NET API) ─────────────────────────────────────────────────────
   - type: web

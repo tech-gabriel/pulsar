@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import { hydrateRoot } from 'react-dom/client';
 import { createHead, UnheadProvider } from '@unhead/react/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, type HydrationState } from 'react-router-dom';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { initAnalytics } from './analytics';
 import { routes } from './routes';
@@ -10,9 +10,16 @@ import './index.css';
 initAnalytics();
 
 const head = createHead();
-const router = createBrowserRouter(routes);
+const hydrationData = (window as Window & {
+  __staticRouterHydrationData?: HydrationState;
+}).__staticRouterHydrationData;
 
-createRoot(document.getElementById('root')!).render(
+const router = createBrowserRouter(routes, {
+  ...(hydrationData ? { hydrationData } : {}),
+});
+
+hydrateRoot(
+  document.getElementById('app')!,
   <StrictMode>
     <ErrorBoundary>
       <UnheadProvider head={head}>

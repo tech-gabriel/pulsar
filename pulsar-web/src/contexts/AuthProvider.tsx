@@ -11,6 +11,7 @@ import type {
 import { AuthContext } from './AuthContext';
 
 function carregarDoStorage(): { usuario: UsuarioDto | null; token: string | null } {
+  if (typeof window === 'undefined') return { token: null, usuario: null };
   try {
     const token = localStorage.getItem('pulsar_token');
     const raw = localStorage.getItem('pulsar_usuario');

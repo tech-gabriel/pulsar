@@ -1,17 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { createHead, UnheadProvider } from '@unhead/react/client';
 import { ThemeProvider } from '../../hooks/ThemeProvider';
 import NovidadesPage from '../../pages/NovidadesPage';
 import { CHANGELOG } from '../../data/changelog';
 
 function renderPage() {
   render(
-    <ThemeProvider>
-      <MemoryRouter>
-        <NovidadesPage />
-      </MemoryRouter>
-    </ThemeProvider>,
+    <UnheadProvider head={createHead()}>
+      <ThemeProvider>
+        <MemoryRouter>
+          <NovidadesPage />
+        </MemoryRouter>
+      </ThemeProvider>
+    </UnheadProvider>,
   );
 }
 

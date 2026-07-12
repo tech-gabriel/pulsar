@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import { createHead, UnheadProvider } from '@unhead/react/client';
 
 // Auth mutável: alterna entre visitante deslogado e usuário autenticado.
 // Mantém o `AuthContext` real (importOriginal) porque o AuthProvider de
@@ -22,7 +23,11 @@ import { routes } from '../../routes';
 
 function renderApp(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
-  render(<RouterProvider router={router} />);
+  render(
+    <UnheadProvider head={createHead()}>
+      <RouterProvider router={router} />
+    </UnheadProvider>,
+  );
 }
 
 describe('LandingPage / RotaLanding', () => {

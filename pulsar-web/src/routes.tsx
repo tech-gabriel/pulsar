@@ -101,8 +101,9 @@ export const routes: RouteObject[] = [
   },
 ];
 
-// Árvore podada para o SSG: RootLayout + só as públicas (sem auth/app/lazy).
-// O plugin auto-descobre os paths desta árvore, gerando exatamente 5 arquivos.
+// Árvore podada para o SSG: RootLayout + públicas + regiões (sem auth/app/lazy).
+// O plugin auto-descobre os paths desta árvore, gerando exatamente 10 arquivos:
+// 5 institucionais (/, /sobre, /privacidade, /termos, /novidades) + 5 zonas de risco.
 export const routesSSG: RouteObject[] = [
   {
     element: <RootLayout />,

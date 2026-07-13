@@ -17,7 +17,7 @@ export const zonas: ZonaSeo[] = [
     subprefeituras: [
       'Aricanduva-Formosa-Carrão', 'Cidade Tiradentes', 'Ermelino Matarazzo', 'Guaianases',
       'Itaim Paulista', 'Itaquera', 'Mooca', 'Penha', 'Sapopemba', 'São Mateus',
-      'São Miguel Paulista', 'Vila Prudente',
+      'São Miguel', 'Vila Prudente',
     ],
   },
   {

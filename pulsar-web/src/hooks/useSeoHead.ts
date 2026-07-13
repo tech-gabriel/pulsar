@@ -8,7 +8,7 @@ const ORIGIN = 'https://app-pulsar.com.br';
  * template index.html; aqui só sobrescrevemos o que é por-página. O @unhead
  * deduplica por tag, então estas tags substituem as do template.
  */
-export function useSeoHead(opts: { title: string; descricao: string; path: string }): void {
+export function useSeoHead(opts: { title: string; descricao: string; path: string; jsonLd?: object }): void {
   const url = `${ORIGIN}${opts.path}`;
   useHead({
     title: opts.title,
@@ -21,5 +21,8 @@ export function useSeoHead(opts: { title: string; descricao: string; path: strin
       { name: 'twitter:title', content: opts.title },
       { name: 'twitter:description', content: opts.descricao },
     ],
+    ...(opts.jsonLd
+      ? { script: [{ type: 'application/ld+json', innerHTML: JSON.stringify(opts.jsonLd) }] }
+      : {}),
   });
 }

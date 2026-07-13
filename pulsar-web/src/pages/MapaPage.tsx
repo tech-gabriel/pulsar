@@ -22,7 +22,7 @@ import ConvitePush from '../components/notificacoes/ConvitePush';
 import { useGeolocalizacao, GeoError } from '../hooks/useGeolocalizacao';
 import { resolverSelecao } from '../utils/selecaoPorPonto';
 import { useToast } from '../contexts/ToastContext';
-import { zonas } from '../data/regioes-seo';
+import { getZonaPorSlug } from '../data/regioes-seo';
 import type { SubprefeituraMapaDto, EnderecoBusca } from '../types';
 
 export default function MapaPage() {
@@ -42,7 +42,7 @@ export default function MapaPage() {
   // Slug inválido não repassa nada adiante — degradação limpa, sem foco.
   const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(() => {
     const slug = searchParams.get('regiao');
-    const zona = slug ? zonas.find((z) => z.slug === slug) : undefined;
+    const zona = slug ? getZonaPorSlug(slug) : undefined;
     return zona ? zona.nomeRegiao : null;
   });
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);

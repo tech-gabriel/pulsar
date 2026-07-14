@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, XCircle, Check, User, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useDestinoPosAuth } from '../hooks/useDestinoPosAuth';
 import AuthLayout from '../components/auth/AuthLayout';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons';
 
@@ -15,6 +16,7 @@ function validarSenha(senha: string): string | null {
 export default function CadastroPage() {
   const navigate = useNavigate();
   const { cadastrar } = useAuth();
+  const destino = useDestinoPosAuth();
 
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -43,7 +45,7 @@ export default function CadastroPage() {
     setEnviando(true);
     try {
       await cadastrar({ nome, email, senha });
-      navigate('/app');
+      navigate(destino);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
       if (status?.status === 409) {

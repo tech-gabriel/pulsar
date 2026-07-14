@@ -11,6 +11,8 @@ import SobrePage from './pages/SobrePage';
 import PrivacidadePage from './pages/PrivacidadePage';
 import TermosPage from './pages/TermosPage';
 import NovidadesPage from './pages/NovidadesPage';
+import RegiaoSeoPage from './pages/RegiaoSeoPage';
+import { PREFIXO_REGIAO } from './data/regioes-seo';
 
 function RotaProtegida() {
   const { estaAutenticado } = useAuth();
@@ -47,12 +49,18 @@ export const rotasPublicas: RouteObject[] = [
   { path: 'novidades', element: <NovidadesPage /> },
 ];
 
+// Páginas públicas de SEO por região (prerenderizadas) — eager, sem guard.
+export const rotasRegiao: RouteObject[] = [
+  { path: `${PREFIXO_REGIAO.slice(1)}/:zona`, element: <RegiaoSeoPage /> },
+];
+
 export const routes: RouteObject[] = [
   {
     element: <RootLayout />,
     children: [
       // Públicas de conteúdo (prerenderizadas) — eager.
       ...rotasPublicas,
+      ...rotasRegiao,
 
       // Auth (CSR, lazy).
       {
@@ -93,11 +101,12 @@ export const routes: RouteObject[] = [
   },
 ];
 
-// Árvore podada para o SSG: RootLayout + só as públicas (sem auth/app/lazy).
-// O plugin auto-descobre os paths desta árvore, gerando exatamente 5 arquivos.
+// Árvore podada para o SSG: RootLayout + públicas + regiões (sem auth/app/lazy).
+// O plugin auto-descobre os paths desta árvore, gerando exatamente 10 arquivos:
+// 5 institucionais (/, /sobre, /privacidade, /termos, /novidades) + 5 zonas de risco.
 export const routesSSG: RouteObject[] = [
   {
     element: <RootLayout />,
-    children: rotasPublicas,
+    children: [...rotasPublicas, ...rotasRegiao],
   },
 ];

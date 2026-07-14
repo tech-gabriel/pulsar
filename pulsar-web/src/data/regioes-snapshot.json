@@ -1,0 +1,31 @@
+{
+  "geradoEm": "2026-07-14",
+  "janelaDias": 90,
+  "zonas": {
+    "zona-centro": {
+      "diasRiscoAlto": 0,
+      "chuvaAcumuladaMm": 0,
+      "faixaPredominante": "BAIXO"
+    },
+    "zona-leste": {
+      "diasRiscoAlto": 0,
+      "chuvaAcumuladaMm": 0,
+      "faixaPredominante": "BAIXO"
+    },
+    "zona-norte": {
+      "diasRiscoAlto": 0,
+      "chuvaAcumuladaMm": 0,
+      "faixaPredominante": "BAIXO"
+    },
+    "zona-oeste": {
+      "diasRiscoAlto": 0,
+      "chuvaAcumuladaMm": 0,
+      "faixaPredominante": "BAIXO"
+    },
+    "zona-sul": {
+      "diasRiscoAlto": 0,
+      "chuvaAcumuladaMm": 0,
+      "faixaPredominante": "BAIXO"
+    }
+  }
+}

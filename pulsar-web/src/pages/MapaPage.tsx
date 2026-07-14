@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { GeoJsonObject, FeatureCollection } from 'geojson';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers, LogOut } from 'lucide-react';
 import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
@@ -21,6 +22,7 @@ import ConvitePush from '../components/notificacoes/ConvitePush';
 import { useGeolocalizacao, GeoError } from '../hooks/useGeolocalizacao';
 import { resolverSelecao } from '../utils/selecaoPorPonto';
 import { useToast } from '../contexts/ToastContext';
+import { getZonaPorSlug } from '../data/regioes-seo';
 import type { SubprefeituraMapaDto, EnderecoBusca } from '../types';
 
 export default function MapaPage() {
@@ -32,9 +34,17 @@ export default function MapaPage() {
   const { aberto: onboardingAberto, concluir: concluirOnboarding } = useOnboarding();
   const { detectar, carregando: localizando } = useGeolocalizacao();
   const { showToast } = useToast();
+  const [searchParams] = useSearchParams();
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
-  const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(null);
+  // Deep-link de conversão: ?regiao=<slug> (vindo das páginas públicas de SEO,
+  // via useDestinoPosAuth) foca a zona correspondente já no estado inicial.
+  // Slug inválido não repassa nada adiante — degradação limpa, sem foco.
+  const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(() => {
+    const slug = searchParams.get('regiao');
+    const zona = slug ? getZonaPorSlug(slug) : undefined;
+    return zona ? zona.nomeRegiao : null;
+  });
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
   const [sidebarColapsada, setSidebarColapsada] = useState(false);

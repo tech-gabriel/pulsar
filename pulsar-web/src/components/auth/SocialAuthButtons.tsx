@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useDestinoPosAuth } from '../../hooks/useDestinoPosAuth';
 import { carregarGsi, type CredentialResponse } from '../../utils/gsi';
 
 /**
@@ -25,6 +26,7 @@ export default function SocialAuthButtons({ acao }: Props) {
   const { loginGoogle } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const destino = useDestinoPosAuth();
   const botaoRef = useRef<HTMLDivElement>(null);
   const onCredential = useRef<(r: CredentialResponse) => void>(() => {});
 
@@ -33,12 +35,12 @@ export default function SocialAuthButtons({ acao }: Props) {
     onCredential.current = async (resp: CredentialResponse) => {
       try {
         await loginGoogle(resp.credential);
-        navigate('/app');
+        navigate(destino);
       } catch {
         showToast('Não foi possível entrar com o Google. Tente novamente.', 'error');
       }
     };
-  }, [loginGoogle, navigate, showToast]);
+  }, [loginGoogle, navigate, destino, showToast]);
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;

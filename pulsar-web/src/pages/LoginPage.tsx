@@ -2,12 +2,14 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, XCircle, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useDestinoPosAuth } from '../hooks/useDestinoPosAuth';
 import AuthLayout from '../components/auth/AuthLayout';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const destino = useDestinoPosAuth();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -21,7 +23,7 @@ export default function LoginPage() {
     setEnviando(true);
     try {
       await login({ email, senha });
-      navigate('/app');
+      navigate(destino);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setErro(msg ?? 'E-mail ou senha incorretos.');

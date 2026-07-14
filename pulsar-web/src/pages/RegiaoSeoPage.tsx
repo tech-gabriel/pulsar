@@ -7,6 +7,16 @@ const FAIXA_LABEL: Record<string, string> = {
   BAIXO: 'baixo', MODERADO: 'moderado', ALTO: 'alto',
 };
 
+// O bloco de estatísticas fica OCULTO até haver histórico suficiente. Por design,
+// o banco só retém dados brutos recentes (poucos dias, para economizar espaço no
+// Supabase), então "dias de risco alto / chuva nos últimos 90 dias" não tem lastro
+// e sairia zerado e enganoso (ainda mais no inverno seco de SP). Reativar quando a
+// frente de ROLLUP (agregado diário persistido, que não pesa no banco) alimentar o
+// snapshot com histórico real — idealmente perto da estação chuvosa, quando os
+// números ficam diferenciados por zona. Todo o pipeline (snapshot/merge/JSX) já
+// está pronto; basta virar esta flag (ou torná-la data-driven pelo snapshot).
+const ESTATISTICAS_PRONTAS = false;
+
 /**
  * Página pública de SEO por zona (/risco-de-alagamento/:zona). Conteúdo templated
  * + agregados reais do snapshot, tudo em HTML estático (prerenderizado). O risco
@@ -80,7 +90,7 @@ export default function RegiaoSeoPage() {
           O Pulsar calcula o risco de chuva forte e alagamento em cada uma, com alerta antecipado.
         </p>
 
-        {snapshot && (
+        {ESTATISTICAS_PRONTAS && snapshot && (
           <section className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4" aria-label="Panorama recente">
             <div className="landing-stat">
               <div className="landing-stat-num">{snapshot.diasRiscoAlto}</div>

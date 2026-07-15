@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import LandingFooter from '../../components/landing/LandingFooter';
 import { APP_VERSION } from '../../data/changelog';
@@ -28,5 +28,15 @@ describe('LandingFooter', () => {
     const ig = screen.getByRole('link', { name: /instagram/i });
     expect(ig).toHaveAttribute('href', 'https://instagram.com/appulsar');
     expect(ig).toHaveAttribute('rel', expect.stringContaining('noopener'));
+  });
+
+  it('lista as 5 zonas com link para a página SEO da região', () => {
+    renderFooter();
+    const nav = screen.getByRole('navigation', { name: /risco de alagamento por região/i });
+    const zonas = ['Zona Centro', 'Zona Leste', 'Zona Norte', 'Zona Oeste', 'Zona Sul'];
+    for (const nome of zonas) {
+      const link = within(nav).getByRole('link', { name: nome });
+      expect(link).toHaveAttribute('href', expect.stringContaining('/risco-de-alagamento/'));
+    }
   });
 });

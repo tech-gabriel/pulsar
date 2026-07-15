@@ -1,7 +1,10 @@
 import Reveal from './Reveal';
 import { useTheme } from '../../hooks/useTheme';
-import dashboardShot from '../../assets/landing/dashboard.jpg';
-import dashboardShotClaro from '../../assets/landing/dashboard-claro.jpg';
+
+// Servidos de `public/` (URL estável) — ver nota em LandingHero: assets
+// importados de `src/` quebram no HTML prerenderizado pelo SSG.
+const DASHBOARD_ESCURO = '/landing/dashboard.jpg';
+const DASHBOARD_CLARO = '/landing/dashboard-claro.jpg';
 
 const PASSOS = [
   {
@@ -23,7 +26,7 @@ const PASSOS = [
 
 export default function LandingComoFunciona() {
   const { theme } = useTheme();
-  const dashboard = theme === 'light' ? dashboardShotClaro : dashboardShot;
+  const dashboard = theme === 'light' ? DASHBOARD_CLARO : DASHBOARD_ESCURO;
 
   return (
     <section className="landing-section">

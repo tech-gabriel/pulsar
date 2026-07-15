@@ -4,12 +4,16 @@ import { motion } from 'motion/react';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import { useTheme } from '../../hooks/useTheme';
 import logoLockup from '../../assets/logos/pulsar-lockup-escuro.svg';
-import mapaShot from '../../assets/landing/mapa.jpg';
-import mapaShotClaro from '../../assets/landing/mapa-claro.jpg';
+
+// Prints do produto servidos de `public/` (URL estável, sem hash). Assets
+// importados de `src/` são resolvidos com caminho de source cru no HTML
+// prerenderizado pelo SSG (viram 404 em produção), então ficam em `public/`.
+const MAPA_ESCURO = '/landing/mapa.jpg';
+const MAPA_CLARO = '/landing/mapa-claro.jpg';
 
 export default function LandingHero() {
   const { theme } = useTheme();
-  const mapa = theme === 'light' ? mapaShotClaro : mapaShot;
+  const mapa = theme === 'light' ? MAPA_CLARO : MAPA_ESCURO;
 
   return (
     <header className="landing-section !pt-16 sm:!pt-24 !pb-10 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">

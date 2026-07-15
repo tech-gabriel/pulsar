@@ -4,6 +4,7 @@ import iconePulsar from '../../assets/logos/pulsar-icone.svg';
 import SeloVersao from '../SeloVersao';
 import { track } from '../../analytics';
 import { INSTAGRAM_URL } from '../../data/social';
+import { zonas, PREFIXO_REGIAO } from '../../data/regioes-seo';
 
 export default function LandingFooter() {
   return (
@@ -53,6 +54,31 @@ export default function LandingFooter() {
           </a>
         </nav>
       </div>
+
+      <nav
+        aria-label="Risco de alagamento por região"
+        className="max-w-[1120px] mx-auto px-6 pb-8"
+        style={{ borderTop: '1px solid var(--border-glass)', paddingTop: 24 }}
+      >
+        <p
+          className="mb-3 text-center sm:text-left"
+          style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', fontFamily: 'var(--font-heading)' }}
+        >
+          Risco de alagamento por região de São Paulo
+        </p>
+        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-5 gap-y-2.5" style={{ fontSize: 14 }}>
+          {zonas.map((z) => (
+            <Link
+              key={z.slug}
+              to={`${PREFIXO_REGIAO}/${z.slug}`}
+              className="transition-colors hover:text-[var(--text-primary)]"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              {z.nome}
+            </Link>
+          ))}
+        </div>
+      </nav>
 
       <div className="flex items-center justify-center gap-2 pb-8" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
         <span>© 2026 Pulsar</span>

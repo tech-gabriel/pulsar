@@ -145,6 +145,13 @@ builder.Services.AddHttpClient("maptiler", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
 });
 
+builder.Services.AddHttpClient("geosampa", client =>
+{
+    client.BaseAddress = new Uri("https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/");
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
+});
+
 // --- Cache ---
 builder.Services.AddMemoryCache();
 
@@ -181,6 +188,7 @@ builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>(
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
 builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
+builder.Services.AddScoped<IGeoSampaClient, GeoSampaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IGeocodingClient, MapTilerGeocodingClient>();
 builder.Services.AddScoped<IBuscaService, BuscaService>();

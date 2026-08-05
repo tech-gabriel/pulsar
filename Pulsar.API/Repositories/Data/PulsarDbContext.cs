@@ -19,6 +19,7 @@ public class PulsarDbContext : DbContext
     public DbSet<AlertaSugestao> AlertaSugestoes => Set<AlertaSugestao>();
     public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
     public DbSet<AssinaturaPush> AssinaturasPush => Set<AssinaturaPush>();
+    public DbSet<OcorrenciaAlagamento> OcorrenciasAlagamento => Set<OcorrenciaAlagamento>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -154,6 +155,16 @@ public class PulsarDbContext : DbContext
              .WithMany()
              .HasForeignKey(a => a.UsuarioId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OcorrenciaAlagamento>(e =>
+        {
+            e.HasKey(o => o.Id);
+            e.Property(o => o.CdIdentificador).IsRequired().HasMaxLength(50);
+            e.Property(o => o.FonteOriginal).HasMaxLength(50);
+            e.Property(o => o.NmSubprefeitura).HasMaxLength(120);
+            e.HasIndex(o => new { o.CdIdentificador, o.Tipo }).IsUnique();
+            e.HasIndex(o => o.DataOcorrencia);
         });
 
         SeedData(modelBuilder);

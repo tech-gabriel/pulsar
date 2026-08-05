@@ -7,14 +7,6 @@ import { corLabelFaixa, estiloPoligono, labelFaixa, scoreFormatado } from './ris
 
 export type Camada = 'score' | 'temperatura' | 'chuva' | 'vento' | 'uv';
 
-export const CAMADAS: { id: Camada; label: string }[] = [
-  { id: 'score', label: 'Score' },
-  { id: 'temperatura', label: 'Temp' },
-  { id: 'chuva', label: 'Chuva' },
-  { id: 'vento', label: 'Vento' },
-  { id: 'uv', label: 'UV' },
-];
-
 /** Estilo resolvido para uma subprefeitura conforme a camada ativa. */
 export interface EstiloCamada {
   texto: string; // texto exibido no círculo do label

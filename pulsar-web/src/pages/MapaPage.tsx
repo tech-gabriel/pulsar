@@ -219,8 +219,9 @@ export default function MapaPage() {
           isMobile={isMobile}
         />
 
-        {/* Legenda dinâmica (ETAPA 6.1/6.2): muda conforme a camada ativa */}
-        <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} />
+        {/* Legenda dinâmica (ETAPA 6.1/6.2): muda conforme a camada ativa.
+            Oculta no modo foco de alagamentos (a legenda é da escala de score). */}
+        {!overlayAlagamento && <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} />}
 
         {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
         <OverlayAlagamentoToggle

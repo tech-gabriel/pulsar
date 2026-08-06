@@ -12,17 +12,30 @@ const LABEL: Record<OcorrenciaAlagamentoDto['tipo'], string> = {
   INUNDACAO: 'Inundação',
 };
 
-/** Ícone de ponto (divIcon SVG) — evita o ícone default do Leaflet que quebra no Vite. */
+// Glifo branco dentro do marcador, distinto por tipo:
+//  - ALAGAMENTO: gota (alagamento pontual de rua)
+//  - INUNDACAO: ondas (transbordamento / corpo d'água)
+const GLIFO: Record<OcorrenciaAlagamentoDto['tipo'], string> = {
+  ALAGAMENTO:
+    '<path d="M10 5.2c-2.3 2.6-3.4 4.3-3.4 5.6a3.4 3.4 0 0 0 6.8 0c0-1.3-1.1-3-3.4-5.6z" fill="#ffffff"/>',
+  INUNDACAO:
+    '<g fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round">' +
+    '<path d="M5.5 9 q1.5 -1.7 3 0 t3 0 t2 0"/>' +
+    '<path d="M5.5 12.2 q1.5 -1.7 3 0 t3 0 t2 0"/></g>',
+};
+
+/** Ícone de ponto (divIcon SVG) — glifo distinto por tipo; evita o ícone default do Leaflet (quebra no Vite). */
 export function iconeOcorrencia(tipo: OcorrenciaAlagamentoDto['tipo']): L.DivIcon {
   const cor = COR[tipo];
   return L.divIcon({
     className: '',
     html:
-      `<svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" ` +
+      `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" ` +
       `style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4))">` +
-      `<circle cx="7" cy="7" r="5" fill="${cor}" stroke="#ffffff" stroke-width="1.5"/></svg>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
+      `<circle cx="10" cy="10" r="8" fill="${cor}" stroke="#ffffff" stroke-width="1.5"/>` +
+      `${GLIFO[tipo]}</svg>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
   });
 }
 

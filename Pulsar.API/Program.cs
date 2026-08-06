@@ -145,6 +145,13 @@ builder.Services.AddHttpClient("maptiler", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
 });
 
+builder.Services.AddHttpClient("geosampa", client =>
+{
+    client.BaseAddress = new Uri("https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/");
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
+});
+
 // --- Cache ---
 builder.Services.AddMemoryCache();
 
@@ -177,10 +184,12 @@ builder.Services.AddScoped<ISugestaoRepository, SugestaoRepository>();
 builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();
 builder.Services.AddScoped<ITokenRecuperacaoSenhaRepository, TokenRecuperacaoSenhaRepository>();
 builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>();
+builder.Services.AddScoped<IOcorrenciaAlagamentoRepository, OcorrenciaAlagamentoRepository>();
 
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
 builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
+builder.Services.AddScoped<IGeoSampaClient, GeoSampaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IGeocodingClient, MapTilerGeocodingClient>();
 builder.Services.AddScoped<IBuscaService, BuscaService>();
@@ -193,6 +202,8 @@ builder.Services.AddScoped<IClimateService, ClimateService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<ISugestaoService, SugestaoService>();
 builder.Services.AddScoped<IAlertaService, AlertaService>();
+builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionService>();
+builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 
 // --- Web Push (notificações) ---
 // Gated por config: sem chaves VAPID (Push:PublicKey/PrivateKey) o serviço fica

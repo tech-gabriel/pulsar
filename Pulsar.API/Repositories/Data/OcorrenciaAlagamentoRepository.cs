@@ -12,7 +12,15 @@ public class OcorrenciaAlagamentoRepository : IOcorrenciaAlagamentoRepository
 
     public async Task UpsertRangeAsync(IEnumerable<OcorrenciaAlagamento> ocorrencias)
     {
-        foreach (var nova in ocorrencias)
+        // Deduplica o lote de entrada por (CdIdentificador, Tipo), mantendo a última ocorrência.
+        // Sem isso, duas linhas com a mesma chave no mesmo lote seriam ambas tratadas como
+        // "não encontradas" no banco e ambas seriam adicionadas, estourando o índice único
+        // no SaveChangesAsync e derrubando o lote inteiro.
+        var unicas = ocorrencias
+            .GroupBy(o => (o.CdIdentificador, o.Tipo))
+            .Select(g => g.Last());
+
+        foreach (var nova in unicas)
         {
             var existente = await _context.OcorrenciasAlagamento
                 .FirstOrDefaultAsync(o => o.CdIdentificador == nova.CdIdentificador && o.Tipo == nova.Tipo);

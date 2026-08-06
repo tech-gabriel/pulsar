@@ -51,10 +51,43 @@ public class OcorrenciaAlagamentoRepositoryTests
         var data = DateTime.UtcNow.AddMonths(-1);
 
         await repo.UpsertRangeAsync([Nova("1", data)]);
-        var atualizada = Nova("1", data);
+
+        var novaData = data.AddDays(1);
+        var atualizada = Nova("1", novaData);
+        atualizada.Latitude = -23.7;
+        atualizada.Longitude = -46.7;
         atualizada.NmSubprefeitura = "SÉ";
+        atualizada.FonteOriginal = "OUTRA-FONTE";
+        atualizada.DataCarga = novaData.AddHours(1);
         await repo.UpsertRangeAsync([atualizada]);
 
+        var lida = await ctx.OcorrenciasAlagamento.SingleAsync();
+        lida.DataOcorrencia.Should().Be(novaData);
+        lida.Latitude.Should().Be(-23.7);
+        lida.Longitude.Should().Be(-46.7);
+        lida.NmSubprefeitura.Should().Be("SÉ");
+        lida.FonteOriginal.Should().Be("OUTRA-FONTE");
+        lida.DataCarga.Should().Be(novaData.AddHours(1));
+    }
+
+    [Fact]
+    public async Task UpsertRange_LoteComChaveDuplicada_NaoEstoura()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var repo = new OcorrenciaAlagamentoRepository(ctx);
+        var data = DateTime.UtcNow.AddMonths(-1);
+
+        var primeira = Nova("dup", data);
+        primeira.NmSubprefeitura = "VP";
+        var segunda = Nova("dup", data);
+        segunda.NmSubprefeitura = "SÉ";
+
+        var act = () => repo.UpsertRangeAsync([primeira, segunda]);
+
+        await act.Should().NotThrowAsync();
+        (await ctx.OcorrenciasAlagamento.CountAsync()).Should().Be(1);
         var lida = await ctx.OcorrenciasAlagamento.SingleAsync();
         lida.NmSubprefeitura.Should().Be("SÉ");
     }

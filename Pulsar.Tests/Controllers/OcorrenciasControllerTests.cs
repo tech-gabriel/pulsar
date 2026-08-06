@@ -31,19 +31,6 @@ public class OcorrenciasControllerTests : IClassFixture<PulsarWebApplicationFact
         return body!.Token;
     }
 
-    private async Task<string> TokenAdminAsync()
-    {
-        var email = PulsarWebApplicationFactory.EmailAdminBootstrap;
-        // Cadastra (1ª vez promove a ADMIN) ou faz login (auto-heal).
-        var cad = await _client.PostAsJsonAsync("/api/auth/cadastro",
-            new { Nome = "Admin", Email = email, Senha = "Senha@123" });
-        if (cad.IsSuccessStatusCode)
-            return (await cad.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!.Token;
-        var login = await _client.PostAsJsonAsync("/api/auth/login", new { Email = email, Senha = "Senha@123" });
-        login.EnsureSuccessStatusCode();
-        return (await login.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!.Token;
-    }
-
     private async Task<HttpResponseMessage> GetComTokenAsync(string url, string token)
     {
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
@@ -80,6 +67,20 @@ public class OcorrenciasControllerTests : IClassFixture<PulsarWebApplicationFact
         var dto = await resp.Content.ReadFromJsonAsync<OcorrenciasProximasDto>(JsonOpts);
         dto.Should().NotBeNull();
         dto!.Total.Should().Be(0);
+    }
+
+    [Theory]
+    [InlineData(100, -46.63, 500)]   // lat fora de [-90,90]
+    [InlineData(-23.55, 200, 500)]   // lon fora de [-180,180]
+    [InlineData(-23.55, -46.63, 0)]  // raioMetros <= 0
+    [InlineData(-23.55, -46.63, 25000)] // raioMetros > 20000
+    public async Task GetProximas_ParametrosInvalidos_Retorna400(double lat, double lon, int raioMetros)
+    {
+        var token = await TokenUsuarioComumAsync();
+        var resp = await GetComTokenAsync(
+            $"/api/ocorrencias/alagamento/proximas?lat={lat}&lon={lon}&raioMetros={raioMetros}", token);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]

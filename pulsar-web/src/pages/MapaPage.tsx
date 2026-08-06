@@ -23,7 +23,11 @@ import { useGeolocalizacao, GeoError } from '../hooks/useGeolocalizacao';
 import { resolverSelecao } from '../utils/selecaoPorPonto';
 import { useToast } from '../contexts/ToastContext';
 import { getZonaPorSlug } from '../data/regioes-seo';
-import type { SubprefeituraMapaDto, EnderecoBusca } from '../types';
+import OverlayAlagamentoToggle from '../components/mapa/OverlayAlagamentoToggle';
+import CardAlagamentoProximo from '../components/mapa/CardAlagamentoProximo';
+import { useOcorrenciasAlagamento } from '../hooks/useOcorrenciasAlagamento';
+import { buscarOcorrenciasProximas } from '../api/ocorrencias';
+import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from '../types';
 
 export default function MapaPage() {
   const { usuario, logout } = useAuth();
@@ -51,6 +55,9 @@ export default function MapaPage() {
   const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');
   const [pontoBusca, setPontoBusca] = useState<PontoBusca | null>(null);
   const [avisoBusca, setAvisoBusca] = useState<string | null>(null);
+  const [overlayAlagamento, setOverlayAlagamento] = useState(false);
+  const [proximas, setProximas] = useState<OcorrenciasProximasDto | null>(null);
+  const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
 
   const regiaoSelecionada = regioes.find(
     (r) => r.nome.toLowerCase() === regiaoSelecionadaNome?.toLowerCase()
@@ -77,6 +84,7 @@ export default function MapaPage() {
     setSubSelecionada(null);
     setPontoBusca(null);
     setAvisoBusca(null);
+    setProximas(null);
   }
 
   // Núcleo compartilhado por busca e geolocalização: resolve o ponto para uma
@@ -108,6 +116,13 @@ export default function MapaPage() {
     try {
       const { lat, lon } = await detectar();
       selecionarPorPonto(lat, lon, 'localizacao');
+      if (overlayAlagamento) {
+        try {
+          setProximas(await buscarOcorrenciasProximas(lat, lon));
+        } catch {
+          // silencioso: o card de proximidade é complementar; a região já foi resolvida
+        }
+      }
     } catch (err) {
       const tipo = err instanceof GeoError ? err.tipo : 'indisponivel';
       showToast(
@@ -178,6 +193,8 @@ export default function MapaPage() {
           regiaoSelecionadaNome={regiaoSelecionadaNome}
           subSelecionadaAtiva={!!subSelecionada}
           pontoBusca={pontoBusca}
+          overlayAlagamento={overlayAlagamento}
+          ocorrencias={ocorrencias}
         />
 
         {/* Busca de rua/endereço sobreposta ao mapa */}
@@ -204,6 +221,18 @@ export default function MapaPage() {
 
         {/* Legenda dinâmica (ETAPA 6.1/6.2): muda conforme a camada ativa */}
         <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} />
+
+        {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
+        <OverlayAlagamentoToggle
+          ativo={overlayAlagamento}
+          onToggle={() => setOverlayAlagamento((v) => !v)}
+          isMobile={isMobile}
+        />
+
+        {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
+        {proximas && (
+          <CardAlagamentoProximo dados={proximas} onFechar={() => setProximas(null)} />
+        )}
       </div>
 
       {/* Banner de erro sobre o mapa */}

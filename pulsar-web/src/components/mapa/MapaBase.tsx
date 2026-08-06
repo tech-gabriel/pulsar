@@ -10,6 +10,8 @@ import { normalizarNome } from '../../utils/texto';
 import { useTheme } from '../../hooks/useTheme';
 import RegioesLayer from './RegioesLayer';
 import ScoreLabel from './ScoreLabel';
+import OcorrenciasLayer from './OcorrenciasLayer';
+import type { OcorrenciaAlagamentoDto } from '../../types';
 
 // Centro geográfico de São Paulo
 const SP_CENTER: [number, number] = [-23.5505, -46.6333];
@@ -77,6 +79,8 @@ interface Props {
   regiaoSelecionadaNome: string | null;
   subSelecionadaAtiva: boolean;
   pontoBusca: PontoBusca | null;
+  overlayAlagamento: boolean;
+  ocorrencias: OcorrenciaAlagamentoDto[];
 }
 
 /**
@@ -133,6 +137,8 @@ export default function MapaBase({
   regiaoSelecionadaNome,
   subSelecionadaAtiva,
   pontoBusca,
+  overlayAlagamento,
+  ocorrencias,
 }: Props) {
   const { theme } = useTheme();
   const tile = tileConfig(theme);
@@ -159,6 +165,9 @@ export default function MapaBase({
       />
       {pontoBusca && (
         <Marker position={[pontoBusca.lat, pontoBusca.lon]} icon={pinBusca} />
+      )}
+      {overlayAlagamento && ocorrencias.length > 0 && (
+        <OcorrenciasLayer ocorrencias={ocorrencias} />
       )}
       {geojson && (
         <>

@@ -203,6 +203,7 @@ builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<ISugestaoService, SugestaoService>();
 builder.Services.AddScoped<IAlertaService, AlertaService>();
 builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionService>();
+builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 
 // --- Web Push (notificações) ---
 // Gated por config: sem chaves VAPID (Push:PublicKey/PrivateKey) o serviço fica

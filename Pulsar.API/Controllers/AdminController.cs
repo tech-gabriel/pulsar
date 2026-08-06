@@ -14,11 +14,16 @@ public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
     private readonly ISistemaService _sistemaService;
+    private readonly IOcorrenciaIngestionService _ingestionService;
 
-    public AdminController(IAdminService adminService, ISistemaService sistemaService)
+    public AdminController(
+        IAdminService adminService,
+        ISistemaService sistemaService,
+        IOcorrenciaIngestionService ingestionService)
     {
         _adminService = adminService;
         _sistemaService = sistemaService;
+        _ingestionService = ingestionService;
     }
 
     /// <summary>Lista todos os usuários do sistema. Acessível a ADMIN e SUPORTE (leitura).</summary>
@@ -203,6 +208,14 @@ public class AdminController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ForcarColeta(CancellationToken ct)
         => Ok(await _sistemaService.ForcarColetaAsync(ct));
+
+    /// <summary>Sincroniza as ocorrências de alagamento do GeoSampa. Apenas ADMIN.</summary>
+    [HttpPost("ocorrencias/sincronizar")]
+    [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(typeof(OcorrenciaSincronizacaoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> SincronizarOcorrencias(CancellationToken ct)
+        => Ok(await _ingestionService.SincronizarAsync(ct));
 
     private Guid UsuarioAtualId()
     {

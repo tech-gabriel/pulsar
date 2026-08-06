@@ -44,6 +44,7 @@ Thumbs.db
 
 ## Claude Code (configs internas, não versionar)
 .claude/
+CLAUDE.md
 
 ## Vite cache + build output
 pulsar-web/.vite/

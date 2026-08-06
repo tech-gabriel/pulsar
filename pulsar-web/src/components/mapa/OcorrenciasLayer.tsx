@@ -10,7 +10,7 @@ interface Props {
 /** Overlay clusterizado das ocorrências de alagamento. Renderizado dentro do MapContainer. */
 export default function OcorrenciasLayer({ ocorrencias }: Props) {
   return (
-    <MarkerClusterGroup chunkedLoading maxClusterRadius={50}>
+    <MarkerClusterGroup chunkedLoading maxClusterRadius={80}>
       {ocorrencias.map((o) => {
         const info = formatarOcorrencia(o);
         return (

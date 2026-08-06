@@ -184,6 +184,7 @@ export default function MapaBase({
             subSelecionada={subSelecionada}
             camadaAtiva={camadaAtiva}
             regiaoSelecionadaNome={regiaoSelecionadaNome}
+            atenuado={overlayAlagamento}
           />
         </>
       )}

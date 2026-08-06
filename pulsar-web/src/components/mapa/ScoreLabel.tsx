@@ -10,6 +10,8 @@ interface Props {
   subSelecionada: SubprefeituraMapaDto | null;
   camadaAtiva: Camada;
   regiaoSelecionadaNome: string | null;
+  /** Modo foco: oculta os números de score (ex.: quando o overlay de alagamentos está ligado). */
+  atenuado?: boolean;
 }
 
 interface TamanhoLabel {
@@ -37,10 +39,12 @@ function normalizar(nome: string): string {
   return nome.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
 }
 
-export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, regiaoSelecionadaNome }: Props) {
+export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, regiaoSelecionadaNome, atenuado = false }: Props) {
   const map = useMap();
   const [zoom, setZoom] = useState<number>(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
+
+  if (atenuado) return null; // modo foco: sem números de score sobre o mapa
 
   const tamanho = tamanhoParaZoom(zoom);
   if (!tamanho) return null; // mapa muito afastado: esconde os labels

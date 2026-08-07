@@ -1,51 +1,20 @@
 import L from 'leaflet';
 import type { OcorrenciaAlagamentoDto } from '../../types';
+import { PALETA } from '../../utils/paleta';
 
-// Cores por tipo (distintas das camadas de score). O azul da inundação é bem
-// mais fechado que o do alagamento para os dois se separarem mesmo de longe,
-// quando o pictograma ainda não é legível.
+// Cores por tipo, vindas da paleta das leituras do mapa (utils/paleta.ts): são
+// os mesmos dois azuis da camada de chuva, então o overlay lê como parte do
+// mapa e não como um elemento de outro sistema. O tom profundo separa a
+// inundação do alagamento mesmo de longe, quando o pictograma ainda não é
+// legível.
 const COR: Record<OcorrenciaAlagamentoDto['tipo'], string> = {
-  ALAGAMENTO: '#3B82F6', // azul
-  INUNDACAO: '#1E40AF',  // azul escuro
+  ALAGAMENTO: PALETA.azul,
+  INUNDACAO: PALETA.azulProfundo,
 };
 
 const LABEL: Record<OcorrenciaAlagamentoDto['tipo'], string> = {
   ALAGAMENTO: 'Alagamento',
   INUNDACAO: 'Inundação',
-};
-
-/**
- * Pictograma branco dentro do disco, distinto por tipo:
- *  - ALAGAMENTO: gota (alagamento pontual de rua)
- *  - INUNDACAO: ondas (transbordamento / corpo d'água)
- *
- * A versão anterior desses glifos ficava ilegível porque o disco tinha 20px e o
- * traço das ondas, 1.5. O que resolve não é trocar por forma geométrica: é dar
- * tamanho e peso. O disco passou a 28px, a gota é sólida (preenchimento lê
- * melhor que contorno em tamanho pequeno) e as ondas ganharam traço 2.6, com
- * menos ondulações e mais espaço entre elas.
- *
- * Os caminhos ficam como dado, não como HTML: o Leaflet precisa de string (o
- * divIcon só aceita markup) e a legenda renderiza JSX. Mantendo o desenho aqui,
- * os dois nunca divergem e a legenda não precisa de innerHTML.
- */
-export interface GlifoOcorrencia {
-  /** `fill`: caminho sólido. `stroke`: contorno, com a espessura indicada. */
-  pintura: 'fill' | 'stroke';
-  espessura?: number;
-  caminhos: string[];
-}
-
-export const GLIFO: Record<OcorrenciaAlagamentoDto['tipo'], GlifoOcorrencia> = {
-  ALAGAMENTO: {
-    pintura: 'fill',
-    caminhos: ['M14 6.6c-3.1 3.6-4.6 5.9-4.6 7.7a4.6 4.6 0 0 0 9.2 0c0-1.8-1.5-4.1-4.6-7.7z'],
-  },
-  INUNDACAO: {
-    pintura: 'stroke',
-    espessura: 2.6,
-    caminhos: ['M7.8 12.2q2.05-2.4 4.1 0t4.1 0', 'M7.8 17.6q2.05-2.4 4.1 0t4.1 0'],
-  },
 };
 
 /** Geometria do disco, compartilhada entre o marcador e a legenda. */
@@ -58,16 +27,57 @@ export const LADO_DESENHO = 28;
 const ALVO = 36;
 const RECUO = (ALVO - LADO_DESENHO) / 2;
 
+/**
+ * Pictograma branco dentro do disco, distinto por tipo:
+ *  - ALAGAMENTO: gota (alagamento pontual de rua)
+ *  - INUNDACAO: ondas (transbordamento / corpo d'água)
+ *
+ * Os caminhos são os oficiais do lucide-react (`droplet` e `waves-horizontal`),
+ * na grade 24x24 de origem — a mesma família de ícones que o resto do app usa.
+ * Isso resolve dois problemas de uma vez: o desenho passa a ter o traço e a
+ * construção dos outros ícones da interface, e fica de fato centrado. Os
+ * caminhos escritos à mão que estavam aqui saíam tortos: as ondas 2,1px à
+ * esquerda e a gota 1,25px acima do centro do disco.
+ *
+ * Os caminhos ficam como dado, não como HTML: o Leaflet precisa de string (o
+ * divIcon só aceita markup) e a legenda renderiza JSX. Mantendo o desenho aqui,
+ * os dois nunca divergem e a legenda não precisa de innerHTML.
+ */
+export const GLIFO: Record<OcorrenciaAlagamentoDto['tipo'], string[]> = {
+  ALAGAMENTO: [
+    'M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z',
+  ],
+  INUNDACAO: [
+    'M2 5q2.5 2 5 0t5 0 5 0 5 0',
+    'M2 12q2.5 2 5 0t5 0 5 0 5 0',
+    'M2 19q2.5 2 5 0t5 0 5 0 5 0',
+  ],
+};
+
+const GRADE_LUCIDE = 24;
+/** Lado do glifo dentro do disco de 28px: sobra ~5,5px de respiro de cada lado. */
+const LADO_GLIFO = 17;
+const ESCALA = LADO_GLIFO / GRADE_LUCIDE;
+const DESLOCAMENTO = (LADO_DESENHO - LADO_GLIFO) / 2;
+
+/** Encaixa a grade 24x24 do lucide centralizada no disco de 28px. */
+export const TRANSFORM_GLIFO = `translate(${DESLOCAMENTO} ${DESLOCAMENTO}) scale(${ESCALA})`;
+
+// O lucide desenha com traço 2 na grade de 24, o que com a escala acima daria
+// 1,4px — fino demais sobre um disco de 28px visto no mapa. 2.8 na grade rende
+// ~2px na tela, que é o peso em que o pictograma ainda se lê de longe.
+export const TRACO_GLIFO = 2.8;
+
 export function corOcorrencia(tipo: OcorrenciaAlagamentoDto['tipo']): string {
   return COR[tipo];
 }
 
 function glifoParaSvg(tipo: OcorrenciaAlagamentoDto['tipo']): string {
-  const g = GLIFO[tipo];
-  const caminhos = g.caminhos.map((d) => `<path d="${d}"/>`).join('');
-  return g.pintura === 'fill'
-    ? `<g fill="#ffffff">${caminhos}</g>`
-    : `<g fill="none" stroke="#ffffff" stroke-width="${g.espessura}" stroke-linecap="round">${caminhos}</g>`;
+  const caminhos = GLIFO[tipo].map((d) => `<path d="${d}"/>`).join('');
+  return (
+    `<g transform="${TRANSFORM_GLIFO}" fill="none" stroke="#ffffff" ` +
+    `stroke-width="${TRACO_GLIFO}" stroke-linecap="round" stroke-linejoin="round">${caminhos}</g>`
+  );
 }
 
 /** Ícone de ponto (divIcon SVG) — pictograma distinto por tipo; evita o ícone default do Leaflet (quebra no Vite). */

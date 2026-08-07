@@ -1,5 +1,12 @@
 import type { OcorrenciaAlagamentoDto } from '../../types';
-import { DISCO, GLIFO, LADO_DESENHO, corOcorrencia } from './ocorrenciaMarker';
+import {
+  DISCO,
+  GLIFO,
+  LADO_DESENHO,
+  TRACO_GLIFO,
+  TRANSFORM_GLIFO,
+  corOcorrencia,
+} from './ocorrenciaMarker';
 
 interface Props {
   tipo: OcorrenciaAlagamentoDto['tipo'];
@@ -12,8 +19,6 @@ interface Props {
  * divergir do que aparece no mapa — e sai como JSX, sem innerHTML.
  */
 export default function MiniIconeOcorrencia({ tipo, lado = 16 }: Props) {
-  const glifo = GLIFO[tipo];
-
   return (
     <svg
       width={lado}
@@ -31,12 +36,14 @@ export default function MiniIconeOcorrencia({ tipo, lado = 16 }: Props) {
         strokeWidth={DISCO.traco}
       />
       <g
-        fill={glifo.pintura === 'fill' ? '#ffffff' : 'none'}
-        stroke={glifo.pintura === 'stroke' ? '#ffffff' : undefined}
-        strokeWidth={glifo.espessura}
+        transform={TRANSFORM_GLIFO}
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth={TRACO_GLIFO}
         strokeLinecap="round"
+        strokeLinejoin="round"
       >
-        {glifo.caminhos.map((d) => (
+        {GLIFO[tipo].map((d) => (
           <path key={d} d={d} />
         ))}
       </g>

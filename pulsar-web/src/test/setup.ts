@@ -1,4 +1,4 @@
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { MotionGlobalConfig } from 'motion/react';
 // Registra os matchers do jest-dom no `expect` e augmenta os tipos do Vitest
@@ -23,5 +23,13 @@ if (!('IntersectionObserver' in globalThis)) {
   globalThis.IntersectionObserver =
     IntersectionObserverStub as unknown as typeof IntersectionObserver;
 }
+
+// O lottie-web precisa de canvas para se inicializar e o jsdom não fornece um,
+// então o player real explodiria em qualquer tela com animação ilustrativa. Em
+// produção isso cairia na FronteiraDeErro do LottieAnimacao; nos testes o stub
+// evita o ruído e mantém as asserções sobre o conteúdo, não sobre a animação.
+vi.mock('lottie-react', () => ({
+  default: () => null,
+}));
 
 afterEach(cleanup);

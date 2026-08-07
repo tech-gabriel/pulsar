@@ -8,6 +8,7 @@ import EmptyState from '../components/ui/EmptyState';
 import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { coresParaFaixa, labelFaixa } from '../utils/risco';
+import { fundoParaTextoBranco } from '../utils/contraste';
 
 function normalizar(s: string): string {
   return s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
@@ -27,12 +28,25 @@ export default function HistoricoListPage() {
       .sort((a, b) => (b.scoreAtual?.valor ?? 0) - (a.scoreAtual?.valor ?? 0));
   }, [subprefeituras, busca]);
 
+  // As 32 subprefeituras numa lista única viram uma rolagem longa e sem marcos:
+  // agrupar por região dá pontos de referência e transforma a página em algo
+  // escaneável. Dentro de cada região a ordem continua por score.
+  const grupos = useMemo(() => {
+    const porRegiao = new Map<string, typeof lista>();
+    for (const sub of lista) {
+      const atual = porRegiao.get(sub.regiaoNome);
+      if (atual) atual.push(sub);
+      else porRegiao.set(sub.regiaoNome, [sub]);
+    }
+    return [...porRegiao.entries()].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
+  }, [lista]);
+
   const vazio = !carregando && !erro && subprefeituras.length === 0;
 
   return (
     <div style={{ background: 'var(--bg-primary)', minHeight: '100dvh' }}>
       <Header />
-      <main className="mx-auto w-full px-3 sm:px-4" style={{ maxWidth: 720, paddingTop: 72, paddingBottom: 72 }}>
+      <main className="mx-auto w-full px-3 sm:px-4" style={{ maxWidth: 1180, paddingTop: 72, paddingBottom: 72 }}>
         {/* Título */}
         <div className="flex items-center gap-2 mb-4">
           <History size={20} style={{ color: 'var(--text-accent)' }} />
@@ -42,7 +56,7 @@ export default function HistoricoListPage() {
         </div>
 
         {/* Busca */}
-        <div className="relative mb-4">
+        <div className="relative mb-4" style={{ maxWidth: 480 }}>
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
           <input
             value={busca}
@@ -64,56 +78,71 @@ export default function HistoricoListPage() {
         {vazio && (
           <EmptyState
             Icon={History}
+            animacao="radar"
             mensagem="Ainda não há subprefeituras para mostrar aqui. Volte mais tarde para acompanhar o histórico."
           />
         )}
 
         {!carregando && !erro && lista.length === 0 && subprefeituras.length > 0 && (
-          <EmptyState Icon={SearchX} mensagem={`Nenhum resultado para “${busca}”.`} />
+          <EmptyState Icon={SearchX} animacao="buscaVazia" mensagem={`Nenhum resultado para “${busca}”.`} />
         )}
 
-        {/* Lista */}
-        <div className="flex flex-col gap-2">
-          {lista.map((sub) => {
-            const cores = coresParaFaixa(sub.faixaRisco);
-            const score = sub.scoreAtual?.valor;
-            const temp = sub.ultimaLeitura?.temperaturaC;
-            return (
-              <button
-                key={sub.id}
-                type="button"
-                onClick={() => navigate(`/app/historico/${sub.id}`, { state: { regiaoNome: sub.regiaoNome, subNome: sub.nome } })}
-                className="glass-card glass-card-hover w-full text-left flex items-center gap-3 px-4 py-3 active:scale-[0.99] transition-transform"
-              >
-                {/* Score pill */}
-                <span
-                  className="inline-flex items-center justify-center rounded-full text-white flex-shrink-0"
-                  style={{ background: cores.fill, width: 44, height: 44, fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15, boxShadow: `0 0 10px ${cores.fill}55` }}
-                >
-                  {score != null ? Math.round(score) : '—'}
-                </span>
+        {/* Lista agrupada por região. Em telas largas vira grade: uma coluna de
+            510px num monitor de 1440 deixava dois terços da tela vazios. */}
+        {grupos.map(([regiaoNome, subs]) => (
+          <section key={regiaoNome} className="mb-6">
+            <h2
+              className="mb-2 flex items-baseline gap-2"
+              style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 13, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}
+            >
+              {regiaoNome}
+              <span style={{ fontSize: 12, fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--text-muted)' }}>
+                {subs.length} {subs.length === 1 ? 'subprefeitura' : 'subprefeituras'}
+              </span>
+            </h2>
 
-                {/* Nome + região */}
-                <div className="flex-1 min-w-0">
-                  <p className="truncate" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
-                    {sub.nome}
-                  </p>
-                  <p className="truncate flex items-center gap-2" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                    <span>{sub.regiaoNome}</span>
-                    <span style={{ color: cores.fill }}>• {labelFaixa(sub.faixaRisco)}</span>
-                    {temp != null && (
-                      <span className="inline-flex items-center gap-0.5" style={{ color: 'var(--text-muted)' }}>
-                        <Thermometer size={12} /> {Math.round(temp)}°C
-                      </span>
-                    )}
-                  </p>
-                </div>
+            <div className="grid gap-2 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+              {subs.map((sub) => {
+                const cores = coresParaFaixa(sub.faixaRisco);
+                const score = sub.scoreAtual?.valor;
+                const temp = sub.ultimaLeitura?.temperaturaC;
+                return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => navigate(`/app/historico/${sub.id}`, { state: { regiaoNome: sub.regiaoNome, subNome: sub.nome } })}
+                    className="glass-card glass-card-hover w-full text-left flex items-center gap-3 px-4 py-3 active:scale-[0.99] transition-transform"
+                  >
+                    {/* Score pill */}
+                    <span
+                      className="inline-flex items-center justify-center rounded-full flex-shrink-0"
+                      style={{ background: fundoParaTextoBranco(cores.fill), color: '#FFFFFF', width: 44, height: 44, fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15, boxShadow: `0 0 10px ${cores.fill}55` }}
+                    >
+                      {score != null ? Math.round(score) : '—'}
+                    </span>
 
-                <ChevronRight size={18} style={{ color: 'var(--text-muted)' }} className="flex-shrink-0" />
-              </button>
-            );
-          })}
-        </div>
+                    {/* Nome + faixa. A região já é o título do grupo. */}
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
+                        {sub.nome}
+                      </p>
+                      <p className="truncate flex items-center gap-2" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                        <span style={{ color: cores.fill }}>{labelFaixa(sub.faixaRisco)}</span>
+                        {temp != null && (
+                          <span className="inline-flex items-center gap-0.5" style={{ color: 'var(--text-muted)' }}>
+                            <Thermometer size={12} /> {Math.round(temp)}°C
+                          </span>
+                        )}
+                      </p>
+                    </div>
+
+                    <ChevronRight size={18} style={{ color: 'var(--text-muted)' }} className="flex-shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </main>
     </div>
   );

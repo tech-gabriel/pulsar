@@ -1,4 +1,5 @@
 import type { FaixaRisco } from '../types';
+import { PALETA, comAlfa } from './paleta';
 
 export interface RiscoCores {
   bg: string;
@@ -11,26 +12,28 @@ export interface RiscoCores {
 // Nota: bg/text/fill são usados também nos badges (tema claro) e têm testes.
 // border/fillOpacity são exclusivos dos polígonos do mapa e foram calibrados
 // para ficarem vibrantes sobre o basemap escuro (MapTiler Dataviz Dark).
+// As cores de leitura saem de utils/paleta.ts; bg/text são os pastéis dos
+// badges no tema claro e não pertencem à paleta do mapa.
 const CORES: Record<FaixaRisco, RiscoCores> = {
   BAIXO: {
     bg: '#D4EDDA',
     text: '#155724',
-    border: '#22c55e',
-    fill: '#22c55e',
+    border: PALETA.verde,
+    fill: PALETA.verde,
     fillOpacity: 0.25,
   },
   MODERADO: {
     bg: '#FFF3CD',
     text: '#856404',
-    border: '#f59e0b',
-    fill: '#f59e0b',
+    border: PALETA.ambar,
+    fill: PALETA.ambar,
     fillOpacity: 0.35,
   },
   ALTO: {
     bg: '#F8D7DA',
     text: '#721C24',
-    border: '#ef4444',
-    fill: '#ef4444',
+    border: PALETA.vermelho,
+    fill: PALETA.vermelho,
     fillOpacity: 0.45,
   },
 };
@@ -39,7 +42,7 @@ const SEM_DADO: RiscoCores = {
   bg: '#F1F5F9',
   text: '#64748b',
   border: '#64748b',
-  fill: '#94a3b8',
+  fill: PALETA.neutro,
   fillOpacity: 0.2,
 };
 
@@ -69,13 +72,13 @@ export interface EstiloPoligono {
 }
 
 const ESTILO_POLIGONO: Record<FaixaRisco, EstiloPoligono> = {
-  BAIXO:    { fillColor: '#22c55e', fillOpacity: 0.25, color: '#22c55e', opacity: 0.5, weight: 1.5 },
-  MODERADO: { fillColor: '#eab308', fillOpacity: 0.3,  color: '#eab308', opacity: 0.5, weight: 1.5 },
-  ALTO:     { fillColor: '#ef4444', fillOpacity: 0.35, color: '#ef4444', opacity: 0.6, weight: 2 },
+  BAIXO:    { fillColor: PALETA.verde,    fillOpacity: 0.25, color: PALETA.verde,    opacity: 0.5, weight: 1.5 },
+  MODERADO: { fillColor: PALETA.amarelo,  fillOpacity: 0.3,  color: PALETA.amarelo,  opacity: 0.5, weight: 1.5 },
+  ALTO:     { fillColor: PALETA.vermelho, fillOpacity: 0.35, color: PALETA.vermelho, opacity: 0.6, weight: 2 },
 };
 
 const ESTILO_POLIGONO_SEM_DADO: EstiloPoligono = {
-  fillColor: '#94a3b8', fillOpacity: 0.15, color: '#94a3b8', opacity: 0.3, weight: 1,
+  fillColor: PALETA.neutro, fillOpacity: 0.15, color: PALETA.neutro, opacity: 0.3, weight: 1,
 };
 
 export function estiloPoligono(faixa: FaixaRisco | null | undefined): EstiloPoligono {
@@ -85,11 +88,11 @@ export function estiloPoligono(faixa: FaixaRisco | null | undefined): EstiloPoli
 
 // ── Cor de fundo do label de score circular (ETAPA 2.4) ────────────────────────
 const COR_LABEL: Record<FaixaRisco, string> = {
-  BAIXO:    'rgba(34, 197, 94, 0.85)',
-  MODERADO: 'rgba(234, 179, 8, 0.85)',
-  ALTO:     'rgba(239, 68, 68, 0.85)',
+  BAIXO:    comAlfa(PALETA.verde, 0.85),
+  MODERADO: comAlfa(PALETA.amarelo, 0.85),
+  ALTO:     comAlfa(PALETA.vermelho, 0.85),
 };
-const COR_LABEL_SEM_DADO = 'rgba(148, 163, 184, 0.85)';
+const COR_LABEL_SEM_DADO = comAlfa(PALETA.neutro, 0.85);
 
 export function corLabelFaixa(faixa: FaixaRisco | null | undefined): string {
   if (!faixa) return COR_LABEL_SEM_DADO;

@@ -6,6 +6,7 @@ import FonteBadge from '../components/ui/FonteBadge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useNoticias } from '../hooks/useNoticias';
 import { tempoRelativo, dataCompleta } from '../utils/data';
+import { resumoLimpo } from '../utils/noticias';
 
 /** Feed de notícias climáticas de São Paulo (atualmente CGE-SP; extensível a outras fontes). */
 export default function NoticiasPage() {
@@ -77,7 +78,9 @@ export default function NoticiasPage() {
 
         {/* Lista de notícias */}
         <div className="flex flex-col gap-3">
-          {noticias.map((noticia, i) => (
+          {noticias.map((noticia, i) => {
+            const resumo = resumoLimpo(noticia.titulo, noticia.resumo);
+            return (
             <a
               key={`${noticia.link}-${i}`}
               href={noticia.link}
@@ -96,9 +99,9 @@ export default function NoticiasPage() {
                   <ExternalLink size={16} className="flex-shrink-0 mt-1" style={{ color: 'var(--text-muted)' }} />
                 </div>
 
-                {noticia.resumo && (
+                {resumo && (
                   <p className="mt-2" style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    {noticia.resumo}
+                    {resumo}
                   </p>
                 )}
 
@@ -112,7 +115,8 @@ export default function NoticiasPage() {
                 </div>
               </GlassCard>
             </a>
-          ))}
+            );
+          })}
         </div>
       </main>
     </div>

@@ -25,6 +25,31 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.4.0',
+    data: '2026-08-07',
+    resumo: 'Agora dá para ver onde São Paulo já alagou, rua por rua.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Camada de alagamentos no mapa',
+        descricao:
+          'Ative a camada de alagamentos e veja os pontos onde houve alagamento ou inundação nos últimos 12 meses. Os registros vêm da prefeitura e se agrupam conforme você afasta o mapa, para não poluir a visão da cidade.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Alagamentos perto de você',
+        descricao:
+          'Use a sua localização e o app mostra quantos alagamentos já foram registrados por perto e a que distância fica o mais próximo. Quando está chovendo sobre uma área com histórico, um aviso de risco elevado aparece na hora.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Mapa mais fácil de usar no celular',
+        descricao:
+          'Os botões do mapa ficaram maiores e mais fáceis de acertar com o dedo, os controles passaram a acompanhar o tema claro e o zoom saiu de baixo da barra de busca.',
+      },
+    ],
+  },
+  {
     versao: '1.3.0',
     data: '2026-07-10',
     resumo: 'Entrar no Pulsar ficou mais rápido.',

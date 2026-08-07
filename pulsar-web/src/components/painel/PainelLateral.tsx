@@ -1,4 +1,4 @@
-import { Activity, RefreshCw, Shield, LogOut } from 'lucide-react';
+import { Activity, RefreshCw, Shield } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { RegiaoDto } from '../../types';
 import { SkeletonCard } from '../ui/Skeleton';
@@ -13,7 +13,6 @@ interface Props {
   onSelecionarRegiao: (nome: string) => void;
   onRecarregar: () => void;
   ultimaAtualizacao: Date | null;
-  onLogout: () => void;
   nomeUsuario: string;
   isFavorito: (regiaoId: string) => boolean;
   onToggleFavorito: (regiaoId: string) => void;
@@ -47,7 +46,6 @@ export default function PainelLateral({
   onSelecionarRegiao,
   onRecarregar,
   ultimaAtualizacao,
-  onLogout,
   isFavorito,
   onToggleFavorito,
   hideHeader = false,
@@ -84,18 +82,11 @@ export default function PainelLateral({
                 Monitoramento
               </h2>
             </div>
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-1 text-[11px] text-pulsar-300 hover:text-white transition-colors mt-1"
-              aria-label="Sair da conta"
-            >
-              <LogOut size={12} />
-              Sair
-            </button>
           </div>
 
           <p className="text-xs text-pulsar-300 mt-1">
-            {totalSubs} subprefeituras • {regioes.length} regiões
+            {totalSubs} {totalSubs === 1 ? 'subprefeitura' : 'subprefeituras'} • {regioes.length}{' '}
+            {regioes.length === 1 ? 'região' : 'regiões'}
           </p>
 
           <button

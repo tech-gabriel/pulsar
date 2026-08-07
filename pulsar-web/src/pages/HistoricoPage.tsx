@@ -149,6 +149,7 @@ export default function HistoricoPage() {
         {semDados && (
           <EmptyState
             Icon={BarChart3}
+            animacao="radar"
             titulo="Histórico insuficiente"
             mensagem="São necessárias pelo menos 2 leituras para exibir o gráfico. Volte mais tarde para acompanhar a evolução."
           />

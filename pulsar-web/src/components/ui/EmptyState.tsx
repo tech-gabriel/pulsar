@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import GlassCard from './GlassCard';
+import LottieAnimacao, { type NomeAnimacao } from './LottieAnimacao';
 
 interface Props {
-  /** Ícone ilustrativo do estado vazio. */
+  /** Ícone ilustrativo do estado vazio. Vira fallback quando há `animacao`. */
   Icon: LucideIcon;
+  /** Anima a ilustração no lugar do ícone estático (carregada sob demanda). */
+  animacao?: NomeAnimacao;
   /** Título curto opcional (ex.: "Histórico insuficiente"). */
   titulo?: string;
   /** Mensagem amigável explicando o vazio. */
@@ -21,10 +24,12 @@ interface Props {
  * Estado vazio padronizado: ícone + mensagem (e título/ação opcionais).
  * Centraliza o visual que antes era reescrito tela a tela.
  */
-export default function EmptyState({ Icon, titulo, mensagem, acao, card = true, className = '' }: Props) {
+export default function EmptyState({ Icon, animacao, titulo, mensagem, acao, card = true, className = '' }: Props) {
+  const icone = <Icon size={44} style={{ color: 'var(--text-muted)' }} />;
+
   const conteudo = (
     <div className={`flex flex-col items-center text-center ${card ? '' : 'py-10'} ${className}`}>
-      <Icon size={44} style={{ color: 'var(--text-muted)' }} />
+      {animacao ? <LottieAnimacao nome={animacao} tamanho={96} fallback={icone} /> : icone}
       {titulo && (
         <p className="mt-3" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
           {titulo}

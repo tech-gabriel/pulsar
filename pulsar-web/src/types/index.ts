@@ -211,3 +211,25 @@ export interface NoticiaDto {
   fonte: string;
   fonteUrl: string;
 }
+
+// ── Ocorrências de alagamento (GeoSampa) ──────────────────────────────────────
+
+/** Retornado por GET /api/ocorrencias/alagamento */
+export interface OcorrenciaAlagamentoDto {
+  id: string;
+  tipo: 'ALAGAMENTO' | 'INUNDACAO';
+  dataOcorrencia: string;
+  latitude: number;
+  longitude: number;
+  nmSubprefeitura: string | null;
+}
+
+/** Retornado por GET /api/ocorrencias/alagamento/proximas */
+export interface OcorrenciasProximasDto {
+  total: number;
+  alagamentos: number;
+  inundacoes: number;
+  maisProximaMetros: number | null;
+  riscoElevado: boolean;
+  chuvaMmH: number | null;
+}

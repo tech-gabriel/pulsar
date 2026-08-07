@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { GeoJsonObject } from 'geojson';
@@ -10,6 +10,8 @@ import { normalizarNome } from '../../utils/texto';
 import { useTheme } from '../../hooks/useTheme';
 import RegioesLayer from './RegioesLayer';
 import ScoreLabel from './ScoreLabel';
+import OcorrenciasLayer from './OcorrenciasLayer';
+import type { OcorrenciaAlagamentoDto } from '../../types';
 
 // Centro geográfico de São Paulo
 const SP_CENTER: [number, number] = [-23.5505, -46.6333];
@@ -77,6 +79,8 @@ interface Props {
   regiaoSelecionadaNome: string | null;
   subSelecionadaAtiva: boolean;
   pontoBusca: PontoBusca | null;
+  overlayAlagamento: boolean;
+  ocorrencias: OcorrenciaAlagamentoDto[];
 }
 
 /**
@@ -133,6 +137,8 @@ export default function MapaBase({
   regiaoSelecionadaNome,
   subSelecionadaAtiva,
   pontoBusca,
+  overlayAlagamento,
+  ocorrencias,
 }: Props) {
   const { theme } = useTheme();
   const tile = tileConfig(theme);
@@ -142,8 +148,13 @@ export default function MapaBase({
       zoom={SP_ZOOM}
       className="w-full h-full"
       scrollWheelZoom
-      zoomControl
+      // O canto padrão do controle de zoom (topo à esquerda) é o mesmo onde a
+      // barra de busca é sobreposta ao mapa, e ela cobria o botão "+" por
+      // inteiro. À direita há espaço nos dois layouts; o recuo que desvia da
+      // busca (desktop) e do botão de camadas (mobile) está em index.css.
+      zoomControl={false}
     >
+      <ZoomControl position="topright" />
       <TileLayer
         key={tile.url}
         attribution={tile.attribution}
@@ -160,6 +171,9 @@ export default function MapaBase({
       {pontoBusca && (
         <Marker position={[pontoBusca.lat, pontoBusca.lon]} icon={pinBusca} />
       )}
+      {overlayAlagamento && ocorrencias.length > 0 && (
+        <OcorrenciasLayer ocorrencias={ocorrencias} />
+      )}
       {geojson && (
         <>
           <RegioesLayer
@@ -175,6 +189,7 @@ export default function MapaBase({
             subSelecionada={subSelecionada}
             camadaAtiva={camadaAtiva}
             regiaoSelecionadaNome={regiaoSelecionadaNome}
+            atenuado={overlayAlagamento}
           />
         </>
       )}

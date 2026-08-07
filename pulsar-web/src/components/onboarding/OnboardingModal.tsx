@@ -5,6 +5,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import type { FaixaRisco } from '../../types';
 import { coresParaFaixa, labelFaixa } from '../../utils/risco';
+import LottieAnimacao, { type NomeAnimacao } from '../ui/LottieAnimacao';
 
 interface Props {
   /** Chamado ao concluir ou pular — marca o onboarding como visto. */
@@ -15,6 +16,9 @@ interface Passo {
   Icon: LucideIcon;
   titulo: string;
   conteudo: ReactNode;
+  /** Só a tela de boas-vindas troca o ícone pela animação de marca; as demais
+   *  usam ícone funcional, que é o que ajuda a entender o passo. */
+  animacao?: NomeAnimacao;
 }
 
 const FAIXAS: FaixaRisco[] = ['BAIXO', 'MODERADO', 'ALTO'];
@@ -55,6 +59,7 @@ function ItemUso({ Icon, children }: { Icon: LucideIcon; children: ReactNode }) 
 const PASSOS: Passo[] = [
   {
     Icon: Sparkles,
+    animacao: 'radar',
     titulo: 'Bem-vindo ao Pulsar',
     conteudo: (
       <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
@@ -134,13 +139,23 @@ export default function OnboardingModal({ onConcluir }: Props) {
         </button>
 
         <div className="px-6 pt-7 pb-5">
-          {/* Ícone */}
-          <div
-            className="w-12 h-12 rounded-xl grid place-items-center mb-4"
-            style={{ background: 'rgba(0, 188, 255, 0.12)', border: '1px solid rgba(0, 188, 255, 0.2)' }}
-          >
-            <atual.Icon size={24} style={{ color: 'var(--text-accent)' }} />
-          </div>
+          {/* Ícone (ou animação de marca, na tela de boas-vindas) */}
+          {atual.animacao ? (
+            <div className="mb-2 -mt-2 -ml-3">
+              <LottieAnimacao
+                nome={atual.animacao}
+                tamanho={72}
+                fallback={<atual.Icon size={24} style={{ color: 'var(--text-accent)' }} />}
+              />
+            </div>
+          ) : (
+            <div
+              className="w-12 h-12 rounded-xl grid place-items-center mb-4"
+              style={{ background: 'rgba(0, 188, 255, 0.12)', border: '1px solid rgba(0, 188, 255, 0.2)' }}
+            >
+              <atual.Icon size={24} style={{ color: 'var(--text-accent)' }} />
+            </div>
+          )}
 
           <h2 style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)' }}>
             {atual.titulo}

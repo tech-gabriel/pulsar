@@ -169,6 +169,54 @@ namespace Pulsar.API.Migrations
                     b.ToTable("LeiturasClimaticas");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.OcorrenciaAlagamento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CdIdentificador")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataCarga")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataOcorrencia")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FonteOriginal")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("NmSubprefeitura")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataOcorrencia");
+
+                    b.HasIndex("CdIdentificador", "Tipo")
+                        .IsUnique();
+
+                    b.ToTable("OcorrenciasAlagamento");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Regiao", b =>
                 {
                     b.Property<Guid>("Id")

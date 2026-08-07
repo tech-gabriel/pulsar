@@ -18,40 +18,24 @@ interface Props {
   isMobile: boolean;
 }
 
-// Estilos do card glassmorphism (valores exatos da spec). Diferem entre
-// desktop (coluna vertical à esquerda) e mobile (barra horizontal no topo).
-const CARD_DESKTOP: React.CSSProperties = {
-  background: 'rgba(5, 47, 74, 0.7)',
-  backdropFilter: 'blur(16px)',
-  WebkitBackdropFilter: 'blur(16px)',
-  border: '1px solid rgba(0, 188, 255, 0.12)',
-  borderRadius: 12,
-  padding: 8,
-  gap: 4,
-};
-
-const CARD_MOBILE: React.CSSProperties = {
-  background: 'rgba(5, 47, 74, 0.85)',
-  backdropFilter: 'blur(16px)',
-  WebkitBackdropFilter: 'blur(16px)',
-  border: '1px solid rgba(0, 188, 255, 0.12)',
-  borderRadius: 12,
-  padding: '6px 8px',
-  gap: 2,
-};
+// Geometria do card. As cores vivem em `.mapa-controle` (index.css), que segue
+// o tema: antes o azul escuro estava fixo aqui e o seletor continuava escuro
+// com o app no tema claro.
+const CARD_DESKTOP: React.CSSProperties = { padding: 8, gap: 4 };
+const CARD_MOBILE: React.CSSProperties = { padding: '6px 8px', gap: 2 };
 
 function estiloBotao(ativo: boolean): React.CSSProperties {
   if (ativo) {
     return {
-      background: 'rgba(0, 132, 209, 0.8)',
-      color: 'white',
+      background: 'rgba(0, 132, 209, 0.85)',
+      color: '#FFFFFF',
       borderRadius: 8,
       boxShadow: '0 0 12px rgba(0, 188, 255, 0.3)',
     };
   }
   return {
     background: 'transparent',
-    color: 'rgba(184, 230, 254, 0.7)',
+    color: 'var(--mapa-controle-texto-suave)',
     borderRadius: 8,
   };
 }
@@ -84,15 +68,15 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
   // largura total) para não colidir com elas.
   if (isMobile) {
     return (
-      <div ref={mobileRef} className="absolute top-[6.5rem] left-3 z-[1000] flex flex-col items-start gap-2">
+      <div ref={mobileRef} className="absolute top-[7.5rem] left-3 z-[1000] flex flex-col items-start gap-2">
         <button
           type="button"
           onClick={() => setAberto((v) => !v)}
           aria-haspopup="true"
           aria-expanded={aberto}
           aria-label="Camadas"
-          className="layer-btn flex items-center gap-2 px-3 py-2"
-          style={{ ...CARD_MOBILE, color: 'white' }}
+          className="mapa-controle mapa-txt layer-btn flex items-center gap-2 px-3 min-h-11"
+          style={CARD_MOBILE}
         >
           <ativa.Icon size={iconSize} strokeWidth={2} />
           <span className="text-sm font-medium">{ativa.label}</span>
@@ -100,7 +84,7 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
         </button>
 
         {aberto && (
-          <div role="radiogroup" aria-label="Camada do mapa" className="flex flex-col" style={CARD_MOBILE}>
+          <div role="radiogroup" aria-label="Camada do mapa" className="mapa-controle flex flex-col" style={CARD_MOBILE}>
             {ITENS.map(({ id, label, Icon }) => {
               const sel = id === camadaAtiva;
               return (
@@ -111,7 +95,7 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
                   aria-checked={sel}
                   aria-label={label}
                   onClick={() => { onChange(id); setAberto(false); }}
-                  className={['layer-btn flex items-center gap-2 px-3 py-2', sel ? 'ativo' : ''].join(' ')}
+                  className={['layer-btn flex items-center gap-2 px-3 min-h-11', sel ? 'ativo' : ''].join(' ')}
                   style={estiloBotao(sel)}
                 >
                   <Icon size={iconSize} strokeWidth={2} />
@@ -130,7 +114,7 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
     <div
       role="radiogroup"
       aria-label="Camada do mapa"
-      className="absolute left-3 top-1/2 -translate-y-1/2 z-[1000] flex flex-col"
+      className="mapa-controle absolute left-3 top-1/2 -translate-y-1/2 z-[1000] flex flex-col"
       style={CARD_DESKTOP}
     >
       {ITENS.map(({ id, label, Icon }) => {
@@ -144,7 +128,7 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
             aria-label={label}
             title={label}
             onClick={() => onChange(id)}
-            className={['layer-btn flex items-center gap-2 px-3 py-2', ativo ? 'ativo' : ''].join(' ')}
+            className={['layer-btn flex items-center gap-2 px-3 min-h-11', ativo ? 'ativo' : ''].join(' ')}
             style={estiloBotao(ativo)}
           >
             <Icon size={20} strokeWidth={2} />

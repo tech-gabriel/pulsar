@@ -73,10 +73,3 @@ export function gerarSugestoes(subs: SubprefeituraDto[]): Sugestao[] {
 
   return lista;
 }
-
-/** Resumo de uma linha para exibir no card da região quando o risco é alto. */
-export function resumoSugestao(subs: SubprefeituraDto[]): string {
-  const sugestoes = gerarSugestoes(subs);
-  if (sugestoes.length > 0) return sugestoes[0].titulo;
-  return 'Condições severas por aí. Confira as recomendações.';
-}

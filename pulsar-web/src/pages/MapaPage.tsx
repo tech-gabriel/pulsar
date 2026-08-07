@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { GeoJsonObject, FeatureCollection } from 'geojson';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers, LogOut } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers } from 'lucide-react';
 import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
 import BuscaEndereco from '../components/mapa/BuscaEndereco';
 import LayerControl from '../components/mapa/LayerControl';
@@ -30,7 +30,7 @@ import { buscarOcorrenciasProximas } from '../api/ocorrencias';
 import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from '../types';
 
 export default function MapaPage() {
-  const { usuario, logout } = useAuth();
+  const { usuario } = useAuth();
   const { regioes, carregando, erro, recarregar, ultimaAtualizacao } = useRegioes();
   const subprefeituras = useSubprefeituras(regioes);
   const { isFavorito, toggleFavorito } = useFavoritos(usuario?.id ?? null);
@@ -155,7 +155,6 @@ export default function MapaPage() {
     regiaoSelecionada: regiaoSelecionadaNome,
     onRecarregar: recarregar,
     ultimaAtualizacao,
-    onLogout: logout,
     nomeUsuario: usuario?.nome ?? '',
     isFavorito,
     onToggleFavorito: toggleFavorito,
@@ -207,7 +206,7 @@ export default function MapaPage() {
 
         {/* Aviso quando o endereço cai fora da área coberta */}
         {avisoBusca && (
-          <div className="absolute left-1/2 -translate-x-1/2 z-[1200] bottom-[7.5rem] md:bottom-6 max-w-[calc(100%-1.5rem)] px-4 py-2.5 rounded-xl bg-pulsar-900/90 border border-pulsar-700 text-xs text-pulsar-100 shadow-xl backdrop-blur-md">
+          <div className="mapa-controle mapa-txt absolute left-1/2 -translate-x-1/2 z-[1200] bottom-[7.5rem] md:bottom-6 max-w-[calc(100%-1.5rem)] px-4 py-2.5 text-xs shadow-xl">
             {avisoBusca}
           </div>
         )}
@@ -219,9 +218,12 @@ export default function MapaPage() {
           isMobile={isMobile}
         />
 
-        {/* Legenda dinâmica (ETAPA 6.1/6.2): muda conforme a camada ativa.
-            Oculta no modo foco de alagamentos (a legenda é da escala de score). */}
-        {!overlayAlagamento && <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} />}
+        {/* Legenda dinâmica (ETAPA 6.1/6.2): muda conforme a camada ativa. Com o
+            overlay ligado ganha a chave dos alagamentos, em vez de sumir: os
+            polígonos continuam coloridos pela camada, então as duas leituras
+            precisam de legenda ao mesmo tempo. */}
+        <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} />
+
 
         {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
         <OverlayAlagamentoToggle
@@ -324,37 +326,36 @@ export default function MapaPage() {
           transition: 'transform 0.36s cubic-bezier(0.32, 0.72, 0, 1)',
         }}
       >
-        {/* Handle bar */}
-        <button
-          className="flex-shrink-0 h-14 flex items-center px-5 rounded-t-[22px] relative select-none transition-colors"
+        {/* Handle bar. O "Sair" que vivia aqui dentro saiu: era um botão dentro
+            de outro (HTML inválido) e a quarta cópia da mesma ação na tela. O
+            logout mora no header, presente em todas as páginas, e em
+            Configurações. */}
+        <div
+          className="flex-shrink-0 h-14 flex items-stretch pr-3 rounded-t-[22px] relative select-none"
           style={{ background: 'var(--bg-primary)' }}
-          onClick={() => setPainelMobileAberto((v) => !v)}
         >
           {/* Pílula de arraste */}
-          <div className="absolute top-[9px] left-1/2 -translate-x-1/2 w-9 h-[3px] rounded-full" style={{ background: 'var(--border-glass)' }} />
+          <div className="absolute top-[9px] left-1/2 -translate-x-1/2 w-9 h-[3px] rounded-full pointer-events-none" style={{ background: 'var(--border-glass)' }} />
 
-          <span className="flex-1 text-sm font-semibold mt-1 text-left truncate" style={{ color: 'var(--text-primary)' }}>
-            {alertasAtivos > 0
-              ? `${alertasAtivos} ${alertasAtivos === 1 ? 'alerta ativo' : 'alertas ativos'}`
-              : 'Tudo tranquilo em São Paulo'}
-          </span>
-
-          {/* Botão Sair dentro do handle */}
           <button
-            onClick={(e) => { e.stopPropagation(); logout(); }}
-            className="mr-3 mt-1 flex items-center gap-1 text-[11px] transition-colors flex-shrink-0"
-            style={{ color: 'var(--text-secondary)' }}
-            aria-label="Sair da conta"
+            type="button"
+            className="flex-1 min-w-0 flex items-center gap-2 pl-5 text-left transition-colors"
+            onClick={() => setPainelMobileAberto((v) => !v)}
+            aria-expanded={painelMobileAberto}
+            aria-label={painelMobileAberto ? 'Recolher painel de regiões' : 'Expandir painel de regiões'}
           >
-            <LogOut size={11} />
-            <span>Sair</span>
+            <span className="flex-1 text-sm font-semibold mt-1 truncate" style={{ color: 'var(--text-primary)' }}>
+              {alertasAtivos > 0
+                ? `${alertasAtivos} ${alertasAtivos === 1 ? 'alerta ativo' : 'alertas ativos'}`
+                : 'Tudo tranquilo em São Paulo'}
+            </span>
+            {painelMobileAberto
+              ? <ChevronDown size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
+              : <ChevronUp size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
+            }
           </button>
 
-          {painelMobileAberto
-            ? <ChevronDown size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-            : <ChevronUp size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-          }
-        </button>
+        </div>
 
         {/* Lista de regiões (sem header duplicado) */}
         <div className="flex-1 overflow-hidden flex flex-col">

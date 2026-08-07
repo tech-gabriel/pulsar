@@ -221,7 +221,7 @@ export default function DashboardPage() {
                   Distribuição por risco
                 </h2>
                 {totalSubs === 0 ? (
-                  <EmptyState card={false} Icon={Gauge} mensagem="Sem dados de subprefeituras por enquanto." />
+                  <EmptyState card={false} Icon={Gauge} animacao="radar" mensagem="Sem dados de subprefeituras por enquanto." />
                 ) : (
                   <div className="relative">
                     <ResponsiveContainer width="100%" height={210}>
@@ -289,13 +289,13 @@ export default function DashboardPage() {
                 </h2>
                 <div className="flex flex-col gap-2">
                   {m.topSubs.length === 0 && (
-                    <EmptyState card={false} Icon={AlertTriangle} mensagem="Sem leituras disponíveis no momento." />
+                    <EmptyState card={false} Icon={AlertTriangle} animacao="radar" mensagem="Sem leituras disponíveis no momento." />
                   )}
                   {m.topSubs.map((s, i) => (
                     <button
                       key={s.id}
                       onClick={() => navigate(`/app/historico/${s.id}`, { state: { subNome: s.nome, regiaoNome: s.regiaoNome } })}
-                      className="regiao-card flex items-center gap-3 text-left"
+                      className="regiao-card regiao-card-linha text-left"
                       style={{ marginBottom: 0 }}
                     >
                       <span className="font-mono flex-shrink-0 w-5 text-center" style={{ fontSize: 13, color: 'var(--text-muted)' }}>

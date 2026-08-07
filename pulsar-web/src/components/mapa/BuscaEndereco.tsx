@@ -11,15 +11,6 @@ interface Props {
   localizando?: boolean;
 }
 
-// Glassmorphism alinhado ao LayerControl/legenda do mapa.
-const CARD: React.CSSProperties = {
-  background: 'rgba(5, 47, 74, 0.7)',
-  backdropFilter: 'blur(16px)',
-  WebkitBackdropFilter: 'blur(16px)',
-  border: '1px solid rgba(0, 188, 255, 0.12)',
-  borderRadius: 12,
-};
-
 const MIN_CHARS = 3;
 
 // Ícone por categoria do resultado, para o usuário distinguir lugar × rua × bairro.
@@ -91,8 +82,11 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
           : 'absolute top-3 left-3 z-[1100] w-[340px]'
       }
     >
-      <div className="flex items-center gap-2 px-3 py-2" style={CARD}>
-        <Search size={18} className="text-pulsar-300 flex-shrink-0" />
+      {/* Sem padding vertical: a altura vem do próprio input (44px), que é
+          também o alvo de toque. Com py-2 a barra passaria de 68px e empurraria
+          os controles do mapa. */}
+      <div className="mapa-controle flex items-center gap-2 px-3">
+        <Search size={18} className="mapa-txt-suave flex-shrink-0" />
         <input
           type="text"
           value={termo}
@@ -104,10 +98,10 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
           onKeyDown={onKeyDown}
           placeholder="Buscar lugar, rua ou bairro em SP…"
           aria-label="Buscar lugar, rua ou bairro"
-          className="flex-1 bg-transparent text-sm text-white placeholder:text-pulsar-300/60 outline-none min-w-0"
+          className="mapa-input flex-1 h-11 bg-transparent text-sm outline-none min-w-0"
         />
         {carregando && (
-          <Loader2 size={16} className="text-pulsar-300 animate-spin flex-shrink-0" />
+          <Loader2 size={16} className="mapa-txt-suave animate-spin flex-shrink-0" />
         )}
         {termo && !carregando && (
           <button
@@ -117,7 +111,7 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
               setAberto(false);
             }}
             aria-label="Limpar busca"
-            className="text-pulsar-300 hover:text-white transition-colors flex-shrink-0"
+            className="mapa-txt-suave flex items-center justify-center w-11 h-11 -my-2 transition-colors flex-shrink-0"
           >
             <X size={16} />
           </button>
@@ -130,9 +124,9 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
             aria-label="Usar minha localização"
             title="Usar minha localização"
             className={[
-              'flex-shrink-0 transition-colors',
-              localizando ? 'text-pulsar-300 cursor-wait' : 'text-pulsar-300 hover:text-white',
-              mostrarDica ? 'ring-2 ring-pulsar-400/70 rounded-lg animate-pulse' : '',
+              'mapa-txt-suave flex items-center justify-center w-11 h-11 -my-2 rounded-lg flex-shrink-0 transition-colors',
+              localizando ? 'cursor-wait' : '',
+              mostrarDica ? 'ring-2 ring-pulsar-400/70 animate-pulse' : '',
             ].filter(Boolean).join(' ')}
           >
             {localizando ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}
@@ -141,25 +135,25 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
       </div>
 
       {onUsarLocalizacao && mostrarDica && (
-        <div className="mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px] text-pulsar-100" style={CARD}>
-          <LocateFixed size={13} className="flex-shrink-0 text-pulsar-300" />
+        <div className="mapa-controle mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
+          <LocateFixed size={13} className="mapa-txt-suave flex-shrink-0" />
           <span className="flex-1">Toque no alvo para ver a sua região</span>
           <button
             type="button"
             onClick={dispensar}
             aria-label="Dispensar dica"
-            className="flex-shrink-0 text-pulsar-300 hover:text-white transition-colors"
+            className="mapa-txt-suave flex items-center justify-center w-11 h-11 -my-2 -mr-2 flex-shrink-0 transition-colors"
           >
-            <X size={13} />
+            <X size={14} />
           </button>
         </div>
       )}
 
       {mostrarDropdown && (
-        <ul className="mt-1.5 max-h-72 overflow-y-auto overflow-x-hidden" style={CARD}>
-          {erro && <li className="px-3 py-2.5 text-xs text-red-300">{erro}</li>}
+        <ul className="mapa-controle mt-1.5 max-h-72 overflow-y-auto overflow-x-hidden">
+          {erro && <li className="px-3 py-2.5 text-xs" style={{ color: '#EF4444' }}>{erro}</li>}
           {!erro && !carregando && resultados.length === 0 && (
-            <li className="px-3 py-2.5 text-xs text-pulsar-300/70">
+            <li className="mapa-txt-suave px-3 py-2.5 text-xs">
               Nada encontrado. Tente o nome de um lugar, rua ou bairro.
             </li>
           )}
@@ -171,15 +165,15 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
                 <button
                   type="button"
                   onClick={() => selecionar(r)}
-                  className="flex w-full items-start gap-2 px-3 py-2.5 text-left transition-colors hover:bg-pulsar-700/40"
+                  className="mapa-item flex w-full items-start gap-2 px-3 py-2.5 text-left transition-colors"
                 >
-                  <Icone size={15} className="mt-0.5 flex-shrink-0 text-pulsar-400" />
+                  <Icone size={15} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--text-accent)' }} />
                   <span className="min-w-0 leading-snug">
-                    <span className="block truncate text-xs font-medium text-pulsar-50">
+                    <span className="mapa-txt block truncate text-xs font-medium">
                       {r.nome || r.descricao}
                     </span>
                     {contexto && (
-                      <span className="block truncate text-[11px] text-pulsar-300/80">{contexto}</span>
+                      <span className="mapa-txt-suave block truncate text-[11px]">{contexto}</span>
                     )}
                   </span>
                 </button>

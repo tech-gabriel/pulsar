@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Info } from 'lucide-react';
 import type { Camada } from '../../utils/camadas';
+import { PALETA, comAlfa } from '../../utils/paleta';
 import MiniIconeOcorrencia from './MiniIconeOcorrencia';
 
 // ── Legenda dinâmica do mapa (ETAPA 6.1/6.3) ───────────────────────────────────
@@ -14,30 +15,37 @@ interface LegendaConfig {
   labels: string[];
 }
 
+// Os tons saem de utils/paleta.ts, os mesmos que colorem os polígonos em
+// utils/camadas.ts: a barra da legenda tem que ser lida como a escala exata do
+// que está desenhado no mapa.
+function gradiente(...tons: string[]): string {
+  return `linear-gradient(to right, ${tons.join(', ')})`;
+}
+
 const LEGENDAS: Record<Camada, LegendaConfig> = {
   score: {
     titulo: 'Score de Perigo',
-    gradiente: 'linear-gradient(to right, #22C55E, #EAB308, #EF4444)',
+    gradiente: gradiente(PALETA.verde, PALETA.amarelo, PALETA.vermelho),
     labels: ['0', '30', '60', '100'],
   },
   temperatura: {
     titulo: 'Temperatura °C',
-    gradiente: 'linear-gradient(to right, #3B82F6, #22C55E, #F59E0B, #EF4444)',
+    gradiente: gradiente(PALETA.azul, PALETA.verde, PALETA.ambar, PALETA.vermelho),
     labels: ['0°', '10°', '20°', '30°', '40°'],
   },
   chuva: {
     titulo: 'Precipitação mm/h',
-    gradiente: 'linear-gradient(to right, rgba(148,163,184,0.3), #3B82F6, #1D4ED8)',
+    gradiente: gradiente(comAlfa(PALETA.neutro, 0.3), PALETA.azul, PALETA.azulProfundo),
     labels: ['0', '10', '25', '50+'],
   },
   vento: {
     titulo: 'Vento km/h',
-    gradiente: 'linear-gradient(to right, #94A3B8, #EAB308, #F59E0B, #EF4444)',
+    gradiente: gradiente(PALETA.neutro, PALETA.amarelo, PALETA.ambar, PALETA.vermelho),
     labels: ['0', '20', '40', '60', '80+'],
   },
   uv: {
     titulo: 'Índice UV',
-    gradiente: 'linear-gradient(to right, #22C55E, #EAB308, #F59E0B, #EF4444, #9333EA)',
+    gradiente: gradiente(PALETA.verde, PALETA.amarelo, PALETA.ambar, PALETA.vermelho, PALETA.roxo),
     labels: ['0', '3', '6', '8', '11+'],
   },
 };

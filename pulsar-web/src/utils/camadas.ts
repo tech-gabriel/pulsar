@@ -1,4 +1,5 @@
 import type { SubprefeituraMapaDto } from '../types';
+import { PALETA, comAlfa } from './paleta';
 import { corLabelFaixa, estiloPoligono, labelFaixa, scoreFormatado } from './risco';
 
 // ── Camadas do mapa (ETAPA 3) ──────────────────────────────────────────────────
@@ -26,39 +27,42 @@ interface FaixaCamada {
   fillOpacity: number;
 }
 
-const SEM_DADO: FaixaCamada = {
-  circulo: 'rgba(148, 163, 184, 0.85)',
-  solida: '#94a3b8',
-  fillOpacity: 0.12,
-};
+// O tom sólido e o do círculo são sempre o mesmo da paleta (utils/paleta.ts),
+// só mudando o alfa — assim as camadas, a legenda e o overlay de alagamentos
+// não têm como divergir de cor.
+function faixa(tom: string, alfa: number, fillOpacity: number): FaixaCamada {
+  return { circulo: comAlfa(tom, alfa), solida: tom, fillOpacity };
+}
+
+const SEM_DADO: FaixaCamada = faixa(PALETA.neutro, 0.85, 0.12);
 
 function faixaTemperatura(t: number): FaixaCamada {
-  if (t <= 10) return { circulo: 'rgba(59, 130, 246, 0.85)', solida: '#3b82f6', fillOpacity: 0.25 };
-  if (t <= 20) return { circulo: 'rgba(34, 197, 94, 0.85)', solida: '#22c55e', fillOpacity: 0.2 };
-  if (t <= 30) return { circulo: 'rgba(245, 158, 11, 0.85)', solida: '#f59e0b', fillOpacity: 0.3 };
-  return { circulo: 'rgba(239, 68, 68, 0.85)', solida: '#ef4444', fillOpacity: 0.35 };
+  if (t <= 10) return faixa(PALETA.azul, 0.85, 0.25);
+  if (t <= 20) return faixa(PALETA.verde, 0.85, 0.2);
+  if (t <= 30) return faixa(PALETA.ambar, 0.85, 0.3);
+  return faixa(PALETA.vermelho, 0.85, 0.35);
 }
 
 function faixaChuva(c: number): FaixaCamada {
-  if (c <= 0) return { circulo: 'rgba(148, 163, 184, 0.5)', solida: '#94a3b8', fillOpacity: 0.08 };
-  if (c <= 5) return { circulo: 'rgba(59, 130, 246, 0.6)', solida: '#3b82f6', fillOpacity: 0.22 };
-  if (c <= 25) return { circulo: 'rgba(59, 130, 246, 0.8)', solida: '#3b82f6', fillOpacity: 0.3 };
-  return { circulo: 'rgba(29, 78, 216, 0.9)', solida: '#1d4ed8', fillOpacity: 0.35 };
+  if (c <= 0) return faixa(PALETA.neutro, 0.5, 0.08);
+  if (c <= 5) return faixa(PALETA.azul, 0.6, 0.22);
+  if (c <= 25) return faixa(PALETA.azul, 0.8, 0.3);
+  return faixa(PALETA.azulProfundo, 0.9, 0.35);
 }
 
 function faixaVento(v: number): FaixaCamada {
-  if (v <= 20) return { circulo: 'rgba(148, 163, 184, 0.6)', solida: '#94a3b8', fillOpacity: 0.15 };
-  if (v <= 40) return { circulo: 'rgba(234, 179, 8, 0.7)', solida: '#eab308', fillOpacity: 0.25 };
-  if (v <= 60) return { circulo: 'rgba(245, 158, 11, 0.8)', solida: '#f59e0b', fillOpacity: 0.3 };
-  return { circulo: 'rgba(239, 68, 68, 0.9)', solida: '#ef4444', fillOpacity: 0.35 };
+  if (v <= 20) return faixa(PALETA.neutro, 0.6, 0.15);
+  if (v <= 40) return faixa(PALETA.amarelo, 0.7, 0.25);
+  if (v <= 60) return faixa(PALETA.ambar, 0.8, 0.3);
+  return faixa(PALETA.vermelho, 0.9, 0.35);
 }
 
 function faixaUv(u: number): FaixaCamada {
-  if (u <= 2) return { circulo: 'rgba(34, 197, 94, 0.7)', solida: '#22c55e', fillOpacity: 0.2 };
-  if (u <= 5) return { circulo: 'rgba(234, 179, 8, 0.7)', solida: '#eab308', fillOpacity: 0.25 };
-  if (u <= 7) return { circulo: 'rgba(245, 158, 11, 0.8)', solida: '#f59e0b', fillOpacity: 0.3 };
-  if (u <= 10) return { circulo: 'rgba(239, 68, 68, 0.85)', solida: '#ef4444', fillOpacity: 0.35 };
-  return { circulo: 'rgba(147, 51, 234, 0.9)', solida: '#9333ea', fillOpacity: 0.35 };
+  if (u <= 2) return faixa(PALETA.verde, 0.7, 0.2);
+  if (u <= 5) return faixa(PALETA.amarelo, 0.7, 0.25);
+  if (u <= 7) return faixa(PALETA.ambar, 0.8, 0.3);
+  if (u <= 10) return faixa(PALETA.vermelho, 0.85, 0.35);
+  return faixa(PALETA.roxo, 0.9, 0.35);
 }
 
 // Extratores do valor bruto de cada camada (null quando não há leitura).

@@ -489,15 +489,69 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 }
 
 /* Zoom do Leaflet: o default do plugin desenha 26x26 (30x30 no modo touch),
-   abaixo do alvo de toque recomendado. O ícone continua igual, só a caixa
-   cresce. `!important` porque o leaflet.css é importado dentro do MapaBase
-   (chunk lazy) e entra depois deste arquivo: sem isso, a regra do plugin vence
-   por ordem, não por especificidade. */
+   abaixo do alvo recomendado. O ícone continua igual, só a caixa cresce.
+   `!important` porque o leaflet.css é importado dentro do MapaBase (chunk
+   lazy) e entra depois deste arquivo: sem isso, a regra do plugin vence por
+   ordem, não por especificidade.
+
+   36px com mouse e 44px no toque: os 44px são a recomendação para o dedo, e no
+   desktop a barra inteira precisa caber entre a busca e o seletor de camadas
+   (mesmo critério do .acao-header, que também encolhe no ponteiro fino). */
 .leaflet-touch .leaflet-bar a,
 .leaflet-bar a {
-  width: 44px !important;
-  height: 44px !important;
-  line-height: 44px !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+}
+@media (pointer: coarse) {
+  .leaflet-touch .leaflet-bar a,
+  .leaflet-bar a {
+    width: 44px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+  }
+}
+
+/* O controle vai para o canto superior direito (MapaBase), porque o esquerdo é
+   da barra de busca. No desktop a busca é estreita (~340px) e para longe da
+   direita, então ali o controle já fica livre com a margem padrão.
+   No mobile não: a busca atravessa a largura toda e o botão de camadas fica
+   justamente no topo à direita (top-[7.5rem] = 120px, mais 44px de altura),
+   então o controle precisa descer abaixo dos dois. Se o botão de camadas
+   mudar de posição, este recuo muda junto. */
+@media (max-width: 767px) {
+  .leaflet-top.leaflet-right .leaflet-control-zoom {
+    margin-top: 172px;
+  }
+}
+
+/* O zoom vem branco de fábrica do Leaflet, o que destoava de todo o resto
+   sobreposto ao mapa (busca, camadas, legenda) — mais ainda depois que ele
+   saiu de trás da barra de busca e passou a ficar bem visível. Aqui ele passa
+   a usar os mesmos tokens de `.mapa-controle`, então acompanha o tema claro e
+   o escuro junto com os vizinhos. */
+.leaflet-control-zoom.leaflet-bar {
+  border: 1px solid var(--mapa-controle-borda) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+}
+.leaflet-control-zoom a,
+.leaflet-touch .leaflet-control-zoom a {
+  background: var(--mapa-controle-bg) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--mapa-controle-texto) !important;
+  border-bottom: 1px solid var(--mapa-controle-borda) !important;
+}
+.leaflet-control-zoom a:last-child {
+  border-bottom: none !important;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--bg-glass-hover) !important;
+}
+.leaflet-control-zoom a.leaflet-disabled {
+  opacity: 0.45;
 }
 
 /* ── Ações do header ──────────────────────────────────────────────────────────
@@ -544,8 +598,9 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  /* Azul profundo da família do marcador de inundação: branco por cima passa
-     de 8:1 de contraste, ao contrário do verde/âmbar do score. */
+  /* blue-700, o mesmo `azulProfundo` de utils/paleta.ts que pinta o marcador de
+     inundação e a chuva forte: branco por cima passa de 8:1 de contraste, ao
+     contrário do verde/âmbar do score. */
   background: rgba(29, 78, 216, 0.94);
   border: 2px solid rgba(255, 255, 255, 0.92);
   color: #ffffff;

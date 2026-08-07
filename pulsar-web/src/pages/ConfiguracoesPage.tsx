@@ -281,12 +281,21 @@ export default function ConfiguracoesPage() {
         {/* ── APARÊNCIA ───────────────────────────────────────────────────── */}
         <GlassCard hover={false} padding="lg" className="mb-4">
           <SecaoTitulo>Aparência</SecaoTitulo>
-          <button type="button" onClick={toggleTheme} className="w-full flex items-center justify-between" aria-pressed={!dark}>
+          {/* O rótulo é fixo e o switch mostra se o tema escuro está ligado. Antes
+              o rótulo trocava junto com o estado e o switch acendia no claro, o
+              que fazia o tema escuro ativo aparecer como "desligado". */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-full flex items-center justify-between min-h-11"
+            role="switch"
+            aria-checked={dark}
+          >
             <span className="flex items-center gap-3">
               {dark ? <Moon size={20} style={{ color: 'var(--text-accent)' }} /> : <Sun size={20} style={{ color: 'var(--text-accent)' }} />}
-              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{dark ? 'Tema escuro' : 'Tema claro'}</span>
+              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>Tema escuro</span>
             </span>
-            <span className={['theme-switch', dark ? '' : 'on'].join(' ')}>
+            <span className={['theme-switch', dark ? 'on' : ''].join(' ')}>
               <span className="theme-switch-knob" />
             </span>
           </button>

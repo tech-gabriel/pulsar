@@ -1,5 +1,6 @@
 import { X, Droplets, AlertTriangle } from 'lucide-react';
 import type { OcorrenciasProximasDto } from '../../types';
+import LottieAnimacao from '../ui/LottieAnimacao';
 
 interface Props {
   dados: OcorrenciasProximasDto;
@@ -30,9 +31,21 @@ export default function CardAlagamentoProximo({ dados, onFechar }: Props) {
       </button>
 
       <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex-shrink-0" style={{ color: 'var(--text-secondary)' }}>
-          <Droplets size={20} />
-        </div>
+        {/* Zero ocorrências é a boa notícia da feature: ganha a animação da
+            gota. Com ocorrências, o ícone estático não rouba atenção do
+            número, que é o dado que importa ali. */}
+        {total === 0 ? (
+          <LottieAnimacao
+            nome="gota"
+            tamanho={44}
+            className="-mt-1 -ml-1 flex-shrink-0"
+            fallback={<Droplets size={20} style={{ color: 'var(--text-secondary)' }} />}
+          />
+        ) : (
+          <div className="mt-0.5 flex-shrink-0" style={{ color: 'var(--text-secondary)' }}>
+            <Droplets size={20} />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           {total > 0 ? (
             <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -49,10 +62,13 @@ export default function CardAlagamentoProximo({ dados, onFechar }: Props) {
               : 'Nos últimos 12 meses.'}
           </p>
 
+          {/* `--cor-alerta` alterna entre o vermelho claro (fundo escuro) e o
+              vermelho escuro (fundo claro): #ef4444 fixo ficava em ~3,3:1 sobre
+              o card do tema claro. */}
           {riscoElevado && (
             <div
               className="mt-2 flex items-center gap-2 rounded-lg px-2.5 py-1.5"
-              style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}
+              style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--cor-alerta)' }}
             >
               <AlertTriangle size={15} className="flex-shrink-0" />
               <span className="text-xs font-medium">

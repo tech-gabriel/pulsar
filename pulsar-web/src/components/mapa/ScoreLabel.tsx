@@ -4,6 +4,7 @@ import L from 'leaflet';
 import type { SubprefeituraMapaDto } from '../../types';
 import { estiloCamada, type Camada } from '../../utils/camadas';
 import { nomeAbreviado } from '../../utils/nomesSub';
+import { fundoParaTextoBranco, opaca } from '../../utils/contraste';
 
 interface Props {
   subprefeituras: SubprefeituraMapaDto[];
@@ -22,9 +23,10 @@ interface TamanhoLabel {
 
 // Comportamento de zoom (ETAPA 2.3/2.7):
 //  zoom <= 9  → esconde tudo;  10 → só círculo;  11 → nome 9px;  12 → 10px;  >=13 → 11px.
+// A fonte do número nunca desce de 11px (mínimo legível recomendado no mobile).
 function tamanhoParaZoom(zoom: number): TamanhoLabel | null {
   if (zoom <= 9) return null;
-  if (zoom === 10) return { diametro: 30, fonte: 10, nomeFonte: 0 };
+  if (zoom === 10) return { diametro: 32, fonte: 11, nomeFonte: 0 };
   if (zoom === 11) return { diametro: 32, fonte: 11, nomeFonte: 9 };
   if (zoom === 12) return { diametro: 35, fonte: 12, nomeFonte: 10 };
   return { diametro: 38, fonte: 13, nomeFonte: 11 };
@@ -34,6 +36,12 @@ function tamanhoParaZoom(zoom: number): TamanhoLabel | null {
 function glowDaCor(cor: string): string {
   return cor.replace(/[\d.]+\)$/, '0.5)');
 }
+
+// Legibilidade do número dentro do círculo: as cores de faixa vêm com alpha
+// (~0.85), então o basemap vaza por baixo e o contraste passa a depender do que
+// está embaixo. O círculo do label vira opaco (o preenchimento translúcido
+// continua no polígono, que é quem precisa deixar o mapa aparecer) e o fundo é
+// fechado até o número branco passar em 4,5:1. Ver utils/contraste.
 
 function normalizar(nome: string): string {
   return nome.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
@@ -68,7 +76,8 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
           selecionada ? 'selecionado' : '',
         ].filter(Boolean).join(' ');
 
-        const circuloHtml = `<div class="${classes}" style="width:${diametro}px;height:${diametro}px;font-size:${fonte}px;background:${estilo.corCirculo};box-shadow:0 0 10px ${glow};">${estilo.texto}</div>`;
+        const fundo = fundoParaTextoBranco(opaca(estilo.corCirculo));
+        const circuloHtml = `<div class="${classes}" style="width:${diametro}px;height:${diametro}px;font-size:${fonte}px;background:${fundo};color:#FFFFFF;box-shadow:0 0 10px ${glow};">${estilo.texto}</div>`;
         const nomeHtml = nomeFonte > 0
           ? `<div class="pulsar-sub-nome" style="font-size:${nomeFonte}px;">${nomeAbreviado(sub.nome)}</div>`
           : '';

@@ -9,6 +9,7 @@ import type { SubprefeituraDto, LeituraDto } from '../../types';
 import { useRegiaoDetalhe } from '../../hooks/useRegiaoDetalhe';
 import { useCountUp } from '../../hooks/useCountUp';
 import { coresParaFaixa, labelFaixa } from '../../utils/risco';
+import { fundoParaTextoBranco } from '../../utils/contraste';
 import { centroideRegiao } from '../../utils/geo';
 import { gerarSugestoes, type CategoriaSugestao } from '../../utils/sugestoes';
 import { DURACAO, EASE_SUAVE, containerStagger, itemStagger } from '../../motion/presets';
@@ -28,7 +29,13 @@ const RING_STROKE = 4;
 const RING_RAIO = (RING_DIAMETRO - RING_STROKE) / 2;
 const RING_CIRC = 2 * Math.PI * RING_RAIO;
 
-function ScoreRing({ score, cor }: { score: number; cor: string }) {
+/**
+ * Anel de score. O número assume a cor da faixa, igual ao anel: branco fixo
+ * fazia o valor mais destacado do painel ser o único que não comunicava risco
+ * pela cor, e destoava dos demais scores do app. `corEscura` é a variante da
+ * mesma faixa para fundo claro (o branco também sumiria no tema light).
+ */
+function ScoreRing({ score, cor, corEscura }: { score: number; cor: string; corEscura: string }) {
   const animado = useCountUp(score, 800);
   const offset = RING_CIRC * (1 - Math.min(animado, 100) / 100);
   const centro = RING_DIAMETRO / 2;
@@ -47,8 +54,8 @@ function ScoreRing({ score, cor }: { score: number; cor: string }) {
         />
       </svg>
       <span
-        className="absolute inset-0 flex items-center justify-center text-pulsar-50"
-        style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 28 }}
+        className="score-ring-valor absolute inset-0 flex items-center justify-center"
+        style={{ '--c': cor, '--c-escura': corEscura, fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 28 } as React.CSSProperties}
       >
         {Math.round(animado)}
       </span>
@@ -138,8 +145,8 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
               <span className="text-pulsar-300" style={{ fontSize: 11 }}>{Math.round(temp)}°C</span>
             )}
             <span
-              className="text-white rounded-full px-2 py-0.5"
-              style={{ background: cores.fill, fontFamily: 'var(--font-mono)', fontWeight: 500, fontSize: 12 }}
+              className="rounded-full px-2 py-0.5"
+              style={{ background: fundoParaTextoBranco(cores.fill), color: '#FFFFFF', fontFamily: 'var(--font-mono)', fontWeight: 500, fontSize: 12 }}
             >
               {score.toFixed(0)}
             </span>
@@ -274,7 +281,7 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
           <motion.div variants={containerStagger} initial="inicial" animate="animar">
             {/* Score em destaque com ring */}
             <motion.div variants={itemStagger} className="flex flex-col items-center py-4">
-              <ScoreRing score={score} cor={cores.fill} />
+              <ScoreRing score={score} cor={cores.fill} corEscura={cores.text} />
               <span className="mt-2 text-pulsar-100" style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: 13 }}>
                 Risco {labelFaixa(regiao.faixaRisco)}
               </span>

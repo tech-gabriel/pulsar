@@ -10,13 +10,16 @@ import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import BadgeRisco from './BadgeRisco';
 import iconePulsar from '../../assets/logos/pulsar-icone.svg';
 
-// Abas de navegação principal (ETAPA B.1.2)
+// Abas de navegação principal (ETAPA B.1.2). O rótulo curto (tab bar do mobile)
+// usa as mesmas palavras do desktop: "Dash"/"News" truncavam sem necessidade e
+// "News" ainda trocava o idioma no meio de uma navegação em pt-BR. Só
+// "Configurações" continua abreviado, porque não cabe em um quinto da tela.
 const TABS: { to: string; label: string; curto: string; Icon: LucideIcon; end?: boolean }[] = [
   { to: '/app', label: 'Mapa', curto: 'Mapa', Icon: Map, end: true },
-  { to: '/app/historico', label: 'Histórico', curto: 'Hist.', Icon: History },
-  { to: '/app/dashboard', label: 'Dashboard', curto: 'Dash', Icon: BarChart3 },
-  { to: '/app/noticias', label: 'Notícias', curto: 'News', Icon: Newspaper },
-  { to: '/app/configuracoes', label: 'Configurações', curto: 'Config', Icon: Settings },
+  { to: '/app/historico', label: 'Histórico', curto: 'Histórico', Icon: History },
+  { to: '/app/dashboard', label: 'Dashboard', curto: 'Dashboard', Icon: BarChart3 },
+  { to: '/app/noticias', label: 'Notícias', curto: 'Notícias', Icon: Newspaper },
+  { to: '/app/configuracoes', label: 'Configurações', curto: 'Config.', Icon: Settings },
 ];
 
 /**
@@ -99,12 +102,12 @@ export default function Header() {
         </nav>
 
         {/* Direita: ações */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-0.5 md:gap-1">
           {/* Acesso ao painel admin (só ADMIN/SUPORTE) — fica no topo, fora da tab bar */}
           {ehAdmin && (
             <NavLink
               to="/app/admin/usuarios"
-              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex"
+              className="acao-header"
               title="Painel administrativo"
               aria-label="Admin"
             >
@@ -116,7 +119,7 @@ export default function Header() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            className="acao-header"
             title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
             aria-label="Alternar tema"
           >
@@ -130,7 +133,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setPainelAberto((v) => !v)}
-              className="relative text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex"
+              className="acao-header relative"
               title="Notificações"
               aria-label={temAlertas ? `Notificações: ${alertas.length} em alerta` : 'Notificações'}
               aria-haspopup="true"
@@ -180,7 +183,7 @@ export default function Header() {
                                 {r.nome}
                               </p>
                               <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                {r.totalSubprefeituras} subprefeituras
+                                {r.totalSubprefeituras} {r.totalSubprefeituras === 1 ? 'subprefeitura' : 'subprefeituras'}
                               </p>
                             </div>
                             <BadgeRisco faixa={r.faixaRisco} score={r.scoreAgregado} size="sm" />
@@ -197,19 +200,19 @@ export default function Header() {
 
           {/* Nome (md+) */}
           {usuario?.nome && (
-            <span className="hidden md:inline" style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)' }}>
+            <span className="hidden md:inline ml-2" style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)' }}>
               {usuario.nome}
             </span>
           )}
 
           {/* Separador isolando o botão de sair */}
-          <span style={{ width: 1, height: 24, background: 'var(--border-glass)' }} />
+          <span className="mx-1.5" style={{ width: 1, height: 24, background: 'var(--border-glass)' }} />
 
           {/* Logout */}
           <button
             type="button"
             onClick={logout}
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+            className="acao-header"
             title="Sair"
             aria-label="Sair da conta"
           >

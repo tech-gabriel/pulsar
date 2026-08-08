@@ -4,6 +4,17 @@ import { PALETA, comAlfa } from '../../utils/paleta';
 
 export type CenaId = 'acender' | 'risco' | 'score' | 'alagamento' | 'alerta';
 
+/**
+ * Recorte do viewBox usado só no hero (`compacta`). O viewBox cheio
+ * (`VIEWBOX`) é bem vertical porque São Paulo tem a cauda longa de
+ * Parelheiros/Marsilac ao sul (até y=1542.3); numa coluna estreita isso
+ * produz um SVG alto demais e empurra o CTA do hero para fora da primeira
+ * dobra. O recorte corta essa cauda (mantém 0 a 920, o suficiente para Sé,
+ * o foco da narrativa a partir da cena 3) sem tocar nos paths nem no
+ * viewBox usado na narrativa em tela cheia.
+ */
+const VIEWBOX_COMPACTO = '0 0 1000 920';
+
 /** Subprefeitura que a narrativa foca a partir da cena 3. */
 const FOCO_ID = 'se';
 const SCORE_FOCO = 72;
@@ -39,6 +50,13 @@ const PONTOS_ALAGAMENTO = [
 interface Props {
   cena: CenaId;
   className?: string;
+  /**
+   * Recorta a cauda sul do mapa (ver `VIEWBOX_COMPACTO`). Default `false`
+   * preserva o comportamento existente (viewBox cheio) para a narrativa.
+   * Usado só pelo hero, onde a coluna é estreita e o mapa vertical cheio
+   * empurrava o CTA para fora da primeira dobra.
+   */
+  compacta?: boolean;
 }
 
 /**
@@ -47,14 +65,14 @@ interface Props {
  * (`aria-hidden`), porque a informação vive no texto de cada cena; o único
  * conteúdo anunciado é o alerta da cena 5.
  */
-export default function MapaCena({ cena, className }: Props) {
+export default function MapaCena({ cena, className, compacta = false }: Props) {
   const mostraRisco = cena !== 'acender';
   const mostraFoco = cena === 'score' || cena === 'alagamento' || cena === 'alerta';
   const mostraAlagamento = cena === 'alagamento' || cena === 'alerta';
 
   return (
     <div className={`relative ${className ?? ''}`}>
-      <svg viewBox={VIEWBOX} aria-hidden="true" className="w-full h-auto">
+      <svg viewBox={compacta ? VIEWBOX_COMPACTO : VIEWBOX} aria-hidden="true" className="w-full h-auto">
         {SUBPREFEITURAS.map((s, i) => {
           const faixa = faixaDe(i);
           const emFoco = mostraFoco && s.id === FOCO_ID;

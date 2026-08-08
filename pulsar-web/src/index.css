@@ -1614,7 +1614,21 @@ html.light .landing-cta-band {
 /* ── Narrativa do mapa (landing) ──────────────────────────────────────────────
    Estado padrão = degradado: cenas empilhadas, todas visíveis. O GSAP aplica
    pin e scrub por cima disso (useNarrativaScroll). Se ele não carregar, ou se
-   o usuário pedir menos movimento, é este layout que fica. */
+   o usuário pedir menos movimento, é este layout que fica.
+   Mesmo container horizontal de `.landing-section` (max-width + gutter): a
+   seção em si não tinha nenhuma regra própria, então no mobile o texto
+   colava na borda e no desktop ficava mais larga que as seções vizinhas. */
+.landing-narrativa {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-inline: 24px;
+}
+@media (max-width: 640px) {
+  .landing-narrativa {
+    padding-inline: 20px;
+  }
+}
+
 .landing-narrativa-cena {
   display: grid;
   gap: 2rem;

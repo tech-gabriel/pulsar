@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import LandingNarrativa, { CENAS } from '../../components/landing/LandingNarrativa';
+import LandingNarrativa from '../../components/landing/LandingNarrativa';
+import { CENAS } from '../../data/landing-narrativa';
 
 describe('LandingNarrativa', () => {
   it('tem as 5 cenas da narrativa', () => {

@@ -2,10 +2,19 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
-import logoLockup from '../../assets/logos/pulsar-lockup-escuro.svg';
+import { useTheme } from '../../hooks/useTheme';
+import lockupEscuro from '../../assets/logos/pulsar-lockup-escuro.svg';
+import lockupClaro from '../../assets/logos/pulsar-lockup-claro.svg';
 import MapaCena from './MapaCena';
 
 export default function LandingHero() {
+  // O lockup traz a cor no próprio SVG (escuro = texto #dff2fe, claro = #024a70),
+  // então precisa acompanhar o tema; fixo no escuro ele some no fundo claro.
+  // Os dois ficam abaixo do limite de inline do Vite e viram `data:` URI, então
+  // não caem na armadilha de asset importado de `src/` quebrando no SSG.
+  const { theme } = useTheme();
+  const logoLockup = theme === 'light' ? lockupClaro : lockupEscuro;
+
   return (
     <header className="landing-section !pt-16 sm:!pt-24 !pb-10 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
       {/* Coluna de texto */}
@@ -59,8 +68,8 @@ export default function LandingHero() {
         </div>
 
         <div className="landing-shot-vetor">
-          {/* compacta: corta a cauda sul (Parelheiros/Marsilac) para o mapa
-              caber na primeira dobra; a narrativa abaixo usa o mapa cheio. */}
+          {/* compacta: recorta a base do mapa e a dissolve num fade, para caber
+              na primeira dobra; a narrativa abaixo usa o mapa cheio. */}
           <MapaCena cena="risco" compacta />
         </div>
       </motion.div>

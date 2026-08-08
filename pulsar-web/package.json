@@ -14,9 +14,11 @@
     "mapa:svg": "node scripts/gerar-mapa-svg.mjs"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@tailwindcss/vite": "^4.3.0",
     "@unhead/react": "^3.1.7",
     "axios": "^1.16.1",
+    "gsap": "^3.15.0",
     "leaflet": "^1.9.4",
     "lottie-react": "^2.4.1",
     "lucide-react": "^1.16.0",

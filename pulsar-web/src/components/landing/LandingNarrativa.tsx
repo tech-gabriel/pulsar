@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import MapaCena from './MapaCena';
 import { CENAS } from '../../data/landing-narrativa';
+import { useNarrativaScroll } from '../../hooks/useNarrativaScroll';
 
 /**
  * Narrativa do mapa. Este componente é o estado degradado por definição: as
@@ -8,8 +10,11 @@ import { CENAS } from '../../data/landing-narrativa';
  * `prefers-reduced-motion`. Se o GSAP nunca carregar, é isto que fica no ar.
  */
 export default function LandingNarrativa() {
+  const ref = useRef<HTMLElement | null>(null);
+  useNarrativaScroll(ref);
+
   return (
-    <section className="landing-narrativa" data-narrativa>
+    <section ref={ref} className="landing-narrativa" data-narrativa>
       {CENAS.map((cena) => {
         const tituloId = `landing-narrativa-titulo-${cena.id}`;
         return (

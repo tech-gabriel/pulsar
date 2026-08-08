@@ -59,7 +59,9 @@ export default function LandingHero() {
         </div>
 
         <div className="landing-shot-vetor">
-          <MapaCena cena="risco" />
+          {/* compacta: corta a cauda sul (Parelheiros/Marsilac) para o mapa
+              caber na primeira dobra; a narrativa abaixo usa o mapa cheio. */}
+          <MapaCena cena="risco" compacta />
         </div>
       </motion.div>
     </header>

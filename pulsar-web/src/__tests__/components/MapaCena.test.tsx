@@ -44,4 +44,18 @@ describe('MapaCena', () => {
     const { container } = render(<MapaCena cena="risco" />);
     expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   });
+
+  it('por padrão usa o viewBox cheio (comportamento da narrativa preservado)', () => {
+    const { container } = render(<MapaCena cena="risco" />);
+    expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 1000 1542.3');
+  });
+
+  it('com "compacta" recorta a cauda sul sem remover subprefeituras do SVG', () => {
+    const { container } = render(<MapaCena cena="risco" compacta />);
+    const svg = container.querySelector('svg');
+    expect(svg).toHaveAttribute('viewBox', '0 0 1000 920');
+    expect(container.querySelectorAll('path[data-subprefeitura]')).toHaveLength(
+      SUBPREFEITURAS.length,
+    );
+  });
 });

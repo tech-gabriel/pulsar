@@ -37,14 +37,23 @@ describe('useNarrativaScroll', () => {
   });
 
   it('mantém data-animada indefinido se o import do gsap for rejeitado', async () => {
-    vi.doMock('gsap', () => {
+    // Espiona a factory do mock: precisa provar que o import foi *tentado e
+    // rejeitado*, não só que nada aconteceu (o que passaria com um hook vazio).
+    const fabricaDoMockGsap = vi.fn(() => {
       throw new Error('falha ao carregar o gsap');
     });
+    vi.doMock('gsap', fabricaDoMockGsap);
     vi.doMock('gsap/ScrollTrigger', () => ({ ScrollTrigger: { refresh: vi.fn() } }));
 
     const { useNarrativaScroll } = await import('../../hooks/useNarrativaScroll');
 
     const el = document.createElement('section');
+    // Filho [data-cena] presente para distinguir este cenário do caso
+    // degenerado: sem a rejeição do import, o callback do mm.add chegaria
+    // até aqui e teria cenas pra marcar.
+    const cena = document.createElement('article');
+    cena.dataset.cena = 'acender';
+    el.appendChild(cena);
     document.body.appendChild(el);
 
     renderHook(() => {
@@ -54,8 +63,9 @@ describe('useNarrativaScroll', () => {
     });
 
     await waitFor(() => {
-      expect(el.dataset.animada).toBeUndefined();
+      expect(fabricaDoMockGsap).toHaveBeenCalled();
     });
+    expect(el.dataset.animada).toBeUndefined();
 
     el.remove();
   });
@@ -151,6 +161,89 @@ describe('useNarrativaScroll', () => {
       expect(el.dataset.animada).toBeUndefined();
     });
     expect(revert).toHaveBeenCalled();
+
+    el.remove();
+  });
+
+  it('monta a timeline sem buracos entre as cenas e com uma parada final antes do pin soltar', async () => {
+    type Chamada = {
+      metodo: 'fromTo' | 'to';
+      alvo: unknown;
+      vars: { duration?: number };
+      posicao: unknown;
+    };
+    const chamadas: Chamada[] = [];
+
+    const add = vi.fn((_query: string, callback: () => void | (() => void)) => {
+      callback();
+    });
+
+    vi.doMock('gsap', () => ({
+      gsap: {
+        registerPlugin: vi.fn(),
+        matchMedia: vi.fn(() => ({ add, revert: vi.fn() })),
+        timeline: vi.fn(() => {
+          const tween = {
+            fromTo: vi.fn((alvo: unknown, _de: unknown, vars: Chamada['vars'], posicao: unknown) => {
+              chamadas.push({ metodo: 'fromTo', alvo, vars, posicao });
+              return tween;
+            }),
+            to: vi.fn((alvo: unknown, vars: Chamada['vars'], posicao: unknown) => {
+              chamadas.push({ metodo: 'to', alvo, vars, posicao });
+              return tween;
+            }),
+          };
+          return tween;
+        }),
+      },
+    }));
+    vi.doMock('gsap/ScrollTrigger', () => ({ ScrollTrigger: { refresh: vi.fn() } }));
+
+    const { useNarrativaScroll } = await import('../../hooks/useNarrativaScroll');
+
+    const el = document.createElement('section');
+    const cenas = ['acender', 'risco', 'score', 'alagamento', 'alerta'].map((id) => {
+      const cena = document.createElement('article');
+      cena.dataset.cena = id;
+      el.appendChild(cena);
+      return cena;
+    });
+    document.body.appendChild(el);
+
+    renderHook(() => {
+      const ref = useRef<HTMLElement | null>(el);
+      useNarrativaScroll(ref);
+      return ref;
+    });
+
+    await waitFor(() => {
+      expect(el.dataset.animada).toBe('true');
+    });
+
+    // 5 cenas: 4 entradas (fromTo), 4 saídas (to num elemento de cena) e 1
+    // parada final (to num alvo vazio, sem posição própria) = 9 chamadas.
+    expect(chamadas).toHaveLength(9);
+
+    const entradas = chamadas.filter((c) => c.metodo === 'fromTo');
+    const saidas = chamadas.filter((c) => c.metodo === 'to' && cenas.includes(c.alvo as HTMLElement));
+    const parada = chamadas[chamadas.length - 1];
+
+    // Toda entrada começa exatamente onde a tween anterior termina: '>' sem
+    // offset. É essa consistência que fecha as janelas do scroll sem
+    // nenhuma cena visível (achado da review).
+    expect(entradas).toHaveLength(4);
+    expect(entradas.every((c) => c.posicao === '>')).toBe(true);
+
+    // Toda saída espera a mesma pausa (0.6s) depois da entrada terminar.
+    expect(saidas).toHaveLength(4);
+    expect(saidas.every((c) => c.posicao === '>0.6')).toBe(true);
+
+    // A última chamada é a parada final (alvo vazio, não uma cena), com a
+    // mesma duração da pausa (0.6s) que as outras 4 cenas tinham antes de
+    // sumir — é o que dá à cena 5 tempo de tela antes do pin soltar.
+    expect(parada.metodo).toBe('to');
+    expect(cenas).not.toContain(parada.alvo);
+    expect(parada.vars.duration).toBe(0.6);
 
     el.remove();
   });

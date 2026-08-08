@@ -1377,6 +1377,18 @@ html.light *::-webkit-scrollbar-thumb:hover {
 }
 .landing-shot img { display: block; width: 100%; height: auto; }
 
+/* Moldura do mapa vetorial no hero: mesma linguagem glass do .landing-shot,
+   mas com respiro interno em vez de imagem colada na borda (o conteúdo é
+   SVG, não um print). */
+.landing-shot-vetor {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid var(--border-glass-hover);
+  background: var(--bg-glass);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 40px rgba(0, 188, 255, 0.12);
+  padding: 28px;
+}
+
 /* Card genérico de feature/passo/fonte. */
 .landing-card {
   background: var(--bg-glass);

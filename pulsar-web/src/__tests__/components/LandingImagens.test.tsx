@@ -18,18 +18,11 @@ function renderComTema(ui: React.ReactNode, theme: Theme) {
 }
 
 describe('Imagens da landing (public/, não import de src/)', () => {
-  it('hero: mapa escuro/claro em /landing/ conforme o tema', () => {
-    const { rerender } = renderComTema(<LandingHero />, 'dark');
-    let img = screen.getByRole('img', { name: /mapa de risco/i });
-    expect(img).toHaveAttribute('src', '/landing/mapa.jpg');
-
-    rerender(
-      <ThemeContext.Provider value={{ theme: 'light', toggleTheme: () => {} }}>
-        <MemoryRouter><LandingHero /></MemoryRouter>
-      </ThemeContext.Provider>,
-    );
-    img = screen.getByRole('img', { name: /mapa de risco/i });
-    expect(img).toHaveAttribute('src', '/landing/mapa-claro.jpg');
+  it('hero: mapa vetorial das subprefeituras no lugar do print', () => {
+    const { container } = renderComTema(<LandingHero />, 'dark');
+    const paths = container.querySelectorAll('path[data-subprefeitura]');
+    expect(paths.length).toBeGreaterThan(0);
+    expect(container.querySelector('img[src="/landing/mapa.jpg"]')).toBeNull();
   });
 
   it('como funciona: dashboard escuro/claro em /landing/ conforme o tema', () => {

@@ -1647,3 +1647,20 @@ html.light .landing-cta-band {
     gap: 4rem;
   }
 }
+
+/* Estado animado: só quando o hook conseguiu carregar o GSAP e o pin está
+   valendo. Enquanto `data-animada` não existir, vale o empilhado acima. */
+.landing-narrativa[data-animada='true'] {
+  position: relative;
+  min-height: 100vh;
+}
+
+.landing-narrativa[data-animada='true'] .landing-narrativa-cena {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+}
+
+.landing-narrativa[data-animada='true'] .landing-narrativa-cena:not(:first-child) {
+  opacity: 0;
+}

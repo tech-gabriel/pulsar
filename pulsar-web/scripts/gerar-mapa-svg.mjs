@@ -13,8 +13,15 @@ const ENTRADA = resolve(aqui, '../public/subprefeituras_wgs84.geojson');
 const SAIDA = resolve(aqui, '../src/components/landing/mapaPaths.ts');
 
 const LARGURA = 1000;   // largura do viewBox; a altura sai da proporção real
-const TOLERANCIA = 0.0009; // graus. Sobe para simplificar mais, desce para detalhar
 const CASAS = 1;        // casas decimais nas coordenadas de saída
+
+// Tolerância do Douglas-Peucker, em graus brutos: a simplificação roda ANTES
+// da projeção, então ela não aplica o `kx` (cosseno da latitude) usado abaixo.
+// Na prática a tolerância efetiva em x fica ~8% menor que em y (cos(-23,6°) ≈
+// 0,917). Sabido e aceito: nesta escala a anisotropia não é visível, e corrigir
+// obrigaria a regerar `mapaPaths.ts`, que é artefato commitado e já validado.
+// Sobe para simplificar mais, desce para detalhar.
+const TOLERANCIA = 0.0009;
 
 // ── Douglas-Peucker ──────────────────────────────────────────────────────────
 function distPerpendicular([x, y], [x1, y1], [x2, y2]) {

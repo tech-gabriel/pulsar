@@ -3,6 +3,20 @@ import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import { useRef } from 'react';
 
 /**
+ * Substitui `document.fonts` por uma promise que o teste controla e devolve a
+ * função que restaura o valor original. `delete` não serve: a propriedade é
+ * readonly no lib.dom, e o `tsc -b` do build reprova (TS2704).
+ */
+function stubDeFontes(ready: Promise<void>) {
+  const original = Object.getOwnPropertyDescriptor(document, 'fonts');
+  Object.defineProperty(document, 'fonts', { configurable: true, value: { ready } });
+  return () => {
+    if (original) Object.defineProperty(document, 'fonts', original);
+    else Reflect.deleteProperty(document, 'fonts');
+  };
+}
+
+/**
  * O hook importa `gsap`/`gsap/ScrollTrigger` dinamicamente dentro do
  * `useEffect`, então cada teste que precisa controlar o comportamento do
  * GSAP usa `vi.doMock` + `vi.resetModules()` + `import()` dinâmico do hook,
@@ -162,6 +176,110 @@ describe('useNarrativaScroll', () => {
     });
     expect(revert).toHaveBeenCalled();
 
+    el.remove();
+  });
+
+  it('remede o pin quando as fontes ficam prontas, sem depender do evento load', async () => {
+    // Regressão: isso já foi um listener de `load`, que é inerte aqui. Quando
+    // o import dinâmico do GSAP resolve (e em qualquer navegação SPA para a
+    // landing), `load` já disparou, então o refresh nunca acontecia e o pin
+    // ficava medido contra a métrica de fonte errada.
+    const refresh = vi.fn();
+    const registerPlugin = vi.fn();
+    let liberarFontes: () => void = () => {};
+    const fontesProntas = new Promise<void>((resolve) => {
+      liberarFontes = resolve;
+    });
+    const restaurarFontes = stubDeFontes(fontesProntas);
+
+    const adicionarListener = vi.spyOn(window, 'addEventListener');
+
+    vi.doMock('gsap', () => ({
+      gsap: {
+        registerPlugin,
+        matchMedia: vi.fn(() => ({ add: vi.fn(), revert: vi.fn() })),
+      },
+    }));
+    vi.doMock('gsap/ScrollTrigger', () => ({ ScrollTrigger: { refresh } }));
+
+    const { useNarrativaScroll } = await import('../../hooks/useNarrativaScroll');
+
+    const el = document.createElement('section');
+    document.body.appendChild(el);
+
+    renderHook(() => {
+      const ref = useRef<HTMLElement | null>(el);
+      useNarrativaScroll(ref);
+      return ref;
+    });
+
+    // `registerPlugin` prova que o import dinâmico já resolveu; sem esta
+    // espera, os asserts abaixo passariam mesmo se o hook não fizesse nada.
+    await waitFor(() => {
+      expect(registerPlugin).toHaveBeenCalled();
+    });
+
+    // Import resolvido e fontes ainda pendentes: nada de refresh, e nenhum
+    // listener de `load` (que nunca dispararia neste ponto).
+    expect(refresh).not.toHaveBeenCalled();
+    expect(
+      adicionarListener.mock.calls.some(([evento]) => evento === 'load'),
+    ).toBe(false);
+
+    liberarFontes();
+    await waitFor(() => {
+      expect(refresh).toHaveBeenCalled();
+    });
+
+    adicionarListener.mockRestore();
+    restaurarFontes();
+    el.remove();
+  });
+
+  it('não remede o pin se o componente desmontar antes das fontes ficarem prontas', async () => {
+    const refresh = vi.fn();
+    const registerPlugin = vi.fn();
+    let liberarFontes: () => void = () => {};
+    const fontesProntas = new Promise<void>((resolve) => {
+      liberarFontes = resolve;
+    });
+    const restaurarFontes = stubDeFontes(fontesProntas);
+
+    vi.doMock('gsap', () => ({
+      gsap: {
+        registerPlugin,
+        matchMedia: vi.fn(() => ({ add: vi.fn(), revert: vi.fn() })),
+      },
+    }));
+    vi.doMock('gsap/ScrollTrigger', () => ({ ScrollTrigger: { refresh } }));
+
+    const { useNarrativaScroll } = await import('../../hooks/useNarrativaScroll');
+
+    const el = document.createElement('section');
+    document.body.appendChild(el);
+
+    const { unmount } = renderHook(() => {
+      const ref = useRef<HTMLElement | null>(el);
+      useNarrativaScroll(ref);
+      return ref;
+    });
+
+    // Só desmonta depois do import ter resolvido: senão o refresh nunca seria
+    // agendado e o teste passaria sem exercitar o cancelamento.
+    await waitFor(() => {
+      expect(registerPlugin).toHaveBeenCalled();
+    });
+
+    unmount();
+    liberarFontes();
+    await fontesProntas;
+    // Uma volta a mais na microtask queue, para o `.then()` do hook rodar
+    // caso o cancelamento não estivesse funcionando.
+    await Promise.resolve();
+
+    expect(refresh).not.toHaveBeenCalled();
+
+    restaurarFontes();
     el.remove();
   });
 

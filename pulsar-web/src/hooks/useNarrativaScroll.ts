@@ -45,17 +45,29 @@ export function useNarrativaScroll(ref: React.RefObject<HTMLElement | null>) {
 
         const mm = gsap.matchMedia();
 
-        // Imagens e fontes mudam altura depois da hidratação; sem o refresh o
-        // pin mede errado e a narrativa fica deslocada.
-        const aoCarregar = () => ScrollTrigger.refresh();
-        window.addEventListener('load', aoCarregar);
+        // As fontes web mudam a altura do texto depois da hidratação, e o pin
+        // fica deslocado se for medido antes disso. Não dá para pendurar no
+        // evento `load`: quando este import dinâmico resolve, e em qualquer
+        // navegação SPA para cá, `load` já disparou e o listener nunca
+        // rodaria. `document.fonts.ready` cobre os dois caminhos, porque já
+        // vem resolvida quando as fontes terminaram. (O mapa é SVG inline;
+        // não há raster para esperar.)
+        let refreshCancelado = false;
+        const fontesProntas = document.fonts?.ready ?? Promise.resolve();
+        fontesProntas
+          .then(() => {
+            if (!refreshCancelado && !cancelado) ScrollTrigger.refresh();
+          })
+          .catch(() => {
+            /* medir com a métrica antiga é melhor do que não medir */
+          });
 
         // Atribuído antes do `mm.add`: se o callback abaixo lançar depois de
         // já ter setado `data-animada`, o catch precisa conseguir chamar
-        // `mm.revert()` (e tirar o listener de load) mesmo sem o `mm.add`
+        // `mm.revert()` (e cancelar o refresh pendente) mesmo sem o `mm.add`
         // ter terminado de rodar.
         limpar = () => {
-          window.removeEventListener('load', aoCarregar);
+          refreshCancelado = true;
           mm.revert();
         };
 

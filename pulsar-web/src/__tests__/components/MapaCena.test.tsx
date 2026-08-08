@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import MapaCena from '../../components/landing/MapaCena';
-import { SUBPREFEITURAS } from '../../components/landing/mapaPaths';
+import MapaCena, { VIEWBOX_COMPACTO } from '../../components/landing/MapaCena';
+import { SUBPREFEITURAS, VIEWBOX } from '../../components/landing/mapaPaths';
 
 describe('MapaCena', () => {
   it('desenha as 32 subprefeituras em qualquer cena', () => {
@@ -47,15 +47,61 @@ describe('MapaCena', () => {
 
   it('por padrão usa o viewBox cheio (comportamento da narrativa preservado)', () => {
     const { container } = render(<MapaCena cena="risco" />);
-    expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 1000 1542.3');
+    expect(container.querySelector('svg')).toHaveAttribute('viewBox', VIEWBOX);
+    // Sem `compacta` nada é mascarado: a narrativa em tela cheia mostra o mapa inteiro.
+    expect(container.querySelector('[data-mascarado]')).toBeNull();
+    expect(container.querySelector('mask')).toBeNull();
   });
 
-  it('com "compacta" recorta a cauda sul sem remover subprefeituras do SVG', () => {
+  it('o recorte compacto herda a largura do viewBox gerado', () => {
+    // Trava o acoplamento com `npm run mapa:svg`: se o gerador mudar `LARGURA`,
+    // o recorte do hero acompanha em vez de renderizar numa escala errada.
+    const [, , larguraCheia] = VIEWBOX.split(' ');
+    const [, , larguraCompacta, alturaCompacta] = VIEWBOX_COMPACTO.split(' ');
+    expect(larguraCompacta).toBe(larguraCheia);
+    expect(Number(alturaCompacta)).toBeLessThan(Number(VIEWBOX.split(' ')[3]));
+  });
+
+  it('com "compacta" recorta a base sem remover subprefeituras do SVG', () => {
     const { container } = render(<MapaCena cena="risco" compacta />);
     const svg = container.querySelector('svg');
-    expect(svg).toHaveAttribute('viewBox', '0 0 1000 920');
+    expect(svg).toHaveAttribute('viewBox', VIEWBOX_COMPACTO);
     expect(container.querySelectorAll('path[data-subprefeitura]')).toHaveLength(
       SUBPREFEITURAS.length,
     );
+  });
+
+  it('com "compacta" dissolve a base para a linha de corte não ficar chapada', () => {
+    // O corte em 920 atravessa Capela do Socorro e M'Boi Mirim (não existe linha
+    // limpa acima de 1542), então a borda reta precisa sumir num fade.
+    const { container } = render(<MapaCena cena="risco" compacta />);
+    const grupo = container.querySelector('g[data-mascarado="true"]');
+    expect(grupo).not.toBeNull();
+
+    const mascara = container.querySelector('mask');
+    expect(mascara).not.toBeNull();
+    expect(grupo?.getAttribute('mask')).toBe(`url(#${mascara?.id})`);
+
+    // O gradiente referenciado pela máscara existe e termina transparente.
+    const gradiente = container.querySelector('linearGradient');
+    expect(mascara?.querySelector('rect')?.getAttribute('fill')).toBe(
+      `url(#${gradiente?.id})`,
+    );
+    const paradas = gradiente?.querySelectorAll('stop');
+    expect(paradas?.[paradas.length - 1].getAttribute('stop-opacity')).toBe('0');
+  });
+
+  it('dois mapas na mesma página não colidem de id de máscara', () => {
+    const { container } = render(
+      <>
+        <MapaCena cena="risco" compacta />
+        <MapaCena cena="risco" compacta />
+      </>,
+    );
+    const ids = [...container.querySelectorAll('mask')].map((m) => m.id);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
+    // E cada id precisa ser referenciável por `url(#...)` (sem `:` ou `«»` do useId).
+    for (const id of ids) expect(id).toMatch(/^[a-zA-Z0-9-]+$/);
   });
 });

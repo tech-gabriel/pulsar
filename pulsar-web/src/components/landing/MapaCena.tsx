@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { SUBPREFEITURAS, VIEWBOX } from './mapaPaths';
 import { PALETA, comAlfa } from '../../utils/paleta';
@@ -5,15 +6,30 @@ import { PALETA, comAlfa } from '../../utils/paleta';
 export type CenaId = 'acender' | 'risco' | 'score' | 'alagamento' | 'alerta';
 
 /**
- * Recorte do viewBox usado só no hero (`compacta`). O viewBox cheio
- * (`VIEWBOX`) é bem vertical porque São Paulo tem a cauda longa de
- * Parelheiros/Marsilac ao sul (até y=1542.3); numa coluna estreita isso
- * produz um SVG alto demais e empurra o CTA do hero para fora da primeira
- * dobra. O recorte corta essa cauda (mantém 0 a 920, o suficiente para Sé,
- * o foco da narrativa a partir da cena 3) sem tocar nos paths nem no
- * viewBox usado na narrativa em tela cheia.
+ * Altura do recorte usado só no hero (`compacta`). O viewBox cheio (`VIEWBOX`)
+ * é bem vertical porque São Paulo desce até y=1542.3 na ponta de Parelheiros;
+ * numa coluna estreita isso produz um SVG alto demais e empurra o CTA do hero
+ * para fora da primeira dobra.
+ *
+ * Não existe linha de corte "limpa": qualquer y entre 903 e 1542 atravessa
+ * Parelheiros, e abaixo de 1173 também atravessa Capela do Socorro. Em 920 o
+ * corte deixa Capela do Socorro em 45% e M'Boi Mirim em 90%, então a base do
+ * mapa é dissolvida por uma máscara (ver `INICIO_FADE`) para a borda reta
+ * não ficar legível.
  */
-const VIEWBOX_COMPACTO = '0 0 1000 920';
+const ALTURA_COMPACTA = 920;
+
+/** Largura do viewBox gerado (`0 0 <largura> <altura>`), para o recorte acompanhar `npm run mapa:svg`. */
+const LARGURA_VIEWBOX = VIEWBOX.split(' ')[2];
+
+export const VIEWBOX_COMPACTO = `0 0 ${LARGURA_VIEWBOX} ${ALTURA_COMPACTA}`;
+
+/**
+ * Onde o fade da base começa, em fração da altura do recorte. De 0.80 a 1.0
+ * dá ~18% de dissolvência, o bastante para a linha de corte sumir sem comer
+ * a mancha urbana que interessa (Sé fica em y~500).
+ */
+const INICIO_FADE = 0.8;
 
 /** Subprefeitura que a narrativa foca a partir da cena 3. */
 const FOCO_ID = 'se';
@@ -51,10 +67,10 @@ interface Props {
   cena: CenaId;
   className?: string;
   /**
-   * Recorta a cauda sul do mapa (ver `VIEWBOX_COMPACTO`). Default `false`
-   * preserva o comportamento existente (viewBox cheio) para a narrativa.
-   * Usado só pelo hero, onde a coluna é estreita e o mapa vertical cheio
-   * empurrava o CTA para fora da primeira dobra.
+   * Recorta a base do mapa e a dissolve num fade (ver `ALTURA_COMPACTA`).
+   * Default `false` preserva o comportamento existente (viewBox cheio) para
+   * a narrativa. Usado só pelo hero, onde a coluna é estreita e o mapa
+   * vertical cheio empurrava o CTA para fora da primeira dobra.
    */
   compacta?: boolean;
 }
@@ -70,45 +86,74 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
   const mostraFoco = cena === 'score' || cena === 'alagamento' || cena === 'alerta';
   const mostraAlagamento = cena === 'alagamento' || cena === 'alerta';
 
+  // `useId` traz caracteres que não valem como id de fragmento; sobram letras e
+  // dígitos para o `url(#...)` continuar resolvendo com dois mapas na mesma página.
+  const idBase = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const idFade = `mapa-fade-${idBase}`;
+  const idMascara = `mapa-mascara-${idBase}`;
+
   return (
     <div className={`relative ${className ?? ''}`}>
       <svg viewBox={compacta ? VIEWBOX_COMPACTO : VIEWBOX} aria-hidden="true" className="w-full h-auto">
-        {SUBPREFEITURAS.map((s, i) => {
-          const faixa = faixaDe(i);
-          const emFoco = mostraFoco && s.id === FOCO_ID;
-          const cor = mostraRisco ? COR_FAIXA[faixa] : PALETA.neutro;
-          // Fora de foco o mapa recua para o número em foco poder brilhar.
-          const alfa = mostraFoco && !emFoco ? 0.16 : mostraRisco ? 0.55 : 0.1;
+        {compacta && (
+          <defs>
+            <linearGradient id={idFade} x1="0" y1="0" x2="0" y2="1">
+              <stop offset={INICIO_FADE} stopColor="#fff" stopOpacity="1" />
+              <stop offset="1" stopColor="#fff" stopOpacity="0" />
+            </linearGradient>
+            <mask id={idMascara}>
+              <rect
+                x="0"
+                y="0"
+                width={LARGURA_VIEWBOX}
+                height={ALTURA_COMPACTA}
+                fill={`url(#${idFade})`}
+              />
+            </mask>
+          </defs>
+        )}
 
-          return (
-            <path
-              key={s.id}
-              d={s.d}
-              data-subprefeitura={s.id}
-              data-risco={mostraRisco ? faixa : undefined}
-              data-foco={emFoco ? 'true' : undefined}
-              fill={comAlfa(cor, alfa)}
-              stroke={comAlfa(cor, emFoco ? 1 : 0.4)}
-              strokeWidth={emFoco ? 3 : 1}
-            >
-              <title>{s.nome}</title>
-            </path>
-          );
-        })}
+        <g
+          data-mascarado={compacta ? 'true' : undefined}
+          mask={compacta ? `url(#${idMascara})` : undefined}
+        >
+          {SUBPREFEITURAS.map((s, i) => {
+            const faixa = faixaDe(i);
+            const emFoco = mostraFoco && s.id === FOCO_ID;
+            const cor = mostraRisco ? COR_FAIXA[faixa] : PALETA.neutro;
+            // Fora de foco o mapa recua para o número em foco poder brilhar.
+            const alfa = mostraFoco && !emFoco ? 0.16 : mostraRisco ? 0.55 : 0.1;
 
-        {mostraAlagamento &&
-          PONTOS_ALAGAMENTO.map((p) => (
-            <circle
-              key={`${p.cx}-${p.cy}`}
-              cx={p.cx}
-              cy={p.cy}
-              r={9}
-              data-alagamento="true"
-              fill={comAlfa(PALETA.azul, 0.9)}
-              stroke={comAlfa(PALETA.azulProfundo, 1)}
-              strokeWidth={2}
-            />
-          ))}
+            return (
+              <path
+                key={s.id}
+                d={s.d}
+                data-subprefeitura={s.id}
+                data-risco={mostraRisco ? faixa : undefined}
+                data-foco={emFoco ? 'true' : undefined}
+                fill={comAlfa(cor, alfa)}
+                stroke={comAlfa(cor, emFoco ? 1 : 0.4)}
+                strokeWidth={emFoco ? 3 : 1}
+              >
+                <title>{s.nome}</title>
+              </path>
+            );
+          })}
+
+          {mostraAlagamento &&
+            PONTOS_ALAGAMENTO.map((p) => (
+              <circle
+                key={`${p.cx}-${p.cy}`}
+                cx={p.cx}
+                cy={p.cy}
+                r={9}
+                data-alagamento="true"
+                fill={comAlfa(PALETA.azul, 0.9)}
+                stroke={comAlfa(PALETA.azulProfundo, 1)}
+                strokeWidth={2}
+              />
+            ))}
+        </g>
       </svg>
 
       {cena === 'score' && (

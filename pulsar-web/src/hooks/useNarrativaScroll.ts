@@ -113,6 +113,9 @@ export function useNarrativaScroll(ref: React.RefObject<HTMLElement | null>) {
           };
         });
       } catch {
+        // Sob StrictMode (mount, cleanup, mount), a instância cancelada não
+        // pode mexer no estado da instância nova que já pode estar rodando.
+        if (cancelado) return;
         // Nenhuma falha pode deixar o CSS colapsado sem timeline por cima.
         delete el.dataset.animada;
         limpar?.();

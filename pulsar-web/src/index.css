@@ -732,6 +732,13 @@ html.light .score-ring-valor {
 }
 
 /* Fundo das páginas de auth com grid pattern sutil (ETAPA 5.3) */
+/* ATENÇÃO: não adicionar `transform`, `filter`, `perspective`, `backdrop-filter`
+   nem `will-change` aqui. Qualquer um deles faz este elemento virar containing
+   block para descendentes `position: fixed`, e o pin do ScrollTrigger na
+   narrativa da landing (ver useNarrativaScroll.ts) usa `fixed`: a narrativa
+   passaria a ser clipada por este `overflow: hidden` em vez de prender na
+   viewport. `overflow: hidden` sozinho não cria containing block, por isso o
+   que está aqui hoje funciona. */
 .auth-bg {
   position: relative;
   background: var(--bg-primary);

@@ -31,6 +31,21 @@ describe('Imagens da landing (public/, não import de src/)', () => {
     expect(img).toHaveAttribute('src', '/landing/dashboard.jpg');
   });
 
+  it('hero: o lockup acompanha o tema (o escuro some no fundo claro)', () => {
+    // O SVG do lockup traz a cor dentro dele: o escuro escreve "PULSAR" em
+    // #dff2fe, que fica ilegível sobre o fundo claro. Regressão de contraste.
+    const escuro = renderComTema(<LandingHero />, 'dark');
+    const srcEscuro = escuro.container.querySelector('img[alt="Pulsar"]')?.getAttribute('src');
+    escuro.unmount();
+
+    const claro = renderComTema(<LandingHero />, 'light');
+    const srcClaro = claro.container.querySelector('img[alt="Pulsar"]')?.getAttribute('src');
+
+    expect(srcEscuro).toBeTruthy();
+    expect(srcClaro).toBeTruthy();
+    expect(srcClaro).not.toBe(srcEscuro);
+  });
+
   it('nenhuma imagem da landing aponta para caminho de source (/src/assets)', () => {
     renderComTema(<><LandingHero /><LandingComoFunciona /></>, 'dark');
     for (const img of screen.getAllByRole('img')) {

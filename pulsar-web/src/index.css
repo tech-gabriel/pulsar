@@ -1610,3 +1610,26 @@ html.light .landing-cta-band {
 ::view-transition-old(root) {
   z-index: 0;
 }
+
+/* ── Narrativa do mapa (landing) ──────────────────────────────────────────────
+   Estado padrão = degradado: cenas empilhadas, todas visíveis. O GSAP aplica
+   pin e scrub por cima disso (useNarrativaScroll). Se ele não carregar, ou se
+   o usuário pedir menos movimento, é este layout que fica. */
+.landing-narrativa-cena {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  padding: 4rem 0;
+}
+
+.landing-narrativa-mapa {
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 1024px) {
+  .landing-narrativa-cena {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+}

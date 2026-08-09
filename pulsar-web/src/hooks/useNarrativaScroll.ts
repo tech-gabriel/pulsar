@@ -98,16 +98,22 @@ export function useNarrativaScroll(ref: React.RefObject<HTMLElement | null>) {
           const DURACAO_TRANSICAO = 0.5;
           const PAUSA = 0.6;
 
-          // Cada cena entra e sai; a primeira já começa visível. Posição
-          // sempre relativa ao fim da animação anterior (`'>'` ou `'>PAUSA'`)
-          // para nunca deixar uma janela do scroll sem nenhuma cena visível.
+          // Cada cena entra e sai; a primeira já começa visível.
+          //
+          // A entrada é posicionada em `'<'` (início da tween anterior, que é
+          // sempre a saída da cena de cima), e não em `'>'`. Com `'>'` a saída
+          // e a entrada ficavam estritamente consecutivas: no ponto de troca as
+          // duas cenas estavam em `autoAlpha: 0` e a viewport fixada ficava
+          // vazia. Eram ~14vh de tela quase em branco por transição, 57vh no
+          // total, 11% da narrativa. Em `'<'` as duas animam juntas e a soma
+          // dos alfas fica perto de 1 o tempo todo (crossfade de verdade).
           cenas.forEach((cena, i) => {
             if (i > 0) {
               tl.fromTo(
                 cena,
                 { autoAlpha: 0, y: 40 },
                 { autoAlpha: 1, y: 0, duration: DURACAO_TRANSICAO },
-                '>',
+                '<',
               );
             }
             if (i < cenas.length - 1) {

@@ -3,17 +3,17 @@ import { ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import { useTheme } from '../../hooks/useTheme';
-import logoLockup from '../../assets/logos/pulsar-lockup-escuro.svg';
-
-// Prints do produto servidos de `public/` (URL estável, sem hash). Assets
-// importados de `src/` são resolvidos com caminho de source cru no HTML
-// prerenderizado pelo SSG (viram 404 em produção), então ficam em `public/`.
-const MAPA_ESCURO = '/landing/mapa.jpg';
-const MAPA_CLARO = '/landing/mapa-claro.jpg';
+import lockupEscuro from '../../assets/logos/pulsar-lockup-escuro.svg';
+import lockupClaro from '../../assets/logos/pulsar-lockup-claro.svg';
+import MapaCena from './MapaCena';
 
 export default function LandingHero() {
+  // O lockup traz a cor no próprio SVG (escuro = texto #dff2fe, claro = #024a70),
+  // então precisa acompanhar o tema; fixo no escuro ele some no fundo claro.
+  // Os dois ficam abaixo do limite de inline do Vite e viram `data:` URI, então
+  // não caem na armadilha de asset importado de `src/` quebrando no SSG.
   const { theme } = useTheme();
-  const mapa = theme === 'light' ? MAPA_CLARO : MAPA_ESCURO;
+  const logoLockup = theme === 'light' ? lockupClaro : lockupEscuro;
 
   return (
     <header className="landing-section !pt-16 sm:!pt-24 !pb-10 grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
@@ -53,7 +53,7 @@ export default function LandingHero() {
         </div>
       </motion.div>
 
-      {/* Coluna visual: print do produto (mapa) com radar decorativo */}
+      {/* Coluna visual: mapa vetorial de São Paulo com radar decorativo */}
       <motion.div
         className="relative"
         initial={{ opacity: 0, scale: 0.96 }}
@@ -67,8 +67,10 @@ export default function LandingHero() {
           <span className="auth-radar-core" />
         </div>
 
-        <div className="landing-shot">
-          <img src={mapa} alt="Mapa de risco do Pulsar: Score de Perigo por subprefeitura de São Paulo" />
+        <div className="landing-shot-vetor">
+          {/* compacta: recorta a base do mapa e a dissolve num fade, para caber
+              na primeira dobra; a narrativa abaixo usa o mapa cheio. */}
+          <MapaCena cena="risco" compacta />
         </div>
       </motion.div>
     </header>

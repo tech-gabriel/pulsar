@@ -18,24 +18,32 @@ function renderComTema(ui: React.ReactNode, theme: Theme) {
 }
 
 describe('Imagens da landing (public/, não import de src/)', () => {
-  it('hero: mapa escuro/claro em /landing/ conforme o tema', () => {
-    const { rerender } = renderComTema(<LandingHero />, 'dark');
-    let img = screen.getByRole('img', { name: /mapa de risco/i });
-    expect(img).toHaveAttribute('src', '/landing/mapa.jpg');
-
-    rerender(
-      <ThemeContext.Provider value={{ theme: 'light', toggleTheme: () => {} }}>
-        <MemoryRouter><LandingHero /></MemoryRouter>
-      </ThemeContext.Provider>,
-    );
-    img = screen.getByRole('img', { name: /mapa de risco/i });
-    expect(img).toHaveAttribute('src', '/landing/mapa-claro.jpg');
+  it('hero: mapa vetorial das subprefeituras no lugar do print', () => {
+    const { container } = renderComTema(<LandingHero />, 'dark');
+    const paths = container.querySelectorAll('path[data-subprefeitura]');
+    expect(paths.length).toBeGreaterThan(0);
+    expect(container.querySelector('img[src="/landing/mapa.jpg"]')).toBeNull();
   });
 
   it('como funciona: dashboard escuro/claro em /landing/ conforme o tema', () => {
     renderComTema(<LandingComoFunciona />, 'dark');
     const img = screen.getByRole('img', { name: /painel do pulsar/i });
     expect(img).toHaveAttribute('src', '/landing/dashboard.jpg');
+  });
+
+  it('hero: o lockup acompanha o tema (o escuro some no fundo claro)', () => {
+    // O SVG do lockup traz a cor dentro dele: o escuro escreve "PULSAR" em
+    // #dff2fe, que fica ilegível sobre o fundo claro. Regressão de contraste.
+    const escuro = renderComTema(<LandingHero />, 'dark');
+    const srcEscuro = escuro.container.querySelector('img[alt="Pulsar"]')?.getAttribute('src');
+    escuro.unmount();
+
+    const claro = renderComTema(<LandingHero />, 'light');
+    const srcClaro = claro.container.querySelector('img[alt="Pulsar"]')?.getAttribute('src');
+
+    expect(srcEscuro).toBeTruthy();
+    expect(srcClaro).toBeTruthy();
+    expect(srcClaro).not.toBe(srcEscuro);
   });
 
   it('nenhuma imagem da landing aponta para caminho de source (/src/assets)', () => {

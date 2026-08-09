@@ -346,15 +346,58 @@ describe('useNarrativaScroll', () => {
     const saidas = chamadas.filter((c) => c.metodo === 'to' && cenas.includes(c.alvo as HTMLElement));
     const parada = chamadas[chamadas.length - 1];
 
-    // Toda entrada começa exatamente onde a tween anterior termina: '>' sem
-    // offset. É essa consistência que fecha as janelas do scroll sem
-    // nenhuma cena visível (achado da review).
+    // Toda entrada começa junto com a saída da cena de cima ('<'), formando
+    // um crossfade. Com '>' as duas ficavam consecutivas e havia um instante
+    // com as duas em autoAlpha 0.
     expect(entradas).toHaveLength(4);
-    expect(entradas.every((c) => c.posicao === '>')).toBe(true);
+    expect(entradas.every((c) => c.posicao === '<')).toBe(true);
 
     // Toda saída espera a mesma pausa (0.6s) depois da entrada terminar.
     expect(saidas).toHaveLength(4);
     expect(saidas.every((c) => c.posicao === '>0.6')).toBe(true);
+
+    // Asserir as strings de posição não basta: elas já foram '>' e o teste
+    // passava enquanto a tela ficava em branco em 11% do scroll. Aqui a
+    // timeline é reconstruída e o alfa de cada cena é simulado, para provar
+    // que em nenhum instante todas as cenas estão apagadas ao mesmo tempo.
+    const DUR = 0.5;
+    const PAUSA_ESPERADA = 0.6;
+    type Evento = { tipo: 'entra' | 'sai'; cena: number; ini: number; fim: number };
+    const eventos: Evento[] = [];
+    let fim = 0;
+    let iniAnterior = 0;
+    for (let i = 0; i < cenas.length; i++) {
+      if (i > 0) {
+        // posição '<': começa junto com a tween anterior.
+        eventos.push({ tipo: 'entra', cena: i, ini: iniAnterior, fim: iniAnterior + DUR });
+        fim = Math.max(fim, iniAnterior + DUR);
+      }
+      if (i < cenas.length - 1) {
+        const ini = fim + PAUSA_ESPERADA;
+        eventos.push({ tipo: 'sai', cena: i, ini, fim: ini + DUR });
+        iniAnterior = ini;
+        fim = ini + DUR;
+      }
+    }
+
+    const alfa = (cena: number, t: number) => {
+      let a = cena === 0 ? 1 : 0;
+      for (const e of eventos) {
+        if (e.cena !== cena) continue;
+        const p = Math.min(1, Math.max(0, (t - e.ini) / (e.fim - e.ini)));
+        a = e.tipo === 'entra' ? p : Math.min(a, 1 - p);
+      }
+      return a;
+    };
+
+    const total = fim + PAUSA_ESPERADA;
+    let alfaMaximoMaisBaixo = 1;
+    for (let t = 0; t <= total; t += 0.01) {
+      const maiorAlfa = Math.max(...cenas.map((_, c) => alfa(c, t)));
+      alfaMaximoMaisBaixo = Math.min(alfaMaximoMaisBaixo, maiorAlfa);
+    }
+    // Sempre há uma cena com pelo menos metade da opacidade na tela.
+    expect(alfaMaximoMaisBaixo).toBeGreaterThanOrEqual(0.5);
 
     // A última chamada é a parada final (alvo vazio, não uma cena), com a
     // mesma duração da pausa (0.6s) que as outras 4 cenas tinham antes de

@@ -19,8 +19,8 @@ export type CenaId = 'acender' | 'risco' | 'score' | 'alagamento' | 'alerta';
  */
 const ALTURA_COMPACTA = 920;
 
-/** Largura do viewBox gerado (`0 0 <largura> <altura>`), para o recorte acompanhar `npm run mapa:svg`. */
-const LARGURA_VIEWBOX = VIEWBOX.split(' ')[2];
+/** Dimensões do viewBox gerado (`0 0 <largura> <altura>`), para tudo aqui acompanhar `npm run mapa:svg`. */
+const [, , LARGURA_VIEWBOX, ALTURA_VIEWBOX] = VIEWBOX.split(' ');
 
 export const VIEWBOX_COMPACTO = `0 0 ${LARGURA_VIEWBOX} ${ALTURA_COMPACTA}`;
 
@@ -34,6 +34,36 @@ const INICIO_FADE = 0.8;
 /** Subprefeitura que a narrativa foca a partir da cena 3. */
 const FOCO_ID = 'se';
 const SCORE_FOCO = 72;
+
+/**
+ * Centro do bounding box de um `d`, em coordenadas do viewBox. Os paths
+ * gerados só usam `M`/`L`/`Z`, então os números saem sempre em pares x,y.
+ */
+function centroDoPath(d: string) {
+  const n = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  const xs = n.filter((_, i) => i % 2 === 0);
+  const ys = n.filter((_, i) => i % 2 === 1);
+  return {
+    x: (Math.min(...xs) + Math.max(...xs)) / 2,
+    y: (Math.min(...ys) + Math.max(...ys)) / 2,
+  };
+}
+
+/**
+ * Posição do número da cena `score`, em % da caixa do SVG. Precisa sair do
+ * polígono em foco: centralizar no container jogava o "72" ~320 unidades
+ * abaixo da Sé, sobre Jabaquara/Santo Amaro, sem encostar na região que ele
+ * rotula. Derivado do path para continuar certo se o mapa for regerado.
+ */
+const CENTRO_FOCO = (() => {
+  const foco = SUBPREFEITURAS.find((s) => s.id === FOCO_ID);
+  if (!foco) return { x: 50, y: 50 };
+  const c = centroDoPath(foco.d);
+  return {
+    x: (c.x / Number(LARGURA_VIEWBOX)) * 100,
+    y: (c.y / Number(ALTURA_VIEWBOX)) * 100,
+  };
+})();
 
 /**
  * Faixa de risco ilustrativa por subprefeitura. Determinística (não aleatória)
@@ -118,8 +148,12 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
           mask={compacta ? `url(#${idMascara})` : undefined}
         >
           {SUBPREFEITURAS.map((s, i) => {
-            const faixa = faixaDe(i);
             const emFoco = mostraFoco && s.id === FOCO_ID;
+            // Na cena 5 o texto e o badge dizem "risco alto"; a faixa
+            // determinística da Sé é 'moderado', então sem esta exceção o
+            // alerta vermelho apontava para um polígono amarelo.
+            const emAlerta = emFoco && cena === 'alerta';
+            const faixa = emAlerta ? 'alto' : faixaDe(i);
             const cor = mostraRisco ? COR_FAIXA[faixa] : PALETA.neutro;
             // Fora de foco o mapa recua para o número em foco poder brilhar.
             const alfa = mostraFoco && !emFoco ? 0.16 : mostraRisco ? 0.55 : 0.1;
@@ -157,13 +191,16 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
       </svg>
 
       {cena === 'score' && (
-        <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          aria-hidden="true"
-        >
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <span
-            className="text-6xl font-bold"
-            style={{ color: PALETA.amarelo, fontFamily: 'var(--font-heading)' }}
+            className="absolute text-6xl font-bold"
+            style={{
+              left: `${CENTRO_FOCO.x}%`,
+              top: `${CENTRO_FOCO.y}%`,
+              transform: 'translate(-50%, -50%)',
+              color: PALETA.amarelo,
+              fontFamily: 'var(--font-heading)',
+            }}
           >
             {SCORE_FOCO}
           </span>

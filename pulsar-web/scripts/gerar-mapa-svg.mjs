@@ -65,6 +65,21 @@ function slug(nome) {
 const geo = JSON.parse(readFileSync(ENTRADA, 'utf8'));
 const feicoes = geo.features;
 
+// Todo o script assume `Polygon` de anel único (`coordinates[0]` é o anel
+// externo). Hoje as 32 feições do GeoSampa são assim. Se um export futuro
+// trouxer `MultiPolygon` (plausível para Capela do Socorro, com as ilhas das
+// represas), `[lon, lat]` desestruturaria um anel em vez de um par e o
+// resultado seria um `mapaPaths.ts` cheio de NaN, sem erro nenhum. Falhar
+// alto é melhor do que gerar mapa quebrado.
+for (const f of feicoes) {
+  if (f.geometry.type !== 'Polygon') {
+    throw new Error(
+      `Feição "${f.properties?.nm_subprefeitura}" é ${f.geometry.type}, e este script só trata Polygon. ` +
+        'Trate os anéis extras antes de gerar.',
+    );
+  }
+}
+
 // Extremos para projetar. O anel externo é o índice 0 de cada Polygon.
 let lonMin = Infinity, lonMax = -Infinity, latMin = Infinity, latMax = -Infinity;
 for (const f of feicoes) {

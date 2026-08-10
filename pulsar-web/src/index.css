@@ -1738,3 +1738,39 @@ html.light .landing-cta-band {
     transform: none;
   }
 }
+
+[data-mapa-cena] [data-temperatura],
+[data-mapa-cena] [data-rotulo-foco] {
+  opacity: 0;
+  transition:
+    opacity 400ms ease,
+    transform 400ms ease;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translateY(6px);
+}
+
+/* Temperatura só na cena 2: é ela que fala em clima variando de bairro para
+   bairro. Nas outras o número competiria com o score e com os pontos. */
+[data-mapa-cena='risco'] [data-temperatura] {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: calc(var(--i, 0) * 60ms);
+}
+
+/* O rótulo da Sé acompanha o foco, que começa na cena 3. */
+[data-mapa-cena='score'] [data-rotulo-foco],
+[data-mapa-cena='alagamento'] [data-rotulo-foco],
+[data-mapa-cena='alerta'] [data-rotulo-foco] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-mapa-cena] [data-temperatura],
+  [data-mapa-cena] [data-rotulo-foco] {
+    transition-duration: 0ms;
+    transition-delay: 0ms;
+    transform: none;
+  }
+}

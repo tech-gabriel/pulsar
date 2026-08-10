@@ -197,4 +197,37 @@ describe('MapaCena', () => {
       expect(container.querySelector('[role="status"]')).toBeNull();
     });
   });
+
+  describe('rótulos de texto sobre o mapa', () => {
+    it('tem 5 rótulos de temperatura, sempre no DOM', () => {
+      for (const cena of ['acender', 'risco', 'alerta'] as const) {
+        const { container, unmount } = render(<MapaCena cena={cena} />);
+        expect(container.querySelectorAll('[data-temperatura]')).toHaveLength(5);
+        unmount();
+      }
+    });
+
+    it('o rótulo da Sé existe e nomeia a região em foco', () => {
+      const { container } = render(<MapaCena cena="score" />);
+      const rotulo = container.querySelector('[data-rotulo-foco]');
+      expect(rotulo).toBeInTheDocument();
+      expect(rotulo).toHaveTextContent('Sé');
+    });
+
+    // Texto sobre o mapa é texto, não leitura do mapa: segue os tokens de tema
+    // e por isso continua legível quando o tema padrão virar claro. Polígono e
+    // círculo é que saem da paleta.ts.
+    it('os rótulos usam tokens de tema, não a paleta do mapa', () => {
+      const { container } = render(<MapaCena cena="risco" />);
+      for (const el of container.querySelectorAll('[data-temperatura], [data-rotulo-foco]')) {
+        expect(el.getAttribute('fill')).toBe('var(--text-primary)');
+        expect(el.getAttribute('stroke')).toBe('var(--bg-primary)');
+      }
+    });
+
+    it('o mapa compacto do hero não mostra rótulo de temperatura', () => {
+      const { container } = render(<MapaCena cena="risco" compacta />);
+      expect(container.querySelectorAll('[data-temperatura]')).toHaveLength(0);
+    });
+  });
 });

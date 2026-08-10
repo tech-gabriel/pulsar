@@ -1774,3 +1774,62 @@ html.light .landing-cta-band {
     transform: none;
   }
 }
+
+/* ── Movimento por cena ───────────────────────────────────────────────────────
+   A onda pende de `data-vista`, e não do mount, porque a narrativa fica abaixo
+   do hero: pendurada no mount ela tocaria no carregamento da página, com o
+   usuário ainda sem ter chegado na seção. */
+@keyframes landing-acender {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.landing-narrativa[data-vista='true'] [data-subprefeitura] {
+  animation: landing-acender 400ms ease both;
+  animation-delay: calc(var(--i) * 15ms);
+}
+
+/* Pulso finito: 2 ciclos e para. Infinito num elemento sticky, que fica parado
+   na tela enquanto o usuário lê, vira ruído em vez de ênfase. */
+@keyframes landing-pulso-alerta {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+[data-mapa-cena='alerta'] [data-foco='true'] {
+  animation: landing-pulso-alerta 900ms ease-in-out 2;
+}
+
+@keyframes landing-badge-entrada {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* O badge monta condicionalmente (role="status"), então a entrada pode ser
+   keyframes no mount em vez de transição. */
+[data-mapa-cena='alerta'] [role='status'] {
+  animation: landing-badge-entrada 400ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-narrativa[data-vista='true'] [data-subprefeitura],
+  [data-mapa-cena='alerta'] [data-foco='true'],
+  [data-mapa-cena='alerta'] [role='status'] {
+    animation: none;
+  }
+}

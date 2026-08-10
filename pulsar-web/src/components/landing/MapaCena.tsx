@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { SUBPREFEITURAS, VIEWBOX } from './mapaPaths';
 import { PALETA, comAlfa } from '../../utils/paleta';
@@ -151,6 +151,57 @@ const PONTOS_ALAGAMENTO = [
   { cx: 497, cy: 470 },
 ];
 
+/** Duração da contagem do score, em ms. */
+const DURACAO_CONTAGEM = 800;
+
+/**
+ * Conta de 0 até `alvo` enquanto `ativo`. É o único JS de animação que sobra na
+ * narrativa: o resto é transição de CSS. Vale o custo porque um número que
+ * sobe lê como medição acontecendo, e um número parado lê como imagem.
+ *
+ * Com `prefers-reduced-motion` mostra o valor final direto, sem quadro
+ * intermediário.
+ *
+ * `ativo` e a preferência de movimento já são conhecidos de forma síncrona no
+ * render (não vêm de um sistema externo), então os casos "parado" (0) e
+ * "direto" (`alvo`) são só uma leitura derivada no fim da função — sem
+ * `setState` nenhum, então não corre atrás do quadro em que o efeito ainda
+ * não rodou (é o que faz "mostra 72 direto" não precisar esperar nenhum
+ * quadro). Só o loop de `requestAnimationFrame` de fato anima, e o cleanup
+ * zera `valor` ao desativar: sem isso, reentrar na cena mostraria por um
+ * quadro o número final da vez anterior antes de recomeçar do zero.
+ */
+function useContagem(alvo: number, ativo: boolean) {
+  const [valor, setValor] = useState(0);
+  const reduzido =
+    typeof window !== 'undefined' &&
+    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  useEffect(() => {
+    if (!ativo || reduzido) return;
+
+    let quadro = 0;
+    const inicio = performance.now();
+
+    const passo = (agora: number) => {
+      const progresso = Math.min(1, (agora - inicio) / DURACAO_CONTAGEM);
+      // easeOutCubic: sobe rápido e assenta, que é como um medidor se comporta.
+      setValor(Math.round(alvo * (1 - Math.pow(1 - progresso, 3))));
+      if (progresso < 1) quadro = requestAnimationFrame(passo);
+    };
+    quadro = requestAnimationFrame(passo);
+
+    return () => {
+      cancelAnimationFrame(quadro);
+      setValor(0);
+    };
+  }, [alvo, ativo, reduzido]);
+
+  if (!ativo) return 0;
+  if (reduzido) return alvo;
+  return valor;
+}
+
 interface Props {
   cena: CenaId;
   className?: string;
@@ -172,6 +223,7 @@ interface Props {
 export default function MapaCena({ cena, className, compacta = false }: Props) {
   const mostraRisco = cena !== 'acender';
   const mostraFoco = cena === 'score' || cena === 'alagamento' || cena === 'alerta';
+  const score = useContagem(SCORE_FOCO, cena === 'score');
 
   // `useId` traz caracteres que não valem como id de fragmento; sobram letras e
   // dígitos para o `url(#...)` continuar resolvendo com dois mapas na mesma página.
@@ -310,9 +362,8 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
               região, que ficam sempre no DOM porque persistem por várias
               cenas): o score é pontual, a cena 4 já muda o assunto para os
               pontos de alagamento.
-              `SCORE_FOCO` é estático por ora; a Task 5 troca por uma
-              contagem animada de 0 a 72 — o valor renderizado aqui é o
-              único ponto que precisa mudar para isso. */}
+              O valor renderizado é `score` (ver `useContagem`), que conta de
+              0 até `SCORE_FOCO` enquanto a cena está ativa. */}
           {cena === 'score' && (
             <text
               x={CENTRO_FOCO.x}
@@ -324,7 +375,7 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
               fill={PALETA.amarelo}
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              {SCORE_FOCO}
+              {score}
             </text>
           )}
         </g>

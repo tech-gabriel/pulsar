@@ -1,7 +1,25 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import MapaCena, { VIEWBOX_COMPACTO } from '../../components/landing/MapaCena';
 import { SUBPREFEITURAS, VIEWBOX } from '../../components/landing/mapaPaths';
+
+/**
+ * O jsdom deste projeto não implementa `matchMedia` (só `requestAnimationFrame`
+ * ganha polyfill do Vitest), e a contagem do score (Task 5) consulta
+ * `prefers-reduced-motion` no efeito. Sem este stub, qualquer teste que
+ * renderiza a cena "score" cai na chamada de `matchMedia` indefinido e a
+ * contagem nunca sai de 0. Testes que não são sobre a animação em si pedem
+ * `matches: true` para o número aparecer no mesmo tick, sem depender de rAF
+ * em tempo real.
+ */
+function stubMenosMovimento() {
+  vi.stubGlobal('matchMedia', (q: string) => ({
+    matches: q.includes('reduce'),
+    media: q,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
+}
 
 describe('MapaCena', () => {
   it('desenha as 32 subprefeituras em qualquer cena', () => {
@@ -25,9 +43,15 @@ describe('MapaCena', () => {
   });
 
   it('na cena "score" destaca uma subprefeitura e mostra o número', () => {
+    // A contagem do score (Task 5) só chega em 72 direto quando a pessoa
+    // pediu menos movimento; sem o stub, este teste dependeria do tempo real
+    // da animação (800ms) para o número aparecer, o que não é o que ele
+    // quer verificar (isso é coberto por "contagem do score" abaixo).
+    stubMenosMovimento();
     const { container } = render(<MapaCena cena="score" />);
     expect(container.querySelectorAll('path[data-foco="true"]')).toHaveLength(1);
     expect(screen.getByText('72')).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 
   it('na cena "score" o número fica sobre a subprefeitura em foco', () => {
@@ -36,6 +60,7 @@ describe('MapaCena', () => {
     // Jabaquara/Santo Amaro, sem encostar na região que ele rotula. Depois
     // disso o número virou <text> no viewBox (mesmo sistema do resto do
     // mapa), então a asserção compara em unidades do viewBox, não em %.
+    stubMenosMovimento();
     const { container } = render(<MapaCena cena="score" />);
     const numero = screen.getByText('72');
     const foco = container.querySelector<SVGPathElement>('path[data-foco="true"]');
@@ -50,6 +75,7 @@ describe('MapaCena', () => {
     // polígono, não de uma constante solta.
     expect(parseFloat(numero.getAttribute('x')!)).toBeCloseTo(centroX, 0);
     expect(parseFloat(numero.getAttribute('y')!)).toBeCloseTo(centroY, 0);
+    vi.unstubAllGlobals();
   });
 
   it('na cena "alerta" a subprefeitura em foco fica em risco alto', () => {
@@ -227,6 +253,37 @@ describe('MapaCena', () => {
     it('o mapa compacto do hero não mostra rótulo de temperatura', () => {
       const { container } = render(<MapaCena cena="risco" compacta />);
       expect(container.querySelectorAll('[data-temperatura]')).toHaveLength(0);
+    });
+  });
+
+  describe('contagem do score', () => {
+    it('mostra 72 direto quando o usuário pede menos movimento', () => {
+      vi.stubGlobal('matchMedia', (q: string) => ({
+        matches: q.includes('reduce'),
+        media: q,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }));
+      render(<MapaCena cena="score" />);
+      expect(screen.getByText('72')).toBeInTheDocument();
+      vi.unstubAllGlobals();
+    });
+
+    it('termina em 72 depois da animação', async () => {
+      vi.stubGlobal('matchMedia', (q: string) => ({
+        matches: false,
+        media: q,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }));
+      render(<MapaCena cena="score" />);
+      expect(await screen.findByText('72', {}, { timeout: 5000 })).toBeInTheDocument();
+      vi.unstubAllGlobals();
+    });
+
+    it('não conta fora da cena do score', () => {
+      const { container } = render(<MapaCena cena="risco" />);
+      expect(container.textContent).not.toContain('72');
     });
   });
 });

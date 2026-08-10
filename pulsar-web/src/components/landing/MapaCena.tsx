@@ -19,8 +19,8 @@ export type CenaId = 'acender' | 'risco' | 'score' | 'alagamento' | 'alerta';
  */
 const ALTURA_COMPACTA = 920;
 
-/** Dimensões do viewBox gerado (`0 0 <largura> <altura>`), para tudo aqui acompanhar `npm run mapa:svg`. */
-const [, , LARGURA_VIEWBOX, ALTURA_VIEWBOX] = VIEWBOX.split(' ');
+/** Largura do viewBox gerado (`0 0 <largura> <altura>`), para tudo aqui acompanhar `npm run mapa:svg`. */
+const [, , LARGURA_VIEWBOX] = VIEWBOX.split(' ');
 
 export const VIEWBOX_COMPACTO = `0 0 ${LARGURA_VIEWBOX} ${ALTURA_COMPACTA}`;
 
@@ -58,20 +58,31 @@ function centroDoPath(d: string) {
 }
 
 /**
- * Posição do número da cena `score`, em % da caixa do SVG. Precisa sair do
- * polígono em foco: centralizar no container jogava o "72" ~320 unidades
- * abaixo da Sé, sobre Jabaquara/Santo Amaro, sem encostar na região que ele
- * rotula. Derivado do path para continuar certo se o mapa for regerado.
+ * Centro, em coordenadas do viewBox, da subprefeitura em foco. Compartilhado
+ * pelo número do score e pelo rótulo da região (ver `ANCORA_FOCO`): antes
+ * cada um fazia a própria busca em `SUBPREFEITURAS` + `centroDoPath` para
+ * chegar num sistema de unidades diferente (o score em %, o rótulo em
+ * unidades do viewBox), e foi exatamente essa divergência de unidades que
+ * deixou o rótulo colidir com o número em telas estreitas — a % do score não
+ * encolhia junto com o `fontSize` fixo do rótulo. Com os dois em unidades do
+ * viewBox, escalam juntos por construção.
  */
 const CENTRO_FOCO = (() => {
   const foco = SUBPREFEITURAS.find((s) => s.id === FOCO_ID);
-  if (!foco) return { x: 50, y: 50 };
-  const c = centroDoPath(foco.d);
-  return {
-    x: (c.x / Number(LARGURA_VIEWBOX)) * 100,
-    y: (c.y / Number(ALTURA_VIEWBOX)) * 100,
-  };
+  return foco ? centroDoPath(foco.d) : { x: 0, y: 0 };
 })();
+
+/**
+ * Tamanho do número do score, em unidades do viewBox (mesmo sistema do
+ * `fontSize` dos outros rótulos: 52 na temperatura, 40 no rótulo da região).
+ * Escolhido para manter a proporção que o antigo `text-6xl` do HTML tinha na
+ * largura de coluna do desktop: a `.landing-narrativa` tem `max-width:
+ * 1120px` com `gap: 4rem` (64px) entre as duas colunas de 1fr, então cada
+ * coluna sai em ~528px — escala de 528 / 1000 (LARGURA_VIEWBOX) ≈ 0.528px
+ * por unidade. 112 unidades × 0.528 ≈ 59px, equivalente ao `text-6xl` (60px)
+ * que o HTML usava.
+ */
+const TAMANHO_SCORE = 112;
 
 /**
  * Faixa de risco ilustrativa por subprefeitura. Determinística (não aleatória)
@@ -119,16 +130,17 @@ const TEMPERATURAS = ROTULOS_TEMPERATURA.flatMap(({ id, valor }) => {
 });
 
 /**
- * Onde ancorar o rótulo da região em foco, em coordenadas do viewBox. Sai um
- * pouco abaixo do centro para não colidir com o número do score, que ocupa o
- * centro exato do mesmo polígono.
+ * Onde ancorar o rótulo da região em foco, em coordenadas do viewBox. Sai
+ * abaixo do centro para não colidir com o número do score, que ocupa o
+ * centro exato do mesmo polígono (`CENTRO_FOCO`). O deslocamento soma metade
+ * do `fontSize` de cada texto (teto conservador para a altura da caixa de um
+ * dígito/palavra, já que a altura real da fonte renderizada é menor) mais um
+ * respiro de 12 unidades: 112/2 (score) + 12 (respiro) + 40/2 (rótulo) = 88.
+ * Como os três números estão em unidades do viewBox, a folga se mantém em
+ * qualquer largura de tela — diferente da versão anterior, que media o score
+ * em % do container e o rótulo em unidades do viewBox.
  */
-const ANCORA_FOCO = (() => {
-  const foco = SUBPREFEITURAS.find((s) => s.id === FOCO_ID);
-  if (!foco) return { x: 0, y: 0 };
-  const c = centroDoPath(foco.d);
-  return { x: c.x, y: c.y + 78 };
-})();
+const ANCORA_FOCO = { x: CENTRO_FOCO.x, y: CENTRO_FOCO.y + 88 };
 
 /** Pontos de alagamento ilustrativos, em coordenadas do viewBox. */
 const PONTOS_ALAGAMENTO = [
@@ -287,25 +299,36 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
               {NOME_FOCO}
             </text>
           )}
+
+          {/* Score entra na cena 3 junto com o foco. Vive no mesmo viewBox
+              dos outros rótulos (não mais um <span> em HTML por cima do
+              SVG): era exatamente a mistura de unidades — o número em % do
+              container, o rótulo da Sé em unidades do viewBox — que fazia a
+              folga entre os dois encolher mais rápido que a fonte fixa do
+              rótulo numa coluna estreita, até colidir. Continua montando só
+              na cena 'score' (diferente da temperatura e do rótulo da
+              região, que ficam sempre no DOM porque persistem por várias
+              cenas): o score é pontual, a cena 4 já muda o assunto para os
+              pontos de alagamento.
+              `SCORE_FOCO` é estático por ora; a Task 5 troca por uma
+              contagem animada de 0 a 72 — o valor renderizado aqui é o
+              único ponto que precisa mudar para isso. */}
+          {cena === 'score' && (
+            <text
+              x={CENTRO_FOCO.x}
+              y={CENTRO_FOCO.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={TAMANHO_SCORE}
+              fontWeight={700}
+              fill={PALETA.amarelo}
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              {SCORE_FOCO}
+            </text>
+          )}
         </g>
       </svg>
-
-      {cena === 'score' && (
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <span
-            className="absolute text-6xl font-bold"
-            style={{
-              left: `${CENTRO_FOCO.x}%`,
-              top: `${CENTRO_FOCO.y}%`,
-              transform: 'translate(-50%, -50%)',
-              color: PALETA.amarelo,
-              fontFamily: 'var(--font-heading)',
-            }}
-          >
-            {SCORE_FOCO}
-          </span>
-        </div>
-      )}
 
       {cena === 'alerta' && (
         <div

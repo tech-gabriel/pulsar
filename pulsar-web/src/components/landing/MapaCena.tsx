@@ -114,7 +114,6 @@ interface Props {
 export default function MapaCena({ cena, className, compacta = false }: Props) {
   const mostraRisco = cena !== 'acender';
   const mostraFoco = cena === 'score' || cena === 'alagamento' || cena === 'alerta';
-  const mostraAlagamento = cena === 'alagamento' || cena === 'alerta';
 
   // `useId` traz caracteres que não valem como id de fragmento; sobram letras e
   // dígitos para o `url(#...)` continuar resolvendo com dois mapas na mesma página.
@@ -123,7 +122,7 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
   const idMascara = `mapa-mascara-${idBase}`;
 
   return (
-    <div className={`relative ${className ?? ''}`}>
+    <div className={`relative ${className ?? ''}`} data-mapa-cena={cena}>
       <svg viewBox={compacta ? VIEWBOX_COMPACTO : VIEWBOX} aria-hidden="true" className="w-full h-auto">
         {compacta && (
           <defs>
@@ -165,6 +164,7 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
                 data-subprefeitura={s.id}
                 data-risco={mostraRisco ? faixa : undefined}
                 data-foco={emFoco ? 'true' : undefined}
+                style={{ '--i': i } as React.CSSProperties}
                 fill={comAlfa(cor, alfa)}
                 stroke={comAlfa(cor, emFoco ? 1 : 0.4)}
                 strokeWidth={emFoco ? 3 : 1}
@@ -174,19 +174,22 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
             );
           })}
 
-          {mostraAlagamento &&
-            PONTOS_ALAGAMENTO.map((p) => (
-              <circle
-                key={`${p.cx}-${p.cy}`}
-                cx={p.cx}
-                cy={p.cy}
-                r={9}
-                data-alagamento="true"
-                fill={comAlfa(PALETA.azul, 0.9)}
-                stroke={comAlfa(PALETA.azulProfundo, 1)}
-                strokeWidth={2}
-              />
-            ))}
+          {/* Sempre no DOM: montar e desmontar não transiciona, e a troca de
+              cena precisa ser interpolável para sobreviver a scroll rápido.
+              Quem controla a visibilidade é o CSS, por `data-mapa-cena`. */}
+          {PONTOS_ALAGAMENTO.map((p, i) => (
+            <circle
+              key={`${p.cx}-${p.cy}`}
+              cx={p.cx}
+              cy={p.cy}
+              r={9}
+              data-alagamento="true"
+              style={{ '--i': i } as React.CSSProperties}
+              fill={comAlfa(PALETA.azul, 0.9)}
+              stroke={comAlfa(PALETA.azulProfundo, 1)}
+              strokeWidth={2}
+            />
+          ))}
         </g>
       </svg>
 

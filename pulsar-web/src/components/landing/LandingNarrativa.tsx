@@ -27,7 +27,7 @@ export default function LandingNarrativa() {
       data-narrativa
       data-vista={vista ? 'true' : undefined}
     >
-      <div className="landing-narrativa-mapa" data-mapa-cena={cenaAtiva}>
+      <div className="landing-narrativa-mapa">
         <MapaCena cena={cenaAtiva} />
       </div>
 

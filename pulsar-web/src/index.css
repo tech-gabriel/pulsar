@@ -1809,14 +1809,22 @@ html.light .landing-cta-band {
   animation: landing-pulso-alerta 900ms ease-in-out 2;
 }
 
+/* O badge usa a utilidade `-translate-x-1/2` do Tailwind v4, que compila para
+   a propriedade `translate` isolada (não `transform` — é o modelo do v4,
+   diferente do v3). `translate` e `transform` compõem em vez de um substituir
+   o outro (CSS Transforms Level 2), então o keyframe precisa animar a mesma
+   propriedade `translate` para *sobrescrever* a centralização do Tailwind em
+   vez de somar um `-50%` a mais em cima dela — daí repetir `-50%` nos dois
+   extremos, para restabelecer a centralização horizontal que o keyframe
+   assumiu por sobrescrita. */
 @keyframes landing-badge-entrada {
   from {
     opacity: 0;
-    transform: translate(-50%, 10px);
+    translate: -50% 10px;
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    translate: -50% 0;
   }
 }
 

@@ -1631,12 +1631,14 @@ html.light .landing-cta-band {
 }
 
 /* ── Narrativa do mapa (landing) ──────────────────────────────────────────────
-   Estado padrão = degradado: cenas empilhadas, todas visíveis. O GSAP aplica
-   pin e scrub por cima disso (useNarrativaScroll). Se ele não carregar, ou se
-   o usuário pedir menos movimento, é este layout que fica.
-   Mesmo container horizontal de `.landing-section` (max-width + gutter): a
-   seção em si não tinha nenhuma regra própria, então no mobile o texto
-   colava na borda e no desktop ficava mais larga que as seções vizinhas. */
+   Mapa sticky numa coluna, textos rolando na outra. Nada aqui sequestra o
+   scroll: sem pin, sem altura falsa, e rolar rápido atravessa a seção.
+
+   A cena ativa vem do `useCenaAtiva` e chega ao mapa pela prop `cena`; o CSS
+   reage ao `data-mapa-cena` que o `MapaCena` publica na própria raiz.
+
+   Estado degradado (sem JS): mapa na primeira cena, 5 textos legíveis, e o
+   sticky funcionando, porque é CSS puro. */
 .landing-narrativa {
   max-width: 1120px;
   margin: 0 auto;
@@ -1648,38 +1650,48 @@ html.light .landing-cta-band {
   }
 }
 
+/* ~80vh por cena dá espaço de leitura entre as trocas sem esticar a seção:
+   as 5 somam ~5 telas de scroll normal. */
 .landing-narrativa-cena {
   display: grid;
-  gap: 2rem;
-  align-items: center;
-  padding: 4rem 0;
+  align-content: center;
+  min-height: 80vh;
+  padding: 3rem 0;
 }
 
+/* A caixa sticky tem a altura da viewport e centra o mapa dentro dela. Foi
+   escolhido em vez de `top: 50%` + `translateY(-50%)` porque o navegador
+   calcula a soltura do sticky antes do transform, e o mapa transbordava
+   meia altura para fora da seção no fim do scroll. */
 .landing-narrativa-mapa {
-  max-width: 34rem;
-  margin-inline: auto;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (min-width: 1024px) {
-  .landing-narrativa-cena {
+  .landing-narrativa {
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4rem;
+    align-items: start;
   }
 }
 
-/* Estado animado: só quando o hook conseguiu carregar o GSAP e o pin está
-   valendo. Enquanto `data-animada` não existir, vale o empilhado acima. */
-.landing-narrativa[data-animada='true'] {
-  position: relative;
-  min-height: 100vh;
-}
-
-.landing-narrativa[data-animada='true'] .landing-narrativa-cena {
-  position: absolute;
-  inset: 0;
-  padding: 0;
-}
-
-.landing-narrativa[data-animada='true'] .landing-narrativa-cena:not(:first-child) {
-  opacity: 0;
+/* Mobile: mapa sticky no topo, em altura reduzida, com o texto passando por
+   baixo. Precisa de fundo opaco e de empilhamento, senão o texto aparece
+   atravessando o mapa. */
+@media (max-width: 1023px) {
+  .landing-narrativa-mapa {
+    height: 45vh;
+    background: var(--bg-primary);
+    z-index: 1;
+    padding-block: 0.5rem;
+  }
+  .landing-narrativa-cena {
+    min-height: 60vh;
+  }
 }

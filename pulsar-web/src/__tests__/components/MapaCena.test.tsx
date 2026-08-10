@@ -142,4 +142,59 @@ describe('MapaCena', () => {
     // E cada id precisa ser referenciável por `url(#...)` (sem `:` ou `«»` do useId).
     for (const id of ids) expect(id).toMatch(/^[a-zA-Z0-9-]+$/);
   });
+
+  // Com as camadas sempre no DOM, teste de presença não prova nada: ele passa
+  // igual se a camada estiver invisível em todas as cenas. A asserção tem que
+  // ser sobre visibilidade. Foi exatamente este buraco que deixou passar a
+  // tela em branco por três rodadas de review na narrativa anterior.
+  describe('camadas sempre no DOM, visibilidade por cena', () => {
+    it('os pontos de alagamento existem em toda cena', () => {
+      for (const cena of ['acender', 'risco', 'score', 'alagamento', 'alerta'] as const) {
+        const { container, unmount } = render(<MapaCena cena={cena} />);
+        expect(container.querySelectorAll('[data-alagamento]').length).toBeGreaterThan(0);
+        unmount();
+      }
+    });
+
+    it('publica a cena na raiz', () => {
+      const { container } = render(<MapaCena cena="score" />);
+      expect(container.querySelector('[data-mapa-cena]')).toHaveAttribute(
+        'data-mapa-cena',
+        'score',
+      );
+    });
+
+    it('cada subprefeitura carrega o seu índice para o stagger da onda', () => {
+      const { container } = render(<MapaCena cena="acender" />);
+      const paths = Array.from(container.querySelectorAll('[data-subprefeitura]'));
+      expect(paths.length).toBeGreaterThan(0);
+      paths.forEach((p, i) => {
+        expect((p as HTMLElement).style.getPropertyValue('--i')).toBe(String(i));
+      });
+    });
+
+    it('cada ponto de alagamento carrega o seu índice para o stagger do pop', () => {
+      const { container } = render(<MapaCena cena="alagamento" />);
+      const pontos = Array.from(container.querySelectorAll('[data-alagamento]'));
+      pontos.forEach((p, i) => {
+        expect((p as HTMLElement).style.getPropertyValue('--i')).toBe(String(i));
+      });
+    });
+
+    // O badge é a exceção deliberada: monta condicionalmente por causa do
+    // `role="status"`. Se ele passar a ficar sempre no DOM, o leitor de tela
+    // anuncia no carregamento e nunca mais.
+    it('o badge de alerta só monta na cena 5', () => {
+      const { queryByRole, unmount } = render(<MapaCena cena="alagamento" />);
+      expect(queryByRole('status')).not.toBeInTheDocument();
+      unmount();
+      render(<MapaCena cena="alerta" />);
+      expect(screen.getByRole('status')).toBeInTheDocument();
+    });
+
+    it('não usa a visibilidade para esconder o badge', () => {
+      const { container } = render(<MapaCena cena="alagamento" />);
+      expect(container.querySelector('[role="status"]')).toBeNull();
+    });
+  });
 });

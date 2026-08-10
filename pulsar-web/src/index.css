@@ -1634,10 +1634,9 @@ html.light .landing-cta-band {
    Mapa sticky numa coluna, textos rolando na outra. Nada aqui sequestra o
    scroll: sem pin, sem altura falsa, e rolar rápido atravessa a seção.
 
-   A cena ativa vem do `useCenaAtiva` e chega ao mapa pela prop `cena`. Por
-   enquanto quem publica `data-mapa-cena` é o wrapper `.landing-narrativa-mapa`
-   (ver `LandingNarrativa.tsx`), não a raiz do `MapaCena`. Se a Task 3 mover o
-   atributo para lá, precisa TIRAR esta cópia do wrapper, não duplicar.
+   A cena ativa vem do `useCenaAtiva` e chega ao mapa pela prop `cena`. Quem
+   publica `data-mapa-cena` é a raiz do `MapaCena` (ver `MapaCena.tsx`), não o
+   wrapper `.landing-narrativa-mapa` — o wrapper só posiciona (sticky).
 
    Estado degradado (sem JS): mapa na primeira cena, 5 textos legíveis, e o
    sticky funcionando, porque é CSS puro. */
@@ -1695,5 +1694,47 @@ html.light .landing-cta-band {
   }
   .landing-narrativa-cena {
     min-height: 60vh;
+  }
+}
+
+/* ── Camadas do mapa, dirigidas pela cena ─────────────────────────────────────
+   Todas as camadas estão sempre no DOM (ver MapaCena.tsx). O que muda por cena
+   é opacidade e cor, então a transição é interpolável e sobrevive a scroll
+   rápido: se a cena troca no meio, o navegador continua do valor corrente. */
+
+[data-mapa-cena] [data-subprefeitura] {
+  transition:
+    fill 500ms ease,
+    stroke 500ms ease,
+    stroke-width 500ms ease;
+}
+
+[data-mapa-cena] [data-alagamento] {
+  opacity: 0;
+  /* Sem `fill-box` o scale usa a origem do SVG inteiro e os pontos entram
+     voando do canto em vez de crescer no lugar. */
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  transition:
+    opacity 350ms ease,
+    transform 350ms cubic-bezier(0.34, 1.3, 0.64, 1);
+  transition-delay: calc(var(--i) * 80ms);
+}
+
+[data-mapa-cena='alagamento'] [data-alagamento],
+[data-mapa-cena='alerta'] [data-alagamento] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-mapa-cena] [data-subprefeitura],
+  [data-mapa-cena] [data-alagamento] {
+    transition-duration: 0ms;
+    transition-delay: 0ms;
+  }
+  [data-mapa-cena] [data-alagamento] {
+    transform: none;
   }
 }

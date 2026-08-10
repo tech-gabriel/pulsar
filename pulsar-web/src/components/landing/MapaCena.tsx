@@ -36,6 +36,14 @@ const FOCO_ID = 'se';
 const SCORE_FOCO = 72;
 
 /**
+ * Nome de exibição da região em foco. Escrito à mão de propósito: os `nome` do
+ * `mapaPaths.ts` vêm gerados do GeoSampa em caixa alta e sem acento ("SE",
+ * "M BOI MIRIM"), o que serve para o `<title>` mas não para um rótulo que o
+ * usuário lê no mapa. Precisa ser atualizado junto com `FOCO_ID`.
+ */
+const NOME_FOCO = 'Sé';
+
+/**
  * Centro do bounding box de um `d`, em coordenadas do viewBox. Os paths
  * gerados só usam `M`/`L`/`Z`, então os números saem sempre em pares x,y.
  */
@@ -83,6 +91,44 @@ const COR_FAIXA: Record<'baixo' | 'moderado' | 'alto', string> = {
   moderado: PALETA.amarelo,
   alto: PALETA.vermelho,
 };
+
+/**
+ * Subprefeituras que recebem rótulo de temperatura na cena `risco`. Um
+ * subconjunto espalhado pelas zonas: as 32 de uma vez viram ruído e o mapa
+ * deixa de ser legível. São essas que sustentam a frase da cena ("o clima muda
+ * de bairro para bairro"), mostrando a diferença entre pontos distantes.
+ */
+const ROTULOS_TEMPERATURA: { id: string; valor: number }[] = [
+  { id: 'se', valor: 31 },
+  { id: 'santana-tucuruvi', valor: 28 },
+  { id: 'cidade-tiradentes', valor: 33 },
+  { id: 'butanta', valor: 27 },
+  { id: 'parelheiros', valor: 24 },
+];
+
+/**
+ * Rótulos já resolvidos em coordenadas do viewBox. Feito uma vez no módulo:
+ * são constantes, não faz sentido recalcular a cada render. Ids que não
+ * existirem no mapa gerado são descartados em silêncio, para o componente não
+ * quebrar se o GeoSampa renomear uma subprefeitura.
+ */
+const TEMPERATURAS = ROTULOS_TEMPERATURA.flatMap(({ id, valor }) => {
+  const sub = SUBPREFEITURAS.find((s) => s.id === id);
+  if (!sub) return [];
+  return [{ id, valor, ...centroDoPath(sub.d) }];
+});
+
+/**
+ * Onde ancorar o rótulo da região em foco, em coordenadas do viewBox. Sai um
+ * pouco abaixo do centro para não colidir com o número do score, que ocupa o
+ * centro exato do mesmo polígono.
+ */
+const ANCORA_FOCO = (() => {
+  const foco = SUBPREFEITURAS.find((s) => s.id === FOCO_ID);
+  if (!foco) return { x: 0, y: 0 };
+  const c = centroDoPath(foco.d);
+  return { x: c.x, y: c.y + 78 };
+})();
 
 /** Pontos de alagamento ilustrativos, em coordenadas do viewBox. */
 const PONTOS_ALAGAMENTO = [
@@ -190,6 +236,57 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
               strokeWidth={2}
             />
           ))}
+
+          {/* Temperatura em `<text>` no próprio viewBox: assim o rótulo
+              acompanha o mapa em qualquer tamanho, sem depender de posição em
+              % do container. Ilustrativo, como as faixas de risco. Sempre no
+              DOM; quem esconde por cena é o CSS. */}
+          {!compacta &&
+            TEMPERATURAS.map((t, i) => (
+              <text
+                key={t.id}
+                x={t.x}
+                y={t.y}
+                data-temperatura={t.id}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={52}
+                fontWeight={600}
+                // Rótulo é texto, não leitura do mapa: segue os tokens de tema
+                // (e por isso continua legível quando o tema virar claro), em
+                // vez de sair da `paleta.ts`, que rege polígonos e círculos.
+                // O halo do `--bg-primary` garante contraste sobre qualquer
+                // faixa de risco embaixo.
+                fill="var(--text-primary)"
+                stroke="var(--bg-primary)"
+                strokeWidth={7}
+                paintOrder="stroke"
+                style={{ fontFamily: 'var(--font-mono)', '--i': i } as React.CSSProperties}
+              >
+                {t.valor}°
+              </text>
+            ))}
+
+          {/* A Sé vira o foco a partir da cena 3, mas nada no mapa dizia onde
+              ela fica. O rótulo entra junto com o foco. */}
+          {!compacta && (
+            <text
+              x={ANCORA_FOCO.x}
+              y={ANCORA_FOCO.y}
+              data-rotulo-foco="true"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={40}
+              fontWeight={600}
+              fill="var(--text-primary)"
+              stroke="var(--bg-primary)"
+              strokeWidth={6}
+              paintOrder="stroke"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              {NOME_FOCO}
+            </text>
+          )}
         </g>
       </svg>
 

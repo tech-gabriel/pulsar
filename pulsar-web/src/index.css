@@ -1634,8 +1634,10 @@ html.light .landing-cta-band {
    Mapa sticky numa coluna, textos rolando na outra. Nada aqui sequestra o
    scroll: sem pin, sem altura falsa, e rolar rápido atravessa a seção.
 
-   A cena ativa vem do `useCenaAtiva` e chega ao mapa pela prop `cena`; o CSS
-   reage ao `data-mapa-cena` que o `MapaCena` publica na própria raiz.
+   A cena ativa vem do `useCenaAtiva` e chega ao mapa pela prop `cena`. Por
+   enquanto quem publica `data-mapa-cena` é o wrapper `.landing-narrativa-mapa`
+   (ver `LandingNarrativa.tsx`), não a raiz do `MapaCena`. Se a Task 3 mover o
+   atributo para lá, precisa TIRAR esta cópia do wrapper, não duplicar.
 
    Estado degradado (sem JS): mapa na primeira cena, 5 textos legíveis, e o
    sticky funcionando, porque é CSS puro. */

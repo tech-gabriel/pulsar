@@ -281,9 +281,58 @@ describe('MapaCena', () => {
       vi.unstubAllGlobals();
     });
 
-    it('não conta fora da cena do score', () => {
+    // Renomeado: este teste só prova que o guard de JSX `{cena === 'score' &&
+    // ...}` esconde o número fora da cena, não que `ativo` (o parâmetro que
+    // `useContagem` recebe) está de fato ligado a isso — os dois testes
+    // abaixo é que provam a wiring de `ativo`.
+    it('o número não aparece fora da cena do score', () => {
       const { container } = render(<MapaCena cena="risco" />);
       expect(container.textContent).not.toContain('72');
+    });
+
+    // Cobre o que `ativo` realmente garante (achado da review de mutação):
+    // fora da cena "score" nenhum quadro de animação é agendado. Sem isto, a
+    // mutação "trocar `ativo` por `true`" não quebrava nenhum teste, porque o
+    // guard de JSX acima já escondia o número por conta própria — o teste
+    // testava a visibilidade, não a wiring do parâmetro.
+    it('não agenda quadros de animação fora da cena do score', () => {
+      const spy = vi.spyOn(window, 'requestAnimationFrame');
+
+      const { unmount } = render(<MapaCena cena="risco" />);
+      expect(spy).not.toHaveBeenCalled();
+      unmount();
+
+      render(<MapaCena cena="score" />);
+      expect(spy).toHaveBeenCalled();
+
+      spy.mockRestore();
+    });
+
+    // A segunda coisa que `ativo` garante: reentrar na cena reinicia a
+    // contagem em vez de saltar direto para o valor final da vez anterior.
+    // `rerender` mantém a mesma instância do componente (o mapa sticky real
+    // nunca desmonta entre cenas), então isto exercita o cleanup do efeito
+    // que zera `valor` ao sair da cena "score".
+    it('reentrar na cena "score" reinicia a contagem em vez de saltar para 72', async () => {
+      vi.stubGlobal('matchMedia', (q: string) => ({
+        matches: false,
+        media: q,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }));
+
+      const { rerender } = render(<MapaCena cena="score" />);
+      await screen.findByText('72', {}, { timeout: 5000 });
+
+      rerender(<MapaCena cena="alagamento" />);
+      rerender(<MapaCena cena="score" />);
+
+      // Reentrada síncrona: o cleanup do efeito já zerou `valor` quando a
+      // cena saiu de "score" (o `rerender` do Testing Library flusha efeitos
+      // via `act`), então o número não pode estar em 72 neste instante.
+      expect(screen.queryByText('72')).not.toBeInTheDocument();
+
+      vi.unstubAllGlobals();
     });
   });
 });

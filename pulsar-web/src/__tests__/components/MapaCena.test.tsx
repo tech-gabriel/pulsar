@@ -31,9 +31,11 @@ describe('MapaCena', () => {
   });
 
   it('na cena "score" o número fica sobre a subprefeitura em foco', () => {
-    // Regressão: o número era centralizado no container (50%/50%), o que o
-    // jogava ~320 unidades do viewBox abaixo da Sé, sobre Jabaquara/Santo
-    // Amaro, sem encostar na região que ele rotula.
+    // Regressão: o número já foi um <span> HTML centralizado no container
+    // (50%/50%), o que o jogava ~320 unidades do viewBox abaixo da Sé, sobre
+    // Jabaquara/Santo Amaro, sem encostar na região que ele rotula. Depois
+    // disso o número virou <text> no viewBox (mesmo sistema do resto do
+    // mapa), então a asserção compara em unidades do viewBox, não em %.
     const { container } = render(<MapaCena cena="score" />);
     const numero = screen.getByText('72');
     const foco = container.querySelector<SVGPathElement>('path[data-foco="true"]');
@@ -41,16 +43,13 @@ describe('MapaCena', () => {
     const nums = foco!.getAttribute('d')!.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
     const xs = nums.filter((_, i) => i % 2 === 0);
     const ys = nums.filter((_, i) => i % 2 === 1);
-    const [, , largura, altura] = VIEWBOX.split(' ').map(Number);
-    const centroX = ((Math.min(...xs) + Math.max(...xs)) / 2 / largura) * 100;
-    const centroY = ((Math.min(...ys) + Math.max(...ys)) / 2 / altura) * 100;
+    const centroX = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const centroY = (Math.min(...ys) + Math.max(...ys)) / 2;
 
-    // Tolerância de 1 ponto percentual: a posição tem que sair do polígono,
-    // não de uma constante solta.
-    expect(parseFloat(numero.style.left)).toBeCloseTo(centroX, 0);
-    expect(parseFloat(numero.style.top)).toBeCloseTo(centroY, 0);
-    // E não pode ser o centro do container.
-    expect(parseFloat(numero.style.top)).toBeLessThan(45);
+    // Tolerância de 1 unidade do viewBox: a posição tem que sair do
+    // polígono, não de uma constante solta.
+    expect(parseFloat(numero.getAttribute('x')!)).toBeCloseTo(centroX, 0);
+    expect(parseFloat(numero.getAttribute('y')!)).toBeCloseTo(centroY, 0);
   });
 
   it('na cena "alerta" a subprefeitura em foco fica em risco alto', () => {

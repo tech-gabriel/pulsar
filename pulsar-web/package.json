@@ -1,7 +1,7 @@
 {
   "name": "pulsar-web",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "snapshot:regioes": "node scripts/gerar-snapshot-regioes.mjs"
+    "snapshot:regioes": "node scripts/gerar-snapshot-regioes.mjs",
+    "mapa:svg": "node scripts/gerar-mapa-svg.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",

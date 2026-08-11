@@ -25,6 +25,31 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.5.0',
+    data: '2026-08-10',
+    resumo: 'A página inicial do Pulsar foi refeita do zero.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Nova página inicial',
+        descricao:
+          'Quem chega no Pulsar agora vê o mapa de São Paulo contar a história: as 32 subprefeituras acendendo, o risco mudando de bairro para bairro, os pontos onde a cidade já alagou e o alerta chegando no celular. O mapa acompanha a leitura enquanto você rola a página.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Página inicial mais leve',
+        descricao:
+          'A animação da página inicial passou a usar recursos nativos do navegador, no lugar de uma biblioteca externa. São 27 KB a menos para baixar, e a rolagem não prende mais a tela.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Menu da página inicial fixo no topo',
+        descricao:
+          'O menu da página inicial deveria acompanhar a rolagem e não estava acompanhando. Agora ele fica sempre à mão, em qualquer ponto da página.',
+      },
+    ],
+  },
+  {
     versao: '1.4.0',
     data: '2026-08-07',
     resumo: 'Agora dá para ver onde São Paulo já alagou, rua por rua.',

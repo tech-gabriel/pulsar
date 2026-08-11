@@ -82,7 +82,7 @@ describe('useCenaAtiva', () => {
     expect(obsCenas().opcoes?.rootMargin).toBe('-50% 0px -50% 0px');
   });
 
-  it('observa os 5 artigos e nunca o mapa', () => {
+  it('observa os artigos de cena da sonda e nunca o mapa', () => {
     render(<Sonda />);
     const observados = obsCenas().alvos.map((a) => (a as HTMLElement).dataset.cena);
     expect(observados).toEqual(['acender', 'risco', 'score']);

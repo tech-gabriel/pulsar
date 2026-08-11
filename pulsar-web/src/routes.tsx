@@ -6,6 +6,7 @@
 import { Navigate, Outlet, type RouteObject } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import RootLayout from './RootLayout';
+import CarregandoRota from './components/CarregandoRota';
 import LandingPage from './pages/LandingPage';
 import SobrePage from './pages/SobrePage';
 import PrivacidadePage from './pages/PrivacidadePage';
@@ -62,9 +63,11 @@ export const routes: RouteObject[] = [
       ...rotasPublicas,
       ...rotasRegiao,
 
-      // Auth (CSR, lazy).
+      // Auth (CSR, lazy). O HydrateFallback cobre a espera do chunk no primeiro
+      // acesso; sem ele a tela fica vazia até o download terminar.
       {
         element: <RotaPublica />,
+        HydrateFallback: CarregandoRota,
         children: [
           { path: 'login', lazy: async () => ({ Component: (await import('./pages/LoginPage')).default }) },
           { path: 'cadastro', lazy: async () => ({ Component: (await import('./pages/CadastroPage')).default }) },
@@ -76,6 +79,7 @@ export const routes: RouteObject[] = [
       // App autenticado (CSR, lazy).
       {
         element: <RotaProtegida />,
+        HydrateFallback: CarregandoRota,
         children: [
           { path: 'app', lazy: async () => ({ Component: (await import('./pages/MapaPage')).default }) },
           { path: 'app/historico', lazy: async () => ({ Component: (await import('./pages/HistoricoListPage')).default }) },
@@ -89,6 +93,7 @@ export const routes: RouteObject[] = [
       // Admin (CSR, lazy) — RotaAdmin já checa auth + role.
       {
         element: <RotaAdmin />,
+        HydrateFallback: CarregandoRota,
         children: [
           { path: 'app/admin/usuarios', lazy: async () => ({ Component: (await import('./pages/admin/UsuariosAdminPage')).default }) },
           { path: 'app/admin/sugestoes', lazy: async () => ({ Component: (await import('./pages/admin/SugestoesAdminPage')).default }) },

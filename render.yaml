@@ -146,7 +146,12 @@ services:
       - type: rewrite
         source: /risco-de-alagamento/zona-sul
         destination: /risco-de-alagamento/zona-sul/index.html
-      # 3) Fallback do roteamento SPA: tudo que não for arquivo real → index.html.
+      # 3) Fallback do roteamento SPA: tudo que não for arquivo real → spa.html.
+      #    NÃO pode ser o index.html: o SSG o sobrescreve com a landing inteira, e
+      #    servi-lo em /login fazia o React encontrar o DOM de outra rota, não
+      #    conseguir reaproveitá-lo e renderizar o formulário ABAIXO da landing.
+      #    O spa.html é o mesmo template com o <div id="app"> vazio, emitido no
+      #    build pelo plugin shellSpa (pulsar-web/vite.config.ts).
       - type: rewrite
         source: /*
-        destination: /index.html
+        destination: /spa.html

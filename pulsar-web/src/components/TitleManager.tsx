@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useHead } from '@unhead/react';
 import { useLocation } from 'react-router-dom';
 
 const MARCA = 'Pulsar';
@@ -36,16 +36,22 @@ function resolverTitulo(pathname: string, state: unknown): string | null {
 }
 
 /**
- * Mantém o título da aba (`document.title`) em sincronia com a rota atual.
- * Renderizado uma vez dentro do Router; não desenha nada.
+ * Mantém o título da aba em sincronia com a rota atual.
+ *
+ * Vai pelo @unhead, e não escrevendo em `document.title`, porque as páginas
+ * públicas definem o título delas por lá (`useSeoHead`). Com dois donos, ao sair
+ * de /termos para /login o unhead reescrevia o head no desmonte da página e
+ * apagava o "Pulsar · Entrar" que este componente tinha acabado de definir.
+ *
+ * Com os dois no unhead a ordem é determinística: este componente fica no
+ * layout, as páginas ficam abaixo dele, e tag de página sobrescreve tag de
+ * layout. Renderizado uma vez dentro do Router; não desenha nada.
  */
 export default function TitleManager() {
   const { pathname, state } = useLocation();
+  const titulo = resolverTitulo(pathname, state);
 
-  useEffect(() => {
-    const titulo = resolverTitulo(pathname, state);
-    document.title = titulo ? `${MARCA} · ${titulo}` : TITULO_PADRAO;
-  }, [pathname, state]);
+  useHead({ title: titulo ? `${MARCA} · ${titulo}` : TITULO_PADRAO });
 
   return null;
 }

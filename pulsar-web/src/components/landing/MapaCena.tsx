@@ -76,11 +76,21 @@ const CENTRO_FOCO = (() => {
  * Tamanho do número do score, em unidades do viewBox (mesmo sistema do
  * `fontSize` dos outros rótulos: 52 na temperatura, 40 no rótulo da região).
  * Escolhido para manter a proporção que o antigo `text-6xl` do HTML tinha na
- * largura de coluna do desktop: a `.landing-narrativa` tem `max-width:
- * 1120px` com `gap: 4rem` (64px) entre as duas colunas de 1fr, então cada
- * coluna sai em ~528px — escala de 528 / 1000 (LARGURA_VIEWBOX) ≈ 0.528px
- * por unidade. 112 unidades × 0.528 ≈ 59px, equivalente ao `text-6xl` (60px)
- * que o HTML usava.
+ * largura de coluna do desktop.
+ *
+ * A conta, medida no navegador (1440×900, `npm run preview`): a
+ * `.landing-narrativa` tem `max-width: 1120px` e `padding-inline: 24px`, então
+ * sobram 1072px; menos o `gap: 4rem` (64px), cada uma das duas colunas de 1fr
+ * fica com **504px** (não 528 — a versão anterior deste comentário esquecia o
+ * padding). Escala = 504 / 1000 (LARGURA_VIEWBOX) ≈ **0.504px por unidade**, e
+ * 112 × 0.504 ≈ **56px**, perto do `text-6xl` (60px) que o HTML usava. Nas
+ * mesmas condições a temperatura sai em ~26px e o rótulo "Sé" em ~20px.
+ *
+ * Numa tela mais baixa a escala cai junto, porque o mapa passa a ser limitado
+ * pela altura da caixa sticky (ver `.landing-narrativa-mapa` no index.css): em
+ * 1366×768 o desenho fica com 456px de largura e o número sai em ~51px. As
+ * proporções entre os três rótulos se mantêm em qualquer tamanho, que é o
+ * motivo de todos viverem em unidades do viewBox.
  */
 const TAMANHO_SCORE = 112;
 

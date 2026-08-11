@@ -732,17 +732,26 @@ html.light .score-ring-valor {
 }
 
 /* Fundo das páginas de auth com grid pattern sutil (ETAPA 5.3) */
-/* ATENÇÃO: não adicionar `transform`, `filter`, `perspective`, `backdrop-filter`
-   nem `will-change` aqui. Qualquer um deles faz este elemento virar containing
-   block para descendentes `position: fixed`, e o pin do ScrollTrigger na
-   narrativa da landing (ver useNarrativaScroll.ts) usa `fixed`: a narrativa
-   passaria a ser clipada por este `overflow: hidden` em vez de prender na
-   viewport. `overflow: hidden` sozinho não cria containing block, por isso o
-   que está aqui hoje funciona. */
+/* ATENÇÃO: o valor de `overflow` aqui é load-bearing. Este elemento é a raiz da
+   landing (`.auth-bg .landing-root`, ver LandingPage.tsx), e dentro dela dois
+   elementos são `position: sticky`: a `.landing-nav` e a caixa do mapa da
+   narrativa (`.landing-narrativa-mapa`).
+
+   `overflow: hidden` faz deste elemento um scroll container, e sticky gruda no
+   scrollport do ancestral mais próximo que rola — que aqui nunca rola, porque a
+   altura é a do conteúdo. Resultado: nada gruda, o mapa some junto com o
+   primeiro texto e as outras 4 cenas rolam contra espaço vazio. `overflow-x:
+   clip` recorta no eixo horizontal sem criar scroll container, então o sticky
+   volta a se resolver contra a viewport. Não trocar por `hidden`, `auto` ou
+   `scroll`. (`clip` pede Chrome 90+, Firefox 81+, Safari 16+.)
+
+   Também não adicionar `transform`, `filter`, `perspective`, `backdrop-filter`
+   nem `will-change`: qualquer um faz este elemento virar containing block de
+   descendentes `position: fixed`. */
 .auth-bg {
   position: relative;
   background: var(--bg-primary);
-  overflow: hidden;
+  overflow-x: clip;
 }
 .auth-bg::before {
   content: '';
@@ -1281,6 +1290,11 @@ html.light *::-webkit-scrollbar-thumb:hover {
 
 /* Wrapper raiz: herda o fundo grid de .auth-bg e garante a rolagem vertical. */
 .landing-root {
+  /* Altura real da `.landing-nav`, medida no navegador: 36px de conteúdo + 14px
+     de padding em cima e embaixo + 1px de borda. Vive como token porque a caixa
+     sticky do mapa da narrativa precisa descontá-la para não passar por baixo da
+     barra (que também é sticky). Mudou o conteúdo da nav, remedir. */
+  --landing-nav-h: 65px;
   min-height: 100vh;
   min-height: 100dvh;
 }
@@ -1660,17 +1674,58 @@ html.light .landing-cta-band {
   padding: 3rem 0;
 }
 
-/* A caixa sticky tem a altura da viewport e centra o mapa dentro dela. Foi
-   escolhido em vez de `top: 50%` + `translateY(-50%)` porque o navegador
+/* A caixa sticky ocupa a viewport abaixo da nav e centra o mapa dentro dela.
+   Foi escolhido em vez de `top: 50%` + `translateY(-50%)` porque o navegador
    calcula a soltura do sticky antes do transform, e o mapa transbordava
-   meia altura para fora da seção no fim do scroll. */
+   meia altura para fora da seção no fim do scroll.
+
+   O `top` desconta a `.landing-nav` (`--landing-nav-h`), que também é sticky e
+   fica por cima (z-index 50): com `top: 0` o topo do mapa entrava por baixo da
+   barra. A altura desconta o mesmo tanto para a caixa continuar cabendo inteira
+   na parte visível da tela. */
 .landing-narrativa-mapa {
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: var(--landing-nav-h, 65px);
+  height: calc(100vh - var(--landing-nav-h, 65px));
   display: flex;
   align-items: center;
   justify-content: center;
+}
+@supports (height: 100dvh) {
+  .landing-narrativa-mapa {
+    height: calc(100dvh - var(--landing-nav-h, 65px));
+  }
+}
+
+/* O `MapaCena` é o item flex desta caixa (a raiz dele publica `data-mapa-cena`).
+   Sem largura própria, a base de um item flex é `max-content`, e para um `<svg>`
+   que só tem `viewBox` isso é o default de elemento substituído: 300px. Daí o
+   `width: 100%`, que devolve a coluna inteira (~504px no desktop).
+
+   O `height: 100%` dá altura definida ao item, e é isso que faz o `max-height`
+   do `<svg>` ter contra o que resolver — contra um pai de altura automática a
+   porcentagem é indefinida e não tem efeito nenhum. Sem esse teto o mapa
+   (razão 1000:1542,3) pede ~777px de altura numa coluna de 504px e transborda a
+   caixa sticky, pintando por cima do texto que rola. O item centraliza o SVG
+   porque, ao respeitar o teto, o mapa fica mais estreito que a coluna. */
+.landing-narrativa-mapa [data-mapa-cena] {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.landing-narrativa-mapa [data-mapa-cena] > svg {
+  max-height: 100%;
+}
+
+/* Respiro depois do último texto. Sem ele a caixa sticky se solta antes da cena
+   5 entrar: os 5 textos somam 5 × 80vh = 400vh, a caixa tem ~100vh, então ela
+   se solta com 300vh de rolagem, enquanto a cena 5 só cruza a linha do meio do
+   `useCenaAtiva` por volta de 310vh. O alerta (badge + pulso) começava a
+   aparecer com o mapa já indo embora, justo na cena que leva ao CTA. */
+.landing-narrativa-textos {
+  padding-bottom: 50vh;
 }
 
 @media (min-width: 1024px) {
@@ -1694,6 +1749,16 @@ html.light .landing-cta-band {
   }
   .landing-narrativa-cena {
     min-height: 60vh;
+  }
+}
+/* `vh` no mobile é a viewport com a barra de URL recolhida, então a caixa
+   sticky pulava de altura junto com a barra. Segue o padrão do resto do arquivo
+   (ver `.landing-root` e o bloco de `100dvh` da ETAPA 6). */
+@supports (height: 100dvh) {
+  @media (max-width: 1023px) {
+    .landing-narrativa-mapa {
+      height: 45dvh;
+    }
   }
 }
 
@@ -1805,7 +1870,14 @@ html.light .landing-cta-band {
   }
 }
 
-[data-mapa-cena='alerta'] [data-foco='true'] {
+/* A especificidade aqui é deliberada, não decoração. O polígono em foco casa
+   também com `.landing-narrativa[data-vista='true'] [data-subprefeitura]`
+   (0,3,0) logo acima, e os dois declaram o atalho `animation`. Com o seletor
+   curto (0,2,0) quem vencia era a onda de acender, e o `animation-name`
+   computado da Sé na cena 5 era `landing-acender`: o pulso do alerta nunca
+   tocava. Repetir o container põe este seletor em (0,4,0) e resolve pela
+   cascata. */
+.landing-narrativa[data-vista='true'] [data-mapa-cena='alerta'] [data-foco='true'] {
   animation: landing-pulso-alerta 900ms ease-in-out 2;
 }
 
@@ -1834,9 +1906,12 @@ html.light .landing-cta-band {
   animation: landing-badge-entrada 400ms ease both;
 }
 
+/* O seletor do pulso repete o do bloco acima (0,4,0) de propósito: um seletor
+   mais curto aqui perderia da regra que ele deveria cancelar. Empata em
+   especificidade e vence por vir depois. */
 @media (prefers-reduced-motion: reduce) {
   .landing-narrativa[data-vista='true'] [data-subprefeitura],
-  [data-mapa-cena='alerta'] [data-foco='true'],
+  .landing-narrativa[data-vista='true'] [data-mapa-cena='alerta'] [data-foco='true'],
   [data-mapa-cena='alerta'] [role='status'] {
     animation: none;
   }

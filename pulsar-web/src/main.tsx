@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { hydrateRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import { createHead, UnheadProvider } from '@unhead/react/client';
 import { createBrowserRouter, RouterProvider, type HydrationState } from 'react-router-dom';
 import ErrorBoundary from './components/ui/ErrorBoundary';
@@ -18,13 +18,25 @@ const router = createBrowserRouter(routes, {
   ...(hydrationData ? { hydrationData } : {}),
 });
 
-hydrateRoot(
-  document.getElementById('app')!,
+const container = document.getElementById('app')!;
+
+const arvore = (
   <StrictMode>
     <ErrorBoundary>
       <UnheadProvider head={head}>
         <RouterProvider router={router} />
       </UnheadProvider>
     </ErrorBoundary>
-  </StrictMode>,
+  </StrictMode>
 );
+
+// As páginas pré-renderizadas chegam com HTML dentro do container e são hidratadas.
+// As demais rotas (/login, /cadastro, /app/*) são servidas pelo shell vazio
+// `spa.html` e precisam de montagem do zero: chamar hydrateRoot num container
+// vazio não é hidratação, e num container com o HTML de OUTRA rota o React não
+// consegue reaproveitar nada e acaba deixando as duas árvores na página.
+if (container.firstChild) {
+  hydrateRoot(container, arvore);
+} else {
+  createRoot(container).render(arvore);
+}

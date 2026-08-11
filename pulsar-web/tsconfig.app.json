@@ -23,5 +23,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/sw.ts"]
+  // `src/__tests__/estilos` roda o minificador de CSS por APIs do Node (fs, Buffer).
+  // Fica no projeto node para o código do app seguir sem os globais do Node.
+  "exclude": ["src/sw.ts", "src/__tests__/estilos"]
 }

@@ -1,7 +1,7 @@
 {
   "name": "pulsar-web",
   "private": true,
-  "version": "1.5.0",
+  "version": "1.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -45,6 +45,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "lightningcss": "^1.32.0",
     "pg": "^8.22.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",

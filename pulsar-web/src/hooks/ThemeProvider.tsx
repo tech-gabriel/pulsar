@@ -1,4 +1,11 @@
-import { useState, useEffect, useCallback, type ReactNode, type MouseEvent } from 'react';
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  type ReactNode,
+  type MouseEvent,
+} from 'react';
 import { ThemeContext, type Theme } from './useTheme';
 
 // Persiste o tema em localStorage, aplica a classe `light` no <html> e atualiza
@@ -19,15 +26,37 @@ function aplicarClasse(theme: Theme) {
   document.documentElement.classList.toggle('light', theme === 'light');
 }
 
+// No servidor não existe layout para medir e o React avisa se useLayoutEffect
+// roda no renderToString do SSG.
+const useLayoutEffectIsomorfico = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(lerTemaInicial);
+  // Começa escuro de propósito, e não lendo o localStorage: o SSG pré-renderiza
+  // sempre no escuro, então iniciar no claro fazia o primeiro render do cliente
+  // divergir do HTML do servidor. LandingHero e LandingComoFunciona trocam o
+  // `src` das imagens pelo tema, e o React abortava a hidratação (erro #418),
+  // jogando fora a árvore pré-renderizada inteira.
+  const [theme, setTheme] = useState<Theme>('dark');
+  const [sincronizado, setSincronizado] = useState(false);
+
+  // Layout effect: a correção entra antes do paint, então quem usa tema claro
+  // não vê o logo escuro piscar. As cores em si já vieram certas do
+  // theme-init.js, que roda antes do primeiro paint.
+  useLayoutEffectIsomorfico(() => {
+    setTheme(lerTemaInicial());
+    setSincronizado(true);
+  }, []);
 
   useEffect(() => {
+    // Antes de sincronizar, o estado ainda é o palpite do servidor: mexer no
+    // DOM aqui apagaria a classe que o theme-init.js já aplicou e gravaria
+    // 'dark' por cima da preferência salva.
+    if (!sincronizado) return;
     aplicarClasse(theme);
     localStorage.setItem(STORAGE_KEY, theme);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', theme === 'dark' ? '#052F4A' : '#F8FAFC');
-  }, [theme]);
+  }, [theme, sincronizado]);
 
   const toggleTheme = useCallback((event?: MouseEvent) => {
     const proximo: Theme = lerTemaInicial() === 'light' ? 'dark' : 'light';

@@ -25,6 +25,43 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.6.0',
+    data: '2026-08-11',
+    resumo: 'Uma rodada de correções em coisas que atrapalhavam o uso.',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'A tela de entrar abre direto no formulário',
+        descricao:
+          'Ao abrir a tela de entrar, a página inicial inteira aparecia antes do formulário, e era preciso rolar bastante para achar onde digitar o e-mail. Agora o formulário aparece de cara.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'O efeito de vidro voltou',
+        descricao:
+          'Os painéis, o menu e as caixas de informação do mapa têm um fundo de vidro que desfoca o que passa por trás. Esse desfoque tinha sumido no navegador e voltou em todas as telas.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'O tema claro não monta mais a página duas vezes',
+        descricao:
+          'Quem usa o tema claro tinha a página montada duas vezes ao abrir o site, o que deixava a abertura mais lenta e podia dar uma piscada. Agora ela abre de uma vez só.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Aviso de carregamento em conexão lenta',
+        descricao:
+          'Nas telas de entrar e criar conta, uma conexão ruim deixava a tela vazia e sem explicação até tudo terminar de carregar. Agora aparece um aviso de carregamento enquanto isso.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'O nome certo na aba do navegador',
+        descricao:
+          'Indo de uma página como Termos de Uso para a de entrar, a aba continuava mostrando o nome anterior. Cada tela voltou a mostrar o seu próprio nome.',
+      },
+    ],
+  },
+  {
     versao: '1.5.0',
     data: '2026-08-10',
     resumo: 'A página inicial do Pulsar foi refeita do zero.',

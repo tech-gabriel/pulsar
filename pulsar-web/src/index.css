@@ -175,7 +175,6 @@ body {
 .painel-glass {
   background: linear-gradient(180deg, rgba(5, 47, 74, 0.97) 0%, rgba(2, 37, 58, 0.95) 100%);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 .painel-card-glass {
   background: rgba(0, 89, 138, 0.1);
@@ -387,7 +386,6 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 .leaflet-tooltip.pulsar-tooltip {
   background: rgba(7, 20, 34, 0.82);
   backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -540,7 +538,6 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 .leaflet-touch .leaflet-control-zoom a {
   background: var(--mapa-controle-bg) !important;
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   color: var(--mapa-controle-texto) !important;
   border-bottom: 1px solid var(--mapa-controle-borda) !important;
 }
@@ -623,7 +620,6 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 .mapa-controle {
   background: var(--mapa-controle-bg);
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--mapa-controle-borda);
   border-radius: 12px;
   color: var(--mapa-controle-texto);
@@ -718,7 +714,6 @@ html.light .score-ring-valor {
 .glass-card {
   background: var(--bg-glass);
   backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-glass);
   border-radius: 12px;
   box-shadow: var(--glass-shadow);
@@ -902,7 +897,6 @@ button, a, [role="button"], [role="radio"] {
 .app-header {
   background: var(--bg-glass);
   backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--border-glass);
 }
 .nav-tab {
@@ -998,7 +992,6 @@ button, a, [role="button"], [role="radio"] {
   overflow-y: auto;
   background: var(--bg-glass);
   backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-glass);
   border-radius: 14px;
   box-shadow: var(--glass-shadow), 0 12px 40px rgba(0, 0, 0, 0.28);
@@ -1311,7 +1304,6 @@ html.light *::-webkit-scrollbar-thumb:hover {
   padding: 14px 24px;
   background: var(--bg-glass);
   backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--border-glass);
 }
 
@@ -1414,7 +1406,6 @@ html.light *::-webkit-scrollbar-thumb:hover {
 .landing-card {
   background: var(--bg-glass);
   backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-glass);
   border-radius: 14px;
   padding: 22px;
@@ -1480,7 +1471,6 @@ html.light *::-webkit-scrollbar-thumb:hover {
   border-radius: 16px;
   background: var(--bg-glass);
   backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-glass);
   transition: border-color 200ms ease, transform 200ms ease, background 200ms ease;
 }
@@ -1535,7 +1525,6 @@ html.light *::-webkit-scrollbar-thumb:hover {
   border-radius: 14px;
   background: var(--bg-glass);
   backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   transition: border-color 200ms ease, background 200ms ease;
 }
 .landing-faq-item:hover {

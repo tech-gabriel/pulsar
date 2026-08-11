@@ -1,44 +1,52 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { createHead, UnheadProvider } from '@unhead/react/client';
 import { describe, it, expect } from 'vitest';
 import TitleManager from '../../components/TitleManager';
 
+// O título passa pelo @unhead (e não por `document.title` direto) para ter um
+// dono só; por isso o provider aqui e a espera assíncrona nas asserções.
 function renderEm(pathname: string, state?: unknown) {
   render(
-    <MemoryRouter initialEntries={[{ pathname, state }]}>
-      <TitleManager />
-    </MemoryRouter>,
+    <UnheadProvider head={createHead()}>
+      <MemoryRouter initialEntries={[{ pathname, state }]}>
+        <TitleManager />
+      </MemoryRouter>
+    </UnheadProvider>,
   );
 }
 
+const esperarTitulo = (esperado: string) =>
+  waitFor(() => expect(document.title).toBe(esperado));
+
 describe('TitleManager', () => {
-  it('define o título da rota exata (marca primeiro)', () => {
+  it('define o título da rota exata (marca primeiro)', async () => {
     renderEm('/app/configuracoes');
-    expect(document.title).toBe('Pulsar · Configurações');
+    await esperarTitulo('Pulsar · Configurações');
   });
 
-  it('home usa o título institucional', () => {
+  it('home usa o título institucional', async () => {
     renderEm('/');
-    expect(document.title).toBe('Pulsar · Monitoramento Climático em Tempo Real');
+    await esperarTitulo('Pulsar · Monitoramento Climático em Tempo Real');
   });
 
-  it('rotas de admin levam o sufixo Admin', () => {
+  it('rotas de admin levam o sufixo Admin', async () => {
     renderEm('/app/admin/usuarios');
-    expect(document.title).toBe('Pulsar · Usuários · Admin');
+    await esperarTitulo('Pulsar · Usuários · Admin');
   });
 
-  it('detalhe de histórico usa o nome da subprefeitura vindo no state', () => {
+  it('detalhe de histórico usa o nome da subprefeitura vindo no state', async () => {
     renderEm('/app/historico/qualquer-id', { subNome: 'Sé' });
-    expect(document.title).toBe('Pulsar · Histórico de Sé');
+    await esperarTitulo('Pulsar · Histórico de Sé');
   });
 
-  it('detalhe de histórico sem state cai no genérico', () => {
+  it('detalhe de histórico sem state cai no genérico', async () => {
     renderEm('/app/historico/qualquer-id');
-    expect(document.title).toBe('Pulsar · Histórico');
+    await esperarTitulo('Pulsar · Histórico');
   });
 
-  it('rota desconhecida usa o título institucional', () => {
+  it('rota desconhecida usa o título institucional', async () => {
     renderEm('/rota-inexistente');
-    expect(document.title).toBe('Pulsar · Monitoramento Climático em Tempo Real');
+    await esperarTitulo('Pulsar · Monitoramento Climático em Tempo Real');
   });
 });

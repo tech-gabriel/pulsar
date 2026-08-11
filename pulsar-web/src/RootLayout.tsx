@@ -7,6 +7,7 @@ import { AuthProvider } from './contexts/AuthProvider';
 import { AlertasProvider } from './contexts/AlertasProvider';
 import { AnalyticsBridge } from './analytics';
 import TitleManager from './components/TitleManager';
+import CanonicalManager from './components/CanonicalManager';
 import ToastContainer from './components/ui/ToastContainer';
 
 /**
@@ -28,6 +29,7 @@ export default function RootLayout() {
             <AlertasProvider>
               <AnalyticsBridge />
               <TitleManager />
+              <CanonicalManager />
               <Outlet />
               <ToastContainer />
             </AlertasProvider>

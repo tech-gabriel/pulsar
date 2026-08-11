@@ -1,34 +1,45 @@
 import { useRef } from 'react';
 import MapaCena from './MapaCena';
 import { CENAS } from '../../data/landing-narrativa';
-import { useNarrativaScroll } from '../../hooks/useNarrativaScroll';
+import { useCenaAtiva } from '../../hooks/useCenaAtiva';
 
 /**
- * Narrativa do mapa. Este componente é o estado degradado por definição: as
- * cenas empilhadas, todas legíveis, sem nenhuma animação. O `useNarrativaScroll`
- * aplica pin e scrub por cima quando o GSAP carrega, no desktop e sem
- * `prefers-reduced-motion`. Se o GSAP nunca carregar, é isto que fica no ar.
+ * Narrativa do mapa: uma instância de `MapaCena` fica sticky numa coluna e os
+ * 5 textos rolam na outra, em fluxo normal.
+ *
+ * Nada aqui sequestra o scroll. Não há pin, não há altura falsa, e rolar
+ * rápido atravessa a seção como em qualquer outra página. Foi a lição das duas
+ * tentativas anteriores: tanto o crossfade vertical quanto o trilho horizontal
+ * prendiam a tela, e era isso que incomodava, não a direção do movimento.
+ *
+ * O estado degradado é o mesmo componente sem JS: `useCenaAtiva` devolve a
+ * primeira cena, os 5 textos estão no DOM (requisito de SEO) e o sticky
+ * funciona, porque é CSS puro.
  */
 export default function LandingNarrativa() {
   const ref = useRef<HTMLElement | null>(null);
-  useNarrativaScroll(ref);
+  const { cenaAtiva, vista } = useCenaAtiva(ref, CENAS[0].id);
 
   return (
-    <section ref={ref} className="landing-narrativa" data-narrativa>
-      {CENAS.map((cena) => {
-        const tituloId = `landing-narrativa-titulo-${cena.id}`;
-        return (
-          <article
-            key={cena.id}
-            className="landing-narrativa-cena"
-            data-cena={cena.id}
-            aria-labelledby={tituloId}
-          >
-            <div className="landing-narrativa-mapa">
-              <MapaCena cena={cena.id} />
-            </div>
+    <section
+      ref={ref}
+      className="landing-narrativa"
+      data-vista={vista ? 'true' : undefined}
+    >
+      <div className="landing-narrativa-mapa">
+        <MapaCena cena={cenaAtiva} />
+      </div>
 
-            <div className="landing-narrativa-texto">
+      <div className="landing-narrativa-textos">
+        {CENAS.map((cena) => {
+          const tituloId = `landing-narrativa-titulo-${cena.id}`;
+          return (
+            <article
+              key={cena.id}
+              className="landing-narrativa-cena"
+              data-cena={cena.id}
+              aria-labelledby={tituloId}
+            >
               {/* Mesmo tratamento dos eyebrows das outras seções da landing
                   (ver LandingProblema.tsx): classes Tailwind + --text-accent. */}
               <p
@@ -56,10 +67,10 @@ export default function LandingNarrativa() {
               >
                 {cena.texto}
               </p>
-            </div>
-          </article>
-        );
-      })}
+            </article>
+          );
+        })}
+      </div>
     </section>
   );
 }

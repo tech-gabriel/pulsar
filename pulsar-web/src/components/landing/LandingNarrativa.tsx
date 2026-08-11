@@ -24,7 +24,6 @@ export default function LandingNarrativa() {
     <section
       ref={ref}
       className="landing-narrativa"
-      data-narrativa
       data-vista={vista ? 'true' : undefined}
     >
       <div className="landing-narrativa-mapa">

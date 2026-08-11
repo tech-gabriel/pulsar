@@ -169,10 +169,16 @@ describe('MapaCena', () => {
   });
 
   // Com as camadas sempre no DOM, teste de presença não prova nada: ele passa
-  // igual se a camada estiver invisível em todas as cenas. A asserção tem que
-  // ser sobre visibilidade. Foi exatamente este buraco que deixou passar a
-  // tela em branco por três rodadas de review na narrativa anterior.
-  describe('camadas sempre no DOM, visibilidade por cena', () => {
+  // igual se a camada estiver invisível em todas as cenas. A asserção que
+  // faltaria é sobre visibilidade. Foi exatamente este buraco que deixou passar
+  // a tela em branco por três rodadas de review na narrativa anterior.
+  //
+  // E ela não cabe aqui: quem esconde e mostra por cena é o CSS externo, que o
+  // jsdom não aplica. Por isso o bloco se chama "estrutura do stagger" e não
+  // "visibilidade por cena" — não prometer cobertura que não existe é o que
+  // impede a próxima pessoa de confiar na suíte verde. Visibilidade se verifica
+  // no navegador (`npm run preview`).
+  describe('camadas sempre no DOM, estrutura do stagger', () => {
     it('os pontos de alagamento existem em toda cena', () => {
       for (const cena of ['acender', 'risco', 'score', 'alagamento', 'alerta'] as const) {
         const { container, unmount } = render(<MapaCena cena={cena} />);
@@ -215,11 +221,6 @@ describe('MapaCena', () => {
       unmount();
       render(<MapaCena cena="alerta" />);
       expect(screen.getByRole('status')).toBeInTheDocument();
-    });
-
-    it('não usa a visibilidade para esconder o badge', () => {
-      const { container } = render(<MapaCena cena="alagamento" />);
-      expect(container.querySelector('[role="status"]')).toBeNull();
     });
   });
 

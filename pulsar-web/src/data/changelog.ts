@@ -25,6 +25,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.7.0',
+    data: '2026-08-11',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'O Pulsar abre no tema claro',
+        descricao:
+          'O site passa a abrir no tema claro em todas as telas. Quem prefere o tema escuro pode voltar para ele pelo botão de tema, no topo da página, e a escolha fica salva no navegador.',
+      },
+    ],
+  },
+  {
     versao: '1.6.0',
     data: '2026-08-11',
     resumo: 'Uma rodada de correções em coisas que atrapalhavam o uso.',

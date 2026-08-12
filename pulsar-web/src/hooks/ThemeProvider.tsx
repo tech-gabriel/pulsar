@@ -9,17 +9,22 @@ import {
 import { ThemeContext, type Theme } from './useTheme';
 
 // Persiste o tema em localStorage, aplica a classe `light` no <html> e atualiza
-// a meta theme-color. Default: dark.
+// a meta theme-color. Default: claro.
 //
 // A troca usa a View Transitions API para uma revelação circular saindo do
 // ponto clicado (efeito premium). Onde a API não existe (ou com
 // prefers-reduced-motion), cai num toggle simples e instantâneo.
 
-const STORAGE_KEY = 'pulsar-theme';
+const STORAGE_KEY = 'pulsar-theme-v2';
+// Chave anterior à virada do tema padrão. O provider gravava o tema em todo
+// mount, então a base inteira tinha 'dark' salvo sem nunca ter escolhido:
+// migrar o valor manteria o site escuro para todo visitante recorrente. A chave
+// nova zera todo mundo, e a antiga é apagada no mount.
+const STORAGE_KEY_ANTIGA = 'pulsar-theme';
 
 function lerTemaInicial(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  return localStorage.getItem(STORAGE_KEY) === 'light' ? 'light' : 'dark';
+  if (typeof window === 'undefined') return 'light';
+  return localStorage.getItem(STORAGE_KEY) === 'dark' ? 'dark' : 'light';
 }
 
 function aplicarClasse(theme: Theme) {
@@ -31,18 +36,19 @@ function aplicarClasse(theme: Theme) {
 const useLayoutEffectIsomorfico = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Começa escuro de propósito, e não lendo o localStorage: o SSG pré-renderiza
-  // sempre no escuro, então iniciar no claro fazia o primeiro render do cliente
-  // divergir do HTML do servidor. LandingHero e LandingComoFunciona trocam o
-  // `src` das imagens pelo tema, e o React abortava a hidratação (erro #418),
-  // jogando fora a árvore pré-renderizada inteira.
-  const [theme, setTheme] = useState<Theme>('dark');
+  // Começa claro de propósito, e não lendo o localStorage: o SSG pré-renderiza
+  // sempre no claro (o padrão do site), então iniciar no escuro faria o primeiro
+  // render do cliente divergir do HTML do servidor. LandingHero e
+  // LandingComoFunciona trocam o `src` das imagens pelo tema, e o React abortava
+  // a hidratação (erro #418), jogando fora a árvore pré-renderizada inteira.
+  const [theme, setTheme] = useState<Theme>('light');
   const [sincronizado, setSincronizado] = useState(false);
 
   // Layout effect: a correção entra antes do paint, então quem usa tema claro
   // não vê o logo escuro piscar. As cores em si já vieram certas do
   // theme-init.js, que roda antes do primeiro paint.
   useLayoutEffectIsomorfico(() => {
+    localStorage.removeItem(STORAGE_KEY_ANTIGA);
     setTheme(lerTemaInicial());
     setSincronizado(true);
   }, []);

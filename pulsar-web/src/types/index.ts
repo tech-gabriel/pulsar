@@ -38,6 +38,8 @@ export interface AtualizarPerfilRequestDto {
 export interface LoginResponseDto {
   token: string;
   usuario: UsuarioDto;
+  /** True quando a chamada criou a conta. O /auth/google cadastra de forma implícita. */
+  novoUsuario: boolean;
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────────

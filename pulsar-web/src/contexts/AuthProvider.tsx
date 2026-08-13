@@ -43,7 +43,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginGoogle = useCallback(async (idToken: string) => {
     const { data } = await api.post<LoginResponseDto>('/auth/google', { idToken });
     salvarSessao(data);
-    track.login('google');
+    // O endpoint cadastra de forma implícita: sem separar os dois casos, todo
+    // cadastro via Google era contado como login e sumia do funil de aquisição.
+    if (data.novoUsuario) track.cadastrou('google');
+    else track.login('google');
   }, [salvarSessao]);
 
   const cadastrar = useCallback(async (dto: CadastroRequestDto) => {

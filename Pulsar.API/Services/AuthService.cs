@@ -45,7 +45,8 @@ public class AuthService : IAuthService
         return new LoginResponseDto
         {
             Token = GerarToken(usuario),
-            Usuario = MapearUsuarioDto(usuario)
+            Usuario = MapearUsuarioDto(usuario),
+            NovoUsuario = true
         };
     }
 
@@ -135,6 +136,8 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("E-mail do Google não verificado.");
 
         var usuario = await _usuarioRepository.ObterPorEmailAsync(payload.Email);
+        // Guardado antes do bloco: adiante `usuario` deixa de ser nulo e a informação se perde.
+        var novoUsuario = usuario is null;
 
         if (usuario is null)
         {
@@ -168,7 +171,8 @@ public class AuthService : IAuthService
         return new LoginResponseDto
         {
             Token = GerarToken(usuario),
-            Usuario = MapearUsuarioDto(usuario)
+            Usuario = MapearUsuarioDto(usuario),
+            NovoUsuario = novoUsuario
         };
     }
 

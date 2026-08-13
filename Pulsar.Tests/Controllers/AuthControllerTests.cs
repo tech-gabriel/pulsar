@@ -44,6 +44,22 @@ public class AuthControllerTests : IClassFixture<PulsarWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Cadastro_DadosValidos_MarcaNovoUsuario()
+    {
+        var request = new CadastroRequestDto
+        {
+            Nome  = "Novo Usuario",
+            Email = $"novo_{Guid.NewGuid()}@test.com",
+            Senha = "Senha@123"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/auth/cadastro", request);
+
+        var body = await response.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts);
+        body!.NovoUsuario.Should().BeTrue("cadastro sempre cria uma conta nova");
+    }
+
+    [Fact]
     public async Task Cadastro_EmailJaExistente_Retorna409()
     {
         var email = $"duplicado_{Guid.NewGuid()}@test.com";
@@ -134,6 +150,21 @@ public class AuthControllerTests : IClassFixture<PulsarWebApplicationFactory>
         var body = await response.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts);
         body!.Token.Should().NotBeNullOrWhiteSpace();
         body.Usuario.Email.Should().Be(email);
+    }
+
+    [Fact]
+    public async Task Login_CredenciaisValidas_NaoMarcaNovoUsuario()
+    {
+        var email = $"recorrente_{Guid.NewGuid()}@test.com";
+        var senha = "Senha@123";
+        await _client.PostAsJsonAsync("/api/auth/cadastro",
+            new CadastroRequestDto { Nome = "Recorrente", Email = email, Senha = senha });
+
+        var response = await _client.PostAsJsonAsync("/api/auth/login",
+            new LoginRequestDto { Email = email, Senha = senha });
+
+        var body = await response.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts);
+        body!.NovoUsuario.Should().BeFalse("login por senha nunca cria conta");
     }
 
     [Fact]

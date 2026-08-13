@@ -36,11 +36,22 @@ describe('AuthProvider analytics', () => {
     expect(h.track.login).toHaveBeenCalledWith('email');
   });
 
-  it('loginGoogle emite track.login("google")', async () => {
-    h.post.mockResolvedValue({ data: respostaLogin });
+  it('loginGoogle de conta existente emite track.login("google")', async () => {
+    h.post.mockResolvedValue({ data: { ...respostaLogin, novoUsuario: false } });
     const { result } = renderHook(() => useAuth(), { wrapper });
     await act(async () => { await result.current.loginGoogle('id-token'); });
     expect(h.track.login).toHaveBeenCalledWith('google');
+    expect(h.track.cadastrou).not.toHaveBeenCalled();
+  });
+
+  // O /auth/google cadastra de forma implícita. Sem distinguir os dois casos, todo
+  // cadastro via Google era contado como login e sumia do funil de aquisição.
+  it('loginGoogle que cria a conta emite track.cadastrou("google")', async () => {
+    h.post.mockResolvedValue({ data: { ...respostaLogin, novoUsuario: true } });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await act(async () => { await result.current.loginGoogle('id-token'); });
+    expect(h.track.cadastrou).toHaveBeenCalledWith('google');
+    expect(h.track.login).not.toHaveBeenCalled();
   });
 
   it('cadastrar emite track.cadastrou("email")', async () => {

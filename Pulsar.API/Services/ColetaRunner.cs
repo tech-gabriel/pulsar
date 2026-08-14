@@ -14,6 +14,7 @@ public class ColetaRunner : IColetaRunner
     private readonly IClimateService _climateService;
     private readonly IScoreService _scoreService;
     private readonly IAlertaService _alertaService;
+    private readonly IAgregadoDiarioService _agregadoService;
     private readonly PulsarDbContext _db;
     private readonly ILogger<ColetaRunner> _logger;
 
@@ -21,12 +22,14 @@ public class ColetaRunner : IColetaRunner
         IClimateService climateService,
         IScoreService scoreService,
         IAlertaService alertaService,
+        IAgregadoDiarioService agregadoService,
         PulsarDbContext db,
         ILogger<ColetaRunner> logger)
     {
         _climateService = climateService;
         _scoreService = scoreService;
         _alertaService = alertaService;
+        _agregadoService = agregadoService;
         _db = db;
         _logger = logger;
     }
@@ -50,6 +53,17 @@ public class ColetaRunner : IColetaRunner
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Falha ao calcular score da subprefeitura {Nome}.", sub.Nome);
+            }
+
+            // try/catch próprio: o agregado é o dado que sobrevive, mas uma falha nele
+            // não pode derrubar o ciclo nem descartar o score que acabou de ser gravado.
+            try
+            {
+                await _agregadoService.AtualizarRecentesAsync(sub.Id, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Falha ao atualizar agregado diário de {Nome}.", sub.Nome);
             }
         }
 

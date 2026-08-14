@@ -19,6 +19,11 @@ public class SubprefeituraRepository : ISubprefeituraRepository
     public async Task<IEnumerable<Subprefeitura>> ObterAtivasAsync()
         => await _context.Subprefeituras.Where(s => s.Ativa).ToListAsync();
 
+    public async Task<Subprefeitura?> ObterComRegiaoAsync(Guid id)
+        => await _context.Subprefeituras
+            .Include(s => s.Regiao)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
     public async Task<Subprefeitura?> ObterComUltimaLeituraAsync(Guid id)
         => await _context.Subprefeituras
             .Include(s => s.Leituras.OrderByDescending(l => l.Timestamp).Take(1))

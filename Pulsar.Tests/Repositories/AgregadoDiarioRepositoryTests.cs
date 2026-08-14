@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Pulsar.API.Domain.Entities;
 using Pulsar.API.Repositories.Data;
 
 namespace Pulsar.Tests.Repositories;
@@ -26,5 +27,23 @@ public class AgregadoDiarioRepositoryTests
 
         regioes.Should().HaveCount(5);
         regioes.Should().OnlyContain(r => r.FusoHorario == "America/Sao_Paulo");
+    }
+
+    [Fact]
+    public async Task IndiceUnico_ImpedeDuasLinhasNoMesmoDiaParaAMesmaSubprefeitura()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var subId = await ctx.Subprefeituras.Select(s => s.Id).FirstAsync();
+        var dia = new DateOnly(2026, 8, 13);
+
+        ctx.AgregadosDiarios.Add(new AgregadoDiario { SubprefeituraId = subId, Dia = dia, FusoHorario = "America/Sao_Paulo" });
+        await ctx.SaveChangesAsync();
+
+        ctx.AgregadosDiarios.Add(new AgregadoDiario { SubprefeituraId = subId, Dia = dia, FusoHorario = "America/Sao_Paulo" });
+        var acao = async () => await ctx.SaveChangesAsync();
+
+        await acao.Should().ThrowAsync<DbUpdateException>();
     }
 }

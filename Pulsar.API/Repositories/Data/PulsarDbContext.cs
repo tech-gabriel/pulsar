@@ -13,6 +13,7 @@ public class PulsarDbContext : DbContext
     public DbSet<Subprefeitura> Subprefeituras => Set<Subprefeitura>();
     public DbSet<LeituraClimatica> LeiturasClimaticas => Set<LeituraClimatica>();
     public DbSet<ScorePerigo> ScoresPerigo => Set<ScorePerigo>();
+    public DbSet<AgregadoDiario> AgregadosDiarios => Set<AgregadoDiario>();
     public DbSet<Alerta> Alertas => Set<Alerta>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioRegiao> UsuarioRegioes => Set<UsuarioRegiao>();
@@ -166,6 +167,19 @@ public class PulsarDbContext : DbContext
             e.Property(o => o.NmSubprefeitura).HasMaxLength(120);
             e.HasIndex(o => new { o.CdIdentificador, o.Tipo }).IsUnique();
             e.HasIndex(o => o.DataOcorrencia);
+        });
+
+        modelBuilder.Entity<AgregadoDiario>(e =>
+        {
+            e.HasKey(a => a.Id);
+            // Chave do upsert. É o que impede a série de duplicar quando o mesmo dia
+            // é recalculado a cada ciclo de coleta.
+            e.HasIndex(a => new { a.SubprefeituraId, a.Dia }).IsUnique();
+            e.Property(a => a.FusoHorario).IsRequired().HasMaxLength(64);
+            e.HasOne(a => a.Subprefeitura)
+             .WithMany()
+             .HasForeignKey(a => a.SubprefeituraId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         SeedData(modelBuilder);

@@ -22,6 +22,73 @@ namespace Pulsar.API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AgregadoDiario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("ChuvaTotalMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Dia")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FusoHorario")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("LeiturasAlto")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LeiturasBaixo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LeiturasCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LeiturasModerado")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("ScoreMax")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ScoreMedio")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ScoreMin")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("TemperaturaMaxC")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("TemperaturaMinC")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("UvMax")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("VentoMaxKmH")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubprefeituraId", "Dia")
+                        .IsUnique();
+
+                    b.ToTable("AgregadosDiarios");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Alerta", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1351,6 +1418,17 @@ namespace Pulsar.API.Migrations
                         .IsUnique();
 
                     b.ToTable("UsuarioRegioes");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AgregadoDiario", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subprefeitura");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Alerta", b =>

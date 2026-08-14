@@ -185,6 +185,7 @@ builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();
 builder.Services.AddScoped<ITokenRecuperacaoSenhaRepository, TokenRecuperacaoSenhaRepository>();
 builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>();
 builder.Services.AddScoped<IOcorrenciaAlagamentoRepository, OcorrenciaAlagamentoRepository>();
+builder.Services.AddScoped<IAgregadoDiarioRepository, AgregadoDiarioRepository>();
 
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
@@ -204,6 +205,7 @@ builder.Services.AddScoped<ISugestaoService, SugestaoService>();
 builder.Services.AddScoped<IAlertaService, AlertaService>();
 builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionService>();
 builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
+builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
 
 // --- Web Push (notificações) ---
 // Gated por config: sem chaves VAPID (Push:PublicKey/PrivateKey) o serviço fica

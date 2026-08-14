@@ -25,7 +25,13 @@ public class LeituraRepository : ILeituraRepository
             .ToListAsync();
     }
 
-    public async Task LimparHistoricoAntigoAsync(Guid subprefeituraId, int horas = 24)
+    // 72h e não 24h porque o agregado diário recalcula hoje e ontem a cada ciclo, e
+    // precisa dos dois dias inteiros em qualquer fuso. Com janela menor o recálculo
+    // lê um dia truncado e grava um total menor que o real, em silêncio.
+    // Efeito colateral aceito: ScorePerigo e Alerta seguem a leitura em cascata e
+    // passam a viver 72h também. Nenhum consumidor depende da janela de 24h: todos
+    // passam a sua própria janela explícita.
+    public async Task LimparHistoricoAntigoAsync(Guid subprefeituraId, int horas = 72)
     {
         var limite = DateTime.UtcNow.AddHours(-horas);
         var antigas = await _context.LeiturasClimaticas

@@ -191,4 +191,23 @@ public class AgregadoDiarioServiceTests
         linhas[0].ChuvaTotalMm.Should().BeApproximately(3.0, 0.001); // (4 + 8) * 0.25
         linhas[0].LeiturasAlto.Should().Be(1);
     }
+
+    [Fact]
+    public async Task RetencaoCobreOntemInteiro()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var repo = new LeituraRepository(ctx);
+        var subId = await ctx.Subprefeituras.Select(s => s.Id).FirstAsync();
+
+        // 47h atrás: ontem em qualquer fuso brasileiro, e precisa sobreviver à limpeza
+        // para o recálculo de ontem ler o dia inteiro em vez de um pedaço.
+        await GravarLeituraAsync(ctx, subId, DateTime.UtcNow.AddHours(-47), chuvaMmH: 5, valorScore: 30, FaixaRisco.BAIXO);
+
+        await repo.LimparHistoricoAntigoAsync(subId);
+        await repo.SalvarAsync();
+
+        (await ctx.LeiturasClimaticas.CountAsync(l => l.SubprefeituraId == subId)).Should().Be(1);
+    }
 }

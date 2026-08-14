@@ -25,6 +25,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.8.0',
+    data: '2026-08-14',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Botão de camadas do mapa responde por voz',
+        descricao:
+          'No celular, o botão que troca a camada do mapa mostrava o nome da camada na tela mas era anunciado com outro nome. Quem usa controle por voz falava "Score" e nada acontecia. Agora o nome falado é o mesmo que aparece no botão.',
+      },
+    ],
+  },
+  {
     versao: '1.7.0',
     data: '2026-08-11',
     itens: [

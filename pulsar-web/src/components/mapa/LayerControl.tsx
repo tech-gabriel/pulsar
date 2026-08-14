@@ -74,7 +74,10 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
           onClick={() => setAberto((v) => !v)}
           aria-haspopup="true"
           aria-expanded={aberto}
-          aria-label="Camadas"
+          // WCAG 2.5.3: o nome acessível precisa começar pelo texto visível, que
+          // aqui é a camada ativa. Com "Camadas" fixo, quem usa controle por voz
+          // dizia "clicar em Score" e nada acontecia.
+          aria-label={`${ativa.label}, escolher camada`}
           className="mapa-controle mapa-txt layer-btn flex items-center gap-2 px-3 min-h-11"
           style={CARD_MOBILE}
         >

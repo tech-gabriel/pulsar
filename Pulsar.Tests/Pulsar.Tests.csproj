@@ -16,6 +16,10 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.8" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
+    <!-- Transitivo de Microsoft.EntityFrameworkCore.Sqlite, que resolve 2.1.11.
+         Fixado direto porque 2.1.11 tem vulnerabilidade alta (GHSA-2m69-gcr7-jv3q,
+         corrigida em 2.1.13). Remover quando o pacote pai subir sozinho. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.13" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>

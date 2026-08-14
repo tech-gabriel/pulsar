@@ -26,6 +26,14 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
     public AdminControllerTests(PulsarWebApplicationFactory factory)
         => _client = factory.CreateClient();
 
+    [Fact]
+    public async Task GetAgregados_SemToken_Retorna401()
+    {
+        var resposta = await _client.GetAsync("/api/admin/agregados");
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     // ── Bootstrap ──────────────────────────────────────────────
 
     [Fact]

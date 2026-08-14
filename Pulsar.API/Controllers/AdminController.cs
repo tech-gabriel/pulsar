@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pulsar.API.DTOs;
+using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services.Interfaces;
 
 namespace Pulsar.API.Controllers;
@@ -15,15 +16,42 @@ public class AdminController : ControllerBase
     private readonly IAdminService _adminService;
     private readonly ISistemaService _sistemaService;
     private readonly IOcorrenciaIngestionService _ingestionService;
+    private readonly IAgregadoDiarioRepository _agregadoRepo;
 
     public AdminController(
         IAdminService adminService,
         ISistemaService sistemaService,
-        IOcorrenciaIngestionService ingestionService)
+        IOcorrenciaIngestionService ingestionService,
+        IAgregadoDiarioRepository agregadoRepo)
     {
         _adminService = adminService;
         _sistemaService = sistemaService;
         _ingestionService = ingestionService;
+        _agregadoRepo = agregadoRepo;
+    }
+
+    /// <summary>Agregados diários recentes. Serve para conferir que a série está acumulando.</summary>
+    [HttpGet("agregados")]
+    [ProducesResponseType(typeof(IReadOnlyList<AgregadoDiarioDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ObterAgregados([FromQuery] int dias = 7)
+    {
+        var limitado = Math.Clamp(dias, 1, 90);
+        var linhas = await _agregadoRepo.ObterRecentesAsync(limitado);
+
+        return Ok(linhas.Select(a => new AgregadoDiarioDto
+        {
+            Dia = a.Dia,
+            Subprefeitura = a.Subprefeitura.Nome,
+            Regiao = a.Subprefeitura.Regiao.Nome,
+            FusoHorario = a.FusoHorario,
+            ChuvaTotalMm = Math.Round(a.ChuvaTotalMm, 1),
+            ScoreMedio = Math.Round(a.ScoreMedio, 1),
+            ScoreMax = Math.Round(a.ScoreMax, 1),
+            LeiturasAlto = a.LeiturasAlto,
+            LeiturasCount = a.LeiturasCount,
+        }).ToList());
     }
 
     /// <summary>Lista todos os usuários do sistema. Acessível a ADMIN e SUPORTE (leitura).</summary>

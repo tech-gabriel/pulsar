@@ -40,6 +40,7 @@ public class PulsarDbContext : DbContext
         {
             e.HasKey(r => r.Id);
             e.Property(r => r.Nome).IsRequired().HasMaxLength(100);
+            e.Property(r => r.FusoHorario).IsRequired().HasMaxLength(64);
             e.HasMany(r => r.Subprefeituras)
              .WithOne(s => s.Regiao)
              .HasForeignKey(s => s.RegiaoId)
@@ -213,12 +214,13 @@ public class PulsarDbContext : DbContext
         var idOeste  = new Guid("10000000-0000-0000-0000-000000000004");
         var idSul    = new Guid("10000000-0000-0000-0000-000000000005");
 
+        const string fusoSp = "America/Sao_Paulo";
         modelBuilder.Entity<Regiao>().HasData(
-            new { Id = idCentro, Nome = "Centro", CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idLeste,  Nome = "Leste",  CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idNorte,  Nome = "Norte",  CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idOeste,  Nome = "Oeste",  CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idSul,    Nome = "Sul",    CriadoEm = seedDate, AtualizadoEm = seedDate }
+            new { Id = idCentro, Nome = "Centro", FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idLeste,  Nome = "Leste",  FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idNorte,  Nome = "Norte",  FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idOeste,  Nome = "Oeste",  FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idSul,    Nome = "Sul",    FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate }
         );
 
         // --- Subprefeituras (32) — centróides WGS-84 calculados dos polígonos oficiais ---

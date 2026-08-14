@@ -229,6 +229,11 @@ namespace Pulsar.API.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("FusoHorario")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -244,6 +249,7 @@ namespace Pulsar.API.Migrations
                             Id = new Guid("10000000-0000-0000-0000-000000000001"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            FusoHorario = "America/Sao_Paulo",
                             Nome = "Centro"
                         },
                         new
@@ -251,6 +257,7 @@ namespace Pulsar.API.Migrations
                             Id = new Guid("10000000-0000-0000-0000-000000000002"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            FusoHorario = "America/Sao_Paulo",
                             Nome = "Leste"
                         },
                         new
@@ -258,6 +265,7 @@ namespace Pulsar.API.Migrations
                             Id = new Guid("10000000-0000-0000-0000-000000000003"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            FusoHorario = "America/Sao_Paulo",
                             Nome = "Norte"
                         },
                         new
@@ -265,6 +273,7 @@ namespace Pulsar.API.Migrations
                             Id = new Guid("10000000-0000-0000-0000-000000000004"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            FusoHorario = "America/Sao_Paulo",
                             Nome = "Oeste"
                         },
                         new
@@ -272,6 +281,7 @@ namespace Pulsar.API.Migrations
                             Id = new Guid("10000000-0000-0000-0000-000000000005"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            FusoHorario = "America/Sao_Paulo",
                             Nome = "Sul"
                         });
                 });

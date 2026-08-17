@@ -21,6 +21,7 @@ public class PulsarDbContext : DbContext
     public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
     public DbSet<AssinaturaPush> AssinaturasPush => Set<AssinaturaPush>();
     public DbSet<OcorrenciaAlagamento> OcorrenciasAlagamento => Set<OcorrenciaAlagamento>();
+    public DbSet<PrevisaoClimatica> PrevisoesClimaticas => Set<PrevisaoClimatica>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -179,6 +180,19 @@ public class PulsarDbContext : DbContext
             e.HasOne(a => a.Subprefeitura)
              .WithMany()
              .HasForeignKey(a => a.SubprefeituraId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PrevisaoClimatica>(e =>
+        {
+            e.HasKey(p => p.Id);
+            // Chave do upsert: impede a previsão de duplicar quando a mesma faixa de 3h
+            // é rebuscada a cada hora.
+            e.HasIndex(p => new { p.SubprefeituraId, p.InstantePrevisto }).IsUnique();
+            e.Property(p => p.CondicaoDescricao).IsRequired().HasMaxLength(120);
+            e.HasOne(p => p.Subprefeitura)
+             .WithMany()
+             .HasForeignKey(p => p.SubprefeituraId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 

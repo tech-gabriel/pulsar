@@ -236,6 +236,41 @@ namespace Pulsar.API.Migrations
                     b.ToTable("LeiturasClimaticas");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.NotificacaoEnviada", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Chave")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<int>("Destinatarios")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("EnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Gatilho")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid>("RegiaoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Chave")
+                        .IsUnique();
+
+                    b.HasIndex("RegiaoId", "Gatilho", "EnviadoEm");
+
+                    b.ToTable("NotificacoesEnviadas");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.OcorrenciaAlagamento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1535,6 +1570,17 @@ namespace Pulsar.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Subprefeitura");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.NotificacaoEnviada", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Regiao", "Regiao")
+                        .WithMany()
+                        .HasForeignKey("RegiaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Regiao");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.PrevisaoClimatica", b =>

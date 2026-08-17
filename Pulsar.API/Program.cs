@@ -187,6 +187,7 @@ builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>(
 builder.Services.AddScoped<IOcorrenciaAlagamentoRepository, OcorrenciaAlagamentoRepository>();
 builder.Services.AddScoped<IAgregadoDiarioRepository, AgregadoDiarioRepository>();
 builder.Services.AddScoped<IPrevisaoRepository, PrevisaoRepository>();
+builder.Services.AddScoped<INotificacaoEnviadaRepository, NotificacaoEnviadaRepository>();
 
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();

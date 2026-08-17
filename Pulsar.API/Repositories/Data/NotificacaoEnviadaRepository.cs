@@ -30,7 +30,20 @@ public class NotificacaoEnviadaRepository : INotificacaoEnviadaRepository
     public async Task RegistrarAsync(NotificacaoEnviada registro)
     {
         await _context.NotificacoesEnviadas.AddAsync(registro);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Chave duplicada é desfecho esperado quando dois ciclos se sobrepõem: é para
+            // isso que o índice único existe. O EF não desfaz o rastreamento sozinho, e o
+            // ciclo do scheduler usa um único contexto para a cidade inteira, então sem
+            // soltar a entidade aqui ela seguiria em Added e o SaveChanges da região
+            // seguinte repetiria o INSERT que falhou, derrubando um envio inocente.
+            _context.Entry(registro).State = EntityState.Detached;
+            throw;
+        }
     }
 
     public async Task<int> RemoverAntigasAsync(DateTime limiteUtc)

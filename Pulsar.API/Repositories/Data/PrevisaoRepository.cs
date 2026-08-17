@@ -23,12 +23,21 @@ public class PrevisaoRepository : IPrevisaoRepository
     {
         if (pontos.Count == 0) return;
 
-        var instantes = pontos.Select(p => p.InstantePrevisto).ToList();
+        // A resposta da API pode trazer a mesma faixa de 3h mais de uma vez. Sem colapsar
+        // isso aqui, os dois pontos viram dois INSERTs e o índice único derruba o lote
+        // inteiro da subprefeitura por causa de um ponto só. Fica a última ocorrência,
+        // que é a leitura mais recente daquela faixa.
+        var pontosPorInstante = pontos
+            .GroupBy(p => p.InstantePrevisto)
+            .Select(g => g.Last())
+            .ToList();
+
+        var instantes = pontosPorInstante.Select(p => p.InstantePrevisto).ToList();
         var existentes = await _context.PrevisoesClimaticas
             .Where(p => p.SubprefeituraId == subprefeituraId && instantes.Contains(p.InstantePrevisto))
             .ToDictionaryAsync(p => p.InstantePrevisto);
 
-        foreach (var ponto in pontos)
+        foreach (var ponto in pontosPorInstante)
         {
             if (existentes.TryGetValue(ponto.InstantePrevisto, out var linha))
             {

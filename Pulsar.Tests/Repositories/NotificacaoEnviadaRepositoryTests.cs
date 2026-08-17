@@ -130,6 +130,25 @@ public class NotificacaoEnviadaRepositoryTests
     }
 
     [Fact]
+    public async Task ObterRecentesPorRegiao_DevolveDoMaisRecenteParaOMaisAntigo()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var regiaoId = await ctx.Regioes.Select(r => r.Id).FirstAsync();
+        var repo = new NotificacaoEnviadaRepository(ctx);
+        var agora = DateTime.UtcNow;
+
+        // Gravados fora de ordem de propósito: quem ordena é a consulta, não a inserção.
+        await repo.RegistrarAsync(Registro(regiaoId, "score-alto", "antigo", agora.AddHours(-10)));
+        await repo.RegistrarAsync(Registro(regiaoId, "score-alto", "recente", agora.AddHours(-1)));
+
+        var recentes = await repo.ObterRecentesPorRegiaoAsync(regiaoId, 48);
+
+        recentes.Select(n => n.Chave).Should().Equal("recente", "antigo");
+    }
+
+    [Fact]
     public async Task RemoverAntigas_ApagaAcimaDoLimite()
     {
         using var conn = new SqliteConnection("Data Source=:memory:");
@@ -166,5 +185,35 @@ public class NotificacaoEnviadaRepositoryTests
             await repo.RegistrarAsync(Registro(regiaoId, "chuva-prevista", "chuva:x:18h", agora));
 
         await repetir.Should().ThrowAsync<DbUpdateException>();
+    }
+
+    [Fact]
+    public async Task RegistrarAsync_AposChaveRepetida_NaoContaminaOProximoRegistro()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var regioes = await ctx.Regioes.Select(r => r.Id).Take(2).ToListAsync();
+        var repo = new NotificacaoEnviadaRepository(ctx);
+        var agora = DateTime.UtcNow;
+
+        // O ciclo do scheduler resolve um único PulsarDbContext por rodada e passa por
+        // todas as regiões com ele. Se a entidade que bateu no índice único continuasse
+        // em Added, o SaveChanges da região seguinte repetiria o INSERT que falhou e
+        // derrubaria uma notificação que não tinha nada de errado.
+        await repo.RegistrarAsync(Registro(regioes[0], "chuva-prevista", "chuva:x:18h", agora));
+        try
+        {
+            await repo.RegistrarAsync(Registro(regioes[0], "chuva-prevista", "chuva:x:18h", agora));
+        }
+        catch (DbUpdateException)
+        {
+            // Esperado: é o dedup funcionando. Task 10 trata assim, seguindo em frente.
+        }
+
+        await repo.RegistrarAsync(Registro(regioes[1], "chuva-prevista", "chuva:y:18h", agora));
+
+        (await ctx.NotificacoesEnviadas.Select(n => n.Chave).ToListAsync())
+            .Should().BeEquivalentTo(["chuva:x:18h", "chuva:y:18h"]);
     }
 }

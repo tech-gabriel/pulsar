@@ -174,8 +174,14 @@ public class PrevisaoServiceTests
         var faixa = DateTime.UtcNow.AddHours(3);
         var repo = new PrevisaoRepository(ctx);
 
-        await repo.UpsertLoteAsync(subs[0].Id, [Ponto(faixa, chuva: 3, pop: 0.30, vento: 12)], DateTime.UtcNow);
-        await repo.UpsertLoteAsync(subs[1].Id, [Ponto(faixa, chuva: 17, pop: 0.85, vento: 40)], DateTime.UtcNow);
+        // Coletas de horas diferentes de propósito: a faixa da região tem que herdar a
+        // MAIS VELHA. Se herdasse a mais nova, uma previsão parada há horas apareceria
+        // como recente e o aviso de "previsão velha" nunca dispararia.
+        var coletaVelha = DateTime.UtcNow.AddMinutes(-40);
+        var coletaNova = DateTime.UtcNow.AddMinutes(-5);
+
+        await repo.UpsertLoteAsync(subs[0].Id, [Ponto(faixa, chuva: 3, pop: 0.30, vento: 12)], coletaVelha);
+        await repo.UpsertLoteAsync(subs[1].Id, [Ponto(faixa, chuva: 17, pop: 0.85, vento: 40)], coletaNova);
 
         var faixas = await NovoServico(ctx).ObterFaixasRegiaoAsync(regiaoId, 8);
 
@@ -183,8 +189,11 @@ public class PrevisaoServiceTests
         faixas[0].ChuvaMm.Should().Be(17);
         faixas[0].ProbabilidadeChuva.Should().Be(0.85);
         faixas[0].VentoKmH.Should().Be(40);
+        faixas[0].RajadaKmH.Should().Be(60, "a rajada também entra por pior caso");
         faixas[0].CondicaoCodigo.Should().Be(502, "a condição vem da sub de pior chuva");
         faixas[0].CondicaoDescricao.Should().Be("chuva forte");
+        faixas[0].ColetadoEm.Should().BeCloseTo(coletaVelha, TimeSpan.FromSeconds(1),
+            "a faixa envelhece pela sub mais atrasada, que é o que alimenta o aviso de previsão velha");
     }
 
     [Fact]

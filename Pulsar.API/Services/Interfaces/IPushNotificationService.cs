@@ -1,4 +1,3 @@
-using Pulsar.API.Domain.Enums;
 using Pulsar.API.Services.Push;
 
 namespace Pulsar.API.Services.Interfaces;
@@ -12,8 +11,8 @@ public interface IPushNotificationService
     string? ChavePublica { get; }
 
     /// <summary>
-    /// Notifica os usuários que favoritaram a região e optaram pela faixa informada.
+    /// Notifica os usuários que favoritaram a região e optaram pelo critério informado.
     /// Inscrições mortas (404/410) são removidas. Retorna quantas notificações foram enviadas.
     /// </summary>
-    Task<int> NotificarRegiaoAsync(Guid regiaoId, FaixaRisco faixa, PushPayload payload, CancellationToken ct = default);
+    Task<int> NotificarRegiaoAsync(Guid regiaoId, CriterioOptIn criterio, PushPayload payload, CancellationToken ct = default);
 }

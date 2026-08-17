@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using Pulsar.API.Domain.Entities;
-using Pulsar.API.Domain.Enums;
 using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services.Push;
 
@@ -47,24 +46,24 @@ public class WebPushNotificationServiceTests
         var sut = Criar(new PushOptions());
 
         var enviados = await sut.NotificarRegiaoAsync(
-            Guid.NewGuid(), FaixaRisco.ALTO, new PushPayload("t", "c"));
+            Guid.NewGuid(), CriterioOptIn.RiscoAlto, new PushPayload("t", "c"));
 
         enviados.Should().Be(0);
         _repoMock.Verify(r => r.ObterPorRegiaoFavoritaAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]
-    public async Task NotificarRegiaoAsync_AssinaturasNaoOptaramPelaFaixa_NaoEnvia()
+    public async Task NotificarRegiaoAsync_AssinaturasNaoOptaramPeloCriterio_NaoEnvia()
     {
         var regiaoId = Guid.NewGuid();
-        // Inscrição só quer faixa ALTO; chega um alerta MODERADO → não deve enviar.
+        // Inscrição só quer risco alto; chega um envio de risco moderado → não deve enviar.
         _repoMock.Setup(r => r.ObterPorRegiaoFavoritaAsync(regiaoId))
             .ReturnsAsync([new AssinaturaPush { AlertaAlto = true, AlertaModerado = false }]);
 
         var sut = Criar(new PushOptions { PublicKey = PublicKeyExemplo, PrivateKey = PrivateKeyExemplo });
 
         var enviados = await sut.NotificarRegiaoAsync(
-            regiaoId, FaixaRisco.MODERADO, new PushPayload("t", "c"));
+            regiaoId, CriterioOptIn.RiscoModerado, new PushPayload("t", "c"));
 
         enviados.Should().Be(0);
     }

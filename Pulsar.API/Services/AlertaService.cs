@@ -118,7 +118,7 @@ public class AlertaService : IAlertaService
                 Url: "/",
                 Tag: $"alerta-{regiaoId}");
 
-            var enviados = await _push.NotificarRegiaoAsync(regiaoId, FaixaRisco.ALTO, payload, ct);
+            var enviados = await _push.NotificarRegiaoAsync(regiaoId, CriterioOptIn.RiscoAlto, payload, ct);
             if (enviados > 0)
                 _logger.LogInformation("Notificações push enviadas para região {RegiaoId}: {Total}.", regiaoId, enviados);
         }

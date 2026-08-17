@@ -15,6 +15,7 @@ public class ColetaRunner : IColetaRunner
     private readonly IScoreService _scoreService;
     private readonly IAlertaService _alertaService;
     private readonly IAgregadoDiarioService _agregadoService;
+    private readonly IPrevisaoService _previsaoService;
     private readonly PulsarDbContext _db;
     private readonly ILogger<ColetaRunner> _logger;
 
@@ -23,6 +24,7 @@ public class ColetaRunner : IColetaRunner
         IScoreService scoreService,
         IAlertaService alertaService,
         IAgregadoDiarioService agregadoService,
+        IPrevisaoService previsaoService,
         PulsarDbContext db,
         ILogger<ColetaRunner> logger)
     {
@@ -30,6 +32,7 @@ public class ColetaRunner : IColetaRunner
         _scoreService = scoreService;
         _alertaService = alertaService;
         _agregadoService = agregadoService;
+        _previsaoService = previsaoService;
         _db = db;
         _logger = logger;
     }
@@ -64,6 +67,18 @@ public class ColetaRunner : IColetaRunner
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Falha ao atualizar agregado diário de {Nome}.", sub.Nome);
+            }
+
+            // try/catch próprio pelo mesmo motivo do agregado: a previsão é a parte que
+            // depende de rede externa, e uma falha dela não pode descartar o score nem o
+            // agregado que acabaram de ser gravados.
+            try
+            {
+                await _previsaoService.AtualizarAsync(sub.Id, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Falha ao atualizar previsão de {Nome}.", sub.Nome);
             }
         }
 

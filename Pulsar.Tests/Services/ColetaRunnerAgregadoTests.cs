@@ -38,6 +38,7 @@ public class ColetaRunnerAgregadoTests
             Mock.Of<IScoreService>(),
             Mock.Of<IAlertaService>(),
             agregado.Object,
+            Mock.Of<IPrevisaoService>(),
             ctx,
             NullLogger<ColetaRunner>.Instance);
 

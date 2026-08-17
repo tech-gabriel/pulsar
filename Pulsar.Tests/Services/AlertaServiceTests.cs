@@ -6,6 +6,7 @@ using Pulsar.API.Domain.Enums;
 using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services;
 using Pulsar.API.Services.Interfaces;
+using Pulsar.API.Services.Push;
 
 namespace Pulsar.Tests.Services;
 
@@ -270,7 +271,7 @@ public class AlertaServiceTests
         await sut.GerarAlertaAsync(regiaoId);
 
         _pushMock.Verify(p => p.NotificarRegiaoAsync(
-            regiaoId, FaixaRisco.ALTO, It.IsAny<Pulsar.API.Services.Push.PushPayload>(), It.IsAny<CancellationToken>()),
+            regiaoId, CriterioOptIn.RiscoAlto, It.IsAny<Pulsar.API.Services.Push.PushPayload>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -289,7 +290,7 @@ public class AlertaServiceTests
         await sut.GerarAlertaAsync(regiaoId);
 
         _pushMock.Verify(p => p.NotificarRegiaoAsync(
-            It.IsAny<Guid>(), It.IsAny<FaixaRisco>(), It.IsAny<Pulsar.API.Services.Push.PushPayload>(), It.IsAny<CancellationToken>()),
+            It.IsAny<Guid>(), It.IsAny<CriterioOptIn>(), It.IsAny<Pulsar.API.Services.Push.PushPayload>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -307,7 +308,7 @@ public class AlertaServiceTests
 
         _alertaRepoMock.Verify(r => r.ObterRecentesPorRegiaoAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
         _pushMock.Verify(p => p.NotificarRegiaoAsync(
-            It.IsAny<Guid>(), It.IsAny<FaixaRisco>(), It.IsAny<Pulsar.API.Services.Push.PushPayload>(), It.IsAny<CancellationToken>()),
+            It.IsAny<Guid>(), It.IsAny<CriterioOptIn>(), It.IsAny<Pulsar.API.Services.Push.PushPayload>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

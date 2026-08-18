@@ -57,6 +57,30 @@ public class MotorNotificacoesTests
     }
 
     /// <summary>
+    /// Gatilho que cancela o ciclo ANTES de devolver a própria pendência. Reproduz o
+    /// desligamento do serviço no meio da avaliação: o loop de gatilhos para na iteração
+    /// seguinte e a lista fica com o que deu tempo de coletar.
+    /// </summary>
+    private sealed class GatilhoQueCancela : IGatilhoNotificacao
+    {
+        private readonly NotificacaoPendente _pendencia;
+        private readonly CancellationTokenSource _cts;
+        public GatilhoQueCancela(string nome, NotificacaoPendente pendencia, CancellationTokenSource cts)
+        {
+            Nome = nome;
+            _pendencia = pendencia;
+            _cts = cts;
+        }
+        public string Nome { get; }
+        public Task<IReadOnlyList<NotificacaoPendente>> AvaliarAsync(
+            ContextoGatilho ctx, CancellationToken ct = default)
+        {
+            _cts.Cancel();
+            return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([_pendencia]);
+        }
+    }
+
+    /// <summary>
     /// Logger que guarda as mensagens já formatadas. Existe para um teste só, o do fuso
     /// inválido: a obrigação ali não é apenas "pular a região", é a falha ser ACHÁVEL nos
     /// logs, e isso só se assere lendo a mensagem.
@@ -451,6 +475,35 @@ public class MotorNotificacoesTests
         (await ctx.NotificacoesEnviadas.SingleAsync()).Gatilho.Should().Be("briefing-diario");
         _logger.Mensagens.Should().Contain(m => m.Contains("explosivo") && m.Contains(nomeRegiao),
             "sem o nome do gatilho e o da região, a falha não é diagnosticável");
+    }
+
+    [Fact]
+    public async Task CicloCancelado_NaoDecideComGatilhosPelaMetade()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        await DeixarSoUmaRegiaoAsync(ctx);
+
+        using var cts = new CancellationTokenSource();
+
+        // O gatilho de MENOR prioridade roda primeiro e derruba o ciclo; o de risco alto, que
+        // venceria a escolha, nunca chega a ser consultado. Sem a guarda, o motor decidiria em
+        // cima da lista pela metade e mandaria o aviso de chuva JUSTAMENTE por faltar o de
+        // risco alto. O mock de push ignora o token de propósito: a guarda tem que valer por si,
+        // e não por o cliente de push acabar lançando.
+        var motor = NovoMotor(ctx,
+            new GatilhoQueCancela("chuva-prevista", Pendencia("chuva-prevista", "chuva:k", 2), cts),
+            new GatilhoFixo("score-alto",
+                Pendencia("score-alto", "score:k", 1, TimeSpan.FromHours(1))));
+
+        var enviados = await motor.AvaliarEDispararAsync(cts.Token);
+
+        enviados.Should().Be(0);
+        _pushMock.Verify(p => p.NotificarRegiaoAsync(
+            It.IsAny<Guid>(), It.IsAny<CriterioOptIn>(), It.IsAny<PushPayload>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        (await ctx.NotificacoesEnviadas.CountAsync()).Should().Be(0);
     }
 
     [Fact]

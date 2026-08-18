@@ -25,12 +25,12 @@ public interface IGatilhoNotificacao
     /// Não deve lançar em operação normal: condição ausente ou dado faltando se resolve
     /// devolvendo lista vazia, que é o sinal previsto para isso.
     ///
-    /// Se lançar mesmo assim, o alcance é MENOR do que este doc afirmava antes. O motor é
-    /// obrigado a envolver CADA gatilho no seu próprio try/catch, então a exceção é
-    /// registrada com o nome do gatilho e o da região e o loop continua: os outros gatilhos
-    /// daquela região seguem rodando e disparando. O custo é a notificação DAQUELE gatilho,
-    /// DAQUELA região, NAQUELE ciclo. Em particular, o aviso de risco alto, que é o caminho
-    /// de segurança, não é calado por um gatilho informativo quebrado.
+    /// Se lançar mesmo assim, o estrago é contido. O motor é obrigado a envolver CADA
+    /// gatilho no seu próprio try/catch, de modo que a exceção seja registrada com o nome do
+    /// gatilho e o da região, o loop continue e os outros gatilhos daquela região sigam
+    /// rodando e disparando. O custo fica sendo a notificação DAQUELE gatilho, DAQUELA
+    /// região, NAQUELE ciclo, e em particular o aviso de risco alto, que é o caminho de
+    /// segurança, não é calado por um gatilho informativo quebrado.
     ///
     /// Esse try/catch por gatilho é parte do contrato, e não detalhe interno do motor: quem
     /// reestruturar o loop precisa preservá-lo, porque é ele que sustenta o isolamento

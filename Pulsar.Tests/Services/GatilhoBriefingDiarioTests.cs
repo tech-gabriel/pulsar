@@ -290,10 +290,17 @@ public class GatilhoBriefingDiarioTests
         payload.Corpo.Should().NotContain("Chuva mais forte",
             "sem chuva prevista o resumo não pode inventar uma");
         payload.Corpo.Should().NotContain("—", "copy visível não usa travessão");
+        payload.Corpo.Should().NotContain("–", "nem o travessão curto");
 
-        // Aqui a igualdade exata cabe: sem a cláusula condicional o corpo é uma frase
-        // inteira escrita à mão, e um Contain("baixo") passaria em corpo truncado.
-        payload.Corpo.Should().Be("Risco baixo.");
+        // "hoje" seria precisão que não conferimos: o horizonte são 24h a partir de agora,
+        // que às 6h locais passa da meia-noite e alcança a manhã seguinte.
+        payload.Corpo.Should().NotContain("hoje",
+            "o escopo conferido são as próximas 24h, não o dia de hoje");
+
+        // Igualdade exata: este ramo é frase inteira escrita à mão, sem interpolação
+        // nenhuma. Um Contain("baixo") passaria em corpo truncado, e é justamente o corpo
+        // truncado ("Risco baixo." e mais nada) que este teste existe para impedir de voltar.
+        payload.Corpo.Should().Be("Risco baixo. Sem chuva prevista nas próximas horas.");
     }
 
     [Fact]
@@ -328,6 +335,32 @@ public class GatilhoBriefingDiarioTests
 
         pendencias.Should().HaveCount(1,
             "o briefing vale mesmo sem previsão: o risco atual já é conteúdo");
+
+        // Guarda antes da igualdade: sem NENHUMA faixa olhada, não observamos ausência de
+        // chuva, só ausência de previsão. Afirmar "sem chuva prevista" aqui seria inventar
+        // uma ausência tanto quanto inventar a chuva, e é o erro fácil de cometer ao
+        // transformar o "if" da cláusula em "if/else".
+        pendencias[0].Payload.Corpo.Should().NotContain("Sem chuva",
+            "sem previsão nenhuma não dá para afirmar que não vai chover");
+
+        pendencias[0].Payload.Corpo.Should().Be("Risco moderado.");
+    }
+
+    /// <summary>
+    /// Previsão existe, mas toda ela cai depois do horizonte do resumo. É o mesmo estado
+    /// epistêmico de não ter previsão: nada foi olhado dentro da janela, então o resumo não
+    /// pode afirmar nem chuva nem ausência de chuva.
+    /// </summary>
+    [Fact]
+    public async Task PrevisaoSoDepoisDoHorizonte_NaoAfirmaChuvaNemAusencia()
+    {
+        var pendencias = await new GatilhoBriefingDiario().AvaliarAsync(Contexto(
+            SeisDaManhaEmSp, Sp, FaixaRisco.MODERADO,
+            Faixa(SeisDaManhaEmSp.AddHours(30), chuva: 0),
+            Faixa(SeisDaManhaEmSp.AddHours(36), chuva: 8)));
+
+        pendencias[0].Payload.Corpo.Should().NotContain("Chuva mais forte");
+        pendencias[0].Payload.Corpo.Should().NotContain("Sem chuva");
         pendencias[0].Payload.Corpo.Should().Be("Risco moderado.");
     }
 

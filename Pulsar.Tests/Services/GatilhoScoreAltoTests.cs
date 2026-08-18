@@ -114,18 +114,13 @@ public class GatilhoScoreAltoTests
         var pendencias = await new GatilhoScoreAlto().AvaliarAsync(Contexto((78, FaixaRisco.ALTO)));
 
         var payload = pendencias[0].Payload;
-        payload.Titulo.Should().Be("Risco alto na região Sul");
 
-        // A guarda de jargão vem ANTES da igualdade de propósito: depois dela seria
-        // inalcançável, porque a comparação exata falharia primeiro em qualquer mutação
-        // e a linha nunca poderia falhar sozinha. Equivalent = ignora caixa, para pegar
-        // também "score máximo" em minúscula.
-        payload.Corpo.Should().NotContainEquivalentOf("score",
-            "o número do score não diz a ninguém o que fazer");
-
-        // Igualdade exata: um Contain("18") passaria em corpo que perdeu a unidade ou a
-        // cláusula do vento. Cobre também o caminho inteiro, em que "0.#" não imprime casa.
-        payload.Corpo.Should().Be("Chuva de 18 mm por hora e vento de 45 km/h agora.");
+        // CONVENÇÃO DESTE ARQUIVO: toda guarda de regra ("não contém X") vem ANTES da
+        // igualdade exata da mesma string. Depois dela a guarda seria inalcançável, porque
+        // a comparação exata falha primeiro em qualquer mutação e a linha nunca poderia
+        // falhar sozinha, virando decoração. Nesta ordem cada guarda ainda erra com a
+        // mensagem que explica QUAL regra foi quebrada, em vez de um diff de string.
+        // Vale para as copies das Tasks 8 e 9 também.
 
         // Travessão é o caractere longo, não o hífen: hífen é legítimo em nome de
         // região ("Centro-Oeste"), então checar "-" proibiria copy correta.
@@ -133,6 +128,16 @@ public class GatilhoScoreAltoTests
         payload.Corpo.Should().NotContain("—", "copy visível não usa travessão");
         payload.Titulo.Should().NotContain("–", "nem o travessão curto");
         payload.Corpo.Should().NotContain("–", "nem o travessão curto");
+
+        // Equivalent = ignora caixa, para pegar também "score máximo" em minúscula.
+        payload.Corpo.Should().NotContainEquivalentOf("score",
+            "o número do score não diz a ninguém o que fazer");
+
+        payload.Titulo.Should().Be("Risco alto na região Sul");
+
+        // Igualdade exata: um Contain("18") passaria em corpo que perdeu a unidade ou a
+        // cláusula do vento. Cobre também o caminho inteiro, em que "0.#" não imprime casa.
+        payload.Corpo.Should().Be("Chuva de 18 mm por hora e vento de 45 km/h agora.");
     }
 
     [Fact]

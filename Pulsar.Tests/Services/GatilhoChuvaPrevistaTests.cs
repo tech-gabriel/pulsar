@@ -122,6 +122,25 @@ public class GatilhoChuvaPrevistaTests
     }
 
     /// <summary>
+    /// O caso mais comum do produto: seco agora, temporal daqui a seis horas. Se o gatilho
+    /// escolhesse a primeira faixa da janela e SÓ DEPOIS conferisse os limiares, a faixa seca
+    /// da frente roubaria o lugar e o app nunca avisaria de chuva se aproximando, em silêncio
+    /// e sem nada acender. É o teste que prova o filtro vindo antes da escolha.
+    /// </summary>
+    [Fact]
+    public async Task FaixaSecaAntesDaTempestade_AvisaDaTempestade()
+    {
+        var pendencias = await new GatilhoChuvaPrevista().AvaliarAsync(Contexto(
+            Faixa(3, chuva: 2, pop: 0.9),
+            Faixa(6, chuva: 30, pop: 0.9)));
+
+        pendencias.Should().HaveCount(1, "a faixa seca da frente não anula a tempestade");
+        pendencias[0].Chave.Should().Contain(
+            Agora.AddHours(6).ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture),
+            "o aviso é da faixa que qualifica, não da primeira da janela");
+    }
+
+    /// <summary>
     /// A severidade divide o público do opt-in: quem só assinou risco alto recebe o
     /// temporal e não a chuva meramente forte. Os 19,9 fixam a fronteira nos 20 mm.
     /// </summary>

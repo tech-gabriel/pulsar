@@ -30,6 +30,14 @@ public static class LimiaresNotificacao
     public const int HoraBriefingLocal = 6;
 
     /// <summary>
+    /// Hora local a partir da qual o briefing do dia deixa de sair (exclusiva). A manhã
+    /// acaba ao meio-dia, e as 6h de folga entre os dois limites são tolerância generosa
+    /// para o serviço voltar de uma queda. Resumo do dia que chega à tarde já não é resumo
+    /// do dia: quem ia decidir se levava guarda-chuva já saiu de casa.
+    /// </summary>
+    public const int HoraLimiteBriefingLocal = 12;
+
+    /// <summary>
     /// Horizonte do resumo diário. Maior que o do aviso de chuva de propósito: o briefing
     /// é o "como vai ser o seu dia", então precisa alcançar a noite de quem lê às 6h da
     /// manhã, enquanto o aviso de chuva existe para ser acionável agora.

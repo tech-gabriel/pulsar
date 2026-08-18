@@ -110,11 +110,18 @@ public class WebPushNotificationService : IPushNotificationService
     /// Público e estático para ser testável direto. Mapeia o critério de envio para a
     /// coluna de preferência correspondente da inscrição.
     /// </summary>
+    /// <remarks>
+    /// O braço final estoura em vez de devolver <c>false</c> de propósito: um critério novo
+    /// sem mapeamento devolvendo <c>false</c> não chegaria em ninguém e ninguém saberia,
+    /// que é exatamente o defeito silencioso que esta função existe para eliminar. Só pode
+    /// disparar por erro de programação (valor fora do enum), nunca por dado do usuário.
+    /// </remarks>
     public static bool OptouPeloCriterio(AssinaturaPush a, CriterioOptIn criterio) => criterio switch
     {
         CriterioOptIn.RiscoAlto => a.AlertaAlto,
         CriterioOptIn.RiscoModerado => a.AlertaModerado,
         CriterioOptIn.ResumoDiario => a.ResumoDiario,
-        _ => false
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(criterio), criterio, "Critério de opt-in sem mapeamento para coluna de preferência.")
     };
 }

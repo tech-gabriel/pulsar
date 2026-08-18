@@ -9,19 +9,29 @@ using Pulsar.API.Services.Push;
 namespace Pulsar.Tests.Services;
 
 /// <summary>
-/// Dois fusos de propósito em todo este arquivo: uma implementação que fixasse
+/// Mais de um fuso de propósito em todo este arquivo: uma implementação que fixasse
 /// America/Sao_Paulo passaria em qualquer teste de um fuso só, e é justamente esse código
 /// que quebra quando entrar a segunda cidade.
 ///
-/// A aritmética abaixo foi conferida nesta máquina, instante a instante:
-/// America/Sao_Paulo é UTC-3 o ano todo (o Brasil aboliu o horário de verão em 2019) e
-/// Europe/Lisbon em agosto está em horário de verão, UTC+1. Por isso 08:00 UTC é 05:00 em
-/// São Paulo e 09:00 em Lisboa: o mesmo instante cai em lados opostos das 6h locais.
+/// A aritmética abaixo foi conferida nesta máquina, instante a instante: America/Sao_Paulo
+/// é UTC-3 o ano todo (o Brasil aboliu o horário de verão em 2019), Europe/Lisbon em agosto
+/// está em horário de verão (UTC+1, e não o UTC+0 que o DisplayName dele anuncia, que é o
+/// deslocamento PADRÃO) e Asia/Tokyo é UTC+9 sem horário de verão. Por isso 08:00 UTC é
+/// 05:00 em São Paulo e 09:00 em Lisboa: o mesmo instante cai em lados opostos das 6h locais.
 /// </summary>
 public class GatilhoBriefingDiarioTests
 {
     private static readonly TimeZoneInfo Sp = TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
     private static readonly TimeZoneInfo Lisboa = TimeZoneInfo.FindSystemTimeZoneById("Europe/Lisbon");
+
+    /// <summary>
+    /// UTC+9 e sem horário de verão. Existe por uma razão aritmética, não por realismo de
+    /// produto: dentro da janela da manhã (6h às 12h locais), o dia local só pode diferir do
+    /// dia UTC num fuso cujo deslocamento passe da hora do briefing. Em São Paulo (UTC-3)
+    /// isso é impossível, então sem um fuso assim o teste da chave por dia local não teria
+    /// como discriminar. Ver Chave_UsaODiaLocalENaoODiaUtc.
+    /// </summary>
+    private static readonly TimeZoneInfo Toquio = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tokyo");
 
     /// <summary>09:00 UTC = 06:00 em São Paulo, o primeiro instante em que o briefing pode sair.</summary>
     private static readonly DateTime SeisDaManhaEmSp = new(2026, 8, 17, 9, 0, 0, DateTimeKind.Utc);
@@ -97,18 +107,22 @@ public class GatilhoBriefingDiarioTests
     }
 
     /// <summary>
-    /// Fixa a fronteira das 6h locais nos dois lados, e não um intervalo: como a decisão é
-    /// pela hora cheia local, 08:59 UTC (05:59 em SP) e 09:00 UTC (06:00 em SP) são os dois
-    /// instantes vizinhos que a cercam. Sem o par, um gatilho que disparasse às 5h passaria.
+    /// Fixa as DUAS fronteiras da janela da manhã, cada uma pelos instantes vizinhos e não
+    /// por um intervalo frouxo. Como a decisão é pela hora cheia local, 08:59 UTC (05:59 em
+    /// SP) e 09:00 UTC (06:00) cercam a abertura, e 14:59 UTC (11:59) e 15:00 UTC (12:00)
+    /// cercam o fechamento. Sem o par de baixo, um gatilho que disparasse às 5h passaria;
+    /// sem o par de cima, o "briefing" sairia de madrugada depois de um dia fora do ar.
     /// </summary>
     [Theory]
-    [InlineData(4, 0, 0)]   // 01:00 em SP, madrugada
-    [InlineData(8, 0, 0)]   // 05:00 em SP
-    [InlineData(8, 59, 0)]  // 05:59 em SP, o último minuto em que ainda não sai
-    [InlineData(9, 0, 1)]   // 06:00 em SP, o primeiro instante em que sai
-    [InlineData(9, 1, 1)]   // 06:01 em SP
-    [InlineData(23, 0, 1)]  // 20:00 em SP: passou das 6h e continua valendo o dia todo
-    public async Task FronteiraDasSeisHorasLocais(int horaUtc, int minutoUtc, int esperado)
+    [InlineData(4, 0, 0)]    // 01:00 em SP, madrugada
+    [InlineData(8, 0, 0)]    // 05:00 em SP
+    [InlineData(8, 59, 0)]   // 05:59 em SP, o último minuto em que ainda não sai
+    [InlineData(9, 0, 1)]    // 06:00 em SP, o primeiro instante em que sai
+    [InlineData(9, 1, 1)]    // 06:01 em SP
+    [InlineData(14, 59, 1)]  // 11:59 em SP, o último minuto em que ainda sai
+    [InlineData(15, 0, 0)]   // 12:00 em SP, meio-dia: a manhã acabou
+    [InlineData(23, 0, 0)]   // 20:00 em SP: passou do meio-dia, o briefing do dia já não sai
+    public async Task FronteiraDaJanelaDaManhaLocal(int horaUtc, int minutoUtc, int esperado)
     {
         var instante = new DateTime(2026, 8, 17, horaUtc, minutoUtc, 0, DateTimeKind.Utc);
 
@@ -137,20 +151,25 @@ public class GatilhoBriefingDiarioTests
     }
 
     /// <summary>
-    /// O caso que separa dia local de dia UTC de verdade: 02:00 UTC do dia 18 ainda é o dia
-    /// 17 em São Paulo, às 23h. Como 23h já passou das 6h, o briefing sai, e a chave tem que
-    /// ser a do dia 17. Um gatilho que usasse ctx.AgoraUtc.Date escreveria 2026-08-18 aqui e
-    /// gastaria a cota do dia seguinte antes de ele começar.
+    /// O caso que separa dia local de dia UTC de verdade: 21:00 UTC do dia 17 já é o dia 18
+    /// em Tóquio, às 6h da manhã, dentro da janela do briefing. A chave tem que ser a do dia
+    /// 18. Um gatilho que usasse ctx.AgoraUtc.Date escreveria 2026-08-17 e mandaria dois
+    /// briefings no mesmo dia local de quem lê.
+    ///
+    /// Foi preciso trocar o fuso deste teste quando a janela ganhou o limite do meio-dia: o
+    /// caso antigo (23h em São Paulo) passou a cair fora da janela, e em UTC-3 nenhum
+    /// instante entre 6h e 12h locais tem dia UTC diferente do dia local.
     /// </summary>
     [Fact]
     public async Task Chave_UsaODiaLocalENaoODiaUtc()
     {
-        var ctx = Contexto(new DateTime(2026, 8, 18, 2, 0, 0, DateTimeKind.Utc));
+        var ctx = Contexto(new DateTime(2026, 8, 17, 21, 0, 0, DateTimeKind.Utc), Toquio);
 
         var pendencias = await new GatilhoBriefingDiario().AvaliarAsync(ctx);
 
-        pendencias[0].Chave.Should().Be($"briefing:{ctx.Regiao.Id}:2026-08-17",
-            "23h do dia 17 em São Paulo é o briefing do dia 17");
+        pendencias.Should().HaveCount(1, "06:00 em Tóquio está dentro da janela da manhã");
+        pendencias[0].Chave.Should().Be($"briefing:{ctx.Regiao.Id}:2026-08-18",
+            "6h da manhã do dia 18 em Tóquio é o briefing do dia 18, e não do dia 17 em UTC");
     }
 
     /// <summary>
@@ -255,6 +274,25 @@ public class GatilhoBriefingDiarioTests
             "o risco de agora abre o resumo, antes da previsão");
         payload.Corpo.Should().Contain("Chuva mais forte prevista para as 18h, 14 mm.",
             "a hora é a LOCAL da janela (18h em SP), não a UTC (21h), e o volume vem junto");
+    }
+
+    /// <summary>
+    /// Cada faixa do enum tem a SUA palavra. Sem este teste o arm de ALTO nunca é exercido,
+    /// e trocá-lo por "moderado" sobrevive à suíte inteira: o resultado seria alguém em
+    /// risco alto lendo "Risco moderado." no briefing da manhã, que é o erro mais caro que
+    /// esta copy pode cometer. A faixa BAIXO está coberta em SemChuvaPrevista_CopyNaoInventaChuva.
+    /// </summary>
+    [Theory]
+    [InlineData(FaixaRisco.BAIXO, "Risco baixo.")]
+    [InlineData(FaixaRisco.MODERADO, "Risco moderado.")]
+    [InlineData(FaixaRisco.ALTO, "Risco alto.")]
+    public async Task Copy_CadaFaixaTemASuaPalavra(FaixaRisco faixa, string esperado)
+    {
+        var pendencias = await new GatilhoBriefingDiario()
+            .AvaliarAsync(Contexto(SeisDaManhaEmSp, Sp, faixa));
+
+        pendencias[0].Payload.Corpo.Should().Be(esperado,
+            "a palavra da copy é a da faixa {0}", faixa);
     }
 
     /// <summary>

@@ -11,9 +11,14 @@ namespace Pulsar.API.Services.Notificacoes;
 /// de configurações promete "um resumo do clima da sua região, uma vez por dia", mas nada
 /// no backend nunca enviou isso. Quem ligou o toggle está esperando desde então.
 ///
-/// Sem cron novo: o ciclo de 15 min já roda sempre, então o primeiro ciclo depois das
-/// 6h locais manda. Consequência aceita: se o serviço estiver fora do ar às 6h, o
-/// briefing sai quando ele voltar; se ficar fora a manhã inteira, não sai. Não há retry.
+/// Sem cron novo: o ciclo de 15 min já roda sempre, então o primeiro ciclo dentro da
+/// janela da manhã manda. A janela é FECHADA dos dois lados (6h às 12h locais), e é ela
+/// que substitui o agendamento: sem o limite de cima o "briefing" sairia à meia-noite
+/// depois de um dia fora do ar, quando já não é resumo de dia nenhum.
+///
+/// Consequências aceitas, e são a regra e não um efeito colateral: se o serviço estiver
+/// fora do ar às 6h, o briefing sai quando ele voltar, desde que ainda seja de manhã; se
+/// ficar fora até depois do meio-dia local, o briefing daquele dia não sai. Não há retry.
 ///
 /// Toda decisão de calendário aqui é UTC -&gt; local, via <see cref="FusoLocal"/>. A direção
 /// inversa ("início do dia local em UTC") não existe de propósito e não deve ser
@@ -31,7 +36,9 @@ public class GatilhoBriefingDiario : IGatilhoNotificacao
 
         // Hora de parede da região e não do servidor: é isto que faz o briefing sair às 6h
         // de QUEM LÊ quando entrar a segunda cidade. Nunca fixar America/Sao_Paulo aqui.
-        if (FusoLocal.HoraLocal(ctx.AgoraUtc, ctx.Fuso) < LimiaresNotificacao.HoraBriefingLocal)
+        var horaLocalAgora = FusoLocal.HoraLocal(ctx.AgoraUtc, ctx.Fuso);
+        if (horaLocalAgora < LimiaresNotificacao.HoraBriefingLocal
+            || horaLocalAgora >= LimiaresNotificacao.HoraLimiteBriefingLocal)
             return vazio;
 
         // Resumo sem score seria uma notificação vazia: gastaria a permissão de push que a
@@ -121,8 +128,19 @@ public class GatilhoBriefingDiario : IGatilhoNotificacao
     /// </summary>
     private static string TextoDaFaixa(FaixaRisco faixa) => faixa switch
     {
-        FaixaRisco.ALTO => "alto",
+        FaixaRisco.BAIXO => "baixo",
         FaixaRisco.MODERADO => "moderado",
-        _ => "baixo",
+        FaixaRisco.ALTO => "alto",
+        // Um arm por valor do enum, sem catch-all que traduza o desconhecido. O antigo
+        // "_ => baixo" errava sempre para o lado perigoso: uma faixa nova sairia como a
+        // palavra mais calma justamente para quem está em risco.
+        //
+        // O descarte que sobrou NÃO devolve conferência em tempo de compilação: mesmo com
+        // todos os arms escritos, o compilador continua exigindo um catch-all (variável de
+        // enum aceita qualquer int), então tirá-lo trocaria isto por um aviso CS8509. O que
+        // ele compra é falha BARULHENTA em vez de silenciosa. Mesma forma de
+        // WebPushNotificationService.OptouPeloCriterio.
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(faixa), faixa, "Faixa de risco sem texto de copy."),
     };
 }

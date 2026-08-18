@@ -102,8 +102,11 @@ public class GatilhoBriefingDiario : IGatilhoNotificacao
             // Uma chave por dia LOCAL: com Cooldown null o motor manda exatamente uma vez
             // por chave, e é isso que traduz o "uma vez por dia" prometido na tela de
             // configurações, apesar de o ciclo de 15 min reavaliar a manhã inteira.
-            // O dia tem que ser o local: às 23h de São Paulo o UTC já virou, e usar o dia
-            // UTC gastaria a cota de amanhã antes de amanhã começar.
+            // O dia tem que ser o LOCAL. Dentro da janela da manhã os dois só divergem em
+            // fuso cujo deslocamento passa da hora do briefing: em Tóquio (UTC+9) as 6h da
+            // manhã do dia 18 ainda são o dia 17 em UTC, e usar o dia UTC mandaria dois
+            // briefings no mesmo dia de quem lê. Em UTC-3 isso não acontece, e é por isso
+            // que o teste desta regra não pode morar em São Paulo.
             // InvariantCulture porque isto é chave de banco, não texto: cultura com
             // calendário não gregoriano escreveria 2569 e nunca casaria com os registros
             // antigos do livro-caixa.

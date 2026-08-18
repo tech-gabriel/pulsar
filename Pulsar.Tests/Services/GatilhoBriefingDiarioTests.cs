@@ -277,10 +277,10 @@ public class GatilhoBriefingDiarioTests
     }
 
     /// <summary>
-    /// Cada faixa do enum tem a SUA palavra. Sem este teste o arm de ALTO nunca é exercido,
-    /// e trocá-lo por "moderado" sobrevive à suíte inteira: o resultado seria alguém em
-    /// risco alto lendo "Risco moderado." no briefing da manhã, que é o erro mais caro que
-    /// esta copy pode cometer. A faixa BAIXO está coberta em SemChuvaPrevista_CopyNaoInventaChuva.
+    /// Cada faixa do enum tem a SUA palavra, uma linha por valor. Sem este teste o arm de
+    /// ALTO nunca é exercido, e trocá-lo por "moderado" sobrevive à suíte inteira: o
+    /// resultado seria alguém em risco alto lendo "Risco moderado." no briefing da manhã,
+    /// que é o erro mais caro que esta copy pode cometer.
     /// </summary>
     [Theory]
     [InlineData(FaixaRisco.BAIXO, "Risco baixo.")]
@@ -293,6 +293,26 @@ public class GatilhoBriefingDiarioTests
 
         pendencias[0].Payload.Corpo.Should().Be(esperado,
             "a palavra da copy é a da faixa {0}", faixa);
+    }
+
+    /// <summary>
+    /// Faixa sem braço no switch precisa falhar alto. Sem este teste, trocar o
+    /// <c>throw</c> de volta por <c>_ => "baixo"</c> sobrevive à suíte inteira, e o defeito
+    /// que aquele arm existe para impedir volta calado: uma faixa nova sairia como a palavra
+    /// mais calma justamente para quem está em risco. Hoje é inalcançável com três membros
+    /// no enum, e o dia que importa é aquele em que alguém adiciona o quarto.
+    ///
+    /// Mesma forma de WebPushCriterioTests.CriterioSemMapeamento_Estoura.
+    /// </summary>
+    [Fact]
+    public async Task FaixaSemMapeamento_Estoura()
+    {
+        var ctx = Contexto(SeisDaManhaEmSp, Sp, (FaixaRisco)999);
+
+        var acao = async () => await new GatilhoBriefingDiario().AvaliarAsync(ctx);
+
+        (await acao.Should().ThrowAsync<ArgumentOutOfRangeException>())
+            .And.ParamName.Should().Be("faixa");
     }
 
     /// <summary>

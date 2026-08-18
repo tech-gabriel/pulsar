@@ -53,13 +53,26 @@ public class GatilhoScoreAltoTests
     [Fact]
     public async Task FaixaAlto_GeraPendencia()
     {
-        var pendencias = await new GatilhoScoreAlto().AvaliarAsync(
-            Contexto((45, FaixaRisco.MODERADO), (78, FaixaRisco.ALTO)));
+        var ctx = Contexto((45, FaixaRisco.MODERADO), (78, FaixaRisco.ALTO));
+
+        var pendencias = await new GatilhoScoreAlto().AvaliarAsync(ctx);
 
         pendencias.Should().HaveCount(1);
         pendencias[0].Gatilho.Should().Be("score-alto");
         pendencias[0].Criterio.Should().Be(CriterioOptIn.RiscoAlto);
-        pendencias[0].Prioridade.Should().Be(LimiaresNotificacao.PrioridadeScoreAlto);
+
+        // Literal e não a constante: comparar a constante consigo mesma passaria mesmo
+        // se ela virasse 3, invertendo a ordem de que a Task 10 depende (score alto
+        // ganha de chuva prevista, que ganha do briefing).
+        pendencias[0].Prioridade.Should().Be(1,
+            "score alto é a maior prioridade e menor número ganha");
+
+        // Chave e Tag são carga: a Chave é o que entra no índice único do livro-caixa,
+        // e a Tag é o que faz o push novo SUBSTITUIR o anterior na bandeja em vez de
+        // empilhar. Nenhuma das duas pode mudar por descuido de refatoração.
+        pendencias[0].Chave.Should().Be($"score:{ctx.Regiao.Id}:202608171800");
+        pendencias[0].Payload.Tag.Should().Be($"alerta-{ctx.Regiao.Id}");
+        pendencias[0].Payload.Url.Should().Be("/");
     }
 
     [Fact]
@@ -102,10 +115,17 @@ public class GatilhoScoreAltoTests
 
         var payload = pendencias[0].Payload;
         payload.Titulo.Should().Be("Risco alto na região Sul");
-        payload.Corpo.Should().Contain("18");
-        payload.Corpo.Should().Contain("45");
-        payload.Corpo.Should().NotContain("Score",
+
+        // A guarda de jargão vem ANTES da igualdade de propósito: depois dela seria
+        // inalcançável, porque a comparação exata falharia primeiro em qualquer mutação
+        // e a linha nunca poderia falhar sozinha. Equivalent = ignora caixa, para pegar
+        // também "score máximo" em minúscula.
+        payload.Corpo.Should().NotContainEquivalentOf("score",
             "o número do score não diz a ninguém o que fazer");
+
+        // Igualdade exata: um Contain("18") passaria em corpo que perdeu a unidade ou a
+        // cláusula do vento. Cobre também o caminho inteiro, em que "0.#" não imprime casa.
+        payload.Corpo.Should().Be("Chuva de 18 mm por hora e vento de 45 km/h agora.");
 
         // Travessão é o caractere longo, não o hífen: hífen é legítimo em nome de
         // região ("Centro-Oeste"), então checar "-" proibiria copy correta.

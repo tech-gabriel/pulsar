@@ -20,7 +20,10 @@ public static class LimiaresNotificacao
     /// <summary>Probabilidade mínima (0 a 1) para o aviso de chuva valer.</summary>
     public const double ProbabilidadeMinima = 0.6;
 
-    /// <summary>Só avisamos de chuva desta janela para frente. Depois de amanhã não é acionável.</summary>
+    /// <summary>
+    /// Lookahead do aviso de chuva: só olhamos faixas que caem DENTRO das próximas 12h.
+    /// Chuva prevista para depois disso não é acionável hoje e vira ruído.
+    /// </summary>
     public const int JanelaPrevisaoHoras = 12;
 
     /// <summary>Hora local a partir da qual o briefing do dia pode sair.</summary>

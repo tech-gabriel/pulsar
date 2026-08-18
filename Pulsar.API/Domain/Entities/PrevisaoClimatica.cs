@@ -11,7 +11,12 @@ public class PrevisaoClimatica
     public Guid SubprefeituraId { get; set; }
     public Subprefeitura Subprefeitura { get; set; } = null!;
 
-    /// <summary>Início da faixa de 3h, em UTC. Chave do upsert junto da subprefeitura.</summary>
+    /// <summary>
+    /// Carimbo da faixa de 3h, em UTC. Chave do upsert junto da subprefeitura.
+    /// A DIREÇÃO da faixa em relação a este carimbo (as 3h anteriores ou as 3h seguintes)
+    /// não está confirmada: ver a ressalva "EM ABERTO" em
+    /// <see cref="Services.Notificacoes.GatilhoChuvaPrevista"/>, onde o raciocínio inteiro vive.
+    /// </summary>
     public DateTime InstantePrevisto { get; set; }
 
     /// <summary>Chuva acumulada prevista na faixa de 3h, em mm. Zero quando a API omite `rain`.</summary>

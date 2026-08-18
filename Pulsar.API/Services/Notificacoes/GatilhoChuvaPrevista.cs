@@ -18,6 +18,10 @@ namespace Pulsar.API.Services.Notificacoes;
 /// troque por "das X às Y" nem por "a partir de X" antes de resolver a direção: erraria
 /// em até 3h justamente o aviso cujo valor inteiro é a antecedência.
 ///
+/// A direção tem UMA consequência de comportamento, e ela é benigna: a janela de 12h é
+/// aplicada ao carimbo, então na leitura dt-&gt;dt+3h um carimbo em +12h descreve chuva que
+/// vai até +15h. Isso avisa um pouco cedo demais, que é o lado seguro de errar.
+///
 /// Duas condições juntas (volume e probabilidade) para o app não gritar por garoa.
 /// </summary>
 public class GatilhoChuvaPrevista : IGatilhoNotificacao
@@ -29,9 +33,12 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
     {
         var limiteJanela = ctx.AgoraUtc.AddHours(LimiaresNotificacao.JanelaPrevisaoHoras);
 
-        // A PRIMEIRA faixa qualificada, não a mais intensa: o valor de um aviso está em
-        // avisar do que chega primeiro. O OrderBy é cinto e suspensório, porque o contexto
-        // já entrega as faixas em ordem crescente (ContextoGatilho.Previsao).
+        // A primeira faixa QUALIFICADA, não a mais intensa nem simplesmente a primeira: o
+        // valor de um aviso está em avisar do que chega primeiro, mas filtrar tem que vir
+        // ANTES de escolher. Sem isso o caso mais comum do produto (seco agora, temporal
+        // daqui a seis horas) nunca avisaria, porque a faixa seca da frente roubaria o lugar.
+        // O OrderBy é cinto e suspensório, porque o contexto já entrega as faixas em ordem
+        // crescente (ContextoGatilho.Previsao).
         var faixa = ctx.Previsao
             .Where(f => f.InstantePrevisto <= limiteJanela)
             .Where(f => f.ChuvaMm >= LimiaresNotificacao.ChuvaFortePrevistaMm
@@ -73,9 +80,9 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
                     $"{faixa.ChuvaMm:0.#} mm previstos por volta das {horaLocal:HH}h. Se puder, antecipe a saída."),
                 Url: "/",
                 Tag: $"chuva-{ctx.Regiao.Id}"),
-            // Cooldown fica no default null de propósito: aqui o dedup é pela chave exata
-            // da faixa, exatamente um aviso por janela prevista, e não janela deslizante.
             Prioridade: LimiaresNotificacao.PrioridadeChuvaPrevista);
+        // Cooldown omitido de propósito (fica no default null): aqui o dedup é pela chave
+        // exata da faixa, exatamente um aviso por janela prevista, e não janela deslizante.
 
         return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([pendencia]);
     }

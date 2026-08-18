@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentAssertions;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
@@ -112,6 +113,34 @@ public class GatilhoScoreAltoTests
         payload.Corpo.Should().NotContain("—", "copy visível não usa travessão");
         payload.Titulo.Should().NotContain("–", "nem o travessão curto");
         payload.Corpo.Should().NotContain("–", "nem o travessão curto");
+    }
+
+    [Fact]
+    public async Task Copy_FormataDecimalComVirgulaIndependenteDoHost()
+    {
+        var leitura = LeituraPadrao();
+        leitura.ChuvaMmH = 12.4;
+        leitura.VentoKmH = 33.6;
+
+        // O host não define cultura (nem o container de produção), então o teste força
+        // a cultura ambiente para invariante: assim ele mede o que o gatilho declara,
+        // e não a máquina em que roda. Sem a cultura explícita no código, o corpo sairia
+        // "12.4" aqui e o teste falharia, inclusive numa máquina pt-BR.
+        var original = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+        try
+        {
+            var pendencias = await new GatilhoScoreAlto().AvaliarAsync(
+                Montar(leitura, [(78, FaixaRisco.ALTO)]));
+
+            pendencias[0].Payload.Corpo.Should().Be(
+                "Chuva de 12,4 mm por hora e vento de 33,6 km/h agora.",
+                "número com ponto no meio de frase em português lê errado");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
     }
 
     [Fact]

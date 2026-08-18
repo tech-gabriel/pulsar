@@ -111,16 +111,17 @@ public class WebPushNotificationService : IPushNotificationService
     /// coluna de preferência correspondente da inscrição.
     /// </summary>
     /// <remarks>
-    /// O braço final estoura em vez de devolver <c>false</c> de propósito: um critério novo
-    /// sem mapeamento devolvendo <c>false</c> não chegaria em ninguém e ninguém saberia,
-    /// que é exatamente o defeito silencioso que esta função existe para eliminar. Só pode
-    /// disparar por erro de programação (valor fora do enum), nunca por dado do usuário.
+    /// O braço final pega qualquer critério sem ramo no switch, <b>inclusive um membro novo
+    /// do enum</b>: o descarte deixa o switch exaustivo, então o compilador não avisa sobre o
+    /// mapeamento esquecido. Por isso ele estoura em vez de devolver <c>false</c> — a garantia
+    /// aqui não é do compilador, é falhar alto no primeiro envio em vez de o critério novo não
+    /// chegar em ninguém e ninguém ficar sabendo. Quem adicionar critério adiciona o ramo.
     /// </remarks>
-    public static bool OptouPeloCriterio(AssinaturaPush a, CriterioOptIn criterio) => criterio switch
+    public static bool OptouPeloCriterio(AssinaturaPush assinatura, CriterioOptIn criterio) => criterio switch
     {
-        CriterioOptIn.RiscoAlto => a.AlertaAlto,
-        CriterioOptIn.RiscoModerado => a.AlertaModerado,
-        CriterioOptIn.ResumoDiario => a.ResumoDiario,
+        CriterioOptIn.RiscoAlto => assinatura.AlertaAlto,
+        CriterioOptIn.RiscoModerado => assinatura.AlertaModerado,
+        CriterioOptIn.ResumoDiario => assinatura.ResumoDiario,
         _ => throw new ArgumentOutOfRangeException(
             nameof(criterio), criterio, "Critério de opt-in sem mapeamento para coluna de preferência.")
     };

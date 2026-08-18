@@ -45,4 +45,16 @@ public class WebPushCriterioTests
             .OptouPeloCriterio(Assinatura(alto: true, moderado: true, resumo: false), CriterioOptIn.ResumoDiario)
             .Should().BeFalse();
     }
+
+    [Fact]
+    public void CriterioSemMapeamento_Estoura()
+    {
+        // Critério sem braço no switch precisa falhar alto. Devolver false faria o envio
+        // sumir em silêncio, que é o defeito que esta função existe para eliminar.
+        var acao = () => WebPushNotificationService
+            .OptouPeloCriterio(Assinatura(alto: true, moderado: true, resumo: true), (CriterioOptIn)999);
+
+        acao.Should().Throw<ArgumentOutOfRangeException>()
+            .And.ParamName.Should().Be("criterio");
+    }
 }

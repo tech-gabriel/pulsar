@@ -127,6 +127,17 @@ public class MotorNotificacoes : IMotorNotificacoes
             }
         }
 
+        // O break acima sai do loop com a lista PELA METADE, e decidir em cima dela é pior que
+        // não decidir: o gatilho que não chegou a rodar pode ser justamente o de risco alto, e
+        // aí sairia a pendência de prioridade menor por AUSÊNCIA da maior, que é exatamente o
+        // desfecho que a ordem de escolha deste motor existe para evitar. Nada foi enviado nem
+        // gravado até aqui, então largar o ciclo é de graça: o próximo reavalia tudo.
+        //
+        // Não confiar no token que segue para o push: hoje ele lança e barra o disparo por
+        // tabela, mas isso é acidente de implementação do cliente, e as etapas entre aqui e lá
+        // (dedup, teto, registro) não recebem token nenhum.
+        if (ct.IsCancellationRequested) return 0;
+
         var escolhida = await EscolherAsync(regiao.Id, pendencias, agora);
         if (escolhida is null) return 0;
 

@@ -199,12 +199,18 @@ public class GatilhoChuvaPrevistaTests
         payload.Titulo.Should().NotContain("–", "nem o travessão curto");
         payload.Corpo.Should().NotContain("–", "nem o travessão curto");
 
+        // "por volta das" e não "das 15h às 18h": a direção da janela de 3h do
+        // OpenWeatherMap em relação ao carimbo não está confirmada, então a copy não pode
+        // se comprometer com um sentido. Ver o doc de GatilhoChuvaPrevista. Também tira
+        // "faixa", que é vocabulário do nosso modelo de dados vazando para o usuário.
+        payload.Corpo.Should().NotContain("faixa", "'faixa' é palavra do modelo, não de quem lê");
+
         payload.Titulo.Should().Be("Chuva forte prevista na região Sul");
 
         // Igualdade exata: um Contain("15h") passaria em corpo que perdeu o volume ou a
         // orientação do que fazer, e cada palavra aqui é decisão de produto.
         payload.Corpo.Should().Be(
-            "14 mm previstos para a faixa das 15h. Se puder, antecipe a saída.");
+            "14 mm previstos por volta das 15h. Se puder, antecipe a saída.");
     }
 
     [Fact]
@@ -222,7 +228,7 @@ public class GatilhoChuvaPrevistaTests
                 .AvaliarAsync(Contexto(Faixa(3, chuva: 12.4, pop: 0.82)));
 
             pendencias[0].Payload.Corpo.Should().Be(
-                "12,4 mm previstos para a faixa das 15h. Se puder, antecipe a saída.",
+                "12,4 mm previstos por volta das 15h. Se puder, antecipe a saída.",
                 "número com ponto no meio de frase em português lê errado");
         }
         finally

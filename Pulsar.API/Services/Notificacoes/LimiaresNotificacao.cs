@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Pulsar.API.Services.Notificacoes;
 
 /// <summary>
@@ -39,6 +41,18 @@ public static class LimiaresNotificacao
     public const int PrioridadeScoreAlto = 1;
     public const int PrioridadeChuvaPrevista = 2;
     public const int PrioridadeBriefing = 3;
+
+    /// <summary>
+    /// Cultura em que os números da copy são escritos. Está amarrada ao IDIOMA do texto,
+    /// que é português escrito à mão aqui dentro, e não ao fuso da região: são regras
+    /// diferentes e não devem ser confundidas. O fuso é dado da Regiao porque muda quando
+    /// entra outra cidade; a cultura acompanha a frase e só muda se a copy for traduzida.
+    ///
+    /// Explícita porque o host não define cultura nenhuma: no container o padrão é
+    /// invariante e "12,4 mm" sairia como "12.4 mm" no meio de uma frase em português.
+    /// Push é justamente o lugar onde o leitor não volta para conferir.
+    /// </summary>
+    public static readonly CultureInfo CulturaCopy = CultureInfo.GetCultureInfo("pt-BR");
 
     /// <summary>Rótulo da região para copy. "região Centro" e "região Sul" funcionam; "zona Centro" não.</summary>
     public static string Rotulo(string nomeRegiao) => $"região {nomeRegiao}";

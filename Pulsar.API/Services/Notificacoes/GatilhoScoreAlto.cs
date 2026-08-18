@@ -26,9 +26,13 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
         var rotulo = LimiaresNotificacao.Rotulo(ctx.Regiao.Nome);
         var leitura = pior.Leitura;
 
+        // Cultura explícita: sem ela o host sem locale formataria "12.4 mm" no meio de
+        // uma frase em português. Ver LimiaresNotificacao.CulturaCopy.
         var corpo = leitura is null
             ? "Condições de risco alto agora. Evite áreas de alagamento."
-            : $"Chuva de {leitura.ChuvaMmH:0.#} mm por hora e vento de {leitura.VentoKmH:0.#} km/h agora.";
+            : string.Create(
+                LimiaresNotificacao.CulturaCopy,
+                $"Chuva de {leitura.ChuvaMmH:0.#} mm por hora e vento de {leitura.VentoKmH:0.#} km/h agora.");
 
         var pendencia = new NotificacaoPendente(
             Gatilho: Nome,

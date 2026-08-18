@@ -29,6 +29,13 @@ public static class LimiaresNotificacao
     /// <summary>Hora local a partir da qual o briefing do dia pode sair.</summary>
     public const int HoraBriefingLocal = 6;
 
+    /// <summary>
+    /// Horizonte do resumo diário. Maior que o do aviso de chuva de propósito: o briefing
+    /// é o "como vai ser o seu dia", então precisa alcançar a noite de quem lê às 6h da
+    /// manhã, enquanto o aviso de chuva existe para ser acionável agora.
+    /// </summary>
+    public const int JanelaBriefingHoras = 24;
+
     /// <summary>Rede de segurança contra tarde caótica em que a previsão muda de hora em hora.</summary>
     public const int MaxPushPorRegiaoPorDia = 3;
 

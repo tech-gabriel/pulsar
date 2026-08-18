@@ -22,8 +22,22 @@ public interface IGatilhoNotificacao
     /// descartada pelo dedup.
     /// </returns>
     /// <remarks>
-    /// Não deve lançar: uma exceção aqui derruba a avaliação da região inteira e cala os
-    /// outros gatilhos. Condição ausente ou dado faltando se resolve devolvendo lista vazia.
+    /// Não deve lançar em operação normal: condição ausente ou dado faltando se resolve
+    /// devolvendo lista vazia, que é o sinal previsto para isso.
+    ///
+    /// Se lançar mesmo assim, o alcance é MENOR do que este doc afirmava antes. O motor é
+    /// obrigado a envolver CADA gatilho no seu próprio try/catch, então a exceção é
+    /// registrada com o nome do gatilho e o da região e o loop continua: os outros gatilhos
+    /// daquela região seguem rodando e disparando. O custo é a notificação DAQUELE gatilho,
+    /// DAQUELA região, NAQUELE ciclo. Em particular, o aviso de risco alto, que é o caminho
+    /// de segurança, não é calado por um gatilho informativo quebrado.
+    ///
+    /// Esse try/catch por gatilho é parte do contrato, e não detalhe interno do motor: quem
+    /// reestruturar o loop precisa preservá-lo, porque é ele que sustenta o isolamento
+    /// descrito aqui. É também o que deixa um gatilho lançar DE PROPÓSITO diante de erro de
+    /// programação sem arriscar o resto: ver o switch de TextoDaFaixa em
+    /// GatilhoBriefingDiario, que prefere explodir a chamar de "baixo" uma faixa que não
+    /// sabe traduzir.
     /// </remarks>
     Task<IReadOnlyList<NotificacaoPendente>> AvaliarAsync(
         ContextoGatilho ctx, CancellationToken ct = default);

@@ -55,13 +55,24 @@ public class AdminNotificacoesControllerTests : IClassFixture<PulsarWebApplicati
         var email = $"suporte_notif_{Guid.NewGuid()}@test.com";
         var suporte = await CadastrarAsync(email, "Senha@123");
         var adminToken = await TokenAdminAsync();
-        await EnviarComTokenAsync($"/api/admin/usuarios/{suporte.Usuario.Id}/role", adminToken,
-            HttpMethod.Put, new AlterarRoleRequestDto { Role = RoleAcesso.SUPORTE });
 
-        // Relogin para o token carregar a role nova.
-        var suporteToken = await LoginAsync(email, "Senha@123");
+        var promocao = await EnviarComTokenAsync($"/api/admin/usuarios/{suporte.Usuario.Id}/role",
+            adminToken, HttpMethod.Put, new AlterarRoleRequestDto { Role = RoleAcesso.SUPORTE });
 
-        var resposta = await EnviarComTokenAsync(Rota, suporteToken);
+        // O arranjo é conferido, e não presumido: AlterarRole pode devolver 400 ou 404, e uma
+        // promoção que falhe em silêncio deixa a conta em USUARIO. USUARIO também leva 403
+        // nesta rota, então o teste seguiria VERDE para sempre sem nunca encostar na fronteira
+        // ADMIN/SUPORTE, que é a única coisa que ele existe para defender.
+        promocao.StatusCode.Should().Be(HttpStatusCode.OK,
+            "sem a promoção a conta continua USUARIO e o 403 lá embaixo não prova nada");
+
+        // Relogin para o token carregar a role nova, e conferência da role no próprio token
+        // que vai ser usado: é ele, e não o registro no banco, que o [Authorize] vai ler.
+        var sessaoSuporte = await LoginAsync(email, "Senha@123");
+        sessaoSuporte.Usuario.Role.Should().Be(RoleAcesso.SUPORTE,
+            "o 403 abaixo só vale se quem bateu na rota for mesmo SUPORTE");
+
+        var resposta = await EnviarComTokenAsync(Rota, sessaoSuporte.Token);
 
         resposta.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -98,12 +109,13 @@ public class AdminNotificacoesControllerTests : IClassFixture<PulsarWebApplicati
         return (await resposta.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!;
     }
 
-    private async Task<string> LoginAsync(string email, string senha)
+    /// <summary>Sessão completa, e não só o token: a role vem no corpo e vale conferir.</summary>
+    private async Task<LoginResponseDto> LoginAsync(string email, string senha)
     {
         var resposta = await _client.PostAsJsonAsync("/api/auth/login",
             new LoginRequestDto { Email = email, Senha = senha });
         resposta.EnsureSuccessStatusCode();
-        return (await resposta.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!.Token;
+        return (await resposta.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!;
     }
 
     private async Task<string> TokenAdminAsync()
@@ -118,7 +130,7 @@ public class AdminNotificacoesControllerTests : IClassFixture<PulsarWebApplicati
             return (await cadastro.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!.Token;
 
         // Já existe (a ordem dos testes não é garantida) → login faz o auto-heal da role.
-        return await LoginAsync(email, senha);
+        return (await LoginAsync(email, senha)).Token;
     }
 
     private async Task<HttpResponseMessage> EnviarComTokenAsync(

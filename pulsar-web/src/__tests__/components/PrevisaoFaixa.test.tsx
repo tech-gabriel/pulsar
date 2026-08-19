@@ -205,4 +205,27 @@ describe('PrevisaoFaixa', () => {
 
     expect(screen.getAllByTestId('faixa-previsao')[0]).toHaveAttribute('title', 'chuva moderada');
   });
+
+  it('anuncia a chuva forte em texto, e nao so na cor da borda', () => {
+    // O destaque é vermelho e nada mais. Sem o texto invisível, os dois blocos
+    // abaixo chegam idênticos a um leitor de tela: "15h, 2.0 mm" e "18h, 14.0 mm",
+    // e o aviso que motiva o push some para quem não enxerga a borda (WCAG 1.4.1).
+    comFaixas([faixa(15, 2, 0.3), faixa(18, 14, 0.82)]);
+    render(<PrevisaoFaixa regiaoId="r1" />);
+
+    const [fraca, forte] = screen.getAllByTestId('faixa-previsao');
+    expect(forte).toHaveTextContent(/chuva forte prevista/i);
+    // A faixa fraca precisa continuar sem o aviso: um texto fixo em todo bloco
+    // passaria na asserção de cima e não distinguiria nada.
+    expect(fraca).not.toHaveTextContent(/chuva forte prevista/i);
+  });
+
+  it('leva a condicao ao leitor de tela, que nao alcanca o title', () => {
+    // O `title` só vira tooltip no hover do mouse. No celular, que é o uso
+    // principal do painel, ele nunca aparece.
+    comFaixas([faixa(18, 4)]);
+    render(<PrevisaoFaixa regiaoId="r1" />);
+
+    expect(screen.getAllByTestId('faixa-previsao')[0]).toHaveTextContent('chuva moderada');
+  });
 });

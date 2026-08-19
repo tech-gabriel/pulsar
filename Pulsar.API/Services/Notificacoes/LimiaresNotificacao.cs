@@ -46,10 +46,21 @@ public static class LimiaresNotificacao
     /// </summary>
     public const int JanelaBriefingHoras = 24;
 
-    /// <summary>Rede de segurança contra tarde caótica em que a previsão muda de hora em hora.</summary>
+    /// <summary>
+    /// Rede de segurança contra tarde caótica em que a previsão muda de hora em hora. Este é o
+    /// teto do conteúdo NÃO CRÍTICO por região por dia local: o aviso de risco alto não consulta
+    /// o teto, mas os envios dele contam para ele, então uma tempestade encurta o que sobra de
+    /// chuva prevista e briefing em vez de somar-se a eles. Ver
+    /// <c>MotorNotificacoes.IsentaDoTetoDiario</c>.
+    /// </summary>
     public const int MaxPushPorRegiaoPorDia = 3;
 
-    /// <summary>Cooldown deslizante do aviso de risco alto. Preserva o comportamento anterior.</summary>
+    /// <summary>
+    /// Cooldown deslizante do aviso de risco alto. Como o risco alto é isento do teto diário,
+    /// este número é o ÚNICO freio de volume dele: mexer aqui mexe direto no pior caso diário
+    /// de push de uma região em tempestade longa. Não é mais "só" o antirrepetição que era
+    /// quando o comportamento veio do AlertaService.
+    /// </summary>
     public static readonly TimeSpan CooldownScoreAlto = TimeSpan.FromHours(1);
 
     /// <summary>Janela consultada para contar o teto diário. Precisa cobrir qualquer fuso com folga.</summary>
@@ -83,6 +94,11 @@ public static class LimiaresNotificacao
     // vai chover às 18h enquanto está chovendo forte agora é ruído, mas repetir o
     // aviso de agora, que o dedup já barrou, não pode calar o de 18h. Ver o doc de
     // MotorNotificacoes.EscolherAsync.
+    //
+    // PrioridadeScoreAlto carrega um segundo significado desde que o teto diário passou a
+    // isentá-la: declará-la não é só "ganha o desempate", é "não pode ser calada pelo teto".
+    // Um gatilho novo só deve usá-la se calá-lo por volume for risco de segurança. Ver
+    // MotorNotificacoes.IsentaDoTetoDiario.
     public const int PrioridadeScoreAlto = 1;
     public const int PrioridadeChuvaPrevista = 2;
     public const int PrioridadeBriefing = 3;

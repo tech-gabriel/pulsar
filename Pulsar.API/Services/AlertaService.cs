@@ -38,6 +38,9 @@ public class AlertaService : IAlertaService
         _logger = logger;
     }
 
+    // O ct fica sem uso desde que o push saiu daqui, e é de propósito: ele é a assinatura de
+    // IAlertaService, e nenhum dos repositórios que este método chama aceita token. Tirar o
+    // parâmetro mudaria a interface; enfiar o token repositório adentro é outra conversa.
     public async Task<Alerta?> GerarAlertaAsync(Guid regiaoId, CancellationToken ct = default)
     {
         var subprefeituras = await _subprefeituraRepo.ObterAtivasAsync();

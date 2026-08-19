@@ -235,3 +235,26 @@ export interface OcorrenciasProximasDto {
   riscoElevado: boolean;
   chuvaMmH: number | null;
 }
+
+// ── Previsão ──────────────────────────────────────────────────────────────────
+
+/**
+ * Retornado por GET /api/regioes/{id}/previsao: faixa de 3h já agregada por pior
+ * caso entre as subprefeituras da região. Lista vazia é resposta legítima, e não
+ * erro, quando ainda não houve coleta.
+ */
+export interface FaixaPrevisaoDto {
+  /** Instante da faixa, em UTC e com sufixo Z. Exibir sempre no fuso do navegador. */
+  instantePrevisto: string;
+  chuvaMm: number;
+  /** Fração de 0 a 1, e não porcentagem: 0.6 é 60%. */
+  probabilidadeChuva: number;
+  ventoKmH: number;
+  /** Nulo quando o provedor não informou rajada para a faixa. */
+  rajadaKmH: number | null;
+  temperaturaC: number;
+  condicaoCodigo: number;
+  condicaoDescricao: string;
+  /** Quando a previsão foi buscada, e não o instante previsto. Alimenta o aviso de dado velho. */
+  coletadoEm: string;
+}

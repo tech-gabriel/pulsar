@@ -123,6 +123,17 @@ export default function PrevisaoFaixa({ regiaoId }: Props) {
               >
                 {`${f.chuvaMm.toFixed(1)} mm`}
               </span>
+              {/* O destaque da chuva forte é borda e fundo vermelhos, e nada além disso:
+                  cor sozinha não chega a quem usa leitor de tela, e o resultado é que a
+                  faixa de 14 mm a 82% e a de 2 mm a 30% são lidas com o mesmo texto
+                  (WCAG 1.4.1). Este texto invisível diz em palavras o que a cor diz.
+                  A descrição da condição vem junto porque ela só existe no `title`, que
+                  nunca aparece no toque: sem isso ela é informação exclusiva de desktop. */}
+              <span className="sr-only">
+                {emDestaque
+                  ? `chuva forte prevista, ${f.condicaoDescricao}`
+                  : f.condicaoDescricao}
+              </span>
             </li>
           );
         })}

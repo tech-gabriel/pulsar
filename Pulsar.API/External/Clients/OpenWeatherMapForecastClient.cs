@@ -96,8 +96,12 @@ public class OpenWeatherMapForecastClient : IForecastClient
         var lat = latitude.ToString(CultureInfo.InvariantCulture);
         var lon = longitude.ToString(CultureInfo.InvariantCulture);
 
+        // lang=pt_br porque a `description` vai direto para a tela e para o leitor de
+        // tela, e sem ele a OpenWeatherMap responde em inglês ("heavy intensity rain")
+        // dentro de um app inteiro em português. Os fixtures dos testes já assumiam o
+        // texto em português, então a URL é que estava fora do combinado, e não eles.
         var response = await client.GetAsync(
-            $"forecast?lat={lat}&lon={lon}&appid={apiKey}&units=metric", ct);
+            $"forecast?lat={lat}&lon={lon}&appid={apiKey}&units=metric&lang=pt_br", ct);
 
         if (!response.IsSuccessStatusCode)
             throw new WeatherApiException(

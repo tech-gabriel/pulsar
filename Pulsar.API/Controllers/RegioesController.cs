@@ -4,6 +4,7 @@ using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Interfaces;
+using Pulsar.API.Services.Interfaces;
 
 namespace Pulsar.API.Controllers;
 
@@ -12,10 +13,20 @@ namespace Pulsar.API.Controllers;
 [Authorize]
 public class RegioesController : ControllerBase
 {
-    private readonly IRegiaoRepository _regiaoRepository;
+    /// <summary>
+    /// Teto de faixas devolvidas: 8 faixas de 3h fecham as 24h que o painel mostra.
+    /// A retenção guarda mais que isso, mas mandar tudo só engordaria o payload.
+    /// </summary>
+    private const int MaxFaixasPrevisao = 8;
 
-    public RegioesController(IRegiaoRepository regiaoRepository)
-        => _regiaoRepository = regiaoRepository;
+    private readonly IRegiaoRepository _regiaoRepository;
+    private readonly IPrevisaoService _previsaoService;
+
+    public RegioesController(IRegiaoRepository regiaoRepository, IPrevisaoService previsaoService)
+    {
+        _regiaoRepository = regiaoRepository;
+        _previsaoService = previsaoService;
+    }
 
     /// <summary>Retorna os scores agregados de todas as regiões.</summary>
     [HttpGet]
@@ -38,6 +49,33 @@ public class RegioesController : ControllerBase
             return NotFound(new { mensagem = "Região não encontrada." });
 
         return Ok(MapearRegiaoDetalheDto(regiao));
+    }
+
+    /// <summary>
+    /// Faixas de 3h previstas para a região, em UTC e ordenadas da mais próxima para a mais
+    /// distante, agregadas por pior caso entre as subprefeituras.
+    /// </summary>
+    /// <remarks>
+    /// Rota separada de <c>GET /api/regioes</c> de propósito: aquela é consumida pelo
+    /// AlertasProvider em toda página do app e recarrega sozinha, então oito faixas por
+    /// região ali engordariam um payload global para servir uma tela só.
+    /// <para>
+    /// Lista vazia é resposta legítima, e não erro: significa que ainda não houve coleta,
+    /// ou que a previsão retida já passou. Quem consome renderiza nada nesse caso.
+    /// </para>
+    /// </remarks>
+    [HttpGet("{id:guid}/previsao")]
+    [ProducesResponseType(typeof(IReadOnlyList<FaixaPrevisaoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ObterPrevisao(Guid id, CancellationToken ct)
+    {
+        // Só a existência da região importa aqui, então basta o Find: as subprefeituras e
+        // os scores que o ObterComDetalheAsync carregaria não entram nesta resposta.
+        var regiao = await _regiaoRepository.ObterPorIdAsync(id);
+        if (regiao is null)
+            return NotFound(new { mensagem = "Região não encontrada." });
+
+        return Ok(await _previsaoService.ObterFaixasRegiaoAsync(id, MaxFaixasPrevisao, ct));
     }
 
     private static RegiaoDto MapearRegiaoDto(Regiao regiao)

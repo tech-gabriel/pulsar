@@ -11,6 +11,16 @@ import reactSsg from 'vite-plugin-react-ssg'
 //   VITE_API_TARGET=http://localhost:8080 npm run dev
 const apiTarget = process.env.VITE_API_TARGET ?? 'http://localhost:5245'
 
+// Mesmo proxy para o dev server e para o preview: são a mesma necessidade, e
+// duas cópias divergiriam na primeira vez que o alvo mudasse.
+const proxyApi = {
+  '/api': {
+    target: apiTarget,
+    changeOrigin: true,
+    secure: false,
+  },
+}
+
 // Guarda uma cópia do index.html AINDA VAZIO como `spa.html`, para o fallback de
 // roteamento do render.yaml servir as rotas que não são pré-renderizadas
 // (/login, /cadastro, /app/*). Sem isso o fallback entrega o index.html final,
@@ -57,11 +67,64 @@ function shellSpa(): Plugin {
   }
 }
 
+// Reproduz no `vite preview` o fallback `/* -> /spa.html` do render.yaml. Sem isto o
+// preview entrega o dist/index.html (que o SSG substituiu pela landing) em /app e
+// /login, o React acha DOM de servidor de outra rota e a hidratação estoura com o
+// erro #418 no console. O efeito colateral era pior do que o erro em si: a única
+// tela de verificação visual deste projeto mostrava um shell que produção não serve,
+// e um erro vermelho permanente escondia os erros de verdade.
+//
+// A regra é a mesma do render.yaml, na mesma ordem: arquivo real primeiro (assets e
+// as rotas pré-renderizadas, que existem como `<rota>/index.html`), spa.html para o
+// resto. Só `apply: 'serve'`: nada disto vai para o build.
+function fallbackSpaNoPreview(): Plugin {
+  let dirSaida = ''
+  return {
+    name: 'pulsar-fallback-spa-preview',
+    apply: 'serve',
+    configResolved(config) {
+      dirSaida = path.resolve(config.root, config.build.outDir)
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        // Só navegação de documento. Este middleware roda ANTES dos internos, o
+        // proxy incluído, então sem esta guarda ele reescrevia /api/auth/login para
+        // /spa.html e o login voltava HTML no lugar do JSON. O Accept é o que separa
+        // as duas coisas: navegador pedindo página manda text/html, XHR não.
+        if (!req.headers.accept?.includes('text/html')) return next()
+        const cru = (req.url ?? '/').split('?')[0].split('#')[0]
+        // URL malformada (um "%" solto) faz o decode lançar, e uma exceção aqui
+        // derrubaria a resposta inteira em vez de só não reescrever.
+        let caminho: string
+        try {
+          caminho = decodeURIComponent(cru)
+        } catch {
+          return next()
+        }
+        if (caminho.startsWith('/api/')) return next()
+        // A raiz é a landing pré-renderizada e o /spa.html é ele mesmo: nenhum dos
+        // dois pode ser reescrito, sob pena de laço.
+        if (caminho === '/' || caminho === '/spa.html') return next()
+        // `join` já normaliza o `..`; a checagem seguinte impede sair do dist e
+        // transformar o fallback em leitura de arquivo arbitrário do disco.
+        const alvo = path.join(dirSaida, caminho)
+        if (!alvo.startsWith(dirSaida)) return next()
+        // existsSync cobre os dois casos de uma vez: arquivo real (assets) e
+        // diretório de rota pré-renderizada, que o sirv resolve para o index.html.
+        if (existsSync(alvo)) return next()
+        req.url = '/spa.html'
+        next()
+      })
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
     tailwindcss(),
     react(),
     shellSpa(),
+    fallbackSpaNoPreview(),
     reactSsg(),
     VitePWA({
       // Service worker próprio (src/sw.ts) para tratar push/notificationclick.
@@ -92,12 +155,14 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    proxy: {
-      '/api': {
-        target: apiTarget,
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    proxy: proxyApi,
+  },
+  // O `preview` serve o build, e é nele que a verificação visual deste projeto
+  // acontece (o dev server esconde erro de SSG e de tipo). Sem o mesmo proxy do
+  // dev server, toda chamada a /api dava 404 na porta 4173 e o app parecia
+  // quebrado por um motivo que não é dele. Em produção nada disto roda: quem
+  // serve o build é o Render, com o rewrite do render.yaml.
+  preview: {
+    proxy: proxyApi,
   },
 })

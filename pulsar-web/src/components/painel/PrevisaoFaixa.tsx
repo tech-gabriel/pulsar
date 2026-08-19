@@ -56,13 +56,18 @@ export default function PrevisaoFaixa({ regiaoId }: Props) {
   // primeiros minutos depois do deploy, e casca vazia parece bug.
   if (erro || faixas.length === 0) return null;
 
-  // A coleta MAIS RECENTE decide a idade: uma subprefeitura atrasada não deve carimbar
-  // de velha a faixa que acabou de ser buscada. O aviso é sobre a coleta ter parado.
-  const coletaMaisRecente = faixas.reduce(
-    (max, f) => Math.max(max, new Date(f.coletadoEm).getTime()),
-    Number.NEGATIVE_INFINITY,
+  // A coleta MAIS ANTIGA decide a idade, e é o mesmo critério que o backend já aplica
+  // dentro da faixa (o ColetadoEm do DTO é o mínimo entre as subs). A razão é a
+  // agregação: cada número exibido é o PIOR CASO entre as subprefeituras, então pode vir
+  // justamente da sub mais atrasada. Carimbar a faixa com a coleta mais recente afirmaria
+  // atualidade para número que veio de dado velho, e calaria o aviso na hora em que ele
+  // mais importa. As coletas divergem de verdade: a guarda de 55 min pula uma sub, e uma
+  // sub que falha seguido fica horas para trás.
+  const coletaMaisAntiga = faixas.reduce(
+    (min, f) => Math.min(min, new Date(f.coletadoEm).getTime()),
+    Number.POSITIVE_INFINITY,
   );
-  const velha = coletaVelha(coletaMaisRecente);
+  const velha = coletaVelha(coletaMaisAntiga);
 
   return (
     <div className="mt-4">
@@ -78,7 +83,7 @@ export default function PrevisaoFaixa({ regiaoId }: Props) {
             className="text-pulsar-300 flex-shrink-0"
             style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5 }}
           >
-            {`previsão de ${horaMinuto(coletaMaisRecente)}`}
+            {`previsão de ${horaMinuto(coletaMaisAntiga)}`}
           </span>
         )}
       </div>

@@ -170,16 +170,18 @@ describe('PrevisaoFaixa', () => {
     expect(screen.getByText(/previsão de/i)).toBeInTheDocument();
   });
 
-  it('julga a idade pela coleta mais recente entre as faixas', () => {
-    // Uma sub atrasada não pode marcar de velha uma faixa que acabou de ser
-    // buscada: o aviso só sai quando NADA foi atualizado nas últimas 3h.
+  it('julga a idade pela coleta mais antiga entre as faixas', () => {
+    // Cada número exibido é o pior caso entre as subprefeituras, então pode vir da
+    // sub mais atrasada. Uma faixa recém-buscada ao lado de uma velha não compra
+    // atualidade para as duas: o aviso sai, e com a hora da coleta velha.
     comFaixas([
-      { ...faixa(15, 2), coletadoEm: '2026-08-17T08:00:00Z' }, // 4h30
-      { ...faixa(18, 4), coletadoEm: '2026-08-17T12:00:00Z' }, // 30 min
+      { ...faixa(15, 2), coletadoEm: '2026-08-17T08:00:00Z' }, // 4h30 atrás
+      { ...faixa(18, 4), coletadoEm: '2026-08-17T12:00:00Z' }, // 30 min atrás
     ]);
     render(<PrevisaoFaixa regiaoId="r1" />);
 
-    expect(screen.queryByText(/previsão de/i)).toBeNull();
+    // 08:00Z é 05:00 em São Paulo. Pela coleta mais recente não haveria aviso nenhum.
+    expect(screen.getByText('previsão de 05:00')).toBeInTheDocument();
   });
 
   it('mostra os milimetros de cada faixa', () => {

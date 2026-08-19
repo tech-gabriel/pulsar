@@ -368,8 +368,12 @@ public class MotorNotificacoesTests
             await RegistrarAsync(ctx, regiaoId, "chuva-prevista", $"chuva:{i}",
                 DateTime.UtcNow.AddSeconds(-i));
 
+        // Prioridade da constante e não um 2 solto: o teto isenta a prioridade de risco alto,
+        // então é preciso ler no teste que esta pendência NÃO é a isenta, senão o verde aqui
+        // passaria a poder vir do caminho errado.
         var motor = NovoMotor(ctx, new GatilhoFixo(
-            "chuva-prevista", Pendencia("chuva-prevista", "chuva:seguinte", 2)));
+            "chuva-prevista",
+            Pendencia("chuva-prevista", "chuva:seguinte", LimiaresNotificacao.PrioridadeChuvaPrevista)));
 
         await motor.AvaliarEDispararAsync();
 
@@ -396,7 +400,8 @@ public class MotorNotificacoesTests
                 DateTime.UtcNow.AddSeconds(-i));
 
         var motor = NovoMotor(ctx, new GatilhoFixo(
-            "chuva-prevista", Pendencia("chuva-prevista", "chuva:ultimo", 2)));
+            "chuva-prevista",
+            Pendencia("chuva-prevista", "chuva:ultimo", LimiaresNotificacao.PrioridadeChuvaPrevista)));
 
         var enviados = await motor.AvaliarEDispararAsync();
 
@@ -421,11 +426,70 @@ public class MotorNotificacoesTests
                 DateTime.UtcNow.AddHours(-24).AddSeconds(-i));
 
         var motor = NovoMotor(ctx, new GatilhoFixo(
-            "chuva-prevista", Pendencia("chuva-prevista", "chuva:hoje", 2)));
+            "chuva-prevista",
+            Pendencia("chuva-prevista", "chuva:hoje", LimiaresNotificacao.PrioridadeChuvaPrevista)));
 
         var enviados = await motor.AvaliarEDispararAsync();
 
         enviados.Should().Be(2, "o teto é diário, e ontem não conta para o dia de hoje");
+    }
+
+    [Fact]
+    public async Task TetoDiarioEstourado_AindaDeixaPassarORiscoAlto()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var regiaoId = await DeixarSoUmaRegiaoAsync(ctx);
+
+        // A manhã da tempestade descrita na revisão: o teto do dia já foi gasto por conteúdo
+        // comum e às 14h o risco piora. Sem a isenção, a região fica calada pelo resto do dia
+        // local justamente no aviso que existe para tirar gente de área de alagamento.
+        // AddSeconds e não AddMinutes pelo mesmo motivo dos testes de teto acima: recuo grande
+        // arrisca cair do outro lado da meia-noite local e sumir da contagem do dia.
+        for (var i = 1; i <= LimiaresNotificacao.MaxPushPorRegiaoPorDia; i++)
+            await RegistrarAsync(ctx, regiaoId, "chuva-prevista", $"chuva:{i}",
+                DateTime.UtcNow.AddSeconds(-i));
+
+        var motor = NovoMotor(ctx, new GatilhoFixo("score-alto",
+            Pendencia("score-alto", "score:piorou", LimiaresNotificacao.PrioridadeScoreAlto,
+                LimiaresNotificacao.CooldownScoreAlto)));
+
+        var enviados = await motor.AvaliarEDispararAsync();
+
+        enviados.Should().Be(2, "o teto diário não pode calar o aviso de risco alto");
+        (await ctx.NotificacoesEnviadas.CountAsync(n => n.RegiaoId == regiaoId))
+            .Should().Be(LimiaresNotificacao.MaxPushPorRegiaoPorDia + 1,
+                "a isenção é de CONSULTAR o teto; o envio segue sendo gravado no livro-caixa");
+    }
+
+    [Fact]
+    public async Task RiscoAltoIsento_AindaGastaOTetoDosOutrosGatilhos()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var regiaoId = await DeixarSoUmaRegiaoAsync(ctx);
+
+        // A outra metade da isenção, e a que é fácil implementar errado: se o teto passasse a
+        // IGNORAR as linhas de risco alto em vez de só não ser consultado por elas, uma
+        // tempestade liberaria de brinde um dia inteiro de chuva prevista e briefing por cima
+        // dos avisos de risco. O irmão acima (teto cheio de chuva, risco alto passa) não pega
+        // isso: lá as linhas do teto são de outro gatilho.
+        for (var i = 1; i <= LimiaresNotificacao.MaxPushPorRegiaoPorDia; i++)
+            await RegistrarAsync(ctx, regiaoId, "score-alto", $"score:{i}",
+                DateTime.UtcNow.AddSeconds(-i));
+
+        var motor = NovoMotor(ctx, new GatilhoFixo("chuva-prevista",
+            Pendencia("chuva-prevista", "chuva:depois-da-tempestade",
+                LimiaresNotificacao.PrioridadeChuvaPrevista)));
+
+        var enviados = await motor.AvaliarEDispararAsync();
+
+        enviados.Should().Be(0);
+        (await ctx.NotificacoesEnviadas.CountAsync(n => n.RegiaoId == regiaoId))
+            .Should().Be(LimiaresNotificacao.MaxPushPorRegiaoPorDia,
+                "envio de risco alto conta para o teto, senão o volume não crítico fica sem limite");
     }
 
     [Fact]

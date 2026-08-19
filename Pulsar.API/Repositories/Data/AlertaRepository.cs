@@ -16,15 +16,6 @@ public class AlertaRepository : IAlertaRepository
     public async Task<IEnumerable<Alerta>> ObterTodosAsync()
         => await _context.Alertas.ToListAsync();
 
-    public async Task<IEnumerable<Alerta>> ObterRecentesPorRegiaoAsync(Guid regiaoId, int horas = 24)
-    {
-        var limite = DateTime.UtcNow.AddHours(-horas);
-        return await _context.Alertas
-            .Where(a => a.RegiaoId == regiaoId && a.Timestamp >= limite)
-            .OrderByDescending(a => a.Timestamp)
-            .ToListAsync();
-    }
-
     public async Task<Alerta?> ObterComSugestoesAsync(Guid alertaId)
         => await _context.Alertas
             .Include(a => a.AlertaSugestoes)

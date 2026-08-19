@@ -1,4 +1,7 @@
+using System.Globalization;
+using System.Net;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Pulsar.API.External.Clients;
 
 namespace Pulsar.Tests.External;
@@ -105,5 +108,122 @@ public class OpenWeatherMapForecastClientTests
     {
         OpenWeatherMapForecastClient.ParseForecast("""{ "cod": "200", "cnt": 0, "list": [] }""")
             .Should().BeEmpty();
+    }
+
+    // --- ObterPrevisaoAsync ---
+    //
+    // O resto do arquivo testa ParseForecast direto, que é o padrão dos clientes daqui
+    // (mesmo motivo de CgespNoticiaClient.ParseRss ser público e estático): parse não
+    // precisa de HttpClient. O que aquele padrão NÃO alcança é a URL, e a URL carrega duas
+    // decisões que somem em silêncio: sem `units=metric` a API responde em Kelvin, e sem
+    // `lang=pt_br` a `description` volta em inglês dentro de um app em português, indo
+    // parar no leitor de tela pelo span sr-only. Por isso, e só por isso, aqui entra um
+    // handler falso.
+
+    /// <summary>
+    /// Handler falso: guarda a URI pedida e devolve a resposta combinada, sem rede.
+    /// </summary>
+    private sealed class HandlerFalso : HttpMessageHandler
+    {
+        private readonly HttpStatusCode _status;
+        private readonly string _corpo;
+
+        public HandlerFalso(HttpStatusCode status, string corpo)
+        {
+            _status = status;
+            _corpo = corpo;
+        }
+
+        public Uri? UriPedida { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            UriPedida = request.RequestUri;
+            return Task.FromResult(new HttpResponseMessage(_status)
+            {
+                Content = new StringContent(_corpo),
+            });
+        }
+    }
+
+    /// <summary>
+    /// O cliente resolve o HttpClient pela fábrica nomeada, então é a fábrica que injeta o
+    /// handler falso. A BaseAddress precisa ser a mesma do Program.cs porque o cliente pede
+    /// um caminho relativo ("forecast?..."), e sem base a chamada nem sairia.
+    /// </summary>
+    private sealed class FabricaFalsa : IHttpClientFactory
+    {
+        private readonly HttpMessageHandler _handler;
+
+        public FabricaFalsa(HttpMessageHandler handler) => _handler = handler;
+
+        public HttpClient CreateClient(string name)
+            => new(_handler, disposeHandler: false)
+            {
+                BaseAddress = new Uri("https://api.openweathermap.org/data/2.5/"),
+            };
+    }
+
+    private static OpenWeatherMapForecastClient ClienteCom(HttpMessageHandler handler)
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["OpenWeatherMap:ApiKey"] = "chave-de-teste",
+            })
+            .Build();
+
+        return new OpenWeatherMapForecastClient(new FabricaFalsa(handler), config);
+    }
+
+    [Fact]
+    public async Task ObterPrevisaoAsync_MontaQueryComUnitsLangECoordenadaInvariante()
+    {
+        var handler = new HandlerFalso(HttpStatusCode.OK, JsonExemplo);
+        var cliente = ClienteCom(handler);
+
+        // Cultura de vírgula decimal FORÇADA, e não herdada da máquina: sem isto o teste
+        // passaria num agente en-US mesmo que o cliente perdesse o InvariantCulture, ou
+        // seja, passaria pelo motivo errado. A máquina do projeto é pt-BR, então é
+        // exatamente esta cultura que quebraria a query string em produção.
+        var culturaAnterior = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("pt-BR");
+        try
+        {
+            await cliente.ObterPrevisaoAsync(-23.55, -46.63);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = culturaAnterior;
+        }
+
+        var uri = handler.UriPedida!.ToString();
+
+        // Ponto e não vírgula: "lat=-23,55" corrompe a query string.
+        uri.Should().Contain("lat=-23.55");
+        uri.Should().Contain("lon=-46.63");
+        // Sem units=metric a temperatura chega em Kelvin e o app mostra 292 graus.
+        uri.Should().Contain("units=metric");
+        // Sem lang=pt_br a descrição da condição volta em inglês, e ela é lida em voz alta.
+        uri.Should().Contain("lang=pt_br");
+        uri.Should().Contain("appid=chave-de-teste");
+    }
+
+    [Fact]
+    public async Task ObterPrevisaoAsync_RespostaNaoSucesso_LancaWeatherApiException()
+    {
+        // Corpo VÁLIDO de propósito, igual ao que a OpenWeatherMap devolve num 401: sem a
+        // linha `if (!response.IsSuccessStatusCode)` o ParseForecast engoliria este JSON
+        // (não tem "list", então devolve lista vazia) e o método voltaria sem erro nenhum.
+        // Um corpo lixo faria o teste passar de graça, por JsonException.
+        var handler = new HandlerFalso(
+            HttpStatusCode.Unauthorized, """{ "cod": 401, "message": "Invalid API key." }""");
+        var cliente = ClienteCom(handler);
+
+        var acao = () => cliente.ObterPrevisaoAsync(-23.55, -46.63);
+
+        (await acao.Should().ThrowAsync<WeatherApiException>())
+            .Which.StatusCode.Should().Be(401);
     }
 }

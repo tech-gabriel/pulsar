@@ -35,6 +35,7 @@ public class ColetaRunnerPrevisaoTests
             Mock.Of<IAlertaService>(),
             Mock.Of<IAgregadoDiarioService>(),
             previsao.Object,
+            Mock.Of<IMotorNotificacoes>(),
             ctx,
             NullLogger<ColetaRunner>.Instance);
 
@@ -64,6 +65,7 @@ public class ColetaRunnerPrevisaoTests
             Mock.Of<IAlertaService>(),
             Mock.Of<IAgregadoDiarioService>(),
             previsao.Object,
+            Mock.Of<IMotorNotificacoes>(),
             ctx,
             NullLogger<ColetaRunner>.Instance);
 

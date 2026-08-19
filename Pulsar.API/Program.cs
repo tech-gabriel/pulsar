@@ -19,6 +19,7 @@ using Pulsar.API.Scheduler;
 using Pulsar.API.Services;
 using Pulsar.API.Services.Email;
 using Pulsar.API.Services.Interfaces;
+using Pulsar.API.Services.Notificacoes;
 using Pulsar.API.Services.Push;
 using Resend;
 
@@ -210,6 +211,19 @@ builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionServi
 builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
 builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
+
+// --- Motor de notificações ---
+// A ordem do registro não importa para a escolha: o motor ordena por Prioridade da
+// pendência. Ela só desempata pendências de mesma prioridade, porque o OrderBy do LINQ é
+// estável. Acrescentar um alerta novo (frente N1) é acrescentar uma linha aqui.
+//
+// Registrar CONTRA IGatilhoNotificacao é o que faz o gatilho existir para o motor, que
+// recebe IEnumerable<IGatilhoNotificacao>: registrado pelo tipo concreto, ele compila,
+// resolve e nunca é avaliado. Ver NotificacoesDependencyInjectionTests.
+builder.Services.AddScoped<IGatilhoNotificacao, GatilhoScoreAlto>();
+builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaPrevista>();
+builder.Services.AddScoped<IGatilhoNotificacao, GatilhoBriefingDiario>();
+builder.Services.AddScoped<IMotorNotificacoes, MotorNotificacoes>();
 
 // --- Web Push (notificações) ---
 // Gated por config: sem chaves VAPID (Push:PublicKey/PrivateKey) o serviço fica

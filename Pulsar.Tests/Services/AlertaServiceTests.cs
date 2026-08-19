@@ -5,27 +5,25 @@ using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
 using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services;
-using Pulsar.API.Services.Interfaces;
-using Pulsar.API.Services.Push;
 
 namespace Pulsar.Tests.Services;
 
+/// <summary>
+/// Geração do registro histórico de risco alto. Push não é assunto daqui: o envio é do
+/// MotorNotificacoes desde que ele passou a ser o dono único do disparo.
+/// </summary>
 public class AlertaServiceTests
 {
     private readonly Mock<IScoreRepository> _scoreRepoMock = new();
     private readonly Mock<ISugestaoRepository> _sugestaoRepoMock = new();
     private readonly Mock<IAlertaRepository> _alertaRepoMock = new();
     private readonly Mock<ISubprefeituraRepository> _subprefeituraRepoMock = new();
-    private readonly Mock<IRegiaoRepository> _regiaoRepoMock = new();
-    private readonly Mock<IPushNotificationService> _pushMock = new();
 
     private AlertaService CriarAlertaService() => new(
         _scoreRepoMock.Object,
         _sugestaoRepoMock.Object,
         _alertaRepoMock.Object,
         _subprefeituraRepoMock.Object,
-        _regiaoRepoMock.Object,
-        _pushMock.Object,
         NullLogger<AlertaService>.Instance);
 
     private static Subprefeitura NovaSubprefeitura(Guid regiaoId, bool ativa = true)
@@ -240,76 +238,6 @@ public class AlertaServiceTests
 
         _alertaRepoMock.Verify(r => r.AdicionarAsync(It.IsAny<Alerta>()), Times.Once);
         _alertaRepoMock.Verify(r => r.SalvarAsync(), Times.Once);
-    }
-
-    // ──────────────────────────────────────────────
-    // Notificações push (dedup + opt-in)
-    // ──────────────────────────────────────────────
-
-    private void PrepararCenarioAlerta(Guid regiaoId, Subprefeitura sub, ScorePerigo score)
-    {
-        _subprefeituraRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([sub]);
-        _scoreRepoMock.Setup(r => r.ObterUltimoAsync(sub.Id)).ReturnsAsync(score);
-        _sugestaoRepoMock.Setup(r => r.ObterPorCategoriaEFaixaAsync("GERAL", FaixaRisco.ALTO))
-            .ReturnsAsync([]);
-        _alertaRepoMock.Setup(r => r.AdicionarAsync(It.IsAny<Alerta>())).Returns(Task.CompletedTask);
-        _alertaRepoMock.Setup(r => r.SalvarAsync()).Returns(Task.CompletedTask);
-    }
-
-    [Fact]
-    public async Task GerarAlertaAsync_PushAtivoSemAlertaRecente_NotificaRegiao()
-    {
-        var regiaoId = Guid.NewGuid();
-        var sub = NovaSubprefeitura(regiaoId);
-        PrepararCenarioAlerta(regiaoId, sub, NovoScore(80, FaixaRisco.ALTO));
-
-        _pushMock.Setup(p => p.Habilitado).Returns(true);
-        _alertaRepoMock.Setup(r => r.ObterRecentesPorRegiaoAsync(regiaoId, It.IsAny<int>()))
-            .ReturnsAsync([]); // nenhum alerta recente → deve notificar
-
-        var sut = CriarAlertaService();
-        await sut.GerarAlertaAsync(regiaoId);
-
-        _pushMock.Verify(p => p.NotificarRegiaoAsync(
-            regiaoId, CriterioOptIn.RiscoAlto, It.IsAny<Pulsar.API.Services.Push.PushPayload>(), It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [Fact]
-    public async Task GerarAlertaAsync_PushAtivoComAlertaRecente_NaoNotificaDeNovo()
-    {
-        var regiaoId = Guid.NewGuid();
-        var sub = NovaSubprefeitura(regiaoId);
-        PrepararCenarioAlerta(regiaoId, sub, NovoScore(80, FaixaRisco.ALTO));
-
-        _pushMock.Setup(p => p.Habilitado).Returns(true);
-        _alertaRepoMock.Setup(r => r.ObterRecentesPorRegiaoAsync(regiaoId, It.IsAny<int>()))
-            .ReturnsAsync([new Alerta { RegiaoId = regiaoId }]); // já houve alerta na janela
-
-        var sut = CriarAlertaService();
-        await sut.GerarAlertaAsync(regiaoId);
-
-        _pushMock.Verify(p => p.NotificarRegiaoAsync(
-            It.IsAny<Guid>(), It.IsAny<CriterioOptIn>(), It.IsAny<Pulsar.API.Services.Push.PushPayload>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Fact]
-    public async Task GerarAlertaAsync_PushDesativado_NaoConsultaRecentesNemNotifica()
-    {
-        var regiaoId = Guid.NewGuid();
-        var sub = NovaSubprefeitura(regiaoId);
-        PrepararCenarioAlerta(regiaoId, sub, NovoScore(80, FaixaRisco.ALTO));
-
-        _pushMock.Setup(p => p.Habilitado).Returns(false);
-
-        var sut = CriarAlertaService();
-        await sut.GerarAlertaAsync(regiaoId);
-
-        _alertaRepoMock.Verify(r => r.ObterRecentesPorRegiaoAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
-        _pushMock.Verify(p => p.NotificarRegiaoAsync(
-            It.IsAny<Guid>(), It.IsAny<CriterioOptIn>(), It.IsAny<Pulsar.API.Services.Push.PushPayload>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     [Fact]

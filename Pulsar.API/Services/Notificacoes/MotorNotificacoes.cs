@@ -160,16 +160,45 @@ public class MotorNotificacoes : IMotorNotificacoes
         var enviados = await _push.NotificarRegiaoAsync(
             regiao.Id, escolhida.Criterio, escolhida.Payload, ct);
 
-        // Grava mesmo com zero destinatários: significa que o evento foi processado e ninguém
-        // tinha opt-in. Sem isso o motor reavaliaria o mesmo evento para sempre.
-        await _livroCaixa.RegistrarAsync(new NotificacaoEnviada
+        try
         {
-            RegiaoId = regiao.Id,
-            Gatilho = escolhida.Gatilho,
-            Chave = escolhida.Chave,
-            EnviadoEm = agora,
-            Destinatarios = enviados,
-        });
+            // Grava mesmo com zero destinatários: significa que o evento foi processado e
+            // ninguém tinha opt-in. Sem isso o motor reavaliaria o mesmo evento para sempre.
+            await _livroCaixa.RegistrarAsync(new NotificacaoEnviada
+            {
+                RegiaoId = regiao.Id,
+                Gatilho = escolhida.Gatilho,
+                Chave = escolhida.Chave,
+                EnviadoEm = agora,
+                Destinatarios = enviados,
+            });
+        }
+        catch (Exception ex)
+        {
+            // catch próprio porque o desfecho é próprio, e o genérico da região o descreveria
+            // ao contrário: "Falha ao avaliar notificações" lê-se como NADA saiu, e aqui o
+            // push JÁ saiu. O livro-caixa sustenta o dedup E o teto diário, os dois freios de
+            // volume, então uma falha persistente aqui é o pior caso do motor: o mesmo push a
+            // cada 15 minutos, sem freio nenhum.
+            //
+            // A rota plausível não é a que parece. Estourar coluna é remoto (a Chave chega a
+            // ~55 caracteres contra um limite de 160 e EnviadoEm é sempre Kind.Utc), mas a
+            // Chave tem índice único e o endpoint admin de avaliação pode rodar junto com o
+            // ciclo agendado: nessa corrida os dois passam pelo dedup e o segundo esbarra no
+            // índice. Ali o push saiu duplicado, porém a linha do outro ciclo está gravada e o
+            // próximo ciclo já a enxerga. Por isso a mensagem afirma só o que é certo (o push
+            // saiu, ESTA gravação não) e deixa a repetição condicionada à falta do registro.
+            _logger.LogError(ex,
+                "Push {Gatilho} da região {Nome} SAIU para {Total} destinatário(s), mas esta " +
+                "gravação no livro-caixa falhou. O dedup e o teto diário dependem do registro: " +
+                "se ele não existir, o mesmo push volta a cada ciclo.",
+                escolhida.Gatilho, regiao.Nome, enviados);
+
+            // Conta assim mesmo. O retorno é métrica de VOLUME, não recibo de gravação (ver o
+            // doc de IMotorNotificacoes), e este é justamente o modo de falha em que o volume
+            // dispara: zerar aqui esconderia o sintoma no único número que o operador vê.
+            return enviados;
+        }
 
         _logger.LogInformation(
             "Push {Gatilho} da região {Nome}: {Total} destinatário(s).",

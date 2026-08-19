@@ -12,6 +12,11 @@ public interface IMotorNotificacoes
     /// <returns>
     /// Quantos push saíram no ciclo, somando as regiões. Zero é desfecho normal e comum
     /// (nenhum gatilho tinha o que dizer, ou o que tinham já havia saído), não é erro.
+    /// <para>
+    /// Pode SUBESTIMAR: uma exceção que estoure depois de o push sair (a limpeza de
+    /// inscrições mortas, por exemplo) leva junto a soma daquela região. Serve para
+    /// acompanhar volume, não para auditar entrega.
+    /// </para>
     /// </returns>
     /// <remarks>
     /// Não lança em operação normal: falha de uma região é contida e registrada, para que

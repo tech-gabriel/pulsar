@@ -109,8 +109,10 @@ public class ColetaRunner : IColetaRunner
 
         var pushEnviados = await AvaliarNotificacoesAsync(ct);
 
-        // "pelo menos": se o registro no livro-caixa falhar depois de um envio, aquela região
-        // cai fora da soma que o motor devolve. O número acompanha volume, não audita entrega.
+        // "pelo menos": uma exceção que estoure DEPOIS de o push sair (a limpeza de inscrições
+        // mortas, por exemplo) leva junto a soma daquela região. A falha só ao gravar no
+        // livro-caixa é a exceção da exceção e segue contando, porque lá o push comprovadamente
+        // saiu. O número acompanha volume, não audita entrega.
         _logger.LogInformation(
             "Ciclo de coleta concluído. Push enviados: pelo menos {Push}.", pushEnviados);
 

@@ -17,17 +17,20 @@ public class AdminController : ControllerBase
     private readonly ISistemaService _sistemaService;
     private readonly IOcorrenciaIngestionService _ingestionService;
     private readonly IAgregadoDiarioRepository _agregadoRepo;
+    private readonly IMotorNotificacoes _motor;
 
     public AdminController(
         IAdminService adminService,
         ISistemaService sistemaService,
         IOcorrenciaIngestionService ingestionService,
-        IAgregadoDiarioRepository agregadoRepo)
+        IAgregadoDiarioRepository agregadoRepo,
+        IMotorNotificacoes motor)
     {
         _adminService = adminService;
         _sistemaService = sistemaService;
         _ingestionService = ingestionService;
         _agregadoRepo = agregadoRepo;
+        _motor = motor;
     }
 
     /// <summary>Agregados diários recentes. Serve para conferir que a série está acumulando.</summary>
@@ -229,7 +232,10 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> ObterMetricas()
         => Ok(await _sistemaService.ObterMetricasAsync());
 
-    /// <summary>Dispara uma coleta manual (clima → scores → alertas). Apenas ADMIN.</summary>
+    /// <summary>
+    /// Dispara uma coleta manual (clima → scores → agregado → previsão → alertas →
+    /// notificações). Apenas ADMIN. Atenção: a última etapa pode mandar push de verdade.
+    /// </summary>
     [HttpPost("sistema/coletar")]
     [Authorize(Roles = "ADMIN")]
     [ProducesResponseType(typeof(ColetaResultadoDto), StatusCodes.Status200OK)]
@@ -244,6 +250,27 @@ public class AdminController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> SincronizarOcorrencias(CancellationToken ct)
         => Ok(await _ingestionService.SincronizarAsync(ct));
+
+    /// <summary>
+    /// Roda o motor de notificações sob demanda. Existe porque o briefing das 6h locais
+    /// não dá para esperar sentado, nem local nem em produção. Apenas ADMIN.
+    /// </summary>
+    /// <remarks>
+    /// ADMIN e não ADMIN,SUPORTE como o resto do controller: isto MANDA PUSH para usuários
+    /// reais, então acompanha a coleta manual e o sync do GeoSampa, e não a leitura do
+    /// painel. O campo devolvido é a soma que o motor apurou, que pode subestimar (ver o
+    /// doc de IMotorNotificacoes).
+    /// </remarks>
+    [HttpPost("notificacoes/avaliar")]
+    [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> AvaliarNotificacoes(CancellationToken ct)
+    {
+        var enviados = await _motor.AvaliarEDispararAsync(ct);
+        return Ok(new { enviados });
+    }
 
     private Guid UsuarioAtualId()
     {

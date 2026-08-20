@@ -57,6 +57,26 @@ export default function SistemaAdminPage() {
           )}
         </div>
 
+        {/* A coleta manual termina no motor de notificações, ou seja, em push de verdade
+            no celular de gente real. O backend documenta isso; quem clica o botão não via
+            nada. O limite é bom de dizer junto, senão o aviso vira medo: o motor lê o
+            histórico de envios antes de decidir, então nada sai duas vezes dentro do
+            intervalo do gatilho. */}
+        {podeColetar && (
+          <p
+            className="-mt-2 mb-5 flex items-start gap-2"
+            style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--text-muted)' }}
+          >
+            <Bell size={14} className="flex-shrink-0" style={{ marginTop: 3 }} />
+            <span>
+              Forçar coleta roda o ciclo inteiro e pode mandar push de verdade para quem ativou
+              as notificações. O motor consulta os envios anteriores antes de disparar, então não
+              repete aviso dentro do intervalo: no máximo antecipa em 15 minutos o que o ciclo
+              automático mandaria.
+            </span>
+          </p>
+        )}
+
         {carregando ? (
           <div className="py-20 grid place-items-center"><LoadingSpinner /></div>
         ) : erro || !status || !metricas ? (

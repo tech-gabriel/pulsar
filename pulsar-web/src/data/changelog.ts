@@ -25,6 +25,31 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.9.0',
+    data: '2026-08-20',
+    resumo: 'O Pulsar passou a olhar para frente, e não só para o agora.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Previsão das próximas horas no painel da região',
+        descricao:
+          'Ao abrir uma região no mapa, o painel mostra o que vem pela frente em faixas de 3 horas: o horário, como fica o céu e quanta chuva é esperada. Fica logo abaixo dos números do momento, então dá para ler o agora e as próximas horas de uma vez só.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Aviso de chuva forte antes de ela começar',
+        descricao:
+          'Quem tem as notificações ligadas recebe um aviso quando a previsão aponta chuva forte na região acompanhada, com algumas horas de antecedência. No painel, a faixa dessa chuva aparece destacada, então o aviso no celular e o app contam a mesma história.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Resumo da sua região pela manhã',
+        descricao:
+          'Quem deixa o resumo diário ligado nas configurações passa a receber, de manhã, um panorama da região acompanhada: como está o risco e se há chuva prevista para o dia. Chega uma vez por dia, cedo o bastante para você decidir a saída antes de sair.',
+      },
+    ],
+  },
+  {
     versao: '1.8.0',
     data: '2026-08-14',
     itens: [

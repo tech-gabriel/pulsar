@@ -2,24 +2,26 @@ using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
 using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services.Interfaces;
-using Pulsar.API.Services.Push;
 
 namespace Pulsar.API.Services;
 
+/// <summary>
+/// Gera e persiste o registro histórico de risco alto por região, com as sugestões
+/// associadas. NÃO envia push: o disparo é responsabilidade única do MotorNotificacoes,
+/// para existir um dono só do envio.
+/// </summary>
+/// <remarks>
+/// Esta classe já notificou, deduplicando pela tabela Alerta. O motor deduplica pelo
+/// livro-caixa NotificacaoEnviada, que é outra tabela: os dois caminhos não se enxergam,
+/// então manter os dois ligados mandaria DOIS push por evento de risco alto. Quem quiser
+/// voltar a notificar daqui não deve; o lugar de um aviso novo é um gatilho novo.
+/// </remarks>
 public class AlertaService : IAlertaService
 {
-    // Janela de deduplicação de notificações (em horas): durante um período
-    // sustentado de risco ALTO, o ciclo de coleta gera um alerta a cada 15 min,
-    // mas só notificamos uma vez por região dentro desta janela para não virar
-    // spam. Inteiro porque o repositório consulta por horas inteiras.
-    private const int JanelaNotificacaoHoras = 1;
-
     private readonly IScoreRepository _scoreRepo;
     private readonly ISugestaoRepository _sugestaoRepo;
     private readonly IAlertaRepository _alertaRepo;
     private readonly ISubprefeituraRepository _subprefeituraRepo;
-    private readonly IRegiaoRepository _regiaoRepo;
-    private readonly IPushNotificationService _push;
     private readonly ILogger<AlertaService> _logger;
 
     public AlertaService(
@@ -27,19 +29,18 @@ public class AlertaService : IAlertaService
         ISugestaoRepository sugestaoRepo,
         IAlertaRepository alertaRepo,
         ISubprefeituraRepository subprefeituraRepo,
-        IRegiaoRepository regiaoRepo,
-        IPushNotificationService push,
         ILogger<AlertaService> logger)
     {
         _scoreRepo = scoreRepo;
         _sugestaoRepo = sugestaoRepo;
         _alertaRepo = alertaRepo;
         _subprefeituraRepo = subprefeituraRepo;
-        _regiaoRepo = regiaoRepo;
-        _push = push;
         _logger = logger;
     }
 
+    // O ct fica sem uso desde que o push saiu daqui, e é de propósito: ele é a assinatura de
+    // IAlertaService, e nenhum dos repositórios que este método chama aceita token. Tirar o
+    // parâmetro mudaria a interface; enfiar o token repositório adentro é outra conversa.
     public async Task<Alerta?> GerarAlertaAsync(Guid regiaoId, CancellationToken ct = default)
     {
         var subprefeituras = await _subprefeituraRepo.ObterAtivasAsync();
@@ -61,17 +62,6 @@ public class AlertaService : IAlertaService
 
         var scoreMax = scoresAltos.MaxBy(s => s.Valor)!;
         var sugestoes = await _sugestaoRepo.ObterPorCategoriaEFaixaAsync("GERAL", FaixaRisco.ALTO);
-
-        // Antes de criar o novo alerta, vê se já houve um recente para a região:
-        // serve de deduplicação do disparo de notificações (ver JanelaNotificacao).
-        // Só consultamos quando o push está ativo — senão é trabalho de banco à toa.
-        var jaNotificadoRecentemente = false;
-        if (_push.Habilitado)
-        {
-            var recentes = await _alertaRepo.ObterRecentesPorRegiaoAsync(
-                regiaoId, JanelaNotificacaoHoras);
-            jaNotificadoRecentemente = recentes.Any();
-        }
 
         var alerta = new Alerta
         {
@@ -97,35 +87,6 @@ public class AlertaService : IAlertaService
 
         _logger.LogInformation("Alerta gerado para região {RegiaoId}: {Mensagem}", regiaoId, alerta.Mensagem);
 
-        if (_push.Habilitado && !jaNotificadoRecentemente)
-            await NotificarAsync(regiaoId, alerta.Mensagem, ct);
-
         return alerta;
-    }
-
-    private async Task NotificarAsync(Guid regiaoId, string mensagem, CancellationToken ct)
-    {
-        if (!_push.Habilitado)
-            return;
-
-        try
-        {
-            var regiao = await _regiaoRepo.ObterPorIdAsync(regiaoId);
-            var nome = regiao?.Nome ?? "sua região";
-            var payload = new PushPayload(
-                Titulo: $"⚠️ Risco alto na zona {nome}",
-                Corpo: mensagem,
-                Url: "/",
-                Tag: $"alerta-{regiaoId}");
-
-            var enviados = await _push.NotificarRegiaoAsync(regiaoId, FaixaRisco.ALTO, payload, ct);
-            if (enviados > 0)
-                _logger.LogInformation("Notificações push enviadas para região {RegiaoId}: {Total}.", regiaoId, enviados);
-        }
-        catch (Exception ex)
-        {
-            // Notificação é best-effort: nunca deve interromper a geração de alertas.
-            _logger.LogWarning(ex, "Falha ao notificar push da região {RegiaoId}.", regiaoId);
-        }
     }
 }

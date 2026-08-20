@@ -50,7 +50,7 @@ public class AgregadoDiarioService : IAgregadoDiarioService
 
         var scores = (await _scoreRepo.ObterHistoricoAsync(subprefeituraId, JanelaHoras)).ToList();
 
-        var hojeLocal = DiaLocal(DateTime.UtcNow, tz);
+        var hojeLocal = FusoLocal.DiaLocal(DateTime.UtcNow, tz);
         var ontemLocal = hojeLocal.AddDays(-1);
 
         foreach (var dia in new[] { ontemLocal, hojeLocal })
@@ -58,10 +58,10 @@ public class AgregadoDiarioService : IAgregadoDiarioService
             // Só hoje e ontem. Dias mais antigos estão apenas parcialmente dentro da
             // janela retida, e gravá-los sobrescreveria uma linha completa por um
             // total menor, sem deixar rastro.
-            var leiturasDoDia = leituras.Where(l => DiaLocal(l.Timestamp, tz) == dia).ToList();
+            var leiturasDoDia = leituras.Where(l => FusoLocal.DiaLocal(l.Timestamp, tz) == dia).ToList();
             if (leiturasDoDia.Count == 0) continue;
 
-            var scoresDoDia = scores.Where(s => DiaLocal(s.Timestamp, tz) == dia).ToList();
+            var scoresDoDia = scores.Where(s => FusoLocal.DiaLocal(s.Timestamp, tz) == dia).ToList();
 
             await _agregadoRepo.UpsertAsync(new AgregadoDiario
             {
@@ -86,11 +86,4 @@ public class AgregadoDiarioService : IAgregadoDiarioService
 
         _logger.LogDebug("Agregado diário atualizado para {Nome} ({Fuso}).", sub.Nome, fusoId);
     }
-
-    // Sempre UTC -> local. O caminho inverso não é seguro: em zona cujo horário de
-    // verão vira à meia-noite, a meia-noite local não existe naquele dia e a
-    // conversão lança. Era assim o horário de verão brasileiro antes de 2019.
-    private static DateOnly DiaLocal(DateTime instanteUtc, TimeZoneInfo tz)
-        => DateOnly.FromDateTime(
-            TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(instanteUtc, DateTimeKind.Utc), tz));
 }

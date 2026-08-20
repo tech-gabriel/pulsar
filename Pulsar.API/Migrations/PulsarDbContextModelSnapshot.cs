@@ -236,6 +236,41 @@ namespace Pulsar.API.Migrations
                     b.ToTable("LeiturasClimaticas");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.NotificacaoEnviada", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Chave")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<int>("Destinatarios")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("EnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Gatilho")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid>("RegiaoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Chave")
+                        .IsUnique();
+
+                    b.HasIndex("RegiaoId", "Gatilho", "EnviadoEm");
+
+                    b.ToTable("NotificacoesEnviadas");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.OcorrenciaAlagamento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -282,6 +317,52 @@ namespace Pulsar.API.Migrations
                         .IsUnique();
 
                     b.ToTable("OcorrenciasAlagamento");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.PrevisaoClimatica", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("ChuvaMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("ColetadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CondicaoCodigo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CondicaoDescricao")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<DateTime>("InstantePrevisto")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("ProbabilidadeChuva")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("RajadaKmH")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("TemperaturaC")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("VentoKmH")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubprefeituraId", "InstantePrevisto")
+                        .IsUnique();
+
+                    b.ToTable("PrevisoesClimaticas");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Regiao", b =>
@@ -1484,6 +1565,28 @@ namespace Pulsar.API.Migrations
                 {
                     b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
                         .WithMany("Leituras")
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subprefeitura");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.NotificacaoEnviada", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Regiao", "Regiao")
+                        .WithMany()
+                        .HasForeignKey("RegiaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Regiao");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.PrevisaoClimatica", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
                         .HasForeignKey("SubprefeituraId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

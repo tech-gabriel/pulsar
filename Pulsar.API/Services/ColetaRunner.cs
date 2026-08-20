@@ -5,16 +5,24 @@ using Pulsar.API.Services.Interfaces;
 namespace Pulsar.API.Services;
 
 /// <summary>
-/// Orquestra um ciclo de coleta: coleta climática de todas as subprefeituras ativas,
-/// recalcula os scores e gera alertas por região. Resiliente a falhas parciais
-/// (uma subprefeitura/região com erro não interrompe as demais).
+/// Orquestra um ciclo de coleta, nesta ordem: coleta climática das subprefeituras ativas,
+/// recalcula os scores, atualiza o agregado diário e a previsão, gera os alertas por região
+/// e, por último, roda o motor de notificações. Resiliente a falhas parciais (uma
+/// subprefeitura, região ou etapa com erro não interrompe as demais).
 /// </summary>
+/// <remarks>
+/// A ordem não é arbitrária: o motor de notificações lê do banco o estado que as etapas
+/// anteriores acabaram de gravar, então ele vem por último e uma vez só. Quem reordenar
+/// isto muda o que o usuário recebe, não só a performance do ciclo.
+/// </remarks>
 public class ColetaRunner : IColetaRunner
 {
     private readonly IClimateService _climateService;
     private readonly IScoreService _scoreService;
     private readonly IAlertaService _alertaService;
     private readonly IAgregadoDiarioService _agregadoService;
+    private readonly IPrevisaoService _previsaoService;
+    private readonly IMotorNotificacoes _motor;
     private readonly PulsarDbContext _db;
     private readonly ILogger<ColetaRunner> _logger;
 
@@ -23,6 +31,8 @@ public class ColetaRunner : IColetaRunner
         IScoreService scoreService,
         IAlertaService alertaService,
         IAgregadoDiarioService agregadoService,
+        IPrevisaoService previsaoService,
+        IMotorNotificacoes motor,
         PulsarDbContext db,
         ILogger<ColetaRunner> logger)
     {
@@ -30,6 +40,8 @@ public class ColetaRunner : IColetaRunner
         _scoreService = scoreService;
         _alertaService = alertaService;
         _agregadoService = agregadoService;
+        _previsaoService = previsaoService;
+        _motor = motor;
         _db = db;
         _logger = logger;
     }
@@ -65,6 +77,18 @@ public class ColetaRunner : IColetaRunner
             {
                 _logger.LogWarning(ex, "Falha ao atualizar agregado diário de {Nome}.", sub.Nome);
             }
+
+            // try/catch próprio pelo mesmo motivo do agregado: a previsão é a parte que
+            // depende de rede externa, e uma falha dela não pode descartar o score nem o
+            // agregado que acabaram de ser gravados.
+            try
+            {
+                await _previsaoService.AtualizarAsync(sub.Id, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Falha ao atualizar previsão de {Nome}.", sub.Nome);
+            }
         }
 
         var regioes = await _db.Regioes.ToListAsync(ct);
@@ -83,7 +107,44 @@ public class ColetaRunner : IColetaRunner
             }
         }
 
-        _logger.LogInformation("Ciclo de coleta concluído.");
+        var pushEnviados = await AvaliarNotificacoesAsync(ct);
+
+        // "pelo menos": uma exceção que estoure DEPOIS de o push sair (a limpeza de inscrições
+        // mortas, por exemplo) leva junto a soma daquela região. A falha só ao gravar no
+        // livro-caixa é a exceção da exceção e segue contando, porque lá o push comprovadamente
+        // saiu. O número acompanha volume, não audita entrega.
+        _logger.LogInformation(
+            "Ciclo de coleta concluído. Push enviados: pelo menos {Push}.", pushEnviados);
+
         return new ColetaResultado(subprefeituras.Count, scoresCalculados, alertasGerados, DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// Um disparo por ciclo, depois de score, agregado, previsão e alertas estarem gravados:
+    /// o motor lê estado consolidado, não estado a meio caminho. Devolve quantos push saíram,
+    /// ou zero quando o ciclo foi cancelado ou o motor falhou.
+    /// </summary>
+    private async Task<int> AvaliarNotificacoesAsync(CancellationToken ct)
+    {
+        // Ciclo cancelado é desligamento no meio do caminho, e os loops acima já quebraram:
+        // parte das subprefeituras ficou sem score e parte das regiões sem alerta. Notificar
+        // em cima disso é decidir sobre dado pela metade, e o custo de esperar é de 15 min.
+        if (ct.IsCancellationRequested)
+            return 0;
+
+        // try/catch aqui e não só lá dentro: o motor protege cada REGIÃO, mas o teste de
+        // Habilitado e a consulta de regiões ficam fora de qualquer catch dele, então um banco
+        // fora do ar sobe até aqui. Este é o mesmo ciclo que grava o score e o agregado
+        // diário, a única memória de longo prazo do sistema, e um problema no envio de
+        // notificação não pode derrubá-lo.
+        try
+        {
+            return await _motor.AvaliarEDispararAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao avaliar notificações do ciclo.");
+            return 0;
+        }
     }
 }

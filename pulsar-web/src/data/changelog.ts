@@ -26,7 +26,7 @@ export interface Release {
 export const CHANGELOG: Release[] = [
   {
     versao: '1.9.0',
-    data: '2026-08-19',
+    data: '2026-08-20',
     resumo: 'O Pulsar passou a olhar para frente, e não só para o agora.',
     itens: [
       {

@@ -14,6 +14,7 @@ import { centroideRegiao } from '../../utils/geo';
 import { gerarSugestoes, type CategoriaSugestao } from '../../utils/sugestoes';
 import { DURACAO, EASE_SUAVE, containerStagger, itemStagger } from '../../motion/presets';
 import BotaoFavorito from './BotaoFavorito';
+import PrevisaoFaixa from './PrevisaoFaixa';
 import { SkeletonCardSubprefeitura } from '../ui/Skeleton';
 
 interface Props {
@@ -299,6 +300,15 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
                 <LinhaClima icon={Sun} corIcone="#EAB308" label="Índice UV" valor={Math.round(clima.uv).toString()} unidade="" />
               </motion.div>
             )}
+
+            {/* Previsão das próximas horas. Fica entre o clima atual e as sugestões
+                porque a narrativa do painel é: agora, próximas horas, o que fazer.
+                Sem guarda aqui de propósito: o componente busca sozinho e devolve
+                null quando não há faixa, então um wrapper condicional só duplicaria
+                a decisão em dois lugares. */}
+            <motion.div variants={itemStagger}>
+              <PrevisaoFaixa regiaoId={regiao.id} />
+            </motion.div>
 
             {/* Sugestões de segurança / atenção */}
             {score > 60 && sugestoes.length > 0 && (

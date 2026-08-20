@@ -2,7 +2,6 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Pulsar.API.Domain.Entities;
-using Pulsar.API.Domain.Enums;
 using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services.Interfaces;
 using WebPush;
@@ -55,13 +54,13 @@ public class WebPushNotificationService : IPushNotificationService
 
     public string? ChavePublica => _chavePublica;
 
-    public async Task<int> NotificarRegiaoAsync(Guid regiaoId, FaixaRisco faixa, PushPayload payload, CancellationToken ct = default)
+    public async Task<int> NotificarRegiaoAsync(Guid regiaoId, CriterioOptIn criterio, PushPayload payload, CancellationToken ct = default)
     {
         if (!Habilitado)
             return 0;
 
         var assinaturas = (await _repo.ObterPorRegiaoFavoritaAsync(regiaoId))
-            .Where(a => OptouPelaFaixa(a, faixa))
+            .Where(a => OptouPeloCriterio(a, criterio))
             .ToList();
 
         if (assinaturas.Count == 0)
@@ -107,10 +106,23 @@ public class WebPushNotificationService : IPushNotificationService
         return enviados;
     }
 
-    private static bool OptouPelaFaixa(AssinaturaPush a, FaixaRisco faixa) => faixa switch
+    /// <summary>
+    /// Público e estático para ser testável direto. Mapeia o critério de envio para a
+    /// coluna de preferência correspondente da inscrição.
+    /// </summary>
+    /// <remarks>
+    /// O braço final pega qualquer critério sem ramo no switch, <b>inclusive um membro novo
+    /// do enum</b>: o descarte deixa o switch exaustivo, então o compilador não avisa sobre o
+    /// mapeamento esquecido. Por isso ele estoura em vez de devolver <c>false</c> — a garantia
+    /// aqui não é do compilador, é falhar alto no primeiro envio em vez de o critério novo não
+    /// chegar em ninguém e ninguém ficar sabendo. Quem adicionar critério adiciona o ramo.
+    /// </remarks>
+    public static bool OptouPeloCriterio(AssinaturaPush assinatura, CriterioOptIn criterio) => criterio switch
     {
-        FaixaRisco.ALTO => a.AlertaAlto,
-        FaixaRisco.MODERADO => a.AlertaModerado,
-        _ => false
+        CriterioOptIn.RiscoAlto => assinatura.AlertaAlto,
+        CriterioOptIn.RiscoModerado => assinatura.AlertaModerado,
+        CriterioOptIn.ResumoDiario => assinatura.ResumoDiario,
+        _ => throw new ArgumentOutOfRangeException(
+            nameof(criterio), criterio, "Critério de opt-in sem mapeamento para coluna de preferência.")
     };
 }

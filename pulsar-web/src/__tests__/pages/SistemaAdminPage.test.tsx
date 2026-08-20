@@ -57,6 +57,8 @@ describe('SistemaAdminPage', () => {
     expect(screen.getByText('Somente leitura')).toBeInTheDocument();
     expect(screen.getByText('Sé')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /forçar coleta/i })).not.toBeInTheDocument();
+    // Sem o botão o aviso não tem a quem avisar, e só ocuparia a tela.
+    expect(screen.queryByText(/push de verdade/i)).not.toBeInTheDocument();
   });
 
   it('ADMIN vê o botão de forçar coleta', () => {
@@ -65,5 +67,14 @@ describe('SistemaAdminPage', () => {
 
     expect(screen.queryByText('Somente leitura')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /forçar coleta/i })).toBeInTheDocument();
+  });
+
+  it('avisa o ADMIN de que a coleta manual pode disparar push', () => {
+    // O ciclo termina no motor de notificações. Quem clica precisa saber disso
+    // antes, e não descobrir pelo celular de outra pessoa.
+    authState.usuario = usuarioDto('ADMIN');
+    renderPage();
+
+    expect(screen.getByText(/push de verdade/i)).toBeInTheDocument();
   });
 });

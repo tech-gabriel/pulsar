@@ -11,9 +11,10 @@ public class OcorrenciaConsultaServiceTests
 {
     private readonly Mock<IOcorrenciaAlagamentoRepository> _repoMock = new();
     private readonly Mock<ISubprefeituraRepository> _subRepoMock = new();
+    private readonly Mock<IScoreRepository> _scoreRepoMock = new();
 
     private OcorrenciaConsultaService CriarServico()
-        => new(_repoMock.Object, _subRepoMock.Object);
+        => new(_repoMock.Object, _subRepoMock.Object, _scoreRepoMock.Object);
 
     private static OcorrenciaAlagamento Oco(double lat, double lon,
         TipoOcorrenciaAlagamento tipo = TipoOcorrenciaAlagamento.ALAGAMENTO)
@@ -52,29 +53,34 @@ public class OcorrenciaConsultaServiceTests
         res.RiscoElevado.Should().BeFalse();
     }
 
-    [Fact]
-    public async Task ObterProximas_ComOcorrenciaEChuvaForte_MarcaRiscoElevado()
+    [Theory]
+    [InlineData(FaixaRisco.BAIXO, false)]
+    [InlineData(FaixaRisco.MODERADO, true)]
+    [InlineData(FaixaRisco.ALTO, true)]
+    public async Task ObterProximas_RiscoElevadoSegueFaixaDeAlagamento(FaixaRisco faixa, bool esperado)
     {
         _repoMock.Setup(r => r.ObterRecentesAsync(It.IsAny<int>())).ReturnsAsync([Oco(Lat, Lon)]);
         var sub = new Subprefeitura { Id = Guid.NewGuid(), Nome = "Sé", Latitude = Lat, Longitude = Lon };
-        _subRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([sub]);
         sub.Leituras.Add(new LeituraClimatica { ChuvaMmH = 12, Timestamp = DateTime.UtcNow });
+        _subRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([sub]);
         _subRepoMock.Setup(r => r.ObterComUltimaLeituraAsync(sub.Id)).ReturnsAsync(sub);
+        // Principal ALTO de propósito: vale a faixa de ALAGAMENTO, não a principal.
+        _scoreRepoMock.Setup(r => r.ObterUltimoAsync(sub.Id))
+            .ReturnsAsync(new ScorePerigo { FaixaAlagamento = faixa, Faixa = FaixaRisco.ALTO });
 
         var res = await CriarServico().ObterProximasAsync(Lat, Lon, 500);
 
-        res.RiscoElevado.Should().BeTrue();
+        res.RiscoElevado.Should().Be(esperado);
         res.ChuvaMmH.Should().Be(12);
     }
 
     [Fact]
-    public async Task ObterProximas_ComOcorrenciaSemChuva_NaoMarcaRiscoElevado()
+    public async Task ObterProximas_SemScore_NaoMarcaRiscoElevado()
     {
         _repoMock.Setup(r => r.ObterRecentesAsync(It.IsAny<int>())).ReturnsAsync([Oco(Lat, Lon)]);
         var sub = new Subprefeitura { Id = Guid.NewGuid(), Nome = "Sé", Latitude = Lat, Longitude = Lon };
         _subRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([sub]);
-        sub.Leituras.Add(new LeituraClimatica { ChuvaMmH = 0, Timestamp = DateTime.UtcNow });
-        _subRepoMock.Setup(r => r.ObterComUltimaLeituraAsync(sub.Id)).ReturnsAsync(sub);
+        _scoreRepoMock.Setup(r => r.ObterUltimoAsync(sub.Id)).ReturnsAsync((ScorePerigo?)null);
 
         var res = await CriarServico().ObterProximasAsync(Lat, Lon, 500);
 

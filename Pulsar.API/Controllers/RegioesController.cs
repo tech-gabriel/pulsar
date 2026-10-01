@@ -91,6 +91,7 @@ public class RegioesController : ControllerBase
             Nome = regiao.Nome,
             ScoreAgregado = Math.Round(scoreAgregado, 1),
             FaixaRisco = regiao.GetFaixaAgregada(),
+            PerigoPrincipal = regiao.GetPerigoPrincipalAgregado(),
             TotalSubprefeituras = regiao.Subprefeituras.Count(s => s.Ativa),
             UltimaAtualizacao = ultimaAtualizacao
         };
@@ -129,12 +130,7 @@ public class RegioesController : ControllerBase
             Longitude = sub.Longitude,
             FaixaRisco = ultimoScore?.Faixa ?? FaixaRisco.BAIXO,
             TemperaturaAtual = ultimaLeitura?.TemperaturaC ?? 0.0,
-            ScoreAtual = ultimoScore is null ? null : new ScoreDto
-            {
-                Valor = Math.Round(ultimoScore.Valor, 1),
-                Faixa = ultimoScore.Faixa,
-                Timestamp = ultimoScore.Timestamp
-            },
+            ScoreAtual = ultimoScore is null ? null : ScoreDto.De(ultimoScore),
             UltimaLeitura = ultimaLeitura is null ? null : new LeituraDto
             {
                 ChuvaMmH = ultimaLeitura.ChuvaMmH,

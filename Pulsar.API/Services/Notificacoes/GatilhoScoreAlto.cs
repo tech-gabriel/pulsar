@@ -1,4 +1,5 @@
 using System.Globalization;
+using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
 using Pulsar.API.Services.Push;
 
@@ -24,15 +25,7 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([]);
 
         var rotulo = LimiaresNotificacao.Rotulo(ctx.Regiao.Nome);
-        var leitura = pior.Leitura;
-
-        // Cultura explícita: sem ela o host sem locale formataria "12.4 mm" no meio de
-        // uma frase em português. Ver LimiaresNotificacao.CulturaCopy.
-        var corpo = leitura is null
-            ? "Condições de risco alto agora. Evite áreas de alagamento."
-            : string.Create(
-                LimiaresNotificacao.CulturaCopy,
-                $"Chuva de {leitura.ChuvaMmH:0.#} mm por hora e vento de {leitura.VentoKmH:0.#} km/h agora.");
+        var (titulo, corpo) = Copy(pior.Score.PerigoPrincipal, pior.Score.Chuva48hMm, pior.Leitura, rotulo);
 
         var pendencia = new NotificacaoPendente(
             Gatilho: Nome,
@@ -43,7 +36,7 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             Chave: $"score:{ctx.Regiao.Id}:{ctx.AgoraUtc.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture)}",
             Criterio: CriterioOptIn.RiscoAlto,
             Payload: new PushPayload(
-                Titulo: $"Risco alto na {rotulo}",
+                Titulo: titulo,
                 Corpo: corpo,
                 Url: "/",
                 Tag: $"alerta-{ctx.Regiao.Id}"),
@@ -51,5 +44,27 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             Cooldown: LimiaresNotificacao.CooldownScoreAlto);
 
         return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([pendencia]);
+    }
+
+    /// <summary>Título e corpo pelo perigo que pôs a região em ALTO.</summary>
+    private static (string Titulo, string Corpo) Copy(
+        TipoPerigo perigo, double chuva48h, LeituraClimatica? leitura, string rotulo)
+    {
+        // Cultura explícita: sem ela o host sem locale formataria "12.4 mm" no meio de
+        // uma frase em português. Ver LimiaresNotificacao.CulturaCopy.
+        var c = LimiaresNotificacao.CulturaCopy;
+        return perigo switch
+        {
+            TipoPerigo.VENTO => ($"Vento forte na {rotulo}", leitura is null
+                ? "Ventos fortes agora. Cuidado com árvores e estruturas soltas."
+                : string.Create(c, $"Ventos de {leitura.VentoKmH:0} km/h agora.")),
+            TipoPerigo.CALOR => ($"Calor extremo na {rotulo}", leitura is null
+                ? "Calor extremo agora. Hidrate-se e evite sol forte."
+                : string.Create(c, $"Sensação térmica de {leitura.SensacaoTermica:0} °C. Hidrate-se e evite sol forte.")),
+            _ => ($"Risco alto de alagamento na {rotulo}", leitura is null
+                ? "Condições de risco alto agora. Evite áreas de alagamento."
+                : string.Create(c, $"Chuva de {leitura.ChuvaMmH:0.#} mm por hora agora")
+                  + (chuva48h >= LimiaresNotificacao.SoloEncharcadoMm ? ", com o solo já encharcado." : ".")),
+        };
     }
 }

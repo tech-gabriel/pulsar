@@ -32,12 +32,13 @@ public class GatilhoScoreAltoTests
         => Montar(null, scores);
 
     private static ContextoGatilho Montar(
-        LeituraClimatica? leitura, (double valor, FaixaRisco faixa)[] scores)
+        LeituraClimatica? leitura, (double valor, FaixaRisco faixa)[] scores,
+        TipoPerigo perigo = TipoPerigo.ALAGAMENTO, double chuva48h = 0)
     {
         var regiao = new Regiao { Nome = "Sul", FusoHorario = "America/Sao_Paulo" };
         var estados = scores.Select(s => new EstadoSubprefeitura(
             new Subprefeitura { RegiaoId = regiao.Id, Nome = "Sub", Ativa = true },
-            new ScorePerigo { Valor = s.valor, Faixa = s.faixa, Timestamp = DateTime.UtcNow },
+            new ScorePerigo { Valor = s.valor, Faixa = s.faixa, PerigoPrincipal = perigo, Chuva48hMm = chuva48h, Timestamp = DateTime.UtcNow },
             leitura)).ToList();
 
         return new ContextoGatilho
@@ -133,11 +134,11 @@ public class GatilhoScoreAltoTests
         payload.Corpo.Should().NotContainEquivalentOf("score",
             "o número do score não diz a ninguém o que fazer");
 
-        payload.Titulo.Should().Be("Risco alto na região Sul");
+        payload.Titulo.Should().Be("Risco alto de alagamento na região Sul");
 
         // Igualdade exata: um Contain("18") passaria em corpo que perdeu a unidade ou a
         // cláusula do vento. Cobre também o caminho inteiro, em que "0.#" não imprime casa.
-        payload.Corpo.Should().Be("Chuva de 18 mm por hora e vento de 45 km/h agora.");
+        payload.Corpo.Should().Be("Chuva de 18 mm por hora agora.");
     }
 
     [Fact]
@@ -159,7 +160,7 @@ public class GatilhoScoreAltoTests
                 Montar(leitura, [(78, FaixaRisco.ALTO)]));
 
             pendencias[0].Payload.Corpo.Should().Be(
-                "Chuva de 12,4 mm por hora e vento de 33,6 km/h agora.",
+                "Chuva de 12,4 mm por hora agora.",
                 "número com ponto no meio de frase em português lê errado");
         }
         finally
@@ -177,5 +178,51 @@ public class GatilhoScoreAltoTests
         pendencias.Should().HaveCount(1, "score alto sem leitura ainda merece aviso");
         pendencias[0].Payload.Corpo.Should().Be(
             "Condições de risco alto agora. Evite áreas de alagamento.");
+    }
+
+    [Fact]
+    public async Task Alagamento_ComSoloEncharcado_AvisaNoCorpo()
+    {
+        var p = await new GatilhoScoreAlto().AvaliarAsync(
+            Montar(LeituraPadrao(), [(78, FaixaRisco.ALTO)], TipoPerigo.ALAGAMENTO, chuva48h: 60));
+        p[0].Payload.Corpo.Should().Be("Chuva de 18 mm por hora agora, com o solo já encharcado.");
+    }
+
+    [Fact]
+    public async Task Vento_TemTituloECorpoProprios()
+    {
+        var p = await new GatilhoScoreAlto().AvaliarAsync(
+            Montar(LeituraPadrao(), [(70, FaixaRisco.ALTO)], TipoPerigo.VENTO));
+        p[0].Payload.Titulo.Should().Be("Vento forte na região Sul");
+        p[0].Payload.Corpo.Should().Be("Ventos de 45 km/h agora.");
+    }
+
+    [Fact]
+    public async Task Calor_TemTituloECorpoProprios_ComCulturaDoHostInvariante()
+    {
+        var leitura = LeituraPadrao();
+        leitura.SensacaoTermica = 42.4;
+        var original = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+        try
+        {
+            var p = await new GatilhoScoreAlto().AvaliarAsync(
+                Montar(leitura, [(65, FaixaRisco.ALTO)], TipoPerigo.CALOR));
+            p[0].Payload.Titulo.Should().Be("Calor extremo na região Sul");
+            p[0].Payload.Corpo.Should().Be("Sensação térmica de 42 °C. Hidrate-se e evite sol forte.");
+        }
+        finally { CultureInfo.CurrentCulture = original; }
+    }
+
+    [Theory]
+    [InlineData(TipoPerigo.ALAGAMENTO)]
+    [InlineData(TipoPerigo.VENTO)]
+    [InlineData(TipoPerigo.CALOR)]
+    public async Task SemLeitura_TodoPerigoTemCopySemNumeroESemTravessao(TipoPerigo perigo)
+    {
+        var p = await new GatilhoScoreAlto().AvaliarAsync(Montar(null, [(78, FaixaRisco.ALTO)], perigo));
+        p.Should().HaveCount(1);
+        p[0].Payload.Corpo.Should().NotContain("—").And.NotContain("–").And.NotContainEquivalentOf("score");
+        p[0].Payload.Titulo.Should().NotContain("—").And.NotContain("–");
     }
 }

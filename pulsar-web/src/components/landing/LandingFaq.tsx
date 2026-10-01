@@ -23,7 +23,7 @@ const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: 'Como o Score de Perigo é calculado?',
-    a: 'A partir das condições atuais de cada subprefeitura, combinando quatro fatores com pesos diferentes: chuva (35%), vento (30%), visibilidade/neblina (20%) e índice UV (15%). Cada fator é normalizado numa escala de 0 a 100 e ponderado, resultando no Score final de 0 a 100. Os pesos refletem o impacto de cada condição no risco do dia a dia da cidade.',
+    a: 'O Pulsar mede três perigos em cada subprefeitura: alagamento, vento forte e calor extremo. O de alagamento considera a chuva da última hora, das últimas 3 horas e dos últimos dois dias, que encharca o solo, além do histórico de ocorrências da Defesa Civil na região. O Score exibido é o pior dos três, e o app mostra qual deles pesou. Os critérios foram testados contra os alagamentos registrados em 2026.',
   },
   {
     q: 'Como recebo os alertas?',

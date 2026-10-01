@@ -25,4 +25,8 @@ describe('RegiaoCard motivo do risco', () => {
     renderCard({ ...base, perigoPrincipal: 'ALAGAMENTO' });
     expect(screen.queryByText(/por /)).not.toBeInTheDocument();
   });
+  it('dia seco com brisa (BAIXO por vento) não mostra motivo', () => {
+    renderCard({ ...base, scoreAgregado: 8, faixaRisco: 'BAIXO', perigoPrincipal: 'VENTO' });
+    expect(screen.queryByText(/por vento/)).not.toBeInTheDocument();
+  });
 });

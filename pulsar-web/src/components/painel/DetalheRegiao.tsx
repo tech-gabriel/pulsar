@@ -124,7 +124,7 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
   const cores = coresParaFaixa(sub.faixaRisco);
   const temp = sub.temperaturaAtual ?? sub.ultimaLeitura?.temperaturaC;
   const l = sub.ultimaLeitura;
-  const motivo = motivoPerigo(sub.scoreAtual?.perigoPrincipal);
+  const motivo = motivoPerigo(sub.scoreAtual?.perigoPrincipal, sub.faixaRisco);
 
   return (
     <div className="py-2">

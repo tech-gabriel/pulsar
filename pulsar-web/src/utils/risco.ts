@@ -1,7 +1,15 @@
 import type { FaixaRisco, TipoPerigo } from '../types';
 
-/** Motivo do risco quando o principal NÃO é alagamento (a promessa padrão do app). */
-export function motivoPerigo(perigo: TipoPerigo | null | undefined): { icone: string; rotulo: string } | null {
+/**
+ * Motivo do risco quando o principal NÃO é alagamento (a promessa padrão do app).
+ * Só existe com risco de fato (MODERADO ou ALTO): em dia tranquilo, qualquer brisa
+ * vira o "maior" perigo e o ícone viraria ruído em toda a tela.
+ */
+export function motivoPerigo(
+  perigo: TipoPerigo | null | undefined,
+  faixa: FaixaRisco | null | undefined,
+): { icone: string; rotulo: string } | null {
+  if (!faixa || faixa === 'BAIXO') return null;
   if (perigo === 'VENTO') return { icone: '💨', rotulo: 'vento' };
   if (perigo === 'CALOR') return { icone: '🌡️', rotulo: 'calor' };
   return null;

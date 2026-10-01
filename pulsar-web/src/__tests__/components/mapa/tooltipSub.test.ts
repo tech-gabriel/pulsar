@@ -55,4 +55,8 @@ describe('tooltipSubprefeituraHtml', () => {
     const html = tooltipSubprefeituraHtml({ ...sub, scoreAtual: { ...sub.scoreAtual!, perigoPrincipal: 'ALAGAMENTO' } }, 'X');
     expect(html).not.toContain(' por ');
   });
+  it('não mostra motivo em faixa BAIXO', () => {
+    const html = tooltipSubprefeituraHtml({ ...sub, faixaRisco: 'BAIXO', scoreAtual: { ...sub.scoreAtual!, faixa: 'BAIXO', perigoPrincipal: 'VENTO' } }, 'X');
+    expect(html).not.toContain('por vento');
+  });
 });

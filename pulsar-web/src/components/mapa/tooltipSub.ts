@@ -54,7 +54,7 @@ export function tooltipSubprefeituraHtml(
   const l = sub.ultimaLeitura;
   const cls = classeFaixa(sub.faixaRisco);
   const score = sub.scoreAtual ? String(Math.round(sub.scoreAtual.valor)) : '—';
-  const motivo = motivoPerigo(sub.scoreAtual?.perigoPrincipal);
+  const motivo = motivoPerigo(sub.scoreAtual?.perigoPrincipal, sub.faixaRisco);
 
   return `<div class="pt">
     ${cabecalho}

@@ -17,7 +17,7 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
         ContextoGatilho ctx, CancellationToken ct = default)
     {
         // Olhar só o maior score da região equivale a procurar qualquer subprefeitura
-        // na faixa ALTO, porque a faixa é derivada do valor (ScorePerigo.ClassificarFaixa):
+        // na faixa ALTO, porque a faixa é derivada do valor (ClassificacaoRisco.Faixa):
         // o maior valor sempre carrega a pior faixa.
         var pior = ctx.Pior;
         if (pior?.Score is null || pior.Score.Faixa != FaixaRisco.ALTO)

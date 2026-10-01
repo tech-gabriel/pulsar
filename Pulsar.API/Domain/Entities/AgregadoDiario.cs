@@ -25,6 +25,11 @@ public class AgregadoDiario
     public double ScoreMin { get; set; }
     public double ScoreMedio { get; set; }
     public double ScoreMax { get; set; }
+    /// <summary>
+    /// Maior score de ALAGAMENTO do dia. Separado do ScoreMax (principal) porque no verão
+    /// o calor domina o principal e esconderia o alagamento na recalibração.
+    /// </summary>
+    public double ScoreAlagamentoMax { get; set; }
 
     // Contagem de leituras por faixa. Fazem trabalho duplo: LeiturasAlto > 0 responde
     // "teve risco alto neste dia", e a soma ao longo de N dias dá a faixa predominante

@@ -152,6 +152,102 @@ services:
       - type: rewrite
         source: /risco-de-alagamento/zona-sul
         destination: /risco-de-alagamento/zona-sul/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/se
+        destination: /risco-de-alagamento/se/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/aricanduva-formosa-carrao
+        destination: /risco-de-alagamento/aricanduva-formosa-carrao/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/cidade-tiradentes
+        destination: /risco-de-alagamento/cidade-tiradentes/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/ermelino-matarazzo
+        destination: /risco-de-alagamento/ermelino-matarazzo/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/guaianases
+        destination: /risco-de-alagamento/guaianases/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/itaim-paulista
+        destination: /risco-de-alagamento/itaim-paulista/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/itaquera
+        destination: /risco-de-alagamento/itaquera/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/mooca
+        destination: /risco-de-alagamento/mooca/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/penha
+        destination: /risco-de-alagamento/penha/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/sapopemba
+        destination: /risco-de-alagamento/sapopemba/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/sao-mateus
+        destination: /risco-de-alagamento/sao-mateus/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/sao-miguel
+        destination: /risco-de-alagamento/sao-miguel/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/vila-prudente
+        destination: /risco-de-alagamento/vila-prudente/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/casa-verde-limao-cachoeirinha
+        destination: /risco-de-alagamento/casa-verde-limao-cachoeirinha/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/freguesia-brasilandia
+        destination: /risco-de-alagamento/freguesia-brasilandia/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/jacana-tremembe
+        destination: /risco-de-alagamento/jacana-tremembe/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/perus-anhanguera
+        destination: /risco-de-alagamento/perus-anhanguera/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/pirituba-jaragua
+        destination: /risco-de-alagamento/pirituba-jaragua/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/santana-tucuruvi
+        destination: /risco-de-alagamento/santana-tucuruvi/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/vila-maria-vila-guilherme
+        destination: /risco-de-alagamento/vila-maria-vila-guilherme/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/butanta
+        destination: /risco-de-alagamento/butanta/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/lapa
+        destination: /risco-de-alagamento/lapa/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/pinheiros
+        destination: /risco-de-alagamento/pinheiros/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/campo-limpo
+        destination: /risco-de-alagamento/campo-limpo/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/capela-do-socorro
+        destination: /risco-de-alagamento/capela-do-socorro/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/cidade-ademar
+        destination: /risco-de-alagamento/cidade-ademar/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/ipiranga
+        destination: /risco-de-alagamento/ipiranga/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/jabaquara
+        destination: /risco-de-alagamento/jabaquara/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/mboi-mirim
+        destination: /risco-de-alagamento/mboi-mirim/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/parelheiros
+        destination: /risco-de-alagamento/parelheiros/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/santo-amaro
+        destination: /risco-de-alagamento/santo-amaro/index.html
+      - type: rewrite
+        source: /risco-de-alagamento/vila-mariana
+        destination: /risco-de-alagamento/vila-mariana/index.html
       # 3) Fallback do roteamento SPA: tudo que não for arquivo real → spa.html.
       #    NÃO pode ser o index.html: o SSG o sobrescreve com a landing inteira, e
       #    servi-lo em /login fazia o React encontrar o DOM de outra rota, não

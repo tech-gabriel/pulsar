@@ -1,0 +1,169 @@
+{
+  "geradoEm": "2026-10-01",
+  "periodo": {
+    "de": "2026-01-04",
+    "ate": "2026-08-30"
+  },
+  "subprefeituras": {
+    "se": {
+      "total": 2,
+      "mesPico": "2026-01",
+      "ultima": "2026-03-08"
+    },
+    "aricanduva-formosa-carrao": {
+      "total": 16,
+      "mesPico": "2026-03",
+      "ultima": "2026-05-11"
+    },
+    "cidade-tiradentes": {
+      "total": 3,
+      "mesPico": "2026-01",
+      "ultima": "2026-01-08"
+    },
+    "ermelino-matarazzo": {
+      "total": 7,
+      "mesPico": "2026-01",
+      "ultima": "2026-03-06"
+    },
+    "guaianases": {
+      "total": 4,
+      "mesPico": "2026-01",
+      "ultima": "2026-04-04"
+    },
+    "itaim-paulista": {
+      "total": 51,
+      "mesPico": "2026-01",
+      "ultima": "2026-03-06"
+    },
+    "itaquera": {
+      "total": 8,
+      "mesPico": "2026-03",
+      "ultima": "2026-08-15"
+    },
+    "mooca": {
+      "total": 1,
+      "mesPico": "2026-06",
+      "ultima": "2026-06-23"
+    },
+    "penha": {
+      "total": 8,
+      "mesPico": "2026-01",
+      "ultima": "2026-06-26"
+    },
+    "sapopemba": {
+      "total": 7,
+      "mesPico": "2026-01",
+      "ultima": "2026-04-02"
+    },
+    "sao-mateus": {
+      "total": 1,
+      "mesPico": "2026-08",
+      "ultima": "2026-08-08"
+    },
+    "sao-miguel": {
+      "total": 57,
+      "mesPico": "2026-01",
+      "ultima": "2026-06-24"
+    },
+    "vila-prudente": {
+      "total": 18,
+      "mesPico": "2026-01",
+      "ultima": "2026-06-24"
+    },
+    "casa-verde-limao-cachoeirinha": {
+      "total": 4,
+      "mesPico": "2026-01",
+      "ultima": "2026-08-15"
+    },
+    "freguesia-brasilandia": {
+      "total": 2,
+      "mesPico": "2026-03",
+      "ultima": "2026-08-15"
+    },
+    "jacana-tremembe": {
+      "total": 10,
+      "mesPico": "2026-01",
+      "ultima": "2026-06-15"
+    },
+    "perus-anhanguera": {
+      "total": 3,
+      "mesPico": "2026-02",
+      "ultima": "2026-05-17"
+    },
+    "pirituba-jaragua": {
+      "total": 4,
+      "mesPico": "2026-03",
+      "ultima": "2026-08-15"
+    },
+    "santana-tucuruvi": {
+      "total": 4,
+      "mesPico": "2026-01",
+      "ultima": "2026-03-13"
+    },
+    "vila-maria-vila-guilherme": {
+      "total": 6,
+      "mesPico": "2026-01",
+      "ultima": "2026-02-17"
+    },
+    "butanta": {
+      "total": 19,
+      "mesPico": "2026-02",
+      "ultima": "2026-08-15"
+    },
+    "lapa": {
+      "total": 1,
+      "mesPico": "2026-06",
+      "ultima": "2026-06-24"
+    },
+    "pinheiros": {
+      "total": 4,
+      "mesPico": "2026-01",
+      "ultima": "2026-08-27"
+    },
+    "campo-limpo": {
+      "total": 68,
+      "mesPico": "2026-03",
+      "ultima": "2026-06-24"
+    },
+    "capela-do-socorro": {
+      "total": 23,
+      "mesPico": "2026-02",
+      "ultima": "2026-06-24"
+    },
+    "cidade-ademar": {
+      "total": 15,
+      "mesPico": "2026-01",
+      "ultima": "2026-04-08"
+    },
+    "ipiranga": {
+      "total": 19,
+      "mesPico": "2026-03",
+      "ultima": "2026-06-23"
+    },
+    "jabaquara": {
+      "total": 19,
+      "mesPico": "2026-03",
+      "ultima": "2026-03-13"
+    },
+    "mboi-mirim": {
+      "total": 39,
+      "mesPico": "2026-03",
+      "ultima": "2026-08-30"
+    },
+    "parelheiros": {
+      "total": 19,
+      "mesPico": "2026-01",
+      "ultima": "2026-02-06"
+    },
+    "santo-amaro": {
+      "total": 8,
+      "mesPico": "2026-03",
+      "ultima": "2026-07-03"
+    },
+    "vila-mariana": {
+      "total": 7,
+      "mesPico": "2026-03",
+      "ultima": "2026-08-10"
+    }
+  }
+}

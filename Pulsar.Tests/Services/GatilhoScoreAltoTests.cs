@@ -25,7 +25,7 @@ public class GatilhoScoreAltoTests
     };
 
     private static ContextoGatilho Contexto(params (double valor, FaixaRisco faixa)[] scores)
-        => Montar(LeituraPadrao(), scores);
+        => Montar(LeituraPadrao(), scores, chuva3h: 18);
 
     /// <summary>Mesmo cenário, mas sem a leitura que gerou o score: cobre a copy de fallback.</summary>
     private static ContextoGatilho ContextoSemLeitura(params (double valor, FaixaRisco faixa)[] scores)
@@ -33,12 +33,12 @@ public class GatilhoScoreAltoTests
 
     private static ContextoGatilho Montar(
         LeituraClimatica? leitura, (double valor, FaixaRisco faixa)[] scores,
-        TipoPerigo perigo = TipoPerigo.ALAGAMENTO, double chuva48h = 0)
+        TipoPerigo perigo = TipoPerigo.ALAGAMENTO, double chuva48h = 0, double chuva3h = 0)
     {
         var regiao = new Regiao { Nome = "Sul", FusoHorario = "America/Sao_Paulo" };
         var estados = scores.Select(s => new EstadoSubprefeitura(
             new Subprefeitura { RegiaoId = regiao.Id, Nome = "Sub", Ativa = true },
-            new ScorePerigo { Valor = s.valor, Faixa = s.faixa, PerigoPrincipal = perigo, Chuva48hMm = chuva48h, Timestamp = DateTime.UtcNow },
+            new ScorePerigo { Valor = s.valor, Faixa = s.faixa, PerigoPrincipal = perigo, Chuva48hMm = chuva48h, Chuva3hMm = chuva3h, Timestamp = DateTime.UtcNow },
             leitura)).ToList();
 
         return new ContextoGatilho
@@ -138,7 +138,7 @@ public class GatilhoScoreAltoTests
 
         // Igualdade exata: um Contain("18") passaria em corpo que perdeu a unidade ou a
         // cláusula do vento. Cobre também o caminho inteiro, em que "0.#" não imprime casa.
-        payload.Corpo.Should().Be("Chuva de 18 mm por hora agora.");
+        payload.Corpo.Should().Be("Chuva de 18 mm nas últimas 3 horas.");
     }
 
     [Fact]
@@ -157,10 +157,10 @@ public class GatilhoScoreAltoTests
         try
         {
             var pendencias = await new GatilhoScoreAlto().AvaliarAsync(
-                Montar(leitura, [(78, FaixaRisco.ALTO)]));
+                Montar(leitura, [(78, FaixaRisco.ALTO)], chuva3h: 12.4));
 
             pendencias[0].Payload.Corpo.Should().Be(
-                "Chuva de 12,4 mm por hora agora.",
+                "Chuva de 12,4 mm nas últimas 3 horas.",
                 "número com ponto no meio de frase em português lê errado");
         }
         finally
@@ -184,8 +184,8 @@ public class GatilhoScoreAltoTests
     public async Task Alagamento_ComSoloEncharcado_AvisaNoCorpo()
     {
         var p = await new GatilhoScoreAlto().AvaliarAsync(
-            Montar(LeituraPadrao(), [(78, FaixaRisco.ALTO)], TipoPerigo.ALAGAMENTO, chuva48h: 60));
-        p[0].Payload.Corpo.Should().Be("Chuva de 18 mm por hora agora, com o solo já encharcado.");
+            Montar(LeituraPadrao(), [(78, FaixaRisco.ALTO)], TipoPerigo.ALAGAMENTO, chuva48h: 60, chuva3h: 18));
+        p[0].Payload.Corpo.Should().Be("Chuva de 18 mm nas últimas 3 horas, com o solo já encharcado.");
     }
 
     [Fact]
@@ -224,5 +224,24 @@ public class GatilhoScoreAltoTests
         p.Should().HaveCount(1);
         p[0].Payload.Corpo.Should().NotContain("—").And.NotContain("–").And.NotContainEquivalentOf("score");
         p[0].Payload.Titulo.Should().NotContain("—").And.NotContain("–");
+    }
+
+    [Fact]
+    public async Task Alagamento_AltoPeloAcumuladoComChuvaParada_NaoDizZeroMm()
+    {
+        // Choveu 25 mm nas últimas 3h, mas a leitura de agora marca 0 mm/h.
+        var leitura = LeituraPadrao();
+        leitura.ChuvaMmH = 0;
+        var p = await new GatilhoScoreAlto().AvaliarAsync(
+            Montar(leitura, [(84, FaixaRisco.ALTO)], TipoPerigo.ALAGAMENTO, chuva3h: 25));
+        p[0].Payload.Corpo.Should().Be("Chuva de 25 mm nas últimas 3 horas.");
+    }
+
+    [Fact]
+    public async Task Alagamento_SemAcumulado_UsaCopyGenerica()
+    {
+        var p = await new GatilhoScoreAlto().AvaliarAsync(
+            Montar(LeituraPadrao(), [(78, FaixaRisco.ALTO)], TipoPerigo.ALAGAMENTO, chuva3h: 0));
+        p[0].Payload.Corpo.Should().Be("Condições de risco alto agora. Evite áreas de alagamento.");
     }
 }

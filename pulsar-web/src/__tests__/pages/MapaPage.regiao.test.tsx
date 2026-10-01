@@ -21,7 +21,10 @@ vi.mock('../../hooks/useRegioes', () => ({
   }),
 }));
 
-vi.mock('../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => [] }));
+// Itaquera existe na "API" para o deep-link de subprefeitura achar pelo nome.
+const ITAQUERA = { id: 's1', nome: 'Itaquera', latitude: 0, longitude: 0, scoreAtual: null, faixaRisco: 'BAIXO', temperaturaAtual: 20, ultimaLeitura: null, regiaoId: 'r1', regiaoNome: 'Leste' };
+const SUBS = [ITAQUERA];
+vi.mock('../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => SUBS }));
 
 vi.mock('../../hooks/useFavoritos', () => ({
   useFavoritos: () => ({ isFavorito: () => false, toggleFavorito: vi.fn() }),
@@ -64,8 +67,12 @@ vi.mock('../../contexts/ToastContext', () => ({
 vi.mock('../../components/ui/Header', () => ({ default: () => null }));
 vi.mock('../../components/notificacoes/ConvitePush', () => ({ default: () => null }));
 
-// Mapa real (react-leaflet) não roda em jsdom — stub.
-vi.mock('../../components/mapa/MapaBase', () => ({ default: () => <div data-testid="mapa-base-stub" /> }));
+// Mapa real (react-leaflet) não roda em jsdom — stub que expõe a sub selecionada.
+vi.mock('../../components/mapa/MapaBase', () => ({
+  default: ({ subSelecionada }: { subSelecionada: { nome: string } | null }) => (
+    <div data-testid="mapa-base-stub">{subSelecionada?.nome ?? ''}</div>
+  ),
+}));
 
 import MapaPage from '../../pages/MapaPage';
 
@@ -105,5 +112,15 @@ describe('MapaPage deep-link de região', () => {
     await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toBeInTheDocument());
     expect(screen.queryByRole('heading', { name: 'Leste' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Sul' })).not.toBeInTheDocument();
+  });
+  it('seleciona a subprefeitura quando ?regiao=<slug> é de subprefeitura', async () => {
+    render(
+      <MemoryRouter initialEntries={['/app?regiao=itaquera']}>
+        <MapaPage />
+      </MemoryRouter>,
+    );
+    // Foca a zona dela (Leste) e seleciona Itaquera no mapa.
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Leste' })).toBeInTheDocument());
+    expect(screen.getByTestId('mapa-base-stub')).toHaveTextContent('Itaquera');
   });
 });

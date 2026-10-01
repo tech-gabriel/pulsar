@@ -1,4 +1,5 @@
 using Pulsar.API.Domain.Enums;
+using Pulsar.API.Domain.Score;
 
 namespace Pulsar.API.Domain.Entities;
 
@@ -31,14 +32,5 @@ public class Regiao
         return scores.Count == 0 ? 0 : scores.Max();
     }
 
-    public FaixaRisco GetFaixaAgregada()
-    {
-        var score = GetScoreAgregado();
-        return score switch
-        {
-            <= 30 => FaixaRisco.BAIXO,
-            <= 60 => FaixaRisco.MODERADO,
-            _ => FaixaRisco.ALTO
-        };
-    }
+    public FaixaRisco GetFaixaAgregada() => ClassificacaoRisco.Faixa(GetScoreAgregado());
 }

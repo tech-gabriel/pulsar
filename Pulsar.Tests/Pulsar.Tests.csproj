@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Pulsar.API\Pulsar.API.csproj" />
+    <ProjectReference Include="..\Pulsar.Calibracao\Pulsar.Calibracao.csproj" />
   </ItemGroup>
 
 </Project>

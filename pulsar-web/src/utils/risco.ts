@@ -1,4 +1,11 @@
-import type { FaixaRisco } from '../types';
+import type { FaixaRisco, TipoPerigo } from '../types';
+
+/** Motivo do risco quando o principal NÃO é alagamento (a promessa padrão do app). */
+export function motivoPerigo(perigo: TipoPerigo | null | undefined): { icone: string; rotulo: string } | null {
+  if (perigo === 'VENTO') return { icone: '💨', rotulo: 'vento' };
+  if (perigo === 'CALOR') return { icone: '🌡️', rotulo: 'calor' };
+  return null;
+}
 import { PALETA, comAlfa } from './paleta';
 
 export interface RiscoCores {

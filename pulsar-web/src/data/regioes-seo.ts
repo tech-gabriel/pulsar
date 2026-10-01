@@ -196,7 +196,7 @@ const SUBPREFEITURAS: Omit<SubprefeituraSeo, 'slug' | 'emNome' | 'deNome'>[] = [
   {
     nome: 'Vila Mariana', zonaSlug: 'zona-sul',
     distritos: ['Vila Mariana', 'Moema', 'Saúde'],
-    descricao: 'A Vila Mariana abriga o Parque Ibirapuera. A Avenida República do Líbano, construída sobre o córrego do Sapateiro, é um dos pontos com histórico de alagamento na região.',
+    descricao: 'A Vila Mariana abriga o Parque Ibirapuera, por onde passa o córrego do Sapateiro, canalizado. O entorno do parque tem histórico de alagamento e recebe obras de novas galerias de drenagem da Prefeitura.',
   },
 ];
 

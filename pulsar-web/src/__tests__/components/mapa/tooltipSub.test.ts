@@ -46,4 +46,13 @@ describe('tooltipSubprefeituraHtml', () => {
     const html = tooltipSubprefeituraHtml({ ...sub, ultimaLeitura: null, scoreAtual: null }, 'X');
     expect(html).toContain('—');
   });
+  it('mostra o motivo quando o risco principal é vento ou calor', () => {
+    const html = tooltipSubprefeituraHtml({ ...sub, scoreAtual: { ...sub.scoreAtual!, perigoPrincipal: 'VENTO' } }, 'X');
+    expect(html).toContain('💨 por vento');
+  });
+
+  it('não mostra motivo quando o principal é alagamento', () => {
+    const html = tooltipSubprefeituraHtml({ ...sub, scoreAtual: { ...sub.scoreAtual!, perigoPrincipal: 'ALAGAMENTO' } }, 'X');
+    expect(html).not.toContain(' por ');
+  });
 });

@@ -107,10 +107,22 @@ export interface ColetaResultadoDto {
 
 // ── Score / Leitura ───────────────────────────────────────────────────────────
 
+export type TipoPerigo = 'ALAGAMENTO' | 'VENTO' | 'CALOR';
+
+export interface ComponenteScoreDto {
+  valor: number;
+  faixa: FaixaRisco;
+}
+
+/** valor/faixa = principal (o pior perigo). Campos novos opcionais: API antiga ou score pré-migração. */
 export interface ScoreDto {
   valor: number;
   faixa: FaixaRisco;
   timestamp: string;
+  perigoPrincipal?: TipoPerigo;
+  componentes?: { alagamento: ComponenteScoreDto; vento: ComponenteScoreDto; calor: ComponenteScoreDto };
+  chuva3hMm?: number;
+  chuva48hMm?: number;
 }
 
 export interface LeituraDto {
@@ -132,6 +144,7 @@ export interface RegiaoDto {
   nome: string;
   scoreAgregado: number;
   faixaRisco: FaixaRisco;
+  perigoPrincipal?: TipoPerigo;
   totalSubprefeituras: number;
   ultimaAtualizacao: string;
 }

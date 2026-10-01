@@ -22,7 +22,7 @@ import ConvitePush from '../components/notificacoes/ConvitePush';
 import { useGeolocalizacao, GeoError } from '../hooks/useGeolocalizacao';
 import { resolverSelecao } from '../utils/selecaoPorPonto';
 import { useToast } from '../contexts/ToastContext';
-import { getZonaPorSlug } from '../data/regioes-seo';
+import { resolverDeepLink } from '../data/regioes-seo';
 import OverlayAlagamentoToggle from '../components/mapa/OverlayAlagamentoToggle';
 import CardAlagamentoProximo from '../components/mapa/CardAlagamentoProximo';
 import { useOcorrenciasAlagamento } from '../hooks/useOcorrenciasAlagamento';
@@ -42,14 +42,25 @@ export default function MapaPage() {
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
   // Deep-link de conversão: ?regiao=<slug> (vindo das páginas públicas de SEO,
-  // via useDestinoPosAuth) foca a zona correspondente já no estado inicial.
+  // via useDestinoPosAuth) foca a zona já no estado inicial; slug de
+  // subprefeitura também a seleciona quando as subprefeituras chegarem da API.
   // Slug inválido não repassa nada adiante — degradação limpa, sem foco.
-  const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(() => {
+  const [deepLink] = useState(() => {
     const slug = searchParams.get('regiao');
-    const zona = slug ? getZonaPorSlug(slug) : undefined;
-    return zona ? zona.nomeRegiao : null;
+    return slug ? resolverDeepLink(slug) : undefined;
   });
+  const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(deepLink?.nomeRegiao ?? null);
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
+  const [subPendente, setSubPendente] = useState<string | null>(deepLink?.nomeSub ?? null);
+  // Ajuste de estado durante o render (padrão do React p/ derivar de props/dados
+  // que chegam depois): aplica a subprefeitura do deep-link uma única vez.
+  if (subPendente) {
+    const sub = subprefeituras.find((s) => s.nome === subPendente);
+    if (sub) {
+      setSubPendente(null);
+      setSubSelecionada(sub);
+    }
+  }
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
   const [sidebarColapsada, setSidebarColapsada] = useState(false);
   const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');

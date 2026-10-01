@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/gerar-sitemap.mjs && tsc -b && vite build",
+    "build": "node scripts/gerar-snapshot-ocorrencias.mjs --manter-se-falhar && node scripts/gerar-sitemap.mjs && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "snapshot:regioes": "node scripts/gerar-snapshot-regioes.mjs",
+    "snapshot:ocorrencias": "node scripts/gerar-snapshot-ocorrencias.mjs",
     "mapa:svg": "node scripts/gerar-mapa-svg.mjs"
   },
   "dependencies": {

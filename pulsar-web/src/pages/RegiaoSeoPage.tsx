@@ -1,11 +1,22 @@
 import { Link, useParams } from 'react-router-dom';
-import { getRegiaoView } from '../data/regiao-view';
-import { zonas, PREFIXO_REGIAO } from '../data/regioes-seo';
+import { getRegiaoView, getSubprefeituraView, type RegiaoView, type SubprefeituraView } from '../data/regiao-view';
+import { zonas, subprefeituras, PREFIXO_REGIAO } from '../data/regioes-seo';
 import { useSeoHead } from '../hooks/useSeoHead';
+
+const ORIGIN = 'https://app-pulsar.com.br';
 
 const FAIXA_LABEL: Record<string, string> = {
   BAIXO: 'baixo', MODERADO: 'moderado', ALTO: 'alto',
 };
+
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+/** "2026-03" -> "mar/2026" */
+const fmtMes = (ym: string) => `${MESES[Number(ym.slice(5, 7)) - 1]}/${ym.slice(0, 4)}`;
+// Datas "AAAA-MM-DD" formatadas por fatia de string, sem Date: evita deslocamento de fuso.
+/** "2026-05-11" -> "11/05" (o ano vai na legenda) */
+const fmtDiaMes = (ymd: string) => `${ymd.slice(8, 10)}/${ymd.slice(5, 7)}`;
+/** "2026-05-11" -> "11/05/2026" */
+const fmtData = (ymd: string) => `${fmtDiaMes(ymd)}/${ymd.slice(0, 4)}`;
 
 // O bloco de estatísticas fica OCULTO até haver histórico suficiente. Por design,
 // o banco só retém dados brutos recentes (poucos dias, para economizar espaço no
@@ -17,58 +28,161 @@ const FAIXA_LABEL: Record<string, string> = {
 // está pronto; basta virar esta flag (ou torná-la data-driven pelo snapshot).
 const ESTATISTICAS_PRONTAS = false;
 
+const h1Style = { fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(28px, 5vw, 42px)', color: 'var(--text-primary)' };
+const h2Style = { fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 26px)', color: 'var(--text-primary)' };
+const navH2Style = { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 18, color: 'var(--text-primary)' };
+const linkStyle = { color: 'var(--text-accent)', textDecoration: 'underline', textUnderlineOffset: 2 };
+
 /**
- * Página pública de SEO por zona (/risco-de-alagamento/:zona). Conteúdo templated
- * + agregados reais do snapshot, tudo em HTML estático (prerenderizado). O risco
- * AO VIVO não fica aqui: é a isca do CTA para o cadastro (deep-link da zona).
+ * Página pública de SEO por zona ou subprefeitura (/risco-de-alagamento/:zona).
+ * Os dois tipos dividem a mesma rota (slugs não colidem: zonas são "zona-*").
+ * Conteúdo templated + curado + snapshots, tudo em HTML estático (prerenderizado).
+ * O risco AO VIVO não fica aqui: é a isca do CTA para o cadastro (deep-link).
  */
 export default function RegiaoSeoPage() {
-  const { zona: slug } = useParams<{ zona: string }>();
-  const view = slug ? getRegiaoView(slug) : undefined;
+  const { zona: slug = '' } = useParams<{ zona: string }>();
+  const zona = getRegiaoView(slug);
+  const sub = zona ? undefined : getSubprefeituraView(slug);
 
-  // useSeoHead precisa ser chamado incondicionalmente (regra dos hooks) mesmo
-  // quando a zona não existe, então o head da página "não encontrada" também
-  // é calculado aqui.
-  const path = `${PREFIXO_REGIAO}/${slug ?? ''}`;
-  const title = view ? `Risco de alagamento na ${view.nome} · Pulsar` : 'Região não encontrada · Pulsar';
-  const descricao = view
-    ? `Acompanhe o risco de chuva forte e alagamento na ${view.nome} de São Paulo por subprefeitura, com alerta antecipado do Pulsar.`
-    : 'Esta região não existe no Pulsar. Veja as zonas de risco de alagamento de São Paulo.';
-  const jsonLd = view
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'WebPage',
-        name: title,
-        description: descricao,
-        url: `https://app-pulsar.com.br${path}`,
-        about: { '@type': 'Place', name: `${view.nome}, São Paulo` },
-      }
-    : undefined;
+  // useSeoHead precisa ser chamado incondicionalmente (regra dos hooks), então o
+  // head de todos os casos (zona, subprefeitura, não encontrada) é calculado aqui.
+  const path = `${PREFIXO_REGIAO}/${slug}`;
+  useSeoHead({ path, ...(zona ? headZona(zona, path) : sub ? headSub(sub, path) : headNaoEncontrada()) });
 
-  useSeoHead({ title, descricao, path, jsonLd });
+  if (zona) return <ZonaView view={zona} />;
+  if (sub) return <SubprefeituraSeoView view={sub} />;
+  return <NaoEncontrada />;
+}
 
-  if (!view) {
-    return (
-      <div className="auth-bg" style={{ minHeight: '100vh' }}>
-        <main className="landing-section text-center" style={{ maxWidth: 640 }}>
-          <h1
-            className="leading-tight"
-            style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(26px, 4vw, 34px)', color: 'var(--text-primary)' }}
-          >
-            Região não encontrada
-          </h1>
-          <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>
-            Veja as{' '}
-            <Link to="/" style={{ color: 'var(--text-accent)', textDecoration: 'underline' }}>
-              zonas de São Paulo no Pulsar
-            </Link>.
-          </p>
-        </main>
-      </div>
-    );
-  }
+function headZona(view: RegiaoView, path: string) {
+  const title = `Risco de alagamento na ${view.nome} · Pulsar`;
+  const descricao = `Acompanhe o risco de chuva forte e alagamento na ${view.nome} de São Paulo por subprefeitura, com alerta antecipado do Pulsar.`;
+  return {
+    title,
+    descricao,
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: title,
+      description: descricao,
+      url: `${ORIGIN}${path}`,
+      about: { '@type': 'Place', name: `${view.nome}, São Paulo` },
+    },
+  };
+}
 
-  const { nome, subprefeituras, snapshot, janelaDias } = view;
+function headSub(view: SubprefeituraView, path: string) {
+  const { nome, emNome, zona, distritos, ocorrencias, periodo, geradoEm } = view;
+  const title = `Risco de alagamento ${emNome} (${zona.nome}, SP) · Pulsar`;
+  const dado = ocorrencias && ocorrencias.total > 0 && periodo.de
+    ? `${ocorrencias.total} ocorrência${ocorrencias.total > 1 ? 's' : ''} de alagamento registrada${ocorrencias.total > 1 ? 's' : ''} pela Defesa Civil desde ${fmtMes(periodo.de.slice(0, 7))}. `
+    : '';
+  const descricao = `${dado}Veja o risco de chuva forte e alagamento ${emNome} (${distritos.join(', ')}) e receba alerta antecipado do Pulsar.`;
+  const url = `${ORIGIN}${path}`;
+  const zonaUrl = `${ORIGIN}${PREFIXO_REGIAO}/${zona.slug}`;
+  return {
+    title,
+    descricao,
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebPage',
+          name: title,
+          description: descricao,
+          url,
+          dateModified: geradoEm,
+          about: {
+            '@type': 'Place',
+            name: `${nome}, São Paulo`,
+            containedInPlace: {
+              '@type': 'Place',
+              name: `${zona.nome}, São Paulo`,
+              url: zonaUrl,
+              containedInPlace: { '@type': 'City', name: 'São Paulo' },
+            },
+          },
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Início', item: `${ORIGIN}/` },
+            { '@type': 'ListItem', position: 2, name: zona.nome, item: zonaUrl },
+            { '@type': 'ListItem', position: 3, name: nome, item: url },
+          ],
+        },
+      ],
+    },
+  };
+}
+
+function headNaoEncontrada() {
+  return {
+    title: 'Região não encontrada · Pulsar',
+    descricao: 'Esta região não existe no Pulsar. Veja as zonas de risco de alagamento de São Paulo.',
+  };
+}
+
+function NaoEncontrada() {
+  return (
+    <div className="auth-bg" style={{ minHeight: '100vh' }}>
+      <main className="landing-section text-center" style={{ maxWidth: 640 }}>
+        <h1 className="leading-tight" style={{ ...h1Style, fontSize: 'clamp(26px, 4vw, 34px)' }}>
+          Região não encontrada
+        </h1>
+        <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>
+          Veja as{' '}
+          <Link to="/" style={{ color: 'var(--text-accent)', textDecoration: 'underline' }}>
+            zonas de São Paulo no Pulsar
+          </Link>.
+        </p>
+      </main>
+    </div>
+  );
+}
+
+function ComoAjuda() {
+  return (
+    <section className="landing-prose mt-10">
+      <h2>Como o Pulsar ajuda</h2>
+      <p><strong>O que é risco de alagamento:</strong> a combinação de chuva forte, solo saturado e escoamento que pode causar pontos de alagamento e transtorno na mobilidade.</p>
+      <p><strong>Como calculamos:</strong> cruzamos chuva, vento e outras variáveis por subprefeitura, com dados meteorológicos do OpenWeatherMap coletados a cada 15 minutos, gerando um score de risco atualizado ao longo do dia.</p>
+      <p><strong>O que fazer em risco alto:</strong> evite áreas historicamente alagáveis, replaneje deslocamentos e acompanhe o alerta do Pulsar.</p>
+    </section>
+  );
+}
+
+function Cta({ slug, emNome }: { slug: string; emNome: string }) {
+  return (
+    <div className="landing-cta-band mt-10">
+      <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
+        Veja o risco de agora {emNome}
+      </p>
+      <Link to={`/cadastro?regiao=${slug}`} className="landing-cta mt-5">
+        Ver risco ao vivo {emNome}
+      </Link>
+    </div>
+  );
+}
+
+function LinksNav({ titulo, itens }: { titulo: string; itens: { slug: string; nome: string }[] }) {
+  return (
+    <nav className="mt-12" aria-label={titulo}>
+      <h2 style={navH2Style}>{titulo}</h2>
+      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+        {itens.map((r) => (
+          <li key={r.slug}>
+            <Link to={`${PREFIXO_REGIAO}/${r.slug}`} style={linkStyle}>{r.nome}</Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function ZonaView({ view }: { view: RegiaoView }) {
+  const { slug, nome, snapshot, janelaDias } = view;
+  const subsDaZona = subprefeituras.filter((s) => s.zonaSlug === slug);
   const outrasZonas = zonas.filter((z) => z.slug !== slug);
 
   return (
@@ -79,14 +193,11 @@ export default function RegiaoSeoPage() {
           <span>Risco de alagamento</span> · <span style={{ color: 'var(--text-primary)' }}>{nome}</span>
         </nav>
 
-        <h1
-          className="mt-4 leading-tight"
-          style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(28px, 5vw, 42px)', color: 'var(--text-primary)' }}
-        >
+        <h1 className="mt-4 leading-tight" style={h1Style}>
           Risco de alagamento na {nome}
         </h1>
         <p className="mt-3 max-w-2xl" style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-          A {nome} de São Paulo reúne {subprefeituras.length} subprefeitura{subprefeituras.length > 1 ? 's' : ''}.
+          A {nome} de São Paulo reúne {subsDaZona.length} subprefeitura{subsDaZona.length > 1 ? 's' : ''}.
           O Pulsar calcula o risco de chuva forte e alagamento em cada uma, com alerta antecipado.
         </p>
 
@@ -113,53 +224,107 @@ export default function RegiaoSeoPage() {
         )}
 
         <section className="mt-10">
-          <h2
-            style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 26px)', color: 'var(--text-primary)' }}
-          >
-            Subprefeituras da {nome}
-          </h2>
+          <h2 style={h2Style}>Subprefeituras da {nome}</h2>
           <ul className="mt-3 flex flex-wrap gap-2">
-            {subprefeituras.map((s) => (
-              <li key={s} className="landing-pill">{s}</li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="landing-prose mt-10">
-          <h2>Como o Pulsar ajuda</h2>
-          <p><strong>O que é risco de alagamento:</strong> a combinação de chuva forte, solo saturado e escoamento que pode causar pontos de alagamento e transtorno na mobilidade.</p>
-          <p><strong>Como calculamos:</strong> cruzamos chuva, vento e outras variáveis por subprefeitura, gerando um score de risco atualizado ao longo do dia.</p>
-          <p><strong>O que fazer em risco alto:</strong> evite áreas historicamente alagáveis, replaneje deslocamentos e acompanhe o alerta do Pulsar.</p>
-        </section>
-
-        <div className="landing-cta-band mt-10">
-          <p style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>
-            Veja o risco de agora da {nome}
-          </p>
-          <Link to={`/cadastro?regiao=${slug}`} className="landing-cta mt-5">
-            Ver risco ao vivo da {nome}
-          </Link>
-        </div>
-
-        <nav className="mt-12" aria-label="Outras zonas">
-          <h2
-            style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 18, color: 'var(--text-primary)' }}
-          >
-            Outras zonas de São Paulo
-          </h2>
-          <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-            {outrasZonas.map((z) => (
-              <li key={z.slug}>
-                <Link
-                  to={`${PREFIXO_REGIAO}/${z.slug}`}
-                  style={{ color: 'var(--text-accent)', textDecoration: 'underline', textUnderlineOffset: 2 }}
-                >
-                  {z.nome}
-                </Link>
+            {subsDaZona.map((s) => (
+              <li key={s.slug}>
+                <Link to={`${PREFIXO_REGIAO}/${s.slug}`} className="landing-pill hover:underline">{s.nome}</Link>
               </li>
             ))}
           </ul>
+        </section>
+
+        <ComoAjuda />
+        <Cta slug={slug} emNome={`da ${nome}`} />
+        <LinksNav titulo="Outras zonas de São Paulo" itens={outrasZonas} />
+      </main>
+    </div>
+  );
+}
+
+function SubprefeituraSeoView({ view }: { view: SubprefeituraView }) {
+  const { slug, nome, emNome, zona, distritos, descricao, ocorrencias, periodo, geradoEm } = view;
+  const vizinhas = subprefeituras.filter((s) => s.zonaSlug === zona.slug && s.slug !== slug);
+  // Sé é a única da Zona Centro: sem vizinhas, cruza para as outras zonas.
+  const links = vizinhas.length > 0
+    ? { titulo: `Outras subprefeituras da ${zona.nome}`, itens: vizinhas }
+    : { titulo: 'Outras zonas de São Paulo', itens: zonas.filter((z) => z.slug !== zona.slug) };
+
+  return (
+    <div className="auth-bg" style={{ minHeight: '100vh' }}>
+      <main className="landing-section" style={{ maxWidth: 820 }}>
+        <nav aria-label="breadcrumb" className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          <Link to="/" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Início</Link> ·{' '}
+          <Link to={`${PREFIXO_REGIAO}/${zona.slug}`} className="hover:underline" style={{ color: 'var(--text-secondary)' }}>
+            {zona.nome}
+          </Link>{' '}
+          · <span style={{ color: 'var(--text-primary)' }}>{nome}</span>
         </nav>
+
+        <h1 className="mt-4 leading-tight" style={h1Style}>
+          Risco de alagamento {emNome}
+        </h1>
+        <p className="mt-3 max-w-2xl" style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          {descricao}
+        </p>
+
+        <section className="mt-10" aria-labelledby="ocorrencias">
+          <h2 id="ocorrencias" style={h2Style}>Alagamentos registrados {emNome}</h2>
+          {ocorrencias && ocorrencias.total > 0 && periodo.de && periodo.ate ? (
+            <>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="landing-stat">
+                  <div className="landing-stat-num">{ocorrencias.total}</div>
+                  <div className="landing-stat-label">ocorrências de alagamento e inundação</div>
+                  <div className="landing-stat-sub">de {fmtMes(periodo.de.slice(0, 7))} a {fmtMes(periodo.ate.slice(0, 7))}</div>
+                </div>
+                {ocorrencias.mesPico && (
+                  <div className="landing-stat">
+                    <div className="landing-stat-num">{fmtMes(ocorrencias.mesPico)}</div>
+                    <div className="landing-stat-label">mês com mais registros</div>
+                    <div className="landing-stat-sub">no período</div>
+                  </div>
+                )}
+                {ocorrencias.ultima && (
+                  <div className="landing-stat">
+                    <div className="landing-stat-num">
+                      <time dateTime={ocorrencias.ultima}>{fmtDiaMes(ocorrencias.ultima)}</time>
+                    </div>
+                    <div className="landing-stat-label">registro mais recente</div>
+                    <div className="landing-stat-sub">em {ocorrencias.ultima.slice(0, 4)}</div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="mt-3" style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              Nenhuma ocorrência de alagamento registrada pela Defesa Civil {emNome} no período mais recente
+              disponível. Isso não elimina o risco: chuvas fortes podem causar pontos de alagamento em qualquer região.
+            </p>
+          )}
+          <p className="mt-3 text-sm" style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            Fonte: registros de ocorrências de alagamento e inundação da Defesa Civil de São Paulo,
+            publicados no{' '}
+            <a href="https://geosampa.prefeitura.sp.gov.br" target="_blank" rel="noopener" style={linkStyle}>
+              GeoSampa
+            </a>
+            , o portal de dados geográficos da Prefeitura. Dados atualizados em{' '}
+            <time dateTime={geradoEm}>{fmtData(geradoEm)}</time>.
+          </p>
+        </section>
+
+        <section className="mt-10">
+          <h2 style={h2Style}>Distritos {view.deNome}</h2>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {distritos.map((d) => (
+              <li key={d} className="landing-pill">{d}</li>
+            ))}
+          </ul>
+        </section>
+
+        <ComoAjuda />
+        <Cta slug={slug} emNome={emNome} />
+        <LinksNav {...links} />
       </main>
     </div>
   );

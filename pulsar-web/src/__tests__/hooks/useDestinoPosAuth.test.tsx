@@ -16,6 +16,13 @@ describe('useDestinoPosAuth', () => {
     expect(result.current).toBe('/app?regiao=zona-leste');
   });
 
+  it('anexa ?regiao quando o slug é uma subprefeitura válida', () => {
+    const { result } = renderHook(() => useDestinoPosAuth(), {
+      wrapper: wrapper('/cadastro?regiao=itaquera'),
+    });
+    expect(result.current).toBe('/app?regiao=itaquera');
+  });
+
   it('ignora slug inválido e vai pro app', () => {
     const { result } = renderHook(() => useDestinoPosAuth(), {
       wrapper: wrapper('/cadastro?regiao=hackerman'),

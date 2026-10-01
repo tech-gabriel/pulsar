@@ -44,6 +44,34 @@ describe('RegiaoSeoPage', () => {
     );
   });
 
+  it('linka as subprefeituras da zona para as páginas próprias', () => {
+    renderRota('/risco-de-alagamento/zona-leste');
+    expect(screen.getByRole('link', { name: 'Itaquera' })).toHaveAttribute(
+      'href', '/risco-de-alagamento/itaquera',
+    );
+  });
+
+  it('renderiza a página da subprefeitura com distritos, ocorrências, CTA e vizinhas', async () => {
+    renderRota('/risco-de-alagamento/mooca');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Risco de alagamento na Mooca');
+    expect(screen.getByRole('heading', { name: 'Distritos da Mooca' })).toBeInTheDocument();
+    expect(screen.getByText('Tatuapé')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Alagamentos registrados na Mooca' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /ver risco ao vivo na Mooca/i })).toHaveAttribute(
+      'href', '/cadastro?regiao=mooca',
+    );
+    // breadcrumb volta para a zona; vizinhas da mesma zona, sem a própria
+    expect(screen.getByRole('link', { name: 'Zona Leste' })).toHaveAttribute('href', '/risco-de-alagamento/zona-leste');
+    expect(screen.getByRole('link', { name: 'Itaquera' })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe('Risco de alagamento na Mooca (Zona Leste, SP) · Pulsar'));
+  });
+
+  it('Sé, única da Zona Centro, cruza para as outras zonas', () => {
+    renderRota('/risco-de-alagamento/se');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Risco de alagamento na Sé');
+    expect(screen.getByRole('link', { name: 'Zona Sul' })).toBeInTheDocument();
+  });
+
   it('slug inválido renderiza estado de "não encontrada" sem quebrar', () => {
     renderRota('/risco-de-alagamento/zona-inexistente');
     expect(screen.getByText(/não encontrada/i)).toBeInTheDocument();

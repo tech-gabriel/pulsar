@@ -5,7 +5,7 @@ const PILARES = [
   {
     Icon: Scale,
     title: 'Método claro',
-    desc: 'O Score sai de variáveis objetivas, com pesos definidos para cada fator. Nada de achismo.',
+    desc: 'O Score sai de variáveis objetivas, com critérios abertos e testados contra alagamentos reais. Nada de achismo.',
   },
   {
     Icon: ShieldCheck,

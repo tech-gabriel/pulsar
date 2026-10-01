@@ -25,6 +25,31 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.10.0',
+    data: '2026-10-01',
+    resumo: 'O risco agora entende chuva acumulada e avisa também sobre vento forte e calor extremo.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Três perigos em cada região',
+        descricao:
+          'Cada subprefeitura mostra o risco de alagamento, de vento forte e de calor extremo, com o dado que explica cada um. A cor do mapa segue o pior dos três, e quando o motivo não é alagamento um ícone avisa qual é.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Risco de alagamento mais fiel',
+        descricao:
+          'O cálculo passou a considerar a chuva da última hora, das últimas 3 horas e dos últimos dois dias, que encharca o solo, além do histórico de ocorrências da Defesa Civil em cada subprefeitura. Ele foi testado contra os alagamentos registrados em 2026.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Avisos que dizem qual é o perigo',
+        descricao:
+          'A notificação de risco alto agora diz se é alagamento, vento forte ou calor extremo, com o número que importa e o que fazer.',
+      },
+    ],
+  },
+  {
     versao: '1.9.0',
     data: '2026-08-20',
     resumo: 'O Pulsar passou a olhar para frente, e não só para o agora.',

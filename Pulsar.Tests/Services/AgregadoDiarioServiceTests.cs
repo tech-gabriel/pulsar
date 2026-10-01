@@ -31,7 +31,7 @@ public class AgregadoDiarioServiceTests
     private static async Task GravarLeituraAsync(
         PulsarDbContext ctx, Guid subId, DateTime instanteUtc,
         double chuvaMmH, double valorScore, FaixaRisco faixa,
-        double vento = 10, double temp = 20, double uv = 3)
+        double vento = 10, double temp = 20, double uv = 3, double valorAlagamento = 0)
     {
         var leitura = new LeituraClimatica
         {
@@ -44,6 +44,7 @@ public class AgregadoDiarioServiceTests
         {
             SubprefeituraId = subId, LeituraId = leitura.Id,
             Timestamp = instanteUtc, Valor = valorScore, Faixa = faixa,
+            ValorAlagamento = valorAlagamento,
         });
         await ctx.SaveChangesAsync();
     }
@@ -81,6 +82,50 @@ public class AgregadoDiarioServiceTests
         linha.TemperaturaMaxC.Should().Be(25);
         linha.UvMax.Should().Be(9);
         linha.FusoHorario.Should().Be("America/Sao_Paulo");
+    }
+
+    [Fact]
+    public async Task GravaOMaiorScoreDeAlagamentoSeparadoDoPrincipal()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var subId = await ctx.Subprefeituras.Select(s => s.Id).FirstAsync();
+        var hojeLocal = DateOnly.FromDateTime(
+            TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo")));
+        var meioDiaUtc = DateTime.SpecifyKind(hojeLocal.ToDateTime(new TimeOnly(15, 0)), DateTimeKind.Utc);
+
+        // O principal foi calor (80); o alagamento ficou em 20 e 70.
+        await GravarLeituraAsync(ctx, subId, meioDiaUtc, chuvaMmH: 1, valorScore: 80, FaixaRisco.ALTO, valorAlagamento: 20);
+        await GravarLeituraAsync(ctx, subId, meioDiaUtc.AddMinutes(15), chuvaMmH: 9, valorScore: 80, FaixaRisco.ALTO, valorAlagamento: 70);
+
+        await NovoServico(ctx).AtualizarRecentesAsync(subId, default);
+
+        var linha = await ctx.AgregadosDiarios.SingleAsync(a => a.Dia == hojeLocal);
+        linha.ScoreMax.Should().Be(80);
+        linha.ScoreAlagamentoMax.Should().Be(70);
+    }
+
+    [Fact]
+    public async Task RecalculoDoDia_AtualizaOScoreDeAlagamentoMax()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var subId = await ctx.Subprefeituras.Select(s => s.Id).FirstAsync();
+        var hojeLocal = DateOnly.FromDateTime(
+            TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo")));
+        var meioDiaUtc = DateTime.SpecifyKind(hojeLocal.ToDateTime(new TimeOnly(15, 0)), DateTimeKind.Utc);
+
+        await GravarLeituraAsync(ctx, subId, meioDiaUtc, chuvaMmH: 1, valorScore: 20, FaixaRisco.BAIXO, valorAlagamento: 20);
+        await NovoServico(ctx).AtualizarRecentesAsync(subId, default);
+
+        // Novo ciclo no mesmo dia: a linha existente é atualizada, não recriada.
+        await GravarLeituraAsync(ctx, subId, meioDiaUtc.AddMinutes(15), chuvaMmH: 9, valorScore: 70, FaixaRisco.ALTO, valorAlagamento: 70);
+        await NovoServico(ctx).AtualizarRecentesAsync(subId, default);
+
+        var linha = await ctx.AgregadosDiarios.SingleAsync(a => a.Dia == hojeLocal);
+        linha.ScoreAlagamentoMax.Should().Be(70);
     }
 
     [Fact]

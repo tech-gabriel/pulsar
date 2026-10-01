@@ -63,12 +63,7 @@ public class HistoricoController : ControllerBase
                 SensacaoTermica = l.SensacaoTermica,
                 Umidade = l.Umidade,
                 Timestamp = l.Timestamp,
-                Score = score is null ? null : new ScoreDto
-                {
-                    Valor = Math.Round(score.Valor, 1),
-                    Faixa = score.Faixa,
-                    Timestamp = score.Timestamp
-                }
+                Score = score is null ? null : ScoreDto.De(score)
             };
         }).ToList();
 

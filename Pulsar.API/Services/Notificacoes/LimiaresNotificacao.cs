@@ -19,6 +19,9 @@ public static class LimiaresNotificacao
     /// <summary>Acima disto a severidade sobe de moderado para alto, em mm.</summary>
     public const double ChuvaMuitoFortePrevistaMm = 20.0;
 
+    /// <summary>Acumulado de 48h a partir do qual a copy de alagamento cita solo encharcado, em mm.</summary>
+    public const double SoloEncharcadoMm = 40.0;
+
     /// <summary>Probabilidade mínima (0 a 1) para o aviso de chuva valer.</summary>
     public const double ProbabilidadeMinima = 0.6;
 

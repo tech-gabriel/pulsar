@@ -1,4 +1,5 @@
 using System.Globalization;
+using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
 using Pulsar.API.Services.Push;
 
@@ -17,22 +18,14 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
         ContextoGatilho ctx, CancellationToken ct = default)
     {
         // Olhar só o maior score da região equivale a procurar qualquer subprefeitura
-        // na faixa ALTO, porque a faixa é derivada do valor (ScorePerigo.ClassificarFaixa):
+        // na faixa ALTO, porque a faixa é derivada do valor (ClassificacaoRisco.Faixa):
         // o maior valor sempre carrega a pior faixa.
         var pior = ctx.Pior;
         if (pior?.Score is null || pior.Score.Faixa != FaixaRisco.ALTO)
             return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([]);
 
         var rotulo = LimiaresNotificacao.Rotulo(ctx.Regiao.Nome);
-        var leitura = pior.Leitura;
-
-        // Cultura explícita: sem ela o host sem locale formataria "12.4 mm" no meio de
-        // uma frase em português. Ver LimiaresNotificacao.CulturaCopy.
-        var corpo = leitura is null
-            ? "Condições de risco alto agora. Evite áreas de alagamento."
-            : string.Create(
-                LimiaresNotificacao.CulturaCopy,
-                $"Chuva de {leitura.ChuvaMmH:0.#} mm por hora e vento de {leitura.VentoKmH:0.#} km/h agora.");
+        var (titulo, corpo) = Copy(pior.Score, pior.Leitura, rotulo);
 
         var pendencia = new NotificacaoPendente(
             Gatilho: Nome,
@@ -43,7 +36,7 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             Chave: $"score:{ctx.Regiao.Id}:{ctx.AgoraUtc.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture)}",
             Criterio: CriterioOptIn.RiscoAlto,
             Payload: new PushPayload(
-                Titulo: $"Risco alto na {rotulo}",
+                Titulo: titulo,
                 Corpo: corpo,
                 Url: "/",
                 Tag: $"alerta-{ctx.Regiao.Id}"),
@@ -51,5 +44,28 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             Cooldown: LimiaresNotificacao.CooldownScoreAlto);
 
         return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([pendencia]);
+    }
+
+    /// <summary>Título e corpo pelo perigo que pôs a região em ALTO.</summary>
+    private static (string Titulo, string Corpo) Copy(ScorePerigo score, LeituraClimatica? leitura, string rotulo)
+    {
+        // Cultura explícita: sem ela o host sem locale formataria "12.4 mm" no meio de
+        // uma frase em português. Ver LimiaresNotificacao.CulturaCopy.
+        var c = LimiaresNotificacao.CulturaCopy;
+        return score.PerigoPrincipal switch
+        {
+            TipoPerigo.VENTO => ($"Vento forte na {rotulo}", leitura is null
+                ? "Ventos fortes agora. Cuidado com árvores e estruturas soltas."
+                : string.Create(c, $"Ventos de {leitura.VentoKmH:0} km/h agora.")),
+            TipoPerigo.CALOR => ($"Calor extremo na {rotulo}", leitura is null
+                ? "Calor extremo agora. Hidrate-se e evite sol forte."
+                : string.Create(c, $"Sensação térmica de {leitura.SensacaoTermica:0} °C. Hidrate-se e evite sol forte.")),
+            // Cita o acumulado de 3h que está no score, e não a chuva do instante: o ALTO
+            // pode vir de uma chuva que já parou, e "0 mm por hora" desmentiria o aviso.
+            _ => ($"Risco alto de alagamento na {rotulo}", score.Chuva3hMm <= 0
+                ? "Condições de risco alto agora. Evite áreas de alagamento."
+                : string.Create(c, $"Chuva de {score.Chuva3hMm:0.#} mm nas últimas 3 horas")
+                  + (score.Chuva48hMm >= LimiaresNotificacao.SoloEncharcadoMm ? ", com o solo já encharcado." : ".")),
+        };
     }
 }

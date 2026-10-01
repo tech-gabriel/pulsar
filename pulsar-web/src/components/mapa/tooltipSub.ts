@@ -1,4 +1,5 @@
 import type { FaixaRisco, SubprefeituraMapaDto } from '../../types';
+import { motivoPerigo } from '../../utils/risco';
 
 /**
  * HTML do tooltip glass exibido ao passar o mouse sobre o polígono da
@@ -53,11 +54,13 @@ export function tooltipSubprefeituraHtml(
   const l = sub.ultimaLeitura;
   const cls = classeFaixa(sub.faixaRisco);
   const score = sub.scoreAtual ? String(Math.round(sub.scoreAtual.valor)) : '—';
+  const motivo = motivoPerigo(sub.scoreAtual?.perigoPrincipal, sub.faixaRisco);
 
   return `<div class="pt">
     ${cabecalho}
     <div class="pt-score-row">
       <span class="pt-faixa ${cls}">${rotuloFaixa(sub.faixaRisco)}</span>
+      ${motivo ? `<span class="pt-motivo">${motivo.icone} por ${motivo.rotulo}</span>` : ''}
       <span class="pt-score ${cls}">${score}</span>
     </div>
     <div class="pt-grid">

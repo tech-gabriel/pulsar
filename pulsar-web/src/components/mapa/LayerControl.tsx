@@ -5,7 +5,7 @@ import type { Camada } from '../../utils/camadas';
 
 // Botões de camada, na ordem da spec (ETAPA 3.1). Score é o default ativo.
 const ITENS: { id: Camada; label: string; Icon: LucideIcon }[] = [
-  { id: 'score', label: 'Score', Icon: Activity },
+  { id: 'score', label: 'Risco', Icon: Activity },
   { id: 'temperatura', label: 'Temp', Icon: Thermometer },
   { id: 'chuva', label: 'Chuva', Icon: CloudRain },
   { id: 'vento', label: 'Vento', Icon: Wind },

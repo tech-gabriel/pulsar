@@ -17,7 +17,7 @@ describe('LayerControl (mobile)', () => {
     render(<LayerControl camadaAtiva="score" onChange={onChange} isMobile />);
     // botão-gatilho mostra a camada ativa
     const gatilho = screen.getByRole('button', { name: /escolher camada/i });
-    expect(gatilho).toHaveTextContent(/score/i);
+    expect(gatilho).toHaveTextContent(/risco/i);
     // seletor fechado: "Chuva" não visível ainda
     expect(screen.queryByRole('radio', { name: 'Chuva' })).toBeNull();
     fireEvent.click(gatilho);

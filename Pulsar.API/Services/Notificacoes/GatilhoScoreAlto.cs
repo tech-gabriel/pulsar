@@ -25,7 +25,7 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([]);
 
         var rotulo = LimiaresNotificacao.Rotulo(ctx.Regiao.Nome);
-        var (titulo, corpo) = Copy(pior.Score.PerigoPrincipal, pior.Score.Chuva48hMm, pior.Leitura, rotulo);
+        var (titulo, corpo) = Copy(pior.Score, pior.Leitura, rotulo);
 
         var pendencia = new NotificacaoPendente(
             Gatilho: Nome,
@@ -47,13 +47,12 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
     }
 
     /// <summary>Título e corpo pelo perigo que pôs a região em ALTO.</summary>
-    private static (string Titulo, string Corpo) Copy(
-        TipoPerigo perigo, double chuva48h, LeituraClimatica? leitura, string rotulo)
+    private static (string Titulo, string Corpo) Copy(ScorePerigo score, LeituraClimatica? leitura, string rotulo)
     {
         // Cultura explícita: sem ela o host sem locale formataria "12.4 mm" no meio de
         // uma frase em português. Ver LimiaresNotificacao.CulturaCopy.
         var c = LimiaresNotificacao.CulturaCopy;
-        return perigo switch
+        return score.PerigoPrincipal switch
         {
             TipoPerigo.VENTO => ($"Vento forte na {rotulo}", leitura is null
                 ? "Ventos fortes agora. Cuidado com árvores e estruturas soltas."
@@ -61,10 +60,12 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             TipoPerigo.CALOR => ($"Calor extremo na {rotulo}", leitura is null
                 ? "Calor extremo agora. Hidrate-se e evite sol forte."
                 : string.Create(c, $"Sensação térmica de {leitura.SensacaoTermica:0} °C. Hidrate-se e evite sol forte.")),
-            _ => ($"Risco alto de alagamento na {rotulo}", leitura is null
+            // Cita o acumulado de 3h que está no score, e não a chuva do instante: o ALTO
+            // pode vir de uma chuva que já parou, e "0 mm por hora" desmentiria o aviso.
+            _ => ($"Risco alto de alagamento na {rotulo}", score.Chuva3hMm <= 0
                 ? "Condições de risco alto agora. Evite áreas de alagamento."
-                : string.Create(c, $"Chuva de {leitura.ChuvaMmH:0.#} mm por hora agora")
-                  + (chuva48h >= LimiaresNotificacao.SoloEncharcadoMm ? ", com o solo já encharcado." : ".")),
+                : string.Create(c, $"Chuva de {score.Chuva3hMm:0.#} mm nas últimas 3 horas")
+                  + (score.Chuva48hMm >= LimiaresNotificacao.SoloEncharcadoMm ? ", com o solo já encharcado." : ".")),
         };
     }
 }

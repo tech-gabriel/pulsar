@@ -22,7 +22,7 @@ export default function RegiaoCard({ regiao, ativa, favorito, onSelecionar, onTo
   // teclado ficam ambíguos), o alvo principal é um botão em camada sobre o
   // card e o conteúdo fica por cima, sem capturar ponteiro. Só o favorito
   // volta a receber cliques.
-  const motivo = motivoPerigo(regiao.perigoPrincipal);
+  const motivo = motivoPerigo(regiao.perigoPrincipal, regiao.faixaRisco);
   const resumo = `${regiao.nome}, risco ${labelFaixa(regiao.faixaRisco).toLowerCase()}${motivo ? `, por ${motivo.rotulo}` : ''}, score ${regiao.scoreAgregado.toFixed(0)}, ${regiao.totalSubprefeituras} ${regiao.totalSubprefeituras === 1 ? 'subprefeitura' : 'subprefeituras'}`;
 
   return (

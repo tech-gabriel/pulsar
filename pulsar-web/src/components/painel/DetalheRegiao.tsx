@@ -8,13 +8,14 @@ import {
 import type { SubprefeituraDto, LeituraDto } from '../../types';
 import { useRegiaoDetalhe } from '../../hooks/useRegiaoDetalhe';
 import { useCountUp } from '../../hooks/useCountUp';
-import { coresParaFaixa, labelFaixa } from '../../utils/risco';
+import { coresParaFaixa, labelFaixa, motivoPerigo } from '../../utils/risco';
 import { fundoParaTextoBranco } from '../../utils/contraste';
 import { centroideRegiao } from '../../utils/geo';
 import { gerarSugestoes, type CategoriaSugestao } from '../../utils/sugestoes';
 import { DURACAO, EASE_SUAVE, containerStagger, itemStagger } from '../../motion/presets';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
+import LinhasPerigo from './LinhasPerigo';
 import { SkeletonCardSubprefeitura } from '../ui/Skeleton';
 
 interface Props {
@@ -123,6 +124,7 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
   const cores = coresParaFaixa(sub.faixaRisco);
   const temp = sub.temperaturaAtual ?? sub.ultimaLeitura?.temperaturaC;
   const l = sub.ultimaLeitura;
+  const motivo = motivoPerigo(sub.scoreAtual?.perigoPrincipal, sub.faixaRisco);
 
   return (
     <div className="py-2">
@@ -144,6 +146,11 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
           <div className="flex items-center gap-2 flex-shrink-0">
             {temp != null && (
               <span className="text-pulsar-300" style={{ fontSize: 11 }}>{Math.round(temp)}°C</span>
+            )}
+            {motivo && (
+              <span title={`Risco por ${motivo.rotulo}`} aria-label={`Risco por ${motivo.rotulo}`} style={{ fontSize: 12 }}>
+                {motivo.icone}
+              </span>
             )}
             <span
               className="rounded-full px-2 py-0.5"
@@ -179,6 +186,7 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
             <span className="block pt-1 pb-0.5 text-[11px] uppercase tracking-wider text-pulsar-300/70" style={{ fontWeight: 600 }}>
               Risco {labelFaixa(sub.faixaRisco)}
             </span>
+            <LinhasPerigo score={sub.scoreAtual} leitura={l} />
             {l ? (
               <div className="mt-1 painel-card-glass px-3 py-1 rounded-[10px]">
                 <LinhaClima icon={Thermometer} corIcone="var(--color-pulsar-400)" label="Temperatura" valor={l.temperaturaC.toFixed(1)} unidade="°C" />

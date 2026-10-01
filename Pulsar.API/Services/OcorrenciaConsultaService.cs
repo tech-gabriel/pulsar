@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Interfaces;
@@ -7,18 +8,18 @@ namespace Pulsar.API.Services;
 
 public class OcorrenciaConsultaService : IOcorrenciaConsultaService
 {
-    // Limiar de chuva alinhado ao "risco de alagamentos" do catálogo (utils/sugestoes.ts front).
-    private const double ChuvaLimiarMmH = 5.0;
-
     private readonly IOcorrenciaAlagamentoRepository _repo;
     private readonly ISubprefeituraRepository _subRepo;
+    private readonly IScoreRepository _scoreRepo;
 
     public OcorrenciaConsultaService(
         IOcorrenciaAlagamentoRepository repo,
-        ISubprefeituraRepository subRepo)
+        ISubprefeituraRepository subRepo,
+        IScoreRepository scoreRepo)
     {
         _repo = repo;
         _subRepo = subRepo;
+        _scoreRepo = scoreRepo;
     }
 
     public async Task<IReadOnlyList<OcorrenciaAlagamentoDto>> ObterRecentesAsync()
@@ -51,29 +52,28 @@ public class OcorrenciaConsultaService : IOcorrenciaConsultaService
             MaisProximaMetros = noRaio.Count > 0 ? noRaio.Min(x => x.Metros) : null,
         };
 
-        // Fase B: risco elevado = há ocorrência no raio E chuva atual acima do limiar
-        // na subprefeitura mais próxima (por centróide).
+        // Fase B: risco elevado = há ocorrência no raio E a subprefeitura mais próxima
+        // (por centróide) está com alagamento MODERADO ou pior. Uma noção só de risco no app.
         if (noRaio.Count > 0)
         {
-            var chuva = await ChuvaNaSubprefeituraMaisProximaAsync(lat, lon);
-            dto.ChuvaMmH = chuva;
-            dto.RiscoElevado = chuva.HasValue && chuva.Value > ChuvaLimiarMmH;
+            var maisProxima = await SubprefeituraMaisProximaAsync(lat, lon);
+            if (maisProxima is not null)
+            {
+                var comLeitura = await _subRepo.ObterComUltimaLeituraAsync(maisProxima.Id);
+                dto.ChuvaMmH = comLeitura?.GetUltimaLeitura()?.ChuvaMmH;
+                var score = await _scoreRepo.ObterUltimoAsync(maisProxima.Id);
+                dto.RiscoElevado = score is not null && score.FaixaAlagamento >= FaixaRisco.MODERADO;
+            }
         }
 
         return dto;
     }
 
-    private async Task<double?> ChuvaNaSubprefeituraMaisProximaAsync(double lat, double lon)
+    private async Task<Subprefeitura?> SubprefeituraMaisProximaAsync(double lat, double lon)
     {
         var ativas = await _subRepo.ObterAtivasAsync();
-        var maisProxima = ativas
-            .Select(s => new { Sub = s, Metros = GeoDistancia.HaversineMetros(lat, lon, s.Latitude, s.Longitude) })
-            .OrderBy(x => x.Metros)
+        return ativas
+            .OrderBy(s => GeoDistancia.HaversineMetros(lat, lon, s.Latitude, s.Longitude))
             .FirstOrDefault();
-        if (maisProxima is null)
-            return null;
-
-        var comLeitura = await _subRepo.ObterComUltimaLeituraAsync(maisProxima.Sub.Id);
-        return comLeitura?.GetUltimaLeitura()?.ChuvaMmH;
     }
 }

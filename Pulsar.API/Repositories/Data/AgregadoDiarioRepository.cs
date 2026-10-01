@@ -31,6 +31,7 @@ public class AgregadoDiarioRepository : IAgregadoDiarioRepository
             existente.ScoreMin = agregado.ScoreMin;
             existente.ScoreMedio = agregado.ScoreMedio;
             existente.ScoreMax = agregado.ScoreMax;
+            existente.ScoreAlagamentoMax = agregado.ScoreAlagamentoMax;
             existente.LeiturasBaixo = agregado.LeiturasBaixo;
             existente.LeiturasModerado = agregado.LeiturasModerado;
             existente.LeiturasAlto = agregado.LeiturasAlto;

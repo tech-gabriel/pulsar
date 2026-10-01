@@ -31,7 +31,7 @@ export const CENAS: Cena[] = [
     olho: 'O SCORE',
     titulo: 'Um número que você consegue conferir',
     texto:
-      'O Score de Perigo sai de variáveis objetivas, com pesos definidos e abertos. Nada de caixa-preta.',
+      'O Score de Perigo sai de variáveis objetivas, com critérios abertos e testados contra alagamentos reais. Nada de caixa-preta.',
   },
   {
     id: 'alagamento',

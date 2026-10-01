@@ -78,6 +78,7 @@ public class AgregadoDiarioService : IAgregadoDiarioService
                 ScoreMin = scoresDoDia.Count > 0 ? scoresDoDia.Min(s => s.Valor) : 0,
                 ScoreMedio = scoresDoDia.Count > 0 ? scoresDoDia.Average(s => s.Valor) : 0,
                 ScoreMax = scoresDoDia.Count > 0 ? scoresDoDia.Max(s => s.Valor) : 0,
+                ScoreAlagamentoMax = scoresDoDia.Count > 0 ? scoresDoDia.Max(s => s.ValorAlagamento) : 0,
                 LeiturasBaixo = scoresDoDia.Count(s => s.Faixa == FaixaRisco.BAIXO),
                 LeiturasModerado = scoresDoDia.Count(s => s.Faixa == FaixaRisco.MODERADO),
                 LeiturasAlto = scoresDoDia.Count(s => s.Faixa == FaixaRisco.ALTO),

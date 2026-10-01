@@ -1,0 +1,23 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import LandingFaq from '../../components/landing/LandingFaq';
+import LandingConfianca from '../../components/landing/LandingConfianca';
+import { CENAS } from '../../data/landing-narrativa';
+
+// A landing não pode descrever a fórmula antiga (chuva 35%, vento 30%, neblina 20%, UV 15%)
+// depois que o score passou a medir três perigos (release 1.10.0).
+describe('copy da landing sobre o score', () => {
+  it('FAQ explica os três perigos e não cita os pesos antigos', () => {
+    const { container } = render(<LandingFaq />);
+    fireEvent.click(screen.getByRole('button', { name: /como .*calculad/i }));
+    const texto = container.textContent ?? '';
+    expect(texto).toMatch(/alagamento, vento forte e calor extremo/);
+    expect(texto).not.toMatch(/35%|índice UV \(15%\)|visibilidade\/neblina/);
+  });
+
+  it('nenhum bloco fala em pesos fixos por fator', () => {
+    const { container } = render(<LandingConfianca />);
+    expect(container.textContent).not.toMatch(/pesos definidos/);
+    expect(CENAS.find((c) => c.id === 'score')!.texto).not.toMatch(/pesos/);
+  });
+});

@@ -57,6 +57,9 @@ namespace Pulsar.API.Migrations
                     b.Property<int>("LeiturasModerado")
                         .HasColumnType("integer");
 
+                    b.Property<double>("ScoreAlagamentoMax")
+                        .HasColumnType("double precision");
+
                     b.Property<double>("ScoreMax")
                         .HasColumnType("double precision");
 
@@ -440,14 +443,32 @@ namespace Pulsar.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<double>("Chuva3hMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Chuva48hMm")
+                        .HasColumnType("double precision");
+
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Faixa")
                         .HasColumnType("integer");
 
+                    b.Property<int>("FaixaAlagamento")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FaixaCalor")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FaixaVento")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("LeituraId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("PerigoPrincipal")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("SubprefeituraId")
                         .HasColumnType("uuid");
@@ -456,6 +477,15 @@ namespace Pulsar.API.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<double>("Valor")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorAlagamento")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorCalor")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorVento")
                         .HasColumnType("double precision");
 
                     b.HasKey("Id");

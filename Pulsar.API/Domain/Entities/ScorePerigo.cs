@@ -1,7 +1,13 @@
 using Pulsar.API.Domain.Enums;
+using Pulsar.API.Domain.Score;
 
 namespace Pulsar.API.Domain.Entities;
 
+/// <summary>
+/// Score de uma leitura. Valor/Faixa são o PRINCIPAL (o pior dos três perigos), então
+/// mapa, rollup, histórico e gatilhos seguem lendo os mesmos campos. Os componentes e as
+/// entradas (acumulados) ficam ao lado para explicar o número e para recalibrar.
+/// </summary>
 public class ScorePerigo
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -11,35 +17,25 @@ public class ScorePerigo
     public LeituraClimatica Leitura { get; set; } = null!;
     public double Valor { get; set; }
     public FaixaRisco Faixa { get; set; }
+    public TipoPerigo PerigoPrincipal { get; set; }
+    public double ValorAlagamento { get; set; }
+    public FaixaRisco FaixaAlagamento { get; set; }
+    public double ValorVento { get; set; }
+    public FaixaRisco FaixaVento { get; set; }
+    public double ValorCalor { get; set; }
+    public FaixaRisco FaixaCalor { get; set; }
+    public double Chuva3hMm { get; set; }
+    public double Chuva48hMm { get; set; }
     public DateTime Timestamp { get; set; }
     public DateTime CriadoEm { get; set; }
 
-    public double Calcular(LeituraClimatica leitura)
+    public void Aplicar(ResultadoScore r)
     {
-        var normChuva = Normalizar(leitura.ChuvaMmH, 0, 50);
-        var normVento = Normalizar(leitura.VentoKmH, 0, 80);
-        var normNeblina = NormalizarNeblina(leitura.VisibilidadeKm);
-        var normUv = Normalizar(leitura.IndiceUv, 0, 11);
-
-        return Math.Clamp(
-            (normChuva * 0.35) + (normVento * 0.30) + (normNeblina * 0.20) + (normUv * 0.15),
-            0, 100);
-    }
-
-    public FaixaRisco ClassificarFaixa() => Valor switch
-    {
-        <= 30 => FaixaRisco.BAIXO,
-        <= 60 => FaixaRisco.MODERADO,
-        _ => FaixaRisco.ALTO
-    };
-
-    private static double Normalizar(double valor, double min, double max)
-        => Math.Clamp((valor - min) / (max - min) * 100, 0, 100);
-
-    private static double NormalizarNeblina(double visibilidadeKm)
-    {
-        if (visibilidadeKm >= 10) return 0;
-        if (visibilidadeKm <= 0.2) return 100;
-        return Math.Clamp((10 - visibilidadeKm) / (10 - 0.2) * 100, 0, 100);
+        ValorAlagamento = r.Alagamento.Valor; FaixaAlagamento = r.Alagamento.Faixa;
+        ValorVento = r.Vento.Valor; FaixaVento = r.Vento.Faixa;
+        ValorCalor = r.Calor.Valor; FaixaCalor = r.Calor.Faixa;
+        PerigoPrincipal = r.Principal;
+        Valor = r.DoPrincipal.Valor;
+        Faixa = r.DoPrincipal.Faixa;
     }
 }

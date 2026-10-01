@@ -6,10 +6,24 @@ namespace Pulsar.Tests.Domain;
 
 public class CalculadoraScoreTests
 {
-    private static readonly ParametrosScore P = CalibracaoScore.Atual with
-    {
-        Fatores = new Dictionary<string, double> { ["Alta"] = 1.15, ["Baixa"] = 0.85 },
-    };
+    // Parâmetros fixos, independentes da calibração: os casos abaixo testam a forma da
+    // fórmula, e recalibrar não pode quebrá-los.
+    private static readonly ParametrosScore P = new(
+        Chuva1h: [new(0, 0), new(5, 30), new(15, 60), new(30, 100)],
+        Chuva3h: [new(0, 0), new(15, 30), new(35, 60), new(60, 100)],
+        Saturacao48h: [new(20, 0), new(80, 20)],
+        Vento: CalibracaoScore.Atual.Vento,
+        Calor: CalibracaoScore.Atual.Calor,
+        Fatores: new Dictionary<string, double> { ["Alta"] = 1.15, ["Baixa"] = 0.85 });
+
+    [Fact]
+    public void CalibracaoAtual_Tempestade20mmH_DaAlto()
+        => CalculadoraScore.Calcular(new EntradaScore(20, 20, 20, 0, 20, "Neutra"))
+            .Alagamento.Faixa.Should().Be(FaixaRisco.ALTO);
+
+    [Fact]
+    public void CalibracaoAtual_TemFatorParaAs32Subprefeituras()
+        => CalibracaoScore.Atual.Fatores.Should().HaveCount(32);
 
     private static ResultadoScore Calc(double c1 = 0, double c3 = 0, double c48 = 0,
         double vento = 0, double sens = 20, string sub = "Neutra")

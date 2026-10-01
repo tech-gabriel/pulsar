@@ -1,0 +1,29 @@
+name: Atualizar ocorrências (SEO)
+
+# Redeploy semanal do Render só para regerar o snapshot de ocorrências da Defesa
+# Civil (GeoSampa) nas páginas de subprefeitura. O snapshot é gerado no próprio
+# build (npm run build), então basta disparar um deploy do master: nada é
+# commitado por bot. Se o GeoSampa estiver fora, o build mantém o JSON anterior.
+#
+# Requer o secret RENDER_DEPLOY_HOOK_URL (Render > serviço pulsar-web > Settings >
+# Deploy Hook).
+
+on:
+  schedule:
+    - cron: '0 10 * * 1'   # segunda, 10:00 UTC (07:00 em Brasília)
+  workflow_dispatch:
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar deploy no Render
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::Secret RENDER_DEPLOY_HOOK_URL não configurado."
+            exit 1
+          fi
+          curl --fail --silent --show-error -X POST "$HOOK" > /dev/null
+          echo "Deploy disparado."

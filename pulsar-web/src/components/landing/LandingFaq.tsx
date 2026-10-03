@@ -27,7 +27,7 @@ const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: 'Como recebo os alertas?',
-    a: 'Dentro do app você vê em destaque as regiões em risco alto. Você também pode favoritar suas regiões e ativar notificações para ser avisado quando elas mudarem de patamar.',
+    a: 'Dentro do app você vê em destaque as regiões em risco alto. Você também escolhe as subprefeituras que acompanha, como casa e trabalho, e ativa notificações para ser avisado quando elas mudarem de patamar.',
   },
   {
     q: 'O Pulsar substitui a Defesa Civil?',

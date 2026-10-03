@@ -21,6 +21,7 @@ import OnboardingModal from '../components/onboarding/OnboardingModal';
 import ConvitePush from '../components/notificacoes/ConvitePush';
 import { useGeolocalizacao, GeoError } from '../hooks/useGeolocalizacao';
 import { resolverSelecao } from '../utils/selecaoPorPonto';
+import { resumoAlertas } from '../utils/risco';
 import { useToast } from '../contexts/ToastContext';
 import { resolverDeepLink } from '../data/regioes-seo';
 import OverlayAlagamentoToggle from '../components/mapa/OverlayAlagamentoToggle';
@@ -74,7 +75,6 @@ export default function MapaPage() {
     (r) => r.nome.toLowerCase() === regiaoSelecionadaNome?.toLowerCase()
   ) ?? null;
 
-  const alertasAtivos = regioes.filter((r) => r.faixaRisco === 'ALTO').length;
 
   useEffect(() => {
     fetch('/subprefeituras_wgs84.geojson')
@@ -356,9 +356,7 @@ export default function MapaPage() {
             aria-label={painelMobileAberto ? 'Recolher painel de regiões' : 'Expandir painel de regiões'}
           >
             <span className="flex-1 text-sm font-semibold mt-1 truncate" style={{ color: 'var(--text-primary)' }}>
-              {alertasAtivos > 0
-                ? `${alertasAtivos} ${alertasAtivos === 1 ? 'alerta ativo' : 'alertas ativos'}`
-                : 'Tudo tranquilo em São Paulo'}
+              {resumoAlertas(regioes, carregando)}
             </span>
             {painelMobileAberto
               ? <ChevronDown size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />

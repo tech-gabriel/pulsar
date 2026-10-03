@@ -122,9 +122,9 @@ export default function ConfiguracoesPage() {
   }
 
   const notifs: { chave: keyof NotificacoesPrefs; titulo: string; descricao: string }[] = [
-    { chave: 'alertaAlto', titulo: 'Alertas de risco alto', descricao: 'Avisar quando uma região entrar em risco alto' },
+    { chave: 'alertaAlto', titulo: 'Alertas de risco alto', descricao: 'Avisar quando uma subprefeitura que você acompanha entrar em risco alto' },
     { chave: 'alertaModerado', titulo: 'Alertas de risco moderado', descricao: 'Avisar já a partir da faixa moderada' },
-    { chave: 'resumoDiario', titulo: 'Resumo diário', descricao: 'Um resumo do clima da sua região, uma vez por dia' },
+    { chave: 'resumoDiario', titulo: 'Resumo diário', descricao: 'Um resumo do clima das suas subprefeituras, uma vez por dia' },
   ];
 
   return (
@@ -321,7 +321,7 @@ export default function ConfiguracoesPage() {
                   <BellRing size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
                   <span className="min-w-0">
                     <span className="block" style={{ fontSize: 13.5, color: 'var(--text-primary)' }}>Notificações ativas neste dispositivo</span>
-                    <span className="block" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Você receberá os alertas das suas regiões favoritas.</span>
+                    <span className="block" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Você receberá os alertas das subprefeituras que acompanha.</span>
                   </span>
                 </span>
                 <button

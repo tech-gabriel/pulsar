@@ -66,12 +66,31 @@ public class OcorrenciaConsultaServiceTests
         _subRepoMock.Setup(r => r.ObterComUltimaLeituraAsync(sub.Id)).ReturnsAsync(sub);
         // Principal ALTO de propósito: vale a faixa de ALAGAMENTO, não a principal.
         _scoreRepoMock.Setup(r => r.ObterUltimoAsync(sub.Id))
-            .ReturnsAsync(new ScorePerigo { FaixaAlagamento = faixa, Faixa = FaixaRisco.ALTO });
+            .ReturnsAsync(new ScorePerigo { FaixaAlagamento = faixa, Faixa = FaixaRisco.ALTO, Timestamp = DateTime.UtcNow });
 
         var res = await CriarServico().ObterProximasAsync(Lat, Lon, 500);
 
         res.RiscoElevado.Should().Be(esperado);
         res.ChuvaMmH.Should().Be(12);
+    }
+
+    [Fact]
+    public async Task ObterProximas_ScoreELeituraVelhos_NaoContamComoAgora()
+    {
+        // Coleta travada: o último score ALTO e a última chuva são de 2h atrás.
+        var antigo = DateTime.UtcNow.AddHours(-2);
+        _repoMock.Setup(r => r.ObterRecentesAsync(It.IsAny<int>())).ReturnsAsync([Oco(Lat, Lon)]);
+        var sub = new Subprefeitura { Id = Guid.NewGuid(), Nome = "Sé", Latitude = Lat, Longitude = Lon };
+        sub.Leituras.Add(new LeituraClimatica { ChuvaMmH = 30, Timestamp = antigo });
+        _subRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([sub]);
+        _subRepoMock.Setup(r => r.ObterComUltimaLeituraAsync(sub.Id)).ReturnsAsync(sub);
+        _scoreRepoMock.Setup(r => r.ObterUltimoAsync(sub.Id))
+            .ReturnsAsync(new ScorePerigo { FaixaAlagamento = FaixaRisco.ALTO, Timestamp = antigo });
+
+        var res = await CriarServico().ObterProximasAsync(Lat, Lon, 500);
+
+        res.RiscoElevado.Should().BeFalse();
+        res.ChuvaMmH.Should().BeNull();
     }
 
     [Fact]

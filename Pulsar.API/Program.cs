@@ -253,6 +253,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 // --- Scheduler ---
 builder.Services.AddHostedService<DataCollectionJob>();
+builder.Services.AddHostedService<SincronizacaoOcorrenciasJob>();
 
 // --- Build ---
 var app = builder.Build();

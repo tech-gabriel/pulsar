@@ -28,10 +28,15 @@ public class GeoSampaClient : IGeoSampaClient
     {
         var alag = await BuscarCamadaAsync(CamadaAlagamento, TipoOcorrenciaAlagamento.ALAGAMENTO, ct);
         var inund = await BuscarCamadaAsync(CamadaInundacao, TipoOcorrenciaAlagamento.INUNDACAO, ct);
-        return [.. alag, .. inund];
+        // As duas fora = GeoSampa fora. Devolver lista vazia aqui seria indistinguível de
+        // "não há ocorrências" e a sincronização responderia 200 {Total:0}.
+        if (alag is null && inund is null)
+            throw new HttpRequestException("GeoSampa indisponível: as duas camadas falharam.");
+        return [.. alag ?? [], .. inund ?? []];
     }
 
-    private async Task<IReadOnlyList<OcorrenciaAlagamento>> BuscarCamadaAsync(
+    /// <summary>Ocorrências da camada, ou null se a camada falhou.</summary>
+    private async Task<IReadOnlyList<OcorrenciaAlagamento>?> BuscarCamadaAsync(
         string typeName, TipoOcorrenciaAlagamento tipo, CancellationToken ct)
     {
         try
@@ -47,7 +52,7 @@ public class GeoSampaClient : IGeoSampaClient
         {
             // Degradação graciosa: falha de uma camada não aborta a outra.
             _logger.LogWarning(ex, "Falha ao buscar a camada {Camada} do GeoSampa.", typeName);
-            return [];
+            return null;
         }
     }
 

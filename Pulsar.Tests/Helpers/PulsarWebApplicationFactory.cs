@@ -67,11 +67,10 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
             services.AddDbContext<PulsarDbContext>(options =>
                 options.UseSqlite(_connection));
 
-            // Remover DataCollectionJob para evitar ciclos em background
-            var jobDescriptor = services.SingleOrDefault(
-                d => d.ImplementationType == typeof(DataCollectionJob));
-            if (jobDescriptor is not null)
-                services.Remove(jobDescriptor);
+            // Remover os jobs agendados: sem ciclos em background nem chamada real ao GeoSampa
+            foreach (var job in services.Where(d => d.ImplementationType == typeof(DataCollectionJob)
+                         || d.ImplementationType == typeof(SincronizacaoOcorrenciasJob)).ToList())
+                services.Remove(job);
 
             // Substituir o cliente de clima real por um fake determinístico, para que a
             // coleta manual (POST /api/admin/sistema/coletar) rode offline nos testes.

@@ -1,6 +1,7 @@
 import { Activity, RefreshCw, Shield } from 'lucide-react';
 import { motion } from 'motion/react';
-import type { RegiaoDto } from '../../types';
+import type { RegiaoDto, SubprefeituraMapaDto } from '../../types';
+import BadgeRisco from '../ui/BadgeRisco';
 import { SkeletonCard } from '../ui/Skeleton';
 import { containerStagger, itemStagger } from '../../motion/presets';
 import RegiaoCard from './RegiaoCard';
@@ -14,8 +15,8 @@ interface Props {
   onRecarregar: () => void;
   ultimaAtualizacao: Date | null;
   nomeUsuario: string;
-  isFavorito: (regiaoId: string) => boolean;
-  onToggleFavorito: (regiaoId: string) => void;
+  /** Subprefeituras que a pessoa acompanha, já com o risco atual. */
+  favoritas: SubprefeituraMapaDto[];
   hideHeader?: boolean;
 }
 
@@ -46,13 +47,10 @@ export default function PainelLateral({
   onSelecionarRegiao,
   onRecarregar,
   ultimaAtualizacao,
-  isFavorito,
-  onToggleFavorito,
+  favoritas,
   hideHeader = false,
 }: Props) {
   const ordenadas = ordenarRegioes(regioes);
-  const favoritas = ordenadas.filter((r) => isFavorito(r.id));
-  const demais = ordenadas.filter((r) => !isFavorito(r.id));
   const totalSubs = regioes.reduce((acc, r) => acc + r.totalSubprefeituras, 0);
   // Só "sem alertas" com dado na mão: lista vazia (falha) não é calma.
   const semAlertas = regioes.length > 0 && !regioes.some((r) => r.faixaRisco === 'ALTO');
@@ -63,9 +61,7 @@ export default function PainelLateral({
         <RegiaoCard
           regiao={regiao}
           ativa={regiao.nome === regiaoSelecionada}
-          favorito={isFavorito(regiao.id)}
           onSelecionar={() => onSelecionarRegiao(regiao.nome)}
-          onToggleFavorito={() => onToggleFavorito(regiao.id)}
         />
       </motion.div>
     );
@@ -128,18 +124,27 @@ export default function PainelLateral({
             {favoritas.length > 0 && (
               <>
                 <p className="px-1 pt-1 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-yellow-400/90">
-                  ★ Favoritas
+                  ★ Suas subprefeituras
                 </p>
-                {favoritas.map(renderCard)}
-                {demais.length > 0 && (
-                  <p className="px-1 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-pulsar-300/70">
-                    Todas as regiões
-                  </p>
-                )}
+                {favoritas.map((s) => (
+                  <motion.div key={s.id} variants={itemStagger}>
+                    <button
+                      type="button"
+                      onClick={() => onSelecionarRegiao(s.regiaoNome)}
+                      className="regiao-card w-full flex items-center gap-3 min-h-11 text-left"
+                    >
+                      <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, color: 'var(--text-primary)' }}>{s.nome}</span>
+                      <BadgeRisco faixa={s.faixaRisco} size="sm" />
+                    </button>
+                  </motion.div>
+                ))}
+                <p className="px-1 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-pulsar-300/70">
+                  Todas as regiões
+                </p>
               </>
             )}
 
-            {demais.map(renderCard)}
+            {ordenadas.map(renderCard)}
           </motion.div>
         )}
       </div>

@@ -113,3 +113,15 @@ export function corLabelFaixa(faixa: FaixaRisco | null | undefined): string {
   if (!faixa) return COR_LABEL_SEM_DADO;
   return COR_LABEL[faixa] ?? COR_LABEL_SEM_DADO;
 }
+
+/**
+ * Frase-resumo dos alertas. Regra de segurança: sem dado (carregando ou falha) nunca
+ * diz "tranquilo", porque lista vazia também não tem região em ALTO e um app de
+ * alerta afirmando calma sem saber é o pior erro possível (falso negativo).
+ */
+export function resumoAlertas(regioes: { faixaRisco: FaixaRisco | null }[], carregando: boolean): string {
+  const alertas = regioes.filter((r) => r.faixaRisco === 'ALTO').length;
+  if (alertas > 0) return `${alertas} ${alertas === 1 ? 'alerta ativo' : 'alertas ativos'}`;
+  if (regioes.length === 0) return carregando ? 'Carregando o risco…' : 'Sem dados de risco agora';
+  return 'Tudo tranquilo em São Paulo';
+}

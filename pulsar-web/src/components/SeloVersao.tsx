@@ -10,7 +10,7 @@ export default function SeloVersao({ className }: { className?: string }) {
   return (
     <Link
       to="/novidades"
-      className={['transition-colors hover:text-[var(--text-primary)]', className]
+      className={['inline-block py-1 transition-colors hover:text-[var(--text-primary)]', className]
         .filter(Boolean)
         .join(' ')}
       style={{ fontSize: 12, color: 'var(--text-muted)' }}

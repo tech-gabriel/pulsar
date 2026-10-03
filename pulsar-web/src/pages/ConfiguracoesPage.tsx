@@ -143,7 +143,7 @@ export default function ConfiguracoesPage() {
               <button
                 type="button"
                 onClick={abrirEdicao}
-                className="flex items-center gap-1.5 hover:underline"
+                className="flex items-center gap-1.5 min-h-11 hover:underline"
                 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)' }}
               >
                 <Pencil size={14} /> Editar
@@ -368,7 +368,7 @@ export default function ConfiguracoesPage() {
           {favoritos.length === 0 ? (
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
               Você ainda não favoritou nenhuma região.{' '}
-              <Link to="/app" className="hover:underline" style={{ color: 'var(--text-accent)' }}>Explorar o mapa</Link>
+              <Link to="/app" className="inline-block py-1 hover:underline" style={{ color: 'var(--text-accent)' }}>Explorar o mapa</Link>
             </p>
           ) : (
             <div className="flex flex-col gap-2">
@@ -393,7 +393,7 @@ export default function ConfiguracoesPage() {
           <button
             type="button"
             onClick={reverBoasVindas}
-            className="w-full flex items-center gap-3 text-left"
+            className="w-full flex items-center gap-3 min-h-11 text-left"
           >
             <HelpCircle size={18} style={{ color: 'var(--text-accent)' }} className="flex-shrink-0" />
             <span className="flex-1" style={{ fontSize: 14, color: 'var(--text-primary)' }}>

@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.10.3',
+    data: '2026-10-03',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Botões mais fáceis de tocar no celular',
+        descricao: 'Entrar, criar conta, tema, voltar, atualizar e ativar alertas ganharam área de toque maior, do tamanho recomendado para o dedo.',
+      },
+    ],
+  },
+  {
     versao: '1.10.2',
     data: '2026-10-03',
     itens: [

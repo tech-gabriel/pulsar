@@ -19,6 +19,7 @@ import { useIsMobile } from '../hooks/useIsMobile';
 import { useOnboarding } from '../hooks/useOnboarding';
 import OnboardingModal from '../components/onboarding/OnboardingModal';
 import ConvitePush from '../components/notificacoes/ConvitePush';
+import BannerEscolherSubprefeituras from '../components/mapa/BannerEscolherSubprefeituras';
 import { useGeolocalizacao, GeoError } from '../hooks/useGeolocalizacao';
 import { resolverSelecao } from '../utils/selecaoPorPonto';
 import { resumoAlertas } from '../utils/risco';
@@ -34,7 +35,9 @@ export default function MapaPage() {
   const { usuario } = useAuth();
   const { regioes, carregando, erro, recarregar, ultimaAtualizacao } = useRegioes();
   const subprefeituras = useSubprefeituras(regioes);
-  const { isFavorito, toggleFavorito } = useFavoritos(usuario?.id ?? null);
+  const { favoritos, isFavorito, toggleFavorito, carregando: carregandoFavoritos } = useFavoritos(usuario?.id ?? null);
+  const semFavoritas = !!usuario && !carregandoFavoritos && favoritos.length === 0;
+  const favoritas = subprefeituras.filter((s) => isFavorito(s.id));
   const isMobile = useIsMobile(768);
   const { aberto: onboardingAberto, concluir: concluirOnboarding } = useOnboarding();
   const { detectar, carregando: localizando } = useGeolocalizacao();
@@ -167,8 +170,7 @@ export default function MapaPage() {
     onRecarregar: recarregar,
     ultimaAtualizacao,
     nomeUsuario: usuario?.nome ?? '',
-    isFavorito,
-    onToggleFavorito: toggleFavorito,
+    favoritas,
   };
 
   // Classes do mapa: offset lateral conforme sidebar (tablet esquerda / desktop direita)
@@ -183,7 +185,10 @@ export default function MapaPage() {
       {onboardingAberto && <OnboardingModal onConcluir={concluirOnboarding} />}
 
       {/* Convite para ativar notificações push — só após o onboarding fechar */}
-      {!onboardingAberto && <ConvitePush />}
+      {/* Sem favorita o push não tem o que mandar: primeiro escolher, depois ativar. */}
+      {!onboardingAberto && (semFavoritas
+        ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
+        : <ConvitePush />)}
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header />
@@ -309,8 +314,8 @@ export default function MapaPage() {
               key={regiaoSelecionada.id}
               regiaoId={regiaoSelecionada.id}
               onFechar={fecharDetalhe}
-              isFavorito={isFavorito(regiaoSelecionada.id)}
-              onToggleFavorito={() => toggleFavorito(regiaoSelecionada.id)}
+              isFavorito={isFavorito}
+              onToggleFavorito={toggleFavorito}
             />
           ) : (
             <PainelLateral
@@ -400,8 +405,8 @@ export default function MapaPage() {
             key={regiaoSelecionada.id}
             regiaoId={regiaoSelecionada.id}
             onFechar={fecharDetalhe}
-            isFavorito={isFavorito(regiaoSelecionada.id)}
-            onToggleFavorito={() => toggleFavorito(regiaoSelecionada.id)}
+            isFavorito={isFavorito}
+            onToggleFavorito={toggleFavorito}
           />
         </div>
       )}

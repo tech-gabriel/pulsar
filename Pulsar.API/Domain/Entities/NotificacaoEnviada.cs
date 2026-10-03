@@ -1,7 +1,7 @@
 namespace Pulsar.API.Domain.Entities;
 
 /// <summary>
-/// Registro de um push que saiu. É o livro-caixa do dedup: sem ele, um período
+/// Registro de que uma PESSOA foi avisada de um evento de uma subprefeitura. É o livro-caixa do dedup: sem ele, um período
 /// sustentado de risco viraria um push a cada ciclo de 15 min.
 /// </summary>
 /// <remarks>
@@ -12,22 +12,16 @@ namespace Pulsar.API.Domain.Entities;
 public class NotificacaoEnviada
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid RegiaoId { get; set; }
-    public Regiao Regiao { get; set; } = null!;
-
+    public Guid UsuarioId { get; set; }
+    public Usuario Usuario { get; set; } = null!;
+    public Guid SubprefeituraId { get; set; }
+    public Subprefeitura Subprefeitura { get; set; } = null!;
+    /// <summary>Agrupa as linhas de um mesmo push consolidado. O teto diário conta EnvioId distintos.</summary>
+    public Guid EnvioId { get; set; }
     /// <summary>Nome do gatilho: "score-alto", "chuva-prevista" ou "briefing-diario".</summary>
     public string Gatilho { get; set; } = string.Empty;
-
-    /// <summary>Chave de idempotência do evento. Única na tabela.</summary>
+    /// <summary>Chave de idempotência do evento. Única por pessoa.</summary>
     public string Chave { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Instante do envio, sempre em UTC. Quem grava é responsável por entregar
-    /// <c>Kind.Utc</c>: o Npgsql recusa qualquer outro Kind nesta coluna, e o dia
-    /// local que o teto diário precisa é calculado fora daqui, pelo fuso da região.
-    /// </summary>
+    /// <summary>Instante do envio, sempre Kind.Utc (o Npgsql recusa outro Kind).</summary>
     public DateTime EnviadoEm { get; set; }
-
-    /// <summary>Quantos push saíram. Zero é informação: ninguém opt-in para este critério.</summary>
-    public int Destinatarios { get; set; }
 }

@@ -10,7 +10,7 @@ const base: RegiaoDto = {
 
 function renderCard(regiao: RegiaoDto) {
   return render(
-    <RegiaoCard regiao={regiao} ativa={false} favorito={false} onSelecionar={vi.fn()} onToggleFavorito={vi.fn()} />,
+    <RegiaoCard regiao={regiao} ativa={false} onSelecionar={vi.fn()} />,
   );
 }
 

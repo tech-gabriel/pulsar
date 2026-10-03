@@ -50,13 +50,14 @@ public static class LimiaresNotificacao
     public const int JanelaBriefingHoras = 24;
 
     /// <summary>
-    /// Rede de segurança contra tarde caótica em que a previsão muda de hora em hora. Este é o
-    /// teto do conteúdo NÃO CRÍTICO por região por dia local: o aviso de risco alto não consulta
-    /// o teto, mas os envios dele contam para ele, então uma tempestade encurta o que sobra de
-    /// chuva prevista e briefing em vez de somar-se a eles. Ver
-    /// <c>MotorNotificacoes.IsentaDoTetoDiario</c>.
+    /// Teto de push por PESSOA por dia local: rede de segurança contra tarde caótica em que a
+    /// previsão muda de hora em hora. O risco alto não consulta o teto, mas os envios dele contam,
+    /// então uma tempestade encurta o que sobra de chuva prevista e briefing em vez de somar-se.
     /// </summary>
-    public const int MaxPushPorRegiaoPorDia = 3;
+    public const int MaxPushPorUsuarioPorDia = 3;
+
+    /// <summary>Protege o texto do push consolidado e o custo por pessoa por ciclo.</summary>
+    public const int MaxFavoritasPorUsuario = 10;
 
     /// <summary>
     /// Cooldown deslizante do aviso de risco alto. Como o risco alto é isento do teto diário,
@@ -118,6 +119,4 @@ public static class LimiaresNotificacao
     /// </summary>
     public static readonly CultureInfo CulturaCopy = CultureInfo.GetCultureInfo("pt-BR");
 
-    /// <summary>Rótulo da região para copy. "região Centro" e "região Sul" funcionam; "zona Centro" não.</summary>
-    public static string Rotulo(string nomeRegiao) => $"região {nomeRegiao}";
 }

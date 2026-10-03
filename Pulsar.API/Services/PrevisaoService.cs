@@ -97,4 +97,23 @@ public class PrevisaoService : IPrevisaoService
             })
             .ToList();
     }
+
+    /// <summary>Faixas futuras de UMA subprefeitura, em ordem crescente. Contexto do motor de notificações.</summary>
+    public async Task<IReadOnlyList<FaixaPrevisaoDto>> ObterFaixasSubprefeituraAsync(
+        Guid subprefeituraId, int maxFaixas, CancellationToken ct = default)
+    {
+        var linhas = await _previsaoRepo.ObterFuturasPorSubprefeituraAsync(subprefeituraId, DateTime.UtcNow);
+        return linhas.Take(maxFaixas).Select(p => new FaixaPrevisaoDto
+        {
+            InstantePrevisto = p.InstantePrevisto,
+            ChuvaMm = p.ChuvaMm,
+            ProbabilidadeChuva = p.ProbabilidadeChuva,
+            VentoKmH = p.VentoKmH,
+            RajadaKmH = p.RajadaKmH,
+            TemperaturaC = p.TemperaturaC,
+            CondicaoCodigo = p.CondicaoCodigo,
+            CondicaoDescricao = p.CondicaoDescricao,
+            ColetadoEm = p.ColetadoEm,
+        }).ToList();
+    }
 }

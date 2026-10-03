@@ -11,6 +11,9 @@ namespace Pulsar.API.Services.Notificacoes;
 ///
 /// Prioridade decide duas coisas, e não uma: quem ganha a vaga do ciclo e quem é isento do teto
 /// diário. Ver <c>MotorNotificacoes.IsentaDoTetoDiario</c> antes de escolher o número.
+///
+/// SubprefeituraId e Local dizem de onde veio o evento: o consolidador cruza com as favoritas
+/// da pessoa e usa o nome no texto de várias subprefeituras.
 /// </summary>
 public record NotificacaoPendente(
     string Gatilho,
@@ -18,4 +21,6 @@ public record NotificacaoPendente(
     CriterioOptIn Criterio,
     PushPayload Payload,
     int Prioridade,
-    TimeSpan? Cooldown = null);
+    TimeSpan? Cooldown = null,
+    Guid SubprefeituraId = default,
+    string Local = "");

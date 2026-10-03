@@ -28,7 +28,8 @@ export const track = {
   visitouApp: (path: string) => capturar('visitou_app', { path }),
   cadastrou: (metodo: 'email' | 'google') => capturar('cadastrou', { metodo }),
   login: (metodo: 'email' | 'google') => capturar('login', { metodo }),
-  favoritouRegiao: (regiaoId: string) => capturar('favoritou_regiao', { regiaoId }),
+  // Nome do evento mantido para não quebrar o funil no PostHog; o alvo agora é a subprefeitura.
+  favoritouRegiao: (subprefeituraId: string) => capturar('favoritou_regiao', { subprefeituraId }),
   ativouPush: () => capturar('ativou_push'),
   usouGeolocalizacao: (sucesso: boolean) => capturar('usou_geolocalizacao', { sucesso }),
   buscouEndereco: () => capturar('buscou_endereco'),

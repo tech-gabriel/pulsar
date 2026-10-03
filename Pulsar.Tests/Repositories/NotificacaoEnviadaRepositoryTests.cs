@@ -8,6 +8,8 @@ namespace Pulsar.Tests.Repositories;
 
 public class NotificacaoEnviadaRepositoryTests
 {
+    private static readonly Guid Mooca = Guid.Parse("20000000-0000-0000-0000-000000000008");
+
     private static PulsarDbContext NovoContexto(SqliteConnection conn)
     {
         var options = new DbContextOptionsBuilder<PulsarDbContext>().UseSqlite(conn).Options;
@@ -16,136 +18,74 @@ public class NotificacaoEnviadaRepositoryTests
         return ctx;
     }
 
-    private static NotificacaoEnviada Registro(
-        Guid regiaoId, string gatilho, string chave, DateTime enviadoEm)
+    private static async Task<Guid> NovoUsuarioAsync(PulsarDbContext ctx)
+    {
+        var u = new Usuario { Nome = "T", Email = $"{Guid.NewGuid()}@t.dev", SenhaHash = "x" };
+        ctx.Usuarios.Add(u);
+        await ctx.SaveChangesAsync();
+        return u.Id;
+    }
+
+    private static NotificacaoEnviada Registro(Guid usuarioId, string chave, DateTime enviadoEm, Guid? envioId = null)
         => new()
         {
-            RegiaoId = regiaoId,
-            Gatilho = gatilho,
+            UsuarioId = usuarioId,
+            SubprefeituraId = Mooca,
+            Gatilho = "score-alto",
             Chave = chave,
             EnviadoEm = enviadoEm,
-            Destinatarios = 3,
+            EnvioId = envioId ?? Guid.NewGuid(),
         };
 
     [Fact]
-    public async Task ExisteChave_ChaveGravada_RetornaTrue()
+    public async Task ObterRecentes_FiltraPorPessoaEJanela()
     {
         using var conn = new SqliteConnection("Data Source=:memory:");
         conn.Open();
         using var ctx = NovoContexto(conn);
-        var regiaoId = await ctx.Regioes.Select(r => r.Id).FirstAsync();
         var repo = new NotificacaoEnviadaRepository(ctx);
+        var a = await NovoUsuarioAsync(ctx);
+        var b = await NovoUsuarioAsync(ctx);
+        await repo.RegistrarAsync([
+            Registro(a, "k1", DateTime.UtcNow.AddHours(-1)),
+            Registro(a, "k2", DateTime.UtcNow.AddHours(-50)),
+            Registro(b, "k3", DateTime.UtcNow)]);
 
-        await repo.RegistrarAsync(Registro(regiaoId, "chuva-prevista", "chuva:x:18h", DateTime.UtcNow));
+        var recentes = await repo.ObterRecentesAsync([a], 48);
 
-        (await repo.ExisteChaveAsync("chuva:x:18h")).Should().BeTrue();
-        (await repo.ExisteChaveAsync("chuva:x:21h")).Should().BeFalse();
+        recentes.Should().ContainSingle().Which.Chave.Should().Be("k1");
     }
 
     [Fact]
-    public async Task ExisteDesde_EnvioDentroDaJanela_RetornaTrue()
+    public async Task MesmaChave_PessoasDiferentes_Convivem()
     {
         using var conn = new SqliteConnection("Data Source=:memory:");
         conn.Open();
         using var ctx = NovoContexto(conn);
-        var regiaoId = await ctx.Regioes.Select(r => r.Id).FirstAsync();
         var repo = new NotificacaoEnviadaRepository(ctx);
-        var agora = DateTime.UtcNow;
+        var a = await NovoUsuarioAsync(ctx);
+        var b = await NovoUsuarioAsync(ctx);
 
-        await repo.RegistrarAsync(Registro(regiaoId, "score-alto", "score:a", agora.AddMinutes(-30)));
+        await repo.RegistrarAsync([Registro(a, "k", DateTime.UtcNow), Registro(b, "k", DateTime.UtcNow)]);
 
-        (await repo.ExisteDesdeAsync(regiaoId, "score-alto", agora.AddHours(-1))).Should().BeTrue();
+        (await ctx.NotificacoesEnviadas.CountAsync()).Should().Be(2);
     }
 
     [Fact]
-    public async Task ExisteDesde_EnvioForaDaJanela_RetornaFalse()
+    public async Task MesmaChave_MesmaPessoa_Explode_ENaoContaminaOProximo()
     {
         using var conn = new SqliteConnection("Data Source=:memory:");
         conn.Open();
         using var ctx = NovoContexto(conn);
-        var regiaoId = await ctx.Regioes.Select(r => r.Id).FirstAsync();
         var repo = new NotificacaoEnviadaRepository(ctx);
-        var agora = DateTime.UtcNow;
+        var a = await NovoUsuarioAsync(ctx);
+        await repo.RegistrarAsync([Registro(a, "k", DateTime.UtcNow)]);
 
-        await repo.RegistrarAsync(Registro(regiaoId, "score-alto", "score:a", agora.AddMinutes(-90)));
+        var act = () => repo.RegistrarAsync([Registro(a, "k", DateTime.UtcNow)]);
+        await act.Should().ThrowAsync<DbUpdateException>();
 
-        (await repo.ExisteDesdeAsync(regiaoId, "score-alto", agora.AddHours(-1))).Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task ExisteDesde_GatilhoDiferente_NaoInterfere()
-    {
-        using var conn = new SqliteConnection("Data Source=:memory:");
-        conn.Open();
-        using var ctx = NovoContexto(conn);
-        var regiaoId = await ctx.Regioes.Select(r => r.Id).FirstAsync();
-        var repo = new NotificacaoEnviadaRepository(ctx);
-        var agora = DateTime.UtcNow;
-
-        // O único envio da região está dentro da janela e é de outro gatilho: se o filtro
-        // de gatilho sumisse, a consulta acharia esta linha e o cooldown do score-alto
-        // seria silenciado por um briefing.
-        await repo.RegistrarAsync(Registro(regiaoId, "briefing-diario", "brief:a", agora.AddMinutes(-10)));
-
-        (await repo.ExisteDesdeAsync(regiaoId, "score-alto", agora.AddHours(-1))).Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task ExisteDesde_OutraRegiao_NaoInterfere()
-    {
-        using var conn = new SqliteConnection("Data Source=:memory:");
-        conn.Open();
-        using var ctx = NovoContexto(conn);
-        var regioes = await ctx.Regioes.Select(r => r.Id).Take(2).ToListAsync();
-        var repo = new NotificacaoEnviadaRepository(ctx);
-        var agora = DateTime.UtcNow;
-
-        // Mesmo gatilho, mesma janela, região vizinha: o cooldown é por região, então
-        // um envio na vizinha não pode calar o push desta aqui.
-        await repo.RegistrarAsync(Registro(regioes[1], "score-alto", "score:vizinha", agora.AddMinutes(-10)));
-
-        (await repo.ExisteDesdeAsync(regioes[0], "score-alto", agora.AddHours(-1))).Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task ObterRecentesPorRegiao_FiltraPorJanelaERegiao()
-    {
-        using var conn = new SqliteConnection("Data Source=:memory:");
-        conn.Open();
-        using var ctx = NovoContexto(conn);
-        var regioes = await ctx.Regioes.Select(r => r.Id).Take(2).ToListAsync();
-        var repo = new NotificacaoEnviadaRepository(ctx);
-        var agora = DateTime.UtcNow;
-
-        // "b" está fora da janela de 48h e "c" é de outra região: cada um derruba o teste
-        // se o filtro correspondente sair da consulta.
-        await repo.RegistrarAsync(Registro(regioes[0], "score-alto", "a", agora.AddHours(-2)));
-        await repo.RegistrarAsync(Registro(regioes[0], "score-alto", "b", agora.AddHours(-60)));
-        await repo.RegistrarAsync(Registro(regioes[1], "score-alto", "c", agora.AddHours(-2)));
-
-        var recentes = await repo.ObterRecentesPorRegiaoAsync(regioes[0], 48);
-
-        recentes.Should().HaveCount(1);
-        recentes[0].Chave.Should().Be("a");
-    }
-
-    [Fact]
-    public async Task ObterRecentesPorRegiao_DevolveDoMaisRecenteParaOMaisAntigo()
-    {
-        using var conn = new SqliteConnection("Data Source=:memory:");
-        conn.Open();
-        using var ctx = NovoContexto(conn);
-        var regiaoId = await ctx.Regioes.Select(r => r.Id).FirstAsync();
-        var repo = new NotificacaoEnviadaRepository(ctx);
-        var agora = DateTime.UtcNow;
-
-        // Gravados fora de ordem de propósito: quem ordena é a consulta, não a inserção.
-        await repo.RegistrarAsync(Registro(regiaoId, "score-alto", "antigo", agora.AddHours(-10)));
-        await repo.RegistrarAsync(Registro(regiaoId, "score-alto", "recente", agora.AddHours(-1)));
-
-        var recentes = await repo.ObterRecentesPorRegiaoAsync(regiaoId, 48);
-
-        recentes.Select(n => n.Chave).Should().Equal("recente", "antigo");
+        await repo.RegistrarAsync([Registro(a, "outra", DateTime.UtcNow)]);
+        (await ctx.NotificacoesEnviadas.CountAsync()).Should().Be(2);
     }
 
     [Fact]
@@ -154,66 +94,12 @@ public class NotificacaoEnviadaRepositoryTests
         using var conn = new SqliteConnection("Data Source=:memory:");
         conn.Open();
         using var ctx = NovoContexto(conn);
-        var regiaoId = await ctx.Regioes.Select(r => r.Id).FirstAsync();
         var repo = new NotificacaoEnviadaRepository(ctx);
-        var agora = DateTime.UtcNow;
+        var a = await NovoUsuarioAsync(ctx);
+        await repo.RegistrarAsync([
+            Registro(a, "velha", DateTime.UtcNow.AddDays(-40)),
+            Registro(a, "nova", DateTime.UtcNow)]);
 
-        await repo.RegistrarAsync(Registro(regiaoId, "score-alto", "velho", agora.AddDays(-40)));
-        await repo.RegistrarAsync(Registro(regiaoId, "score-alto", "novo", agora.AddDays(-2)));
-
-        var removidos = await repo.RemoverAntigasAsync(agora.AddDays(-30));
-
-        removidos.Should().Be(1);
-        (await ctx.NotificacoesEnviadas.CountAsync()).Should().Be(1);
-    }
-
-    [Fact]
-    public async Task RegistrarAsync_ChaveRepetida_Explode()
-    {
-        using var conn = new SqliteConnection("Data Source=:memory:");
-        conn.Open();
-        using var ctx = NovoContexto(conn);
-        var regiaoId = await ctx.Regioes.Select(r => r.Id).FirstAsync();
-        var repo = new NotificacaoEnviadaRepository(ctx);
-        var agora = DateTime.UtcNow;
-
-        // O índice único da Chave é a última linha de defesa do "exatamente uma vez por
-        // evento": se dois ciclos se sobrepuserem, o segundo INSERT não pode passar.
-        await repo.RegistrarAsync(Registro(regiaoId, "chuva-prevista", "chuva:x:18h", agora));
-
-        var repetir = async () =>
-            await repo.RegistrarAsync(Registro(regiaoId, "chuva-prevista", "chuva:x:18h", agora));
-
-        await repetir.Should().ThrowAsync<DbUpdateException>();
-    }
-
-    [Fact]
-    public async Task RegistrarAsync_AposChaveRepetida_NaoContaminaOProximoRegistro()
-    {
-        using var conn = new SqliteConnection("Data Source=:memory:");
-        conn.Open();
-        using var ctx = NovoContexto(conn);
-        var regioes = await ctx.Regioes.Select(r => r.Id).Take(2).ToListAsync();
-        var repo = new NotificacaoEnviadaRepository(ctx);
-        var agora = DateTime.UtcNow;
-
-        // O ciclo do scheduler resolve um único PulsarDbContext por rodada e passa por
-        // todas as regiões com ele. Se a entidade que bateu no índice único continuasse
-        // em Added, o SaveChanges da região seguinte repetiria o INSERT que falhou e
-        // derrubaria uma notificação que não tinha nada de errado.
-        await repo.RegistrarAsync(Registro(regioes[0], "chuva-prevista", "chuva:x:18h", agora));
-        try
-        {
-            await repo.RegistrarAsync(Registro(regioes[0], "chuva-prevista", "chuva:x:18h", agora));
-        }
-        catch (DbUpdateException)
-        {
-            // Esperado: é o dedup funcionando. Task 10 trata assim, seguindo em frente.
-        }
-
-        await repo.RegistrarAsync(Registro(regioes[1], "chuva-prevista", "chuva:y:18h", agora));
-
-        (await ctx.NotificacoesEnviadas.Select(n => n.Chave).ToListAsync())
-            .Should().BeEquivalentTo(["chuva:x:18h", "chuva:y:18h"]);
+        (await repo.RemoverAntigasAsync(DateTime.UtcNow.AddDays(-30))).Should().Be(1);
     }
 }

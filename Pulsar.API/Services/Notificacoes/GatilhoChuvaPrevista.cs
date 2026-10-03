@@ -49,9 +49,9 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
         if (faixa is null)
             return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([]);
 
-        var rotulo = LimiaresNotificacao.Rotulo(ctx.Regiao.Nome);
+        var em = NomesSubprefeitura.ComPreposicao(ctx.Subprefeitura.Nome);
 
-        // Hora de parede da região, para o aviso falar no relógio de quem lê. O retorno tem
+        // Hora de parede da subprefeitura, para o aviso falar no relógio de quem lê. O retorno tem
         // Kind Unspecified de propósito: serve para exibir e não volta para conta nenhuma.
         // É o carimbo da janela, e a copy o apresenta como aproximação ("por volta das"):
         // ver a ressalva sobre a direção da janela no doc da classe.
@@ -69,18 +69,20 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
             // muda de horário volta a avisar. InvariantCulture porque isto é chave de banco,
             // não texto: cultura com calendário não gregoriano mudaria o ano e quebraria a
             // comparação com os registros antigos.
-            Chave: $"chuva:{ctx.Regiao.Id}:{faixa.InstantePrevisto.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture)}",
+            Chave: $"chuva:{ctx.Subprefeitura.Id}:{faixa.InstantePrevisto.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture)}",
             Criterio: criterio,
             Payload: new PushPayload(
-                Titulo: $"Chuva forte prevista na {rotulo}",
+                Titulo: $"Chuva forte prevista {em}",
                 // Cultura explícita: sem ela o host sem locale escreveria "12.4 mm" no meio
                 // de uma frase em português. Ver LimiaresNotificacao.CulturaCopy.
                 Corpo: string.Create(
                     LimiaresNotificacao.CulturaCopy,
                     $"{faixa.ChuvaMm:0.#} mm previstos por volta das {horaLocal:HH}h. Se puder, antecipe a saída."),
                 Url: "/",
-                Tag: $"chuva-{ctx.Regiao.Id}"),
-            Prioridade: LimiaresNotificacao.PrioridadeChuvaPrevista);
+                Tag: $"chuva-{ctx.Subprefeitura.Id}"),
+            Prioridade: LimiaresNotificacao.PrioridadeChuvaPrevista,
+            SubprefeituraId: ctx.Subprefeitura.Id,
+            Local: ctx.Subprefeitura.Nome);
         // Cooldown omitido de propósito (fica no default null): aqui o dedup é pela chave
         // exata da faixa, exatamente um aviso por janela prevista, e não janela deslizante.
 

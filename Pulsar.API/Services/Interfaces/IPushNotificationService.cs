@@ -11,8 +11,8 @@ public interface IPushNotificationService
     string? ChavePublica { get; }
 
     /// <summary>
-    /// Notifica os usuários que favoritaram a região e optaram pelo critério informado.
-    /// Inscrições mortas (404/410) são removidas. Retorna quantas notificações foram enviadas.
+    /// Envia para os aparelhos da pessoa que optaram pelo critério. Inscrições mortas
+    /// (404/410/403) são removidas. Devolve quantos aparelhos receberam.
     /// </summary>
-    Task<int> NotificarRegiaoAsync(Guid regiaoId, CriterioOptIn criterio, PushPayload payload, CancellationToken ct = default);
+    Task<int> NotificarUsuarioAsync(Guid usuarioId, CriterioOptIn criterio, PushPayload payload, CancellationToken ct = default);
 }

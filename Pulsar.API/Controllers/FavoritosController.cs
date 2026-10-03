@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Interfaces;
+using Pulsar.API.Services.Notificacoes;
 
 namespace Pulsar.API.Controllers;
 
@@ -14,17 +15,17 @@ namespace Pulsar.API.Controllers;
 public class FavoritosController : ControllerBase
 {
     private readonly IUsuarioRepository _usuarioRepository;
-    private readonly IRegiaoRepository _regiaoRepository;
+    private readonly ISubprefeituraRepository _subprefeituraRepository;
 
     public FavoritosController(
         IUsuarioRepository usuarioRepository,
-        IRegiaoRepository regiaoRepository)
+        ISubprefeituraRepository subprefeituraRepository)
     {
         _usuarioRepository = usuarioRepository;
-        _regiaoRepository = regiaoRepository;
+        _subprefeituraRepository = subprefeituraRepository;
     }
 
-    /// <summary>Retorna as regiões favoritas do usuário.</summary>
+    /// <summary>Retorna as subprefeituras que o usuário acompanha.</summary>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<FavoritoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -38,16 +39,10 @@ public class FavoritosController : ControllerBase
         if (usuario is null)
             return NotFound(new { mensagem = "Usuário não encontrado." });
 
-        var dtos = usuario.Favoritos.Select(f => new FavoritoDto
-        {
-            RegiaoId = f.RegiaoId,
-            RegiaoNome = f.Regiao.Nome
-        });
-
-        return Ok(dtos);
+        return Ok(usuario.Favoritos.Select(f => ParaDto(f.Subprefeitura)));
     }
 
-    /// <summary>Adiciona uma região aos favoritos do usuário.</summary>
+    /// <summary>Passa a acompanhar uma subprefeitura (até o limite por pessoa).</summary>
     [HttpPost]
     [ProducesResponseType(typeof(FavoritoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -65,32 +60,32 @@ public class FavoritosController : ControllerBase
         if (usuario is null)
             return NotFound(new { mensagem = "Usuário não encontrado." });
 
-        var regiao = await _regiaoRepository.ObterPorIdAsync(request.RegiaoId);
-        if (regiao is null)
-            return NotFound(new { mensagem = "Região não encontrada." });
+        var sub = await _subprefeituraRepository.ObterComRegiaoAsync(request.SubprefeituraId);
+        if (sub is null)
+            return NotFound(new { mensagem = "Subprefeitura não encontrada." });
 
-        if (usuario.Favoritos.Any(f => f.RegiaoId == request.RegiaoId))
-            return Conflict(new { mensagem = "Região já está nos favoritos." });
+        if (usuario.Favoritos.Any(f => f.SubprefeituraId == request.SubprefeituraId))
+            return Conflict(new { mensagem = "Subprefeitura já está nos favoritos." });
 
-        var favorito = new UsuarioRegiao
+        if (usuario.Favoritos.Count >= LimiaresNotificacao.MaxFavoritasPorUsuario)
+            return BadRequest(new { mensagem = $"Você já acompanha {LimiaresNotificacao.MaxFavoritasPorUsuario} subprefeituras. Remova uma para adicionar outra." });
+
+        await _usuarioRepository.AdicionarFavoritoAsync(new UsuarioSubprefeitura
         {
             UsuarioId = usuarioId,
-            RegiaoId = request.RegiaoId
-        };
-
-        await _usuarioRepository.AdicionarFavoritoAsync(favorito);
+            SubprefeituraId = request.SubprefeituraId,
+        });
         await _usuarioRepository.SalvarAsync();
 
-        var dto = new FavoritoDto { RegiaoId = regiao.Id, RegiaoNome = regiao.Nome };
-        return StatusCode(StatusCodes.Status201Created, dto);
+        return StatusCode(StatusCodes.Status201Created, ParaDto(sub));
     }
 
-    /// <summary>Remove uma região dos favoritos do usuário.</summary>
-    [HttpDelete("{regiaoId:guid}")]
+    /// <summary>Deixa de acompanhar uma subprefeitura.</summary>
+    [HttpDelete("{subprefeituraId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RemoverFavorito(Guid usuarioId, Guid regiaoId)
+    public async Task<IActionResult> RemoverFavorito(Guid usuarioId, Guid subprefeituraId)
     {
         if (!UsuarioAutorizado(usuarioId))
             return Forbid();
@@ -99,7 +94,7 @@ public class FavoritosController : ControllerBase
         if (usuario is null)
             return NotFound(new { mensagem = "Usuário não encontrado." });
 
-        var favorito = usuario.Favoritos.FirstOrDefault(f => f.RegiaoId == regiaoId);
+        var favorito = usuario.Favoritos.FirstOrDefault(f => f.SubprefeituraId == subprefeituraId);
         if (favorito is null)
             return NotFound(new { mensagem = "Favorito não encontrado." });
 
@@ -108,6 +103,14 @@ public class FavoritosController : ControllerBase
 
         return NoContent();
     }
+
+    private static FavoritoDto ParaDto(Subprefeitura s) => new()
+    {
+        SubprefeituraId = s.Id,
+        Nome = s.Nome,
+        RegiaoId = s.RegiaoId,
+        RegiaoNome = s.Regiao.Nome,
+    };
 
     private bool UsuarioAutorizado(Guid usuarioId)
     {

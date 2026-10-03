@@ -13,5 +13,5 @@ public interface IUsuarioRepository : IRepository<Usuario>
     /// via navegação (usuario.Favoritos.Add) em um usuário já carregado faz o EF
     /// tratar a chave Guid pré-preenchida como linha existente → UPDATE (0 linhas).
     /// </summary>
-    Task AdicionarFavoritoAsync(UsuarioRegiao favorito);
+    Task AdicionarFavoritoAsync(UsuarioSubprefeitura favorito);
 }

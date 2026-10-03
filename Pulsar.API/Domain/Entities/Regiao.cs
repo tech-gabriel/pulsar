@@ -16,7 +16,6 @@ public class Regiao
 
     public IList<Subprefeitura> Subprefeituras { get; set; } = new List<Subprefeitura>();
     public IList<Alerta> Alertas { get; set; } = new List<Alerta>();
-    public IList<UsuarioRegiao> Favoritos { get; set; } = new List<UsuarioRegiao>();
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
 

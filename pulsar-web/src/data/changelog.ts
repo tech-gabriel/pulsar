@@ -25,6 +25,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.11.0',
+    data: '2026-10-03',
+    resumo: 'Agora você acompanha as subprefeituras que importam para você.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Alertas por subprefeitura',
+        descricao: 'Escolha casa, trabalho ou onde quiser, e receba um aviso só com os lugares que você acompanha, em vez da zona inteira.',
+      },
+    ],
+  },
+  {
     versao: '1.10.3',
     data: '2026-10-03',
     itens: [

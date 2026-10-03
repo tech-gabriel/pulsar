@@ -54,7 +54,8 @@ export default function PainelLateral({
   const favoritas = ordenadas.filter((r) => isFavorito(r.id));
   const demais = ordenadas.filter((r) => !isFavorito(r.id));
   const totalSubs = regioes.reduce((acc, r) => acc + r.totalSubprefeituras, 0);
-  const semAlertas = !regioes.some((r) => r.faixaRisco === 'ALTO');
+  // Só "sem alertas" com dado na mão: lista vazia (falha) não é calma.
+  const semAlertas = regioes.length > 0 && !regioes.some((r) => r.faixaRisco === 'ALTO');
 
   function renderCard(regiao: RegiaoDto) {
     return (

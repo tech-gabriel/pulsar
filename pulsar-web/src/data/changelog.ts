@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.10.1',
+    data: '2026-10-03',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Mais fácil de achar no Google',
+        descricao: 'A página de cada subprefeitura mostra na busca o risco da região e quantos alagamentos a Defesa Civil registrou lá.',
+      },
+    ],
+  },
+  {
     versao: '1.10.0',
     data: '2026-10-01',
     resumo: 'O risco agora entende chuva acumulada e avisa também sobre vento forte e calor extremo.',

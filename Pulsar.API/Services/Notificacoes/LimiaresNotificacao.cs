@@ -58,6 +58,12 @@ public static class LimiaresNotificacao
     /// </summary>
     public const int MaxPushPorRegiaoPorDia = 3;
 
+    /// <summary>Teto de push por PESSOA por dia local. Risco alto não consulta, mas conta.</summary>
+    public const int MaxPushPorUsuarioPorDia = 3;
+
+    /// <summary>Protege o texto do push consolidado e o custo por pessoa por ciclo.</summary>
+    public const int MaxFavoritasPorUsuario = 10;
+
     /// <summary>
     /// Cooldown deslizante do aviso de risco alto. Como o risco alto é isento do teto diário,
     /// este número é o ÚNICO freio de volume dele: mexer aqui mexe direto no pior caso diário

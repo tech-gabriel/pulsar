@@ -55,7 +55,7 @@ export default function SobreCard() {
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Versão</span>
         <Link
           to="/novidades"
-          className="transition-colors hover:text-[var(--text-primary)]"
+          className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]"
           style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, color: 'var(--text-secondary)' }}
           title="Ver novidades desta versão"
         >

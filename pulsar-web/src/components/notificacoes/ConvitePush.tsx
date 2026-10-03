@@ -86,7 +86,7 @@ export default function ConvitePush() {
           type="button"
           onClick={ativar}
           disabled={push.ocupado}
-          className="btn-gradient rounded-lg px-3 py-1.5 text-xs font-semibold flex-shrink-0"
+          className="btn-gradient rounded-lg px-3 min-h-11 inline-flex items-center text-xs font-semibold flex-shrink-0"
         >
           {push.ocupado ? 'Ativando…' : 'Ativar'}
         </button>
@@ -94,7 +94,7 @@ export default function ConvitePush() {
           type="button"
           onClick={dispensar}
           aria-label="Dispensar"
-          className="flex-shrink-0 p-1"
+          className="flex-shrink-0 min-w-11 min-h-11 inline-flex items-center justify-center"
           style={{ color: 'var(--text-secondary)' }}
         >
           <X size={16} />

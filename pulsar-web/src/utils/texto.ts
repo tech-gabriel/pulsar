@@ -13,3 +13,12 @@ export function normalizarNome(nome: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+/**
+ * Primeira opção que cabe em `max` caracteres; se nenhuma couber, a última (a mais
+ * curta, por convenção de quem chama). Usado na meta description: acima de ~155
+ * caracteres o Google corta com "…" e a frase perde o fim.
+ */
+export function primeiraQueCabe(opcoes: string[], max = 155): string {
+  return opcoes.find((o) => o.length <= max) ?? opcoes[opcoes.length - 1];
+}

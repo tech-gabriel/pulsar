@@ -10,7 +10,7 @@ public class OcorrenciaAlagamentoRepository : IOcorrenciaAlagamentoRepository
 
     public OcorrenciaAlagamentoRepository(PulsarDbContext context) => _context = context;
 
-    public async Task UpsertRangeAsync(IEnumerable<OcorrenciaAlagamento> ocorrencias)
+    public async Task<int> UpsertRangeAsync(IEnumerable<OcorrenciaAlagamento> ocorrencias)
     {
         // Deduplica o lote de entrada por (CdIdentificador, Tipo), mantendo a última ocorrência.
         // Sem isso, duas linhas com a mesma chave no mesmo lote seriam ambas tratadas como
@@ -20,6 +20,7 @@ public class OcorrenciaAlagamentoRepository : IOcorrenciaAlagamentoRepository
             .GroupBy(o => (o.CdIdentificador, o.Tipo))
             .Select(g => g.Last());
 
+        var novas = 0;
         foreach (var nova in unicas)
         {
             var existente = await _context.OcorrenciasAlagamento
@@ -28,6 +29,7 @@ public class OcorrenciaAlagamentoRepository : IOcorrenciaAlagamentoRepository
             if (existente is null)
             {
                 await _context.OcorrenciasAlagamento.AddAsync(nova);
+                novas++;
             }
             else
             {
@@ -40,6 +42,7 @@ public class OcorrenciaAlagamentoRepository : IOcorrenciaAlagamentoRepository
             }
         }
         await _context.SaveChangesAsync();
+        return novas;
     }
 
     public async Task<IReadOnlyList<OcorrenciaAlagamento>> ObterRecentesAsync(int meses = 12)

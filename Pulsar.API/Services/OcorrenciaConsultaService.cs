@@ -8,6 +8,12 @@ namespace Pulsar.API.Services;
 
 public class OcorrenciaConsultaService : IOcorrenciaConsultaService
 {
+    /// <summary>
+    /// Idade máxima de leitura/score para valer como "agora". A coleta roda a cada 15 min
+    /// num servidor sempre ligado; 1h = 4 ciclos perdidos, ou seja, coleta travada.
+    /// </summary>
+    private static readonly TimeSpan IdadeMaximaAtual = TimeSpan.FromHours(1);
+
     private readonly IOcorrenciaAlagamentoRepository _repo;
     private readonly ISubprefeituraRepository _subRepo;
     private readonly IScoreRepository _scoreRepo;
@@ -59,10 +65,13 @@ public class OcorrenciaConsultaService : IOcorrenciaConsultaService
             var maisProxima = await SubprefeituraMaisProximaAsync(lat, lon);
             if (maisProxima is not null)
             {
+                var limite = DateTime.UtcNow - IdadeMaximaAtual;
                 var comLeitura = await _subRepo.ObterComUltimaLeituraAsync(maisProxima.Id);
-                dto.ChuvaMmH = comLeitura?.GetUltimaLeitura()?.ChuvaMmH;
+                var leitura = comLeitura?.GetUltimaLeitura();
+                dto.ChuvaMmH = leitura?.Timestamp >= limite ? leitura.ChuvaMmH : null;
                 var score = await _scoreRepo.ObterUltimoAsync(maisProxima.Id);
-                dto.RiscoElevado = score is not null && score.FaixaAlagamento >= FaixaRisco.MODERADO;
+                dto.RiscoElevado = score is not null && score.Timestamp >= limite
+                    && score.FaixaAlagamento >= FaixaRisco.MODERADO;
             }
         }
 

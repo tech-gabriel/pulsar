@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 const MARCA = 'Pulsar';
 /** Título institucional completo, usado em rotas sem nome próprio. */
-const TITULO_PADRAO = 'Pulsar · Monitoramento Climático em Tempo Real';
+const TITULO_PADRAO = 'Pulsar: alerta de alagamento e chuva forte em São Paulo';
 
 // Nome de cada rota exata → vira "Pulsar · Nome". A home (/) fica de fora de
 // propósito: usa o título institucional completo (TITULO_PADRAO).

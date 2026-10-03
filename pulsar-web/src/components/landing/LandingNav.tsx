@@ -12,7 +12,7 @@ export default function LandingNav() {
 
   return (
     <nav className="landing-nav">
-      <Link to="/" className="flex items-center gap-2.5" aria-label="Pulsar, página inicial">
+      <Link to="/" className="flex items-center gap-2.5 min-h-11" aria-label="Pulsar, página inicial">
         <img
           src={iconePulsar}
           alt=""
@@ -36,7 +36,7 @@ export default function LandingNav() {
         <button
           type="button"
           onClick={toggleTheme}
-          className="p-2 rounded-lg transition-colors hover:bg-[var(--bg-glass-hover)]"
+          className="min-w-11 min-h-11 inline-flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--bg-glass-hover)]"
           style={{ color: 'var(--text-secondary)' }}
           title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
           aria-label="Alternar tema"
@@ -45,12 +45,12 @@ export default function LandingNav() {
         </button>
         <Link
           to="/login"
-          className="text-sm font-semibold px-3 py-2 rounded-lg transition-colors"
+          className="text-sm font-semibold px-3 min-h-11 inline-flex items-center rounded-lg transition-colors"
           style={{ color: 'var(--text-secondary)' }}
         >
           Entrar
         </Link>
-        <Link to="/cadastro" className="landing-cta whitespace-nowrap !px-4 !py-2 !text-sm">
+        <Link to="/cadastro" className="landing-cta whitespace-nowrap !px-4 !py-0 min-h-11 inline-flex items-center !text-sm">
           Criar conta
         </Link>
       </div>

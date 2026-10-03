@@ -1283,8 +1283,8 @@ html.light *::-webkit-scrollbar-thumb:hover {
 
 /* Wrapper raiz: herda o fundo grid de .auth-bg e garante a rolagem vertical. */
 .landing-root {
-  /* Altura real da `.landing-nav`, medida no navegador: 36px de conteúdo + 14px
-     de padding em cima e embaixo + 1px de borda. Vive como token porque a caixa
+  /* Altura real da `.landing-nav`, medida no navegador: 44px de conteúdo (alvo de
+     toque mínimo) + 10px de padding em cima e embaixo + 1px de borda. Vive como token porque a caixa
      sticky do mapa da narrativa precisa descontá-la para não passar por baixo da
      barra (que também é sticky). Mudou o conteúdo da nav, remedir. */
   --landing-nav-h: 65px;
@@ -1301,7 +1301,7 @@ html.light *::-webkit-scrollbar-thumb:hover {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 24px;
+  padding: 10px 24px;
   background: var(--bg-glass);
   backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--border-glass);

@@ -26,19 +26,19 @@ export default function LandingFooter() {
         </div>
 
         <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5" style={{ fontSize: 14 }}>
-          <Link to="/novidades" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
+          <Link to="/novidades" className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
             Novidades
           </Link>
-          <Link to="/sobre" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
+          <Link to="/sobre" className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
             Sobre
           </Link>
-          <Link to="/privacidade" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
+          <Link to="/privacidade" className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
             Privacidade
           </Link>
-          <Link to="/termos" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
+          <Link to="/termos" className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
             Termos
           </Link>
-          <Link to="/login" className="transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
+          <Link to="/login" className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]" style={{ color: 'var(--text-secondary)' }}>
             Entrar
           </Link>
           <a
@@ -47,7 +47,7 @@ export default function LandingFooter() {
             rel="noopener noreferrer"
             aria-label="Instagram do Pulsar"
             onClick={() => track.clicouInstagram('landing')}
-            className="transition-colors hover:text-[var(--text-primary)]"
+            className="min-w-11 min-h-11 inline-flex items-center justify-center transition-colors hover:text-[var(--text-primary)]"
             style={{ color: 'var(--text-secondary)' }}
           >
             <AtSign size={18} />
@@ -71,7 +71,7 @@ export default function LandingFooter() {
             <Link
               key={z.slug}
               to={`${PREFIXO_REGIAO}/${z.slug}`}
-              className="transition-colors hover:text-[var(--text-primary)]"
+              className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]"
               style={{ color: 'var(--text-secondary)' }}
             >
               {z.nome}

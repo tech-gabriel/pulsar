@@ -88,7 +88,7 @@ const PASSOS: Passo[] = [
       <div className="flex flex-col gap-2.5">
         <ItemUso Icon={MousePointerClick}>Toque numa região para ver o detalhe e as condições do momento.</ItemUso>
         <ItemUso Icon={Search}>Busque uma rua ou endereço para localizar a região correspondente.</ItemUso>
-        <ItemUso Icon={Star}>Favorite as regiões que você acompanha de perto.</ItemUso>
+        <ItemUso Icon={Star}>Toque na estrela das subprefeituras que você acompanha de perto, como casa e trabalho, para receber os avisos delas.</ItemUso>
         <ItemUso Icon={History}>Veja o histórico das últimas 24h de cada subprefeitura.</ItemUso>
       </div>
     ),

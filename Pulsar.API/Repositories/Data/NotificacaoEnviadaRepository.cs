@@ -10,38 +10,27 @@ public class NotificacaoEnviadaRepository : INotificacaoEnviadaRepository
 
     public NotificacaoEnviadaRepository(PulsarDbContext context) => _context = context;
 
-    public async Task<bool> ExisteChaveAsync(string chave)
-        => await _context.NotificacoesEnviadas.AnyAsync(n => n.Chave == chave);
-
-    public async Task<bool> ExisteDesdeAsync(Guid regiaoId, string gatilho, DateTime desdeUtc)
-        => await _context.NotificacoesEnviadas.AnyAsync(n =>
-            n.RegiaoId == regiaoId && n.Gatilho == gatilho && n.EnviadoEm >= desdeUtc);
-
-    public async Task<IReadOnlyList<NotificacaoEnviada>> ObterRecentesPorRegiaoAsync(
-        Guid regiaoId, int horas)
+    public async Task<IReadOnlyList<NotificacaoEnviada>> ObterRecentesAsync(IReadOnlyCollection<Guid> usuarioIds, int horas)
     {
         var limite = DateTime.UtcNow.AddHours(-horas);
         return await _context.NotificacoesEnviadas
-            .Where(n => n.RegiaoId == regiaoId && n.EnviadoEm >= limite)
-            .OrderByDescending(n => n.EnviadoEm)
+            .Where(n => usuarioIds.Contains(n.UsuarioId) && n.EnviadoEm >= limite)
             .ToListAsync();
     }
 
-    public async Task RegistrarAsync(NotificacaoEnviada registro)
+    public async Task RegistrarAsync(IReadOnlyList<NotificacaoEnviada> registros)
     {
-        await _context.NotificacoesEnviadas.AddAsync(registro);
+        await _context.NotificacoesEnviadas.AddRangeAsync(registros);
         try
         {
             await _context.SaveChangesAsync();
         }
         catch (DbUpdateException)
         {
-            // Chave duplicada é desfecho esperado quando dois ciclos se sobrepõem: é para
-            // isso que o índice único existe. O EF não desfaz o rastreamento sozinho, e o
-            // ciclo do scheduler usa um único contexto para a cidade inteira, então sem
-            // soltar a entidade aqui ela seguiria em Added e o SaveChanges da região
-            // seguinte repetiria o INSERT que falhou, derrubando um envio inocente.
-            _context.Entry(registro).State = EntityState.Detached;
+            // Chave duplicada (ciclos sobrepostos) é desfecho esperado: é para isso que o
+            // índice único existe. Soltar as entidades porque o ciclo usa um contexto só, e
+            // sem isto o SaveChanges da próxima pessoa repetiria o INSERT que falhou.
+            foreach (var r in registros) _context.Entry(r).State = EntityState.Detached;
             throw;
         }
     }

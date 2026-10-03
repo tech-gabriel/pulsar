@@ -27,7 +27,7 @@ const SUBS = [ITAQUERA];
 vi.mock('../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => SUBS }));
 
 vi.mock('../../hooks/useFavoritos', () => ({
-  useFavoritos: () => ({ isFavorito: () => false, toggleFavorito: vi.fn() }),
+  useFavoritos: () => ({ favoritos: [], isFavorito: () => false, toggleFavorito: vi.fn(), carregando: false }),
 }));
 
 vi.mock('../../hooks/useOnboarding', () => ({

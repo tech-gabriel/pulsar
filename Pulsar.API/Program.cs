@@ -211,6 +211,7 @@ builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionServi
 builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
 builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
+builder.Services.AddScoped<IAvisoMigracaoService, AvisoMigracaoService>();
 
 // --- Motor de notificações ---
 // A ordem do registro não importa para a escolha: o motor ordena por Prioridade da
@@ -254,6 +255,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 // --- Scheduler ---
 builder.Services.AddHostedService<DataCollectionJob>();
 builder.Services.AddHostedService<SincronizacaoOcorrenciasJob>();
+builder.Services.AddHostedService<AvisoMigracaoJob>();
 
 // --- Build ---
 var app = builder.Build();

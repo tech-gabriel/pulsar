@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.10.2',
+    data: '2026-10-03',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Sem dados, o app não diz mais que está tudo tranquilo',
+        descricao: 'Enquanto o risco carrega ou se a conexão falhar, o mapa e o sino avisam isso em vez de mostrar que não há alertas.',
+      },
+    ],
+  },
+  {
     versao: '1.10.1',
     data: '2026-10-03',
     itens: [

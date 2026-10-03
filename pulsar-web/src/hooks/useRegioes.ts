@@ -26,7 +26,7 @@ export function useRegioes(): UseRegioesResult {
       setRegioes(data);
       setUltimaAtualizacao(new Date());
     } catch {
-      setErro('Não foi possível carregar os dados. Verifique se o backend está ativo.');
+      setErro('Não foi possível carregar os dados. Verifique sua conexão e tente de novo.');
     } finally {
       setCarregando(false);
     }

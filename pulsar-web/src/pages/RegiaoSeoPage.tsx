@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getRegiaoView, getSubprefeituraView, type RegiaoView, type SubprefeituraView } from '../data/regiao-view';
 import { zonas, subprefeituras, PREFIXO_REGIAO } from '../data/regioes-seo';
 import { useSeoHead } from '../hooks/useSeoHead';
+import { primeiraQueCabe } from '../utils/texto';
 
 const ORIGIN = 'https://app-pulsar.com.br';
 
@@ -75,9 +76,16 @@ function headSub(view: SubprefeituraView, path: string) {
   const { nome, emNome, zona, distritos, ocorrencias, periodo, geradoEm } = view;
   const title = `Risco de alagamento ${emNome} (${zona.nome}, SP) · Pulsar`;
   const dado = ocorrencias && ocorrencias.total > 0 && periodo.de
-    ? `${ocorrencias.total} ocorrência${ocorrencias.total > 1 ? 's' : ''} de alagamento registrada${ocorrencias.total > 1 ? 's' : ''} pela Defesa Civil desde ${fmtMes(periodo.de.slice(0, 7))}. `
+    ? ` ${ocorrencias.total} ocorrência${ocorrencias.total > 1 ? 's' : ''} registrada${ocorrencias.total > 1 ? 's' : ''} pela Defesa Civil desde ${fmtMes(periodo.de.slice(0, 7))}.`
     : '';
-  const descricao = `${dado}Veja o risco de chuva forte e alagamento ${emNome} (${distritos.join(', ')}) e receba alerta antecipado do Pulsar.`;
+  const risco = `Risco de chuva forte e alagamento ${emNome}`;
+  // Do mais completo ao mais enxuto. Os distritos pegam a cauda longa ("alagamento
+  // Tatuapé"); o número de ocorrências fica até o fim porque é o que faz clicar.
+  const descricao = primeiraQueCabe([
+    `${risco} (${distritos.join(', ')}).${dado} Alerta grátis do Pulsar.`,
+    `${risco}.${dado} Alerta grátis do Pulsar.`,
+    `${risco}.${dado}`,
+  ]);
   const url = `${ORIGIN}${path}`;
   const zonaUrl = `${ORIGIN}${PREFIXO_REGIAO}/${zona.slug}`;
   return {

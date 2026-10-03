@@ -27,7 +27,7 @@ describe('TitleManager', () => {
 
   it('home usa o título institucional', async () => {
     renderEm('/');
-    await esperarTitulo('Pulsar · Monitoramento Climático em Tempo Real');
+    await esperarTitulo('Pulsar: alerta de alagamento e chuva forte em São Paulo');
   });
 
   it('rotas de admin levam o sufixo Admin', async () => {
@@ -47,6 +47,6 @@ describe('TitleManager', () => {
 
   it('rota desconhecida usa o título institucional', async () => {
     renderEm('/rota-inexistente');
-    await esperarTitulo('Pulsar · Monitoramento Climático em Tempo Real');
+    await esperarTitulo('Pulsar: alerta de alagamento e chuva forte em São Paulo');
   });
 });

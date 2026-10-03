@@ -42,7 +42,8 @@ public class AvisoMigracaoService : IAvisoMigracaoService
             if (ct.IsCancellationRequested) break;
             var linhas = g.ToList();
             var usuario = linhas[0].Usuario;
-            var zonas = ZonasPorExtenso([.. linhas.Select(l => l.Regiao.Nome).Distinct()]);
+            // Ordenadas: sem isso o texto dependeria da ordem em que o banco devolve as linhas.
+            var zonas = ZonasPorExtenso([.. linhas.Select(l => l.Regiao.Nome).Distinct().Order()]);
             var texto = $"Você acompanhava {zonas}. Escolha suas subprefeituras para continuar recebendo alertas.";
             var agora = DateTime.UtcNow;
 

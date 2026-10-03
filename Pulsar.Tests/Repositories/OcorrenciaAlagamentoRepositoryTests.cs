@@ -42,6 +42,19 @@ public class OcorrenciaAlagamentoRepositoryTests
     }
 
     [Fact]
+    public async Task UpsertRange_DevolveQuantasEramNovas()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var repo = new OcorrenciaAlagamentoRepository(ctx);
+        var data = DateTime.UtcNow.AddMonths(-1);
+
+        (await repo.UpsertRangeAsync([Nova("1", data), Nova("2", data)])).Should().Be(2);
+        (await repo.UpsertRangeAsync([Nova("1", data), Nova("2", data), Nova("3", data)])).Should().Be(1);
+    }
+
+    [Fact]
     public async Task UpsertRange_AtualizaRegistroExistente()
     {
         using var conn = new SqliteConnection("Data Source=:memory:");

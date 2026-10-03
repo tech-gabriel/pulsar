@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAlertas } from '../../contexts/AlertasContext';
+import { resumoAlertas } from '../../utils/risco';
 import { useTheme } from '../../hooks/useTheme';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import BadgeRisco from './BadgeRisco';
@@ -31,13 +32,14 @@ const TABS: { to: string; label: string; curto: string; Icon: LucideIcon; end?: 
 export default function Header() {
   const { usuario, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { alertas } = useAlertas();
+  const { alertas, regioes, carregando } = useAlertas();
   const navigate = useNavigate();
 
   const [painelAberto, setPainelAberto] = useState(false);
   const sinoRef = useRef<HTMLDivElement>(null);
 
   const temAlertas = alertas.length > 0;
+  const semDado = regioes.length === 0;
 
   // Fecha o painel ao clicar fora ou pressionar Esc.
   useEffect(() => {
@@ -165,12 +167,12 @@ export default function Header() {
 
                   {!temAlertas ? (
                     <div className="notif-empty">
-                      <ShieldCheck size={26} style={{ color: '#22c55e' }} />
+                      <ShieldCheck size={26} style={{ color: semDado ? 'var(--text-muted)' : '#22c55e' }} />
                       <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Tudo tranquilo em São Paulo
+                        {resumoAlertas(regioes, carregando)}
                       </p>
                       <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
-                        Nenhuma região em risco alto agora.
+                        {semDado ? 'Os alertas aparecem aqui assim que os dados chegarem.' : 'Nenhuma região em risco alto agora.'}
                       </p>
                     </div>
                   ) : (

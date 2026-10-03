@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizarNome } from '../../utils/texto';
+import { normalizarNome, primeiraQueCabe } from '../../utils/texto';
 
 describe('normalizarNome', () => {
   it('remove acentos e baixa a caixa (GeoJSON x banco)', () => {
@@ -22,5 +22,14 @@ describe('normalizarNome', () => {
 
   it('casa São Miguel (banco, após alinhamento) com SAO MIGUEL (GeoJSON)', () => {
     expect(normalizarNome('São Miguel')).toBe(normalizarNome('SAO MIGUEL'));
+  });
+});
+
+describe('primeiraQueCabe', () => {
+  it('devolve a primeira opção dentro do limite', () => {
+    expect(primeiraQueCabe(['a'.repeat(10), 'b'.repeat(5), 'c'], 6)).toBe('bbbbb');
+  });
+  it('sem nenhuma dentro do limite, devolve a última', () => {
+    expect(primeiraQueCabe(['a'.repeat(10), 'b'.repeat(8)], 6)).toBe('bbbbbbbb');
   });
 });

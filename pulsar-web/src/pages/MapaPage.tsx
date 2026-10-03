@@ -167,8 +167,9 @@ export default function MapaPage() {
     onRecarregar: recarregar,
     ultimaAtualizacao,
     nomeUsuario: usuario?.nome ?? '',
-    isFavorito,
-    onToggleFavorito: toggleFavorito,
+    // A estrela do painel sai na Task 9 (vira "Suas subprefeituras").
+    isFavorito: () => false,
+    onToggleFavorito: () => {},
   };
 
   // Classes do mapa: offset lateral conforme sidebar (tablet esquerda / desktop direita)
@@ -309,8 +310,8 @@ export default function MapaPage() {
               key={regiaoSelecionada.id}
               regiaoId={regiaoSelecionada.id}
               onFechar={fecharDetalhe}
-              isFavorito={isFavorito(regiaoSelecionada.id)}
-              onToggleFavorito={() => toggleFavorito(regiaoSelecionada.id)}
+              isFavorito={isFavorito}
+              onToggleFavorito={toggleFavorito}
             />
           ) : (
             <PainelLateral
@@ -400,8 +401,8 @@ export default function MapaPage() {
             key={regiaoSelecionada.id}
             regiaoId={regiaoSelecionada.id}
             onFechar={fecharDetalhe}
-            isFavorito={isFavorito(regiaoSelecionada.id)}
-            onToggleFavorito={() => toggleFavorito(regiaoSelecionada.id)}
+            isFavorito={isFavorito}
+            onToggleFavorito={toggleFavorito}
           />
         </div>
       )}

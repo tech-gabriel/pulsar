@@ -21,8 +21,8 @@ import { SkeletonCardSubprefeitura } from '../ui/Skeleton';
 interface Props {
   regiaoId: string;
   onFechar: () => void;
-  isFavorito: boolean;
-  onToggleFavorito: () => void;
+  isFavorito: (subprefeituraId: string) => boolean;
+  onToggleFavorito: (subprefeituraId: string) => void;
 }
 
 // ── Ring de progresso circular (ETAPA 4.3) ─────────────────────────────────────
@@ -116,8 +116,9 @@ function LinhaClima({
 }
 
 // ── Item de subprefeitura: expande para a visão micro (clima da subprefeitura) ──
-function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
+function ItemSubprefeitura({ sub, indice, onVerHistorico, favorito, onToggleFavorito }: {
   sub: SubprefeituraDto; indice: number; onVerHistorico: () => void;
+  favorito: boolean; onToggleFavorito: () => void;
 }) {
   const [aberto, setAberto] = useState(false);
   const score = sub.scoreAtual?.valor ?? 0;
@@ -128,10 +129,11 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
 
   return (
     <div className="py-2">
+      <div className="flex items-center gap-1">
       <button
         type="button"
         onClick={() => setAberto((v) => !v)}
-        className="w-full text-left"
+        className="flex-1 min-w-0 text-left"
         aria-expanded={aberto}
       >
         <div className="flex items-center justify-between gap-2">
@@ -173,6 +175,8 @@ function ItemSubprefeitura({ sub, indice, onVerHistorico }: {
           />
         </div>
       </button>
+      <BotaoFavorito ativo={favorito} onToggle={onToggleFavorito} size={16} />
+      </div>
 
       <AnimatePresence initial={false}>
         {aberto && (
@@ -263,7 +267,6 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
             </p>
           )}
         </div>
-        <BotaoFavorito ativo={isFavorito} onToggle={onToggleFavorito} size={18} />
       </div>
 
       {/* Body */}
@@ -364,6 +367,8 @@ export default function DetalheRegiao({ regiaoId, onFechar, isFavorito, onToggle
                       key={sub.id}
                       sub={sub}
                       indice={i}
+                      favorito={isFavorito(sub.id)}
+                      onToggleFavorito={() => onToggleFavorito(sub.id)}
                       onVerHistorico={() =>
                         navigate(`/app/historico/${sub.id}`, { state: { regiaoNome: regiao.nome, subNome: sub.nome } })
                       }

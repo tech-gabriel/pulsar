@@ -117,7 +117,7 @@ export default function HistoricoPage() {
         <GlassCard hover={false} padding="lg" className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="transition-colors flex items-center gap-1.5 flex-shrink-0 hover:text-[var(--text-primary)]"
+            className="transition-colors flex items-center justify-center gap-1.5 flex-shrink-0 min-w-11 min-h-11 hover:text-[var(--text-primary)]"
             style={{ color: 'var(--text-secondary)' }}
           >
             <ArrowLeft size={20} />

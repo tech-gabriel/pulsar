@@ -50,7 +50,7 @@ export default function PrivacidadePage() {
           e e-mail).
         </li>
         <li>
-          <strong>Preferências de uso:</strong> regiões favoritas, tema (claro ou escuro) e suas
+          <strong>Preferências de uso:</strong> subprefeituras favoritas, tema (claro ou escuro) e suas
           configurações de notificação.
         </li>
         <li>
@@ -87,7 +87,7 @@ export default function PrivacidadePage() {
           de uso do serviço.
         </li>
         <li>
-          <strong>Personalizar a experiência</strong> (regiões favoritas, tema) e
+          <strong>Personalizar a experiência</strong> (subprefeituras favoritas, tema) e
           <strong> enviar as notificações que você ativou:</strong> execução do contrato e,
           no caso do push, o seu consentimento.
         </li>

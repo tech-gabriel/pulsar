@@ -1,4 +1,6 @@
+using System.Net;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Pulsar.API.Domain.Enums;
 using Pulsar.API.External.Clients;
 
@@ -70,5 +72,42 @@ public class GeoSampaClientTests
         ]}
         """;
         GeoSampaClient.ParseOcorrencias(json, TipoOcorrenciaAlagamento.ALAGAMENTO).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ObterOcorrencias_AsDuasCamadasFalham_Lanca()
+    {
+        var cliente = ClienteCom(_ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+
+        var act = () => cliente.ObterOcorrenciasAsync();
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task ObterOcorrencias_UmaCamadaFalha_SegueComAOutra()
+    {
+        var cliente = ClienteCom(req => req.RequestUri!.Query.Contains("alagamento")
+            ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(GeoJsonExemplo) });
+
+        var lista = await cliente.ObterOcorrenciasAsync();
+
+        lista.Should().HaveCount(2).And.OnlyContain(o => o.Tipo == TipoOcorrenciaAlagamento.INUNDACAO);
+    }
+
+    private static GeoSampaClient ClienteCom(Func<HttpRequestMessage, HttpResponseMessage> responder)
+        => new(new FabricaFalsa(new HandlerFalso(responder)), NullLogger<GeoSampaClient>.Instance);
+
+    private sealed class HandlerFalso(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+            => Task.FromResult(responder(request));
+    }
+
+    private sealed class FabricaFalsa(HttpMessageHandler handler) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name)
+            => new(handler, disposeHandler: false) { BaseAddress = new Uri("https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/") };
     }
 }

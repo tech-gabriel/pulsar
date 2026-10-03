@@ -16,8 +16,8 @@ public class PulsarDbContext : DbContext
     public DbSet<AgregadoDiario> AgregadosDiarios => Set<AgregadoDiario>();
     public DbSet<Alerta> Alertas => Set<Alerta>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
-    public DbSet<UsuarioRegiao> UsuarioRegioes => Set<UsuarioRegiao>();
     public DbSet<UsuarioSubprefeitura> UsuarioSubprefeituras => Set<UsuarioSubprefeitura>();
+    public DbSet<MigracaoFavoritoZona> MigracoesFavoritoZona => Set<MigracaoFavoritoZona>();
     public DbSet<AlertaSugestao> AlertaSugestoes => Set<AlertaSugestao>();
     public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
     public DbSet<AssinaturaPush> AssinaturasPush => Set<AssinaturaPush>();
@@ -109,18 +109,11 @@ public class PulsarDbContext : DbContext
             e.HasIndex(s => new { s.Categoria, s.FaixaRisco });
         });
 
-        modelBuilder.Entity<UsuarioRegiao>(e =>
+        modelBuilder.Entity<MigracaoFavoritoZona>(e =>
         {
-            e.HasKey(ur => ur.Id);
-            e.HasIndex(ur => new { ur.UsuarioId, ur.RegiaoId }).IsUnique();
-            e.HasOne(ur => ur.Usuario)
-             .WithMany()
-             .HasForeignKey(ur => ur.UsuarioId)
-             .OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(ur => ur.Regiao)
-             .WithMany(r => r.Favoritos)
-             .HasForeignKey(ur => ur.RegiaoId)
-             .OnDelete(DeleteBehavior.Cascade);
+            e.HasKey(m => m.Id);
+            e.HasOne(m => m.Usuario).WithMany().HasForeignKey(m => m.UsuarioId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(m => m.Regiao).WithMany().HasForeignKey(m => m.RegiaoId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<UsuarioSubprefeitura>(e =>

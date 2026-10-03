@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Entities;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -156,5 +157,26 @@ public class PrevisaoRepositoryTests
             .Should().BeEquivalentTo([daRegiao[0].Id, daRegiao[1].Id], "só as subs da região pedida");
         futuras.Select(p => p.InstantePrevisto)
             .Should().Equal(agora.AddHours(3), agora.AddHours(6));
+    }
+    [Fact]
+    public async Task ObterFuturasPorSubprefeitura_SoDaquelaSubEmOrdemCrescente()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var repo = new PrevisaoRepository(ctx);
+        var mooca = Guid.Parse("20000000-0000-0000-0000-000000000008");
+        var penha = Guid.Parse("20000000-0000-0000-0000-000000000009");
+        var agora = DateTime.UtcNow;
+        ctx.PrevisoesClimaticas.AddRange(
+            new PrevisaoClimatica { SubprefeituraId = mooca, InstantePrevisto = agora.AddHours(6), ColetadoEm = agora },
+            new PrevisaoClimatica { SubprefeituraId = mooca, InstantePrevisto = agora.AddHours(3), ColetadoEm = agora },
+            new PrevisaoClimatica { SubprefeituraId = mooca, InstantePrevisto = agora.AddHours(-3), ColetadoEm = agora },
+            new PrevisaoClimatica { SubprefeituraId = penha, InstantePrevisto = agora.AddHours(3), ColetadoEm = agora });
+        await ctx.SaveChangesAsync();
+
+        var linhas = await repo.ObterFuturasPorSubprefeituraAsync(mooca, agora);
+
+        linhas.Select(l => l.InstantePrevisto).Should().Equal(agora.AddHours(3), agora.AddHours(6));
     }
 }

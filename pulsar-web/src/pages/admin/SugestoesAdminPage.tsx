@@ -165,10 +165,10 @@ function SugestaoCard({ s, podeEditar, onEditar, onRemover }: {
               </>
             ) : (
               <>
-                <button type="button" onClick={onEditar} title="Editar" aria-label="Editar sugestão" className="p-1.5" style={{ color: 'var(--text-secondary)' }}>
+                <button type="button" onClick={onEditar} title="Editar" aria-label="Editar sugestão" className="min-w-6 min-h-6 p-1.5 inline-flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
                   <Pencil size={15} />
                 </button>
-                <button type="button" onClick={() => setConfirmando(true)} title="Excluir" aria-label="Excluir sugestão" className="p-1.5" style={{ color: 'var(--text-muted)' }}>
+                <button type="button" onClick={() => setConfirmando(true)} title="Excluir" aria-label="Excluir sugestão" className="min-w-6 min-h-6 p-1.5 inline-flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
                   <Trash2 size={15} />
                 </button>
               </>

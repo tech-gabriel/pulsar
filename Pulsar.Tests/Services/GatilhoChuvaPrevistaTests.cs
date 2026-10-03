@@ -31,9 +31,8 @@ public class GatilhoChuvaPrevistaTests
     private static ContextoGatilho Contexto(params FaixaPrevisaoDto[] faixas)
         => new()
         {
-            Regiao = new Regiao { Nome = "Sul", FusoHorario = "America/Sao_Paulo" },
+            Estado = new EstadoSubprefeitura(new Subprefeitura { Nome = "Mooca", Ativa = true }, null, null),
             Fuso = Sp,
-            Subprefeituras = Array.Empty<EstadoSubprefeitura>(),
             Previsao = faixas,
             AgoraUtc = Agora,
         };
@@ -58,7 +57,7 @@ public class GatilhoChuvaPrevistaTests
 
         // Tag é carga: é ela que faz o aviso novo SUBSTITUIR o anterior na bandeja em vez
         // de empilhar dois avisos da mesma região.
-        pendencias[0].Payload.Tag.Should().Be($"chuva-{ctx.Regiao.Id}");
+        pendencias[0].Payload.Tag.Should().Be($"chuva-{ctx.Subprefeitura.Id}");
         pendencias[0].Payload.Url.Should().Be("/");
     }
 
@@ -181,7 +180,7 @@ public class GatilhoChuvaPrevistaTests
         {
             var pendencias = await new GatilhoChuvaPrevista().AvaliarAsync(ctx);
 
-            pendencias[0].Chave.Should().Be($"chuva:{ctx.Regiao.Id}:202608171800",
+            pendencias[0].Chave.Should().Be($"chuva:{ctx.Subprefeitura.Id}:202608171800",
                 "a chave é texto de máquina e não pode variar com o locale");
         }
         finally
@@ -224,7 +223,7 @@ public class GatilhoChuvaPrevistaTests
         // "faixa", que é vocabulário do nosso modelo de dados vazando para o usuário.
         payload.Corpo.Should().NotContain("faixa", "'faixa' é palavra do modelo, não de quem lê");
 
-        payload.Titulo.Should().Be("Chuva forte prevista na região Sul");
+        payload.Titulo.Should().Be("Chuva forte prevista na Mooca");
 
         // Igualdade exata: um Contain("15h") passaria em corpo que perdeu o volume ou a
         // orientação do que fazer, e cada palavra aqui é decisão de produto.

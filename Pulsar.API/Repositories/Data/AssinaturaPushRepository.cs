@@ -19,11 +19,8 @@ public class AssinaturaPushRepository : IAssinaturaPushRepository
     public async Task<AssinaturaPush?> ObterPorEndpointAsync(string endpoint)
         => await _context.AssinaturasPush.FirstOrDefaultAsync(a => a.Endpoint == endpoint);
 
-    public async Task<IEnumerable<AssinaturaPush>> ObterPorRegiaoFavoritaAsync(Guid regiaoId)
-        => await _context.AssinaturasPush
-            .Where(a => _context.UsuarioRegioes
-                .Any(ur => ur.RegiaoId == regiaoId && ur.UsuarioId == a.UsuarioId))
-            .ToListAsync();
+    public async Task<IReadOnlyList<AssinaturaPush>> ObterPorUsuarioAsync(Guid usuarioId)
+        => await _context.AssinaturasPush.Where(a => a.UsuarioId == usuarioId).ToListAsync();
 
     public async Task AdicionarAsync(AssinaturaPush entidade)
         => await _context.AssinaturasPush.AddAsync(entidade);

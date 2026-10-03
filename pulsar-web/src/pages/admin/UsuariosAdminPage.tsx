@@ -251,7 +251,7 @@ function LinhaUsuario({ u, ehVoce, podeEditar, onRole, onAtivo, onExcluir }: {
           onClick={() => onAtivo(!u.ativo)}
           title={u.ativo ? 'Desativar conta' : 'Ativar conta'}
           aria-label={u.ativo ? 'Desativar conta' : 'Ativar conta'}
-          className="flex-shrink-0 transition-colors"
+          className="flex-shrink-0 min-w-6 min-h-6 inline-flex items-center justify-center transition-colors"
           style={{ color: u.ativo ? '#22c55e' : '#ef4444' }}
         >
           {u.ativo ? <UserCheck size={18} /> : <UserX size={18} />}
@@ -269,7 +269,7 @@ function LinhaUsuario({ u, ehVoce, podeEditar, onRole, onAtivo, onExcluir }: {
           onClick={onExcluir}
           title="Excluir conta"
           aria-label={`Excluir conta de ${u.nome}`}
-          className="flex-shrink-0 transition-colors"
+          className="flex-shrink-0 min-w-6 min-h-6 inline-flex items-center justify-center transition-colors"
           style={{ color: 'var(--text-muted)' }}
           onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
           onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}

@@ -158,7 +158,7 @@ export default function DashboardPage() {
           </div>
           <button
             onClick={recarregar}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 transition-colors"
+            className="flex items-center justify-center gap-2 rounded-lg px-3 min-w-11 min-h-11 transition-colors"
             style={{ background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-secondary)', fontSize: 13 }}
             title="Atualizar dados"
           >

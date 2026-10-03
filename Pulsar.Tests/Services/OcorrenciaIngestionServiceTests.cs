@@ -48,4 +48,17 @@ public class OcorrenciaIngestionServiceTests
 
         resultado.Total.Should().Be(0);
     }
+
+    [Fact]
+    public async Task Sincronizar_InformaQuantasEramNovas()
+    {
+        _clientMock.Setup(c => c.ObterOcorrenciasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([Nova(TipoOcorrenciaAlagamento.ALAGAMENTO), Nova(TipoOcorrenciaAlagamento.INUNDACAO)]);
+        _repoMock.Setup(r => r.UpsertRangeAsync(It.IsAny<IEnumerable<OcorrenciaAlagamento>>())).ReturnsAsync(1);
+
+        var resultado = await CriarServico().SincronizarAsync();
+
+        resultado.Total.Should().Be(2);
+        resultado.Novas.Should().Be(1);
+    }
 }

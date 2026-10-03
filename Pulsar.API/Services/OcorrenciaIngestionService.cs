@@ -25,15 +25,16 @@ public class OcorrenciaIngestionService : IOcorrenciaIngestionService
     public async Task<OcorrenciaSincronizacaoDto> SincronizarAsync(CancellationToken ct = default)
     {
         var ocorrencias = await _client.ObterOcorrenciasAsync(ct);
-        await _repo.UpsertRangeAsync(ocorrencias);
+        var novas = await _repo.UpsertRangeAsync(ocorrencias);
 
         var resultado = new OcorrenciaSincronizacaoDto
         {
             Total = ocorrencias.Count,
             Alagamentos = ocorrencias.Count(o => o.Tipo == TipoOcorrenciaAlagamento.ALAGAMENTO),
             Inundacoes = ocorrencias.Count(o => o.Tipo == TipoOcorrenciaAlagamento.INUNDACAO),
+            Novas = novas,
         };
-        _logger.LogInformation("Sincronização GeoSampa: {Total} ocorrências.", resultado.Total);
+        _logger.LogInformation("Sincronização GeoSampa: {Total} ocorrências, {Novas} novas.", resultado.Total, resultado.Novas);
         return resultado;
     }
 }

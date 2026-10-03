@@ -207,12 +207,14 @@ export interface HistoricoDto {
 // ── Favoritos ─────────────────────────────────────────────────────────────────
 
 export interface FavoritoDto {
+  subprefeituraId: string;
+  nome: string;
   regiaoId: string;
   regiaoNome: string;
 }
 
 export interface AdicionarFavoritoRequestDto {
-  regiaoId: string;
+  subprefeituraId: string;
 }
 
 // ── Notícias ──────────────────────────────────────────────────────────────────

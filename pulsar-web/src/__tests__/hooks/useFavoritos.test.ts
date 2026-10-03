@@ -27,7 +27,7 @@ const mockedApi = api as unknown as {
 };
 
 const USUARIO = 'user-1';
-const fav = (regiaoId: string, regiaoNome = 'Centro'): FavoritoDto => ({ regiaoId, regiaoNome });
+const fav = (subprefeituraId: string, nome = 'Mooca'): FavoritoDto => ({ subprefeituraId, nome, regiaoId: 'r-leste', regiaoNome: 'Leste' });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -69,9 +69,9 @@ describe('useFavoritos', () => {
 
     await act(async () => { await result.current.toggleFavorito('r9'); });
 
-    expect(mockedApi.post).toHaveBeenCalledWith(`/usuarios/${USUARIO}/favoritos`, { regiaoId: 'r9' });
+    expect(mockedApi.post).toHaveBeenCalledWith(`/usuarios/${USUARIO}/favoritos`, { subprefeituraId: 'r9' });
     expect(result.current.isFavorito('r9')).toBe(true);
-    expect(showToast).toHaveBeenCalledWith('Região adicionada aos favoritos', 'success');
+    expect(showToast).toHaveBeenCalledWith('Subprefeitura adicionada aos favoritos', 'success');
   });
 
   it('emite favoritou_regiao ao adicionar um favorito', async () => {
@@ -93,7 +93,7 @@ describe('useFavoritos', () => {
 
     expect(mockedApi.delete).toHaveBeenCalledWith(`/usuarios/${USUARIO}/favoritos/r1`);
     expect(result.current.isFavorito('r1')).toBe(false);
-    expect(showToast).toHaveBeenCalledWith('Região removida dos favoritos', 'info');
+    expect(showToast).toHaveBeenCalledWith('Subprefeitura removida dos favoritos', 'info');
   });
 
   it('exibe toast de erro quando o toggle falha', async () => {
@@ -113,5 +113,15 @@ describe('useFavoritos', () => {
 
     expect(mockedApi.post).not.toHaveBeenCalled();
     expect(mockedApi.delete).not.toHaveBeenCalled();
+  });
+
+  it('mostra a mensagem da API quando passa do limite', async () => {
+    mockedApi.post.mockRejectedValueOnce({ response: { data: { mensagem: 'Você já acompanha 10 subprefeituras. Remova uma para adicionar outra.' } } });
+    const { result } = renderHook(() => useFavoritos(USUARIO));
+    await waitFor(() => expect(result.current.carregando).toBe(false));
+
+    await act(() => result.current.toggleFavorito('s11'));
+
+    expect(showToast).toHaveBeenCalledWith('Você já acompanha 10 subprefeituras. Remova uma para adicionar outra.', 'error');
   });
 });

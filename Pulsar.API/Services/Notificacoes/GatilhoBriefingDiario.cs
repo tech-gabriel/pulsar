@@ -95,7 +95,6 @@ public class GatilhoBriefingDiario : IGatilhoNotificacao
         // chuva prevista" seria inventar uma ausência tanto quanto inventar a chuva.
 
         var diaLocal = FusoLocal.DiaLocal(ctx.AgoraUtc, ctx.Fuso);
-        var rotulo = LimiaresNotificacao.Rotulo(ctx.Regiao.Nome);
 
         var pendencia = new NotificacaoPendente(
             Gatilho: Nome,
@@ -110,15 +109,16 @@ public class GatilhoBriefingDiario : IGatilhoNotificacao
             // InvariantCulture porque isto é chave de banco, não texto: cultura com
             // calendário não gregoriano escreveria 2569 e nunca casaria com os registros
             // antigos do livro-caixa.
-            Chave: $"briefing:{ctx.Regiao.Id}:{diaLocal.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}",
+            Chave: $"briefing:{ctx.Subprefeitura.Id}:{diaLocal.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}",
             Criterio: CriterioOptIn.ResumoDiario,
             Payload: new PushPayload(
-                // Maiúscula porque o rótulo abre o título: "Região Sul hoje".
-                Titulo: $"{char.ToUpperInvariant(rotulo[0])}{rotulo[1..]} hoje",
+                Titulo: $"{ctx.Subprefeitura.Nome} hoje",
                 Corpo: corpo,
                 Url: "/",
-                Tag: $"briefing-{ctx.Regiao.Id}"),
-            Prioridade: LimiaresNotificacao.PrioridadeBriefing);
+                Tag: $"briefing-{ctx.Subprefeitura.Id}"),
+            Prioridade: LimiaresNotificacao.PrioridadeBriefing,
+            SubprefeituraId: ctx.Subprefeitura.Id,
+            Local: ctx.Subprefeitura.Nome);
         // Cooldown omitido de propósito (fica no default null): o dedup aqui é pela chave
         // exata do dia local, e não janela deslizante. Só o risco alto usa cooldown.
 

@@ -16,7 +16,7 @@ public class Usuario
     /// <summary>Conta ativa. Quando false, o login é bloqueado.</summary>
     public bool Ativo { get; set; } = true;
 
-    public IList<UsuarioRegiao> Favoritos { get; set; } = new List<UsuarioRegiao>();
+    public IList<UsuarioSubprefeitura> Favoritos { get; set; } = new List<UsuarioSubprefeitura>();
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
 }

@@ -54,12 +54,12 @@ public class WebPushNotificationService : IPushNotificationService
 
     public string? ChavePublica => _chavePublica;
 
-    public async Task<int> NotificarRegiaoAsync(Guid regiaoId, CriterioOptIn criterio, PushPayload payload, CancellationToken ct = default)
+    public async Task<int> NotificarUsuarioAsync(Guid usuarioId, CriterioOptIn criterio, PushPayload payload, CancellationToken ct = default)
     {
         if (!Habilitado)
             return 0;
 
-        var assinaturas = (await _repo.ObterPorRegiaoFavoritaAsync(regiaoId))
+        var assinaturas = (await _repo.ObterPorUsuarioAsync(usuarioId))
             .Where(a => OptouPeloCriterio(a, criterio))
             .ToList();
 

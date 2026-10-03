@@ -18,9 +18,9 @@ describe('track', () => {
     h.posthog.capture.mockClear();
   });
 
-  it('favoritouRegiao emite favoritou_regiao com regiaoId', () => {
-    track.favoritouRegiao('r-123');
-    expect(h.posthog.capture).toHaveBeenCalledWith('favoritou_regiao', { regiaoId: 'r-123' });
+  it('favoritouRegiao emite favoritou_regiao com subprefeituraId', () => {
+    track.favoritouRegiao('s-123');
+    expect(h.posthog.capture).toHaveBeenCalledWith('favoritou_regiao', { subprefeituraId: 's-123' });
   });
 
   it('cadastrou emite cadastrou com metodo', () => {

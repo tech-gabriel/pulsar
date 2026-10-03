@@ -24,37 +24,31 @@ public class GatilhoScoreAltoTests
         Timestamp = DateTime.UtcNow,
     };
 
-    private static ContextoGatilho Contexto(params (double valor, FaixaRisco faixa)[] scores)
-        => Montar(LeituraPadrao(), scores, chuva3h: 18);
+    private static ContextoGatilho Contexto(double valor, FaixaRisco faixa)
+        => Montar(LeituraPadrao(), (valor, faixa), chuva3h: 18);
 
     /// <summary>Mesmo cenário, mas sem a leitura que gerou o score: cobre a copy de fallback.</summary>
-    private static ContextoGatilho ContextoSemLeitura(params (double valor, FaixaRisco faixa)[] scores)
-        => Montar(null, scores);
+    private static ContextoGatilho ContextoSemLeitura(double valor, FaixaRisco faixa)
+        => Montar(null, (valor, faixa));
 
     private static ContextoGatilho Montar(
-        LeituraClimatica? leitura, (double valor, FaixaRisco faixa)[] scores,
+        LeituraClimatica? leitura, (double valor, FaixaRisco faixa) score,
         TipoPerigo perigo = TipoPerigo.ALAGAMENTO, double chuva48h = 0, double chuva3h = 0)
-    {
-        var regiao = new Regiao { Nome = "Sul", FusoHorario = "America/Sao_Paulo" };
-        var estados = scores.Select(s => new EstadoSubprefeitura(
-            new Subprefeitura { RegiaoId = regiao.Id, Nome = "Sub", Ativa = true },
-            new ScorePerigo { Valor = s.valor, Faixa = s.faixa, PerigoPrincipal = perigo, Chuva48hMm = chuva48h, Chuva3hMm = chuva3h, Timestamp = DateTime.UtcNow },
-            leitura)).ToList();
-
-        return new ContextoGatilho
+        => new()
         {
-            Regiao = regiao,
+            Estado = new EstadoSubprefeitura(
+                new Subprefeitura { Nome = "Mooca", Ativa = true },
+                new ScorePerigo { Valor = score.valor, Faixa = score.faixa, PerigoPrincipal = perigo, Chuva48hMm = chuva48h, Chuva3hMm = chuva3h, Timestamp = DateTime.UtcNow },
+                leitura),
             Fuso = Sp,
-            Subprefeituras = estados,
             Previsao = Array.Empty<FaixaPrevisaoDto>(),
             AgoraUtc = new DateTime(2026, 8, 17, 18, 0, 0, DateTimeKind.Utc),
         };
-    }
 
     [Fact]
     public async Task FaixaAlto_GeraPendencia()
     {
-        var ctx = Contexto((45, FaixaRisco.MODERADO), (78, FaixaRisco.ALTO));
+        var ctx = Contexto(78, FaixaRisco.ALTO);
 
         var pendencias = await new GatilhoScoreAlto().AvaliarAsync(ctx);
 
@@ -71,15 +65,17 @@ public class GatilhoScoreAltoTests
         // Chave e Tag são carga: a Chave é o que entra no índice único do livro-caixa,
         // e a Tag é o que faz o push novo SUBSTITUIR o anterior na bandeja em vez de
         // empilhar. Nenhuma das duas pode mudar por descuido de refatoração.
-        pendencias[0].Chave.Should().Be($"score:{ctx.Regiao.Id}:202608171800");
-        pendencias[0].Payload.Tag.Should().Be($"alerta-{ctx.Regiao.Id}");
+        pendencias[0].Chave.Should().Be($"score:{ctx.Subprefeitura.Id}:202608171800");
+        pendencias[0].Payload.Tag.Should().Be($"alerta-{ctx.Subprefeitura.Id}");
         pendencias[0].Payload.Url.Should().Be("/");
+        pendencias[0].SubprefeituraId.Should().Be(ctx.Subprefeitura.Id);
+        pendencias[0].Local.Should().Be("Mooca");
     }
 
     [Fact]
     public async Task FaixaAlto_UsaCooldownDeslizanteDeUmaHora()
     {
-        var pendencias = await new GatilhoScoreAlto().AvaliarAsync(Contexto((78, FaixaRisco.ALTO)));
+        var pendencias = await new GatilhoScoreAlto().AvaliarAsync(Contexto(78, FaixaRisco.ALTO));
 
         pendencias[0].Cooldown.Should().Be(TimeSpan.FromHours(1),
             "o dedup do score alto é janela deslizante, não balde de hora de calendário");
@@ -89,7 +85,7 @@ public class GatilhoScoreAltoTests
     public async Task SemFaixaAlto_NaoGeraNada()
     {
         var pendencias = await new GatilhoScoreAlto().AvaliarAsync(
-            Contexto((25, FaixaRisco.BAIXO), (55, FaixaRisco.MODERADO)));
+            Contexto(55, FaixaRisco.MODERADO));
 
         pendencias.Should().BeEmpty();
     }
@@ -99,9 +95,8 @@ public class GatilhoScoreAltoTests
     {
         var ctx = new ContextoGatilho
         {
-            Regiao = new Regiao { Nome = "Sul", FusoHorario = "America/Sao_Paulo" },
+            Estado = new EstadoSubprefeitura(new Subprefeitura { Nome = "Mooca" }, null, null),
             Fuso = Sp,
-            Subprefeituras = Array.Empty<EstadoSubprefeitura>(),
             Previsao = Array.Empty<FaixaPrevisaoDto>(),
             AgoraUtc = DateTime.UtcNow,
         };
@@ -112,7 +107,7 @@ public class GatilhoScoreAltoTests
     [Fact]
     public async Task Copy_TrazNumerosConcretosEmVezDeScore()
     {
-        var pendencias = await new GatilhoScoreAlto().AvaliarAsync(Contexto((78, FaixaRisco.ALTO)));
+        var pendencias = await new GatilhoScoreAlto().AvaliarAsync(Contexto(78, FaixaRisco.ALTO));
 
         var payload = pendencias[0].Payload;
 
@@ -134,7 +129,7 @@ public class GatilhoScoreAltoTests
         payload.Corpo.Should().NotContainEquivalentOf("score",
             "o número do score não diz a ninguém o que fazer");
 
-        payload.Titulo.Should().Be("Risco alto de alagamento na região Sul");
+        payload.Titulo.Should().Be("Risco alto de alagamento na Mooca");
 
         // Igualdade exata: um Contain("18") passaria em corpo que perdeu a unidade ou a
         // cláusula do vento. Cobre também o caminho inteiro, em que "0.#" não imprime casa.
@@ -157,7 +152,7 @@ public class GatilhoScoreAltoTests
         try
         {
             var pendencias = await new GatilhoScoreAlto().AvaliarAsync(
-                Montar(leitura, [(78, FaixaRisco.ALTO)], chuva3h: 12.4));
+                Montar(leitura, (78, FaixaRisco.ALTO), chuva3h: 12.4));
 
             pendencias[0].Payload.Corpo.Should().Be(
                 "Chuva de 12,4 mm nas últimas 3 horas.",
@@ -173,7 +168,7 @@ public class GatilhoScoreAltoTests
     public async Task SemLeitura_UsaCopyGenericaEmVezDeNumeros()
     {
         var pendencias = await new GatilhoScoreAlto().AvaliarAsync(
-            ContextoSemLeitura((78, FaixaRisco.ALTO)));
+            ContextoSemLeitura(78, FaixaRisco.ALTO));
 
         pendencias.Should().HaveCount(1, "score alto sem leitura ainda merece aviso");
         pendencias[0].Payload.Corpo.Should().Be(
@@ -184,7 +179,7 @@ public class GatilhoScoreAltoTests
     public async Task Alagamento_ComSoloEncharcado_AvisaNoCorpo()
     {
         var p = await new GatilhoScoreAlto().AvaliarAsync(
-            Montar(LeituraPadrao(), [(78, FaixaRisco.ALTO)], TipoPerigo.ALAGAMENTO, chuva48h: 60, chuva3h: 18));
+            Montar(LeituraPadrao(), (78, FaixaRisco.ALTO), TipoPerigo.ALAGAMENTO, chuva48h: 60, chuva3h: 18));
         p[0].Payload.Corpo.Should().Be("Chuva de 18 mm nas últimas 3 horas, com o solo já encharcado.");
     }
 
@@ -192,8 +187,8 @@ public class GatilhoScoreAltoTests
     public async Task Vento_TemTituloECorpoProprios()
     {
         var p = await new GatilhoScoreAlto().AvaliarAsync(
-            Montar(LeituraPadrao(), [(70, FaixaRisco.ALTO)], TipoPerigo.VENTO));
-        p[0].Payload.Titulo.Should().Be("Vento forte na região Sul");
+            Montar(LeituraPadrao(), (70, FaixaRisco.ALTO), TipoPerigo.VENTO));
+        p[0].Payload.Titulo.Should().Be("Vento forte na Mooca");
         p[0].Payload.Corpo.Should().Be("Ventos de 45 km/h agora.");
     }
 
@@ -207,8 +202,8 @@ public class GatilhoScoreAltoTests
         try
         {
             var p = await new GatilhoScoreAlto().AvaliarAsync(
-                Montar(leitura, [(65, FaixaRisco.ALTO)], TipoPerigo.CALOR));
-            p[0].Payload.Titulo.Should().Be("Calor extremo na região Sul");
+                Montar(leitura, (65, FaixaRisco.ALTO), TipoPerigo.CALOR));
+            p[0].Payload.Titulo.Should().Be("Calor extremo na Mooca");
             p[0].Payload.Corpo.Should().Be("Sensação térmica de 42 °C. Hidrate-se e evite sol forte.");
         }
         finally { CultureInfo.CurrentCulture = original; }
@@ -220,7 +215,7 @@ public class GatilhoScoreAltoTests
     [InlineData(TipoPerigo.CALOR)]
     public async Task SemLeitura_TodoPerigoTemCopySemNumeroESemTravessao(TipoPerigo perigo)
     {
-        var p = await new GatilhoScoreAlto().AvaliarAsync(Montar(null, [(78, FaixaRisco.ALTO)], perigo));
+        var p = await new GatilhoScoreAlto().AvaliarAsync(Montar(null, (78, FaixaRisco.ALTO), perigo));
         p.Should().HaveCount(1);
         p[0].Payload.Corpo.Should().NotContain("—").And.NotContain("–").And.NotContainEquivalentOf("score");
         p[0].Payload.Titulo.Should().NotContain("—").And.NotContain("–");
@@ -233,7 +228,7 @@ public class GatilhoScoreAltoTests
         var leitura = LeituraPadrao();
         leitura.ChuvaMmH = 0;
         var p = await new GatilhoScoreAlto().AvaliarAsync(
-            Montar(leitura, [(84, FaixaRisco.ALTO)], TipoPerigo.ALAGAMENTO, chuva3h: 25));
+            Montar(leitura, (84, FaixaRisco.ALTO), TipoPerigo.ALAGAMENTO, chuva3h: 25));
         p[0].Payload.Corpo.Should().Be("Chuva de 25 mm nas últimas 3 horas.");
     }
 
@@ -241,7 +236,7 @@ public class GatilhoScoreAltoTests
     public async Task Alagamento_SemAcumulado_UsaCopyGenerica()
     {
         var p = await new GatilhoScoreAlto().AvaliarAsync(
-            Montar(LeituraPadrao(), [(78, FaixaRisco.ALTO)], TipoPerigo.ALAGAMENTO, chuva3h: 0));
+            Montar(LeituraPadrao(), (78, FaixaRisco.ALTO), TipoPerigo.ALAGAMENTO, chuva3h: 0));
         p[0].Payload.Corpo.Should().Be("Condições de risco alto agora. Evite áreas de alagamento.");
     }
 }

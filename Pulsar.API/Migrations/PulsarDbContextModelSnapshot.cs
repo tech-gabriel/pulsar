@@ -239,6 +239,33 @@ namespace Pulsar.API.Migrations
                     b.ToTable("LeiturasClimaticas");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.MigracaoFavoritoZona", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EmailAvisadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PushAvisadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RegiaoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegiaoId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("MigracoesFavoritoZona");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.NotificacaoEnviada", b =>
                 {
                     b.Property<Guid>("Id")
@@ -250,26 +277,31 @@ namespace Pulsar.API.Migrations
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
-                    b.Property<int>("Destinatarios")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("EnviadoEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EnvioId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Gatilho")
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
-                    b.Property<Guid>("RegiaoId")
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UsuarioId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Chave")
+                    b.HasIndex("SubprefeituraId");
+
+                    b.HasIndex("UsuarioId", "Chave")
                         .IsUnique();
 
-                    b.HasIndex("RegiaoId", "Gatilho", "EnviadoEm");
+                    b.HasIndex("UsuarioId", "EnviadoEm");
 
                     b.ToTable("NotificacoesEnviadas");
                 });
@@ -1506,7 +1538,7 @@ namespace Pulsar.API.Migrations
                     b.ToTable("Usuarios");
                 });
 
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.UsuarioRegiao", b =>
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.UsuarioSubprefeitura", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1515,7 +1547,7 @@ namespace Pulsar.API.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("RegiaoId")
+                    b.Property<Guid>("SubprefeituraId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("UsuarioId")
@@ -1523,12 +1555,12 @@ namespace Pulsar.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RegiaoId");
+                    b.HasIndex("SubprefeituraId");
 
-                    b.HasIndex("UsuarioId", "RegiaoId")
+                    b.HasIndex("UsuarioId", "SubprefeituraId")
                         .IsUnique();
 
-                    b.ToTable("UsuarioRegioes");
+                    b.ToTable("UsuarioSubprefeituras");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.AgregadoDiario", b =>
@@ -1602,7 +1634,7 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Subprefeitura");
                 });
 
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.NotificacaoEnviada", b =>
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.MigracaoFavoritoZona", b =>
                 {
                     b.HasOne("Pulsar.API.Domain.Entities.Regiao", "Regiao")
                         .WithMany()
@@ -1610,7 +1642,34 @@ namespace Pulsar.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Regiao");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.NotificacaoEnviada", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subprefeitura");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.PrevisaoClimatica", b =>
@@ -1665,11 +1724,11 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.UsuarioRegiao", b =>
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.UsuarioSubprefeitura", b =>
                 {
-                    b.HasOne("Pulsar.API.Domain.Entities.Regiao", "Regiao")
-                        .WithMany("Favoritos")
-                        .HasForeignKey("RegiaoId")
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1679,7 +1738,7 @@ namespace Pulsar.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Regiao");
+                    b.Navigation("Subprefeitura");
 
                     b.Navigation("Usuario");
                 });
@@ -1692,8 +1751,6 @@ namespace Pulsar.API.Migrations
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Regiao", b =>
                 {
                     b.Navigation("Alertas");
-
-                    b.Navigation("Favoritos");
 
                     b.Navigation("Subprefeituras");
                 });

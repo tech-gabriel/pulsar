@@ -63,7 +63,7 @@ export default function ConfiguracoesPage() {
   const { showToast } = useToast();
   const { prefs, toggle } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
-  const { favoritos } = useFavoritos(usuario?.id ?? null);
+  const { favoritos, toggleFavorito } = useFavoritos(usuario?.id ?? null);
   const { reverNovamente } = useOnboarding();
   const navigate = useNavigate();
   const dark = theme === 'dark';
@@ -122,9 +122,9 @@ export default function ConfiguracoesPage() {
   }
 
   const notifs: { chave: keyof NotificacoesPrefs; titulo: string; descricao: string }[] = [
-    { chave: 'alertaAlto', titulo: 'Alertas de risco alto', descricao: 'Avisar quando uma região entrar em risco alto' },
+    { chave: 'alertaAlto', titulo: 'Alertas de risco alto', descricao: 'Avisar quando uma subprefeitura que você acompanha entrar em risco alto' },
     { chave: 'alertaModerado', titulo: 'Alertas de risco moderado', descricao: 'Avisar já a partir da faixa moderada' },
-    { chave: 'resumoDiario', titulo: 'Resumo diário', descricao: 'Um resumo do clima da sua região, uma vez por dia' },
+    { chave: 'resumoDiario', titulo: 'Resumo diário', descricao: 'Um resumo do clima das suas subprefeituras, uma vez por dia' },
   ];
 
   return (
@@ -321,7 +321,7 @@ export default function ConfiguracoesPage() {
                   <BellRing size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
                   <span className="min-w-0">
                     <span className="block" style={{ fontSize: 13.5, color: 'var(--text-primary)' }}>Notificações ativas neste dispositivo</span>
-                    <span className="block" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Você receberá os alertas das suas regiões favoritas.</span>
+                    <span className="block" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Você receberá os alertas das subprefeituras que acompanha.</span>
                   </span>
                 </span>
                 <button
@@ -363,26 +363,31 @@ export default function ConfiguracoesPage() {
         <GlassCard hover={false} padding="lg" className="mb-4">
           <div className="flex items-center gap-2 mb-1">
             <Star size={15} style={{ color: 'var(--text-secondary)' }} />
-            <SecaoTitulo>Regiões favoritas</SecaoTitulo>
+            <SecaoTitulo>Suas subprefeituras</SecaoTitulo>
           </div>
           {favoritos.length === 0 ? (
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              Você ainda não favoritou nenhuma região.{' '}
-              <Link to="/app" className="inline-block py-1 hover:underline" style={{ color: 'var(--text-accent)' }}>Explorar o mapa</Link>
+              Escolha no mapa as subprefeituras que você acompanha.{' '}
+              <Link to="/app" className="inline-block py-1 hover:underline" style={{ color: 'var(--text-accent)' }}>Abrir o mapa</Link>
             </p>
           ) : (
             <div className="flex flex-col gap-2">
               {favoritos.map((f) => (
-                <Link
-                  key={f.regiaoId}
-                  to="/app"
-                  className="regiao-card flex items-center gap-3"
-                  style={{ marginBottom: 0 }}
-                >
+                <div key={f.subprefeituraId} className="regiao-card flex items-center gap-3" style={{ marginBottom: 0 }}>
                   <Star size={15} style={{ color: '#f59e0b' }} fill="#f59e0b" />
-                  <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, color: 'var(--text-primary)' }}>{f.regiaoNome}</span>
-                  <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
-                </Link>
+                  <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, color: 'var(--text-primary)' }}>
+                    {f.nome} <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>· {f.regiaoNome}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleFavorito(f.subprefeituraId)}
+                    className="min-w-11 min-h-11 inline-flex items-center justify-center"
+                    aria-label={`Deixar de acompanhar ${f.nome}`}
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
               ))}
             </div>
           )}

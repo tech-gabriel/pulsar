@@ -69,7 +69,8 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
 
             // Remover os jobs agendados: sem ciclos em background nem chamada real ao GeoSampa
             foreach (var job in services.Where(d => d.ImplementationType == typeof(DataCollectionJob)
-                         || d.ImplementationType == typeof(SincronizacaoOcorrenciasJob)).ToList())
+                         || d.ImplementationType == typeof(SincronizacaoOcorrenciasJob)
+                         || d.ImplementationType == typeof(AvisoMigracaoJob)).ToList())
                 services.Remove(job);
 
             // Substituir o cliente de clima real por um fake determinístico, para que a

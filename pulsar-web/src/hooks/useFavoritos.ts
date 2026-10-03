@@ -6,14 +6,16 @@ import { track } from '../analytics';
 
 interface UseFavoritosResult {
   favoritos: FavoritoDto[];
-  isFavorito: (regiaoId: string) => boolean;
-  toggleFavorito: (regiaoId: string) => Promise<void>;
+  isFavorito: (subprefeituraId: string) => boolean;
+  toggleFavorito: (subprefeituraId: string) => Promise<void>;
   carregando: boolean;
 }
 
 export function useFavoritos(usuarioId: string | null): UseFavoritosResult {
   const [favoritos, setFavoritos] = useState<FavoritoDto[]>([]);
-  const [carregando, setCarregando] = useState(false);
+  // Começa carregando quando há usuário: quem decide "sem favoritas" (banner) não pode
+  // concluir isso antes da primeira resposta.
+  const [carregando, setCarregando] = useState(usuarioId !== null);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -36,29 +38,28 @@ export function useFavoritos(usuarioId: string | null): UseFavoritosResult {
   }, [usuarioId]);
 
   const isFavorito = useCallback(
-    (regiaoId: string) => favoritos.some((f) => f.regiaoId === regiaoId),
+    (subprefeituraId: string) => favoritos.some((f) => f.subprefeituraId === subprefeituraId),
     [favoritos]
   );
 
   const toggleFavorito = useCallback(
-    async (regiaoId: string) => {
+    async (subprefeituraId: string) => {
       if (!usuarioId) return;
       try {
-        if (isFavorito(regiaoId)) {
-          await api.delete(`/usuarios/${usuarioId}/favoritos/${regiaoId}`);
-          setFavoritos((prev) => prev.filter((f) => f.regiaoId !== regiaoId));
-          showToast('Região removida dos favoritos', 'info');
+        if (isFavorito(subprefeituraId)) {
+          await api.delete(`/usuarios/${usuarioId}/favoritos/${subprefeituraId}`);
+          setFavoritos((prev) => prev.filter((f) => f.subprefeituraId !== subprefeituraId));
+          showToast('Subprefeitura removida dos favoritos', 'info');
         } else {
-          const { data } = await api.post<FavoritoDto>(
-            `/usuarios/${usuarioId}/favoritos`,
-            { regiaoId }
-          );
+          const { data } = await api.post<FavoritoDto>(`/usuarios/${usuarioId}/favoritos`, { subprefeituraId });
           setFavoritos((prev) => [...prev, data]);
-          track.favoritouRegiao(regiaoId);
-          showToast('Região adicionada aos favoritos', 'success');
+          track.favoritouRegiao(subprefeituraId);
+          showToast('Subprefeitura adicionada aos favoritos', 'success');
         }
-      } catch {
-        showToast('Não foi possível atualizar favoritos', 'error');
+      } catch (err) {
+        // O limite de 10 volta como 400 com mensagem pronta; mostra a da API quando houver.
+        const mensagem = (err as { response?: { data?: { mensagem?: string } } }).response?.data?.mensagem;
+        showToast(mensagem ?? 'Não foi possível atualizar favoritos', 'error');
       }
     },
     [usuarioId, isFavorito, showToast]

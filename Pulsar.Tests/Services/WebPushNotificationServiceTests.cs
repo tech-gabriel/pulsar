@@ -41,30 +41,45 @@ public class WebPushNotificationServiceTests
     }
 
     [Fact]
-    public async Task NotificarRegiaoAsync_Desabilitado_RetornaZeroSemConsultarRepo()
+    public async Task NotificarUsuarioAsync_Desabilitado_RetornaZeroSemConsultarRepo()
     {
         var sut = Criar(new PushOptions());
 
-        var enviados = await sut.NotificarRegiaoAsync(
+        var enviados = await sut.NotificarUsuarioAsync(
             Guid.NewGuid(), CriterioOptIn.RiscoAlto, new PushPayload("t", "c"));
 
         enviados.Should().Be(0);
-        _repoMock.Verify(r => r.ObterPorRegiaoFavoritaAsync(It.IsAny<Guid>()), Times.Never);
+        _repoMock.Verify(r => r.ObterPorUsuarioAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]
-    public async Task NotificarRegiaoAsync_AssinaturasNaoOptaramPeloCriterio_NaoEnvia()
+    public async Task NotificarUsuarioAsync_AssinaturasNaoOptaramPeloCriterio_NaoEnvia()
     {
-        var regiaoId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
         // Inscrição só quer risco alto; chega um envio de risco moderado → não deve enviar.
-        _repoMock.Setup(r => r.ObterPorRegiaoFavoritaAsync(regiaoId))
+        _repoMock.Setup(r => r.ObterPorUsuarioAsync(usuarioId))
             .ReturnsAsync([new AssinaturaPush { AlertaAlto = true, AlertaModerado = false }]);
 
         var sut = Criar(new PushOptions { PublicKey = PublicKeyExemplo, PrivateKey = PrivateKeyExemplo });
 
-        var enviados = await sut.NotificarRegiaoAsync(
-            regiaoId, CriterioOptIn.RiscoModerado, new PushPayload("t", "c"));
+        var enviados = await sut.NotificarUsuarioAsync(
+            usuarioId, CriterioOptIn.RiscoModerado, new PushPayload("t", "c"));
 
         enviados.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task NotificarUsuarioAsync_DoisAparelhos_SoOQueOptouEntraNoEnvio()
+    {
+        var usuarioId = Guid.NewGuid();
+        _repoMock.Setup(r => r.ObterPorUsuarioAsync(usuarioId)).ReturnsAsync(new List<AssinaturaPush>
+        {
+            new() { UsuarioId = usuarioId, Endpoint = "https://invalido.local/a", AlertaAlto = false, ResumoDiario = true },
+            new() { UsuarioId = usuarioId, Endpoint = "https://invalido.local/b", AlertaAlto = false, ResumoDiario = false },
+        });
+        var sut = Criar(new PushOptions { PublicKey = PublicKeyExemplo, PrivateKey = PrivateKeyExemplo });
+
+        // RiscoAlto: nenhum dos dois optou, então nem tenta enviar.
+        (await sut.NotificarUsuarioAsync(usuarioId, CriterioOptIn.RiscoAlto, new PushPayload("t", "c"))).Should().Be(0);
     }
 }

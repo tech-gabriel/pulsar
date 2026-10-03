@@ -38,7 +38,7 @@ export default function ConvitePush() {
   useEffect(() => {
     if (!ativandoRef.current) return;
     if (push.estado === 'ativo') {
-      showToast('Pronto! Você vai receber os alertas das suas regiões.', 'success');
+      showToast('Pronto! Você vai receber os alertas das suas subprefeituras.', 'success');
       ativandoRef.current = false;
     } else if (push.estado === 'negado') {
       showToast('As notificações ficaram bloqueadas. Você pode reativar nas configurações do navegador.', 'error');
@@ -130,7 +130,7 @@ export default function ConvitePush() {
             Receba alertas no celular
           </p>
           <p className="mt-0.5" style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-            Avisamos assim que uma região que você acompanha entrar em risco.
+            Avisamos assim que uma subprefeitura que você acompanha entrar em risco.
           </p>
 
           <div className="mt-3 flex items-center gap-2">

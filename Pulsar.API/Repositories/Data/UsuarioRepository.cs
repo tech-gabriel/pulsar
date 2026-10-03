@@ -25,11 +25,12 @@ public class UsuarioRepository : IUsuarioRepository
     public async Task<Usuario?> ObterComFavoritosAsync(Guid id)
         => await _context.Usuarios
             .Include(u => u.Favoritos)
-                .ThenInclude(f => f.Regiao)
+                .ThenInclude(f => f.Subprefeitura)
+                    .ThenInclude(s => s.Regiao)
             .FirstOrDefaultAsync(u => u.Id == id);
 
-    public async Task AdicionarFavoritoAsync(UsuarioRegiao favorito)
-        => await _context.UsuarioRegioes.AddAsync(favorito);
+    public async Task AdicionarFavoritoAsync(UsuarioSubprefeitura favorito)
+        => await _context.UsuarioSubprefeituras.AddAsync(favorito);
 
     public async Task AdicionarAsync(Usuario entidade)
         => await _context.Usuarios.AddAsync(entidade);

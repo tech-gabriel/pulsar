@@ -43,23 +43,18 @@ public class GatilhoBriefingDiarioTests
         params FaixaPrevisaoDto[] previsao)
     {
         var tz = fuso ?? Sp;
-        var regiao = new Regiao { Nome = "Sul", FusoHorario = tz.Id };
-
         return new ContextoGatilho
         {
-            Regiao = regiao,
             Fuso = tz,
-            Subprefeituras =
-            [
+            Estado =
                 new EstadoSubprefeitura(
-                    new Subprefeitura { RegiaoId = regiao.Id, Nome = "Sub", Ativa = true },
+                    new Subprefeitura { Nome = "Mooca", Ativa = true },
                     new ScorePerigo { Valor = 48, Faixa = faixa, Timestamp = agoraUtc },
                     new LeituraClimatica
                     {
                         ChuvaMmH = 1, VentoKmH = 12, VisibilidadeKm = 9, IndiceUv = 3,
                         TemperaturaC = 18, SensacaoTermica = 17, Umidade = 80, Timestamp = agoraUtc,
                     }),
-            ],
             Previsao = previsao,
             AgoraUtc = agoraUtc,
         };
@@ -102,7 +97,7 @@ public class GatilhoBriefingDiarioTests
 
         // Tag é carga: é ela que faz o briefing de hoje SUBSTITUIR o de ontem na bandeja
         // em vez de empilhar.
-        pendencias[0].Payload.Tag.Should().Be($"briefing-{ctx.Regiao.Id}");
+        pendencias[0].Payload.Tag.Should().Be($"briefing-{ctx.Subprefeitura.Id}");
         pendencias[0].Payload.Url.Should().Be("/");
     }
 
@@ -168,7 +163,7 @@ public class GatilhoBriefingDiarioTests
         var pendencias = await new GatilhoBriefingDiario().AvaliarAsync(ctx);
 
         pendencias.Should().HaveCount(1, "06:00 em Tóquio está dentro da janela da manhã");
-        pendencias[0].Chave.Should().Be($"briefing:{ctx.Regiao.Id}:2026-08-18",
+        pendencias[0].Chave.Should().Be($"briefing:{ctx.Subprefeitura.Id}:2026-08-18",
             "6h da manhã do dia 18 em Tóquio é o briefing do dia 18, e não do dia 17 em UTC");
     }
 
@@ -183,15 +178,15 @@ public class GatilhoBriefingDiarioTests
         var dia17 = new DateTime(2026, 8, 17, 12, 0, 0, DateTimeKind.Utc); // 09:00 local, dia 17
         var dia18 = new DateTime(2026, 8, 18, 12, 0, 0, DateTimeKind.Utc); // 09:00 local, dia 18
 
-        // A MESMA região nos dois dias, de propósito: com duas regiões diferentes o Id já
+        // A MESMA subprefeitura nos dois dias, de propósito: com duas diferentes o Id já
         // separaria as chaves e o NotBe abaixo não poderia falhar, virando decoração.
-        var regiao = new Regiao { Nome = "Sul", FusoHorario = Sp.Id };
+        var sub = new Subprefeitura { Nome = "Mooca", Ativa = true };
 
-        var a = await gatilho.AvaliarAsync(ComRegiao(regiao, dia17));
-        var b = await gatilho.AvaliarAsync(ComRegiao(regiao, dia18));
+        var a = await gatilho.AvaliarAsync(ComSub(sub, dia17));
+        var b = await gatilho.AvaliarAsync(ComSub(sub, dia18));
 
-        a[0].Chave.Should().Be($"briefing:{regiao.Id}:2026-08-17");
-        b[0].Chave.Should().Be($"briefing:{regiao.Id}:2026-08-18");
+        a[0].Chave.Should().Be($"briefing:{sub.Id}:2026-08-17");
+        b[0].Chave.Should().Be($"briefing:{sub.Id}:2026-08-18");
         a[0].Chave.Should().NotBe(b[0].Chave, "dia novo é briefing novo");
     }
 
@@ -203,11 +198,11 @@ public class GatilhoBriefingDiarioTests
     public async Task Chave_NaoMudaEntreCiclosDoMesmoDiaLocal()
     {
         var gatilho = new GatilhoBriefingDiario();
-        var regiao = new Regiao { Nome = "Sul", FusoHorario = Sp.Id };
+        var sub = new Subprefeitura { Nome = "Mooca", Ativa = true };
 
-        var seisEmPonto = await gatilho.AvaliarAsync(ComRegiao(regiao, SeisDaManhaEmSp));
+        var seisEmPonto = await gatilho.AvaliarAsync(ComSub(sub, SeisDaManhaEmSp));
         var quinzeMinutosDepois = await gatilho.AvaliarAsync(
-            ComRegiao(regiao, SeisDaManhaEmSp.AddMinutes(15)));
+            ComSub(sub, SeisDaManhaEmSp.AddMinutes(15)));
 
         quinzeMinutosDepois[0].Chave.Should().Be(seisEmPonto[0].Chave,
             "o ciclo reavalia a cada 15 min e a chave é o que impede o segundo envio");
@@ -227,7 +222,7 @@ public class GatilhoBriefingDiarioTests
         {
             var pendencias = await new GatilhoBriefingDiario().AvaliarAsync(ctx);
 
-            pendencias[0].Chave.Should().Be($"briefing:{ctx.Regiao.Id}:2026-08-17",
+            pendencias[0].Chave.Should().Be($"briefing:{ctx.Subprefeitura.Id}:2026-08-17",
                 "a chave é texto de máquina e não pode variar com o locale");
         }
         finally
@@ -263,7 +258,7 @@ public class GatilhoBriefingDiarioTests
             "faixa prevista para depois de 24h não entra no resumo do dia");
         payload.Corpo.Should().NotContain("faixa", "'faixa' é palavra do modelo, não de quem lê");
 
-        payload.Titulo.Should().Be("Região Sul hoje");
+        payload.Titulo.Should().Be("Mooca hoje");
 
         // Instrumento escolhido para o corpo: fragmentos exatos em vez de igualdade da
         // frase inteira. A cláusula da chuva é CONDICIONAL (some quando não há chuva
@@ -427,9 +422,8 @@ public class GatilhoBriefingDiarioTests
     {
         var ctx = new ContextoGatilho
         {
-            Regiao = new Regiao { Nome = "Sul", FusoHorario = Sp.Id },
+            Estado = new EstadoSubprefeitura(new Subprefeitura { Nome = "Mooca" }, null, null),
             Fuso = Sp,
-            Subprefeituras = Array.Empty<EstadoSubprefeitura>(),
             Previsao = Array.Empty<FaixaPrevisaoDto>(),
             AgoraUtc = SeisDaManhaEmSp,
         };
@@ -438,19 +432,15 @@ public class GatilhoBriefingDiarioTests
             "sem dado nenhum o resumo seria uma notificação vazia");
     }
 
-    /// <summary>Mesma região (mesmo Id) em dois instantes, para comparar chaves entre ciclos.</summary>
-    private static ContextoGatilho ComRegiao(Regiao regiao, DateTime agoraUtc)
+    /// <summary>Mesma subprefeitura (mesmo Id) em dois instantes, para comparar chaves entre ciclos.</summary>
+    private static ContextoGatilho ComSub(Subprefeitura sub, DateTime agoraUtc)
         => new()
         {
-            Regiao = regiao,
-            Fuso = TimeZoneInfo.FindSystemTimeZoneById(regiao.FusoHorario),
-            Subprefeituras =
-            [
-                new EstadoSubprefeitura(
-                    new Subprefeitura { RegiaoId = regiao.Id, Nome = "Sub", Ativa = true },
-                    new ScorePerigo { Valor = 48, Faixa = FaixaRisco.MODERADO, Timestamp = agoraUtc },
-                    null),
-            ],
+            Fuso = Sp,
+            Estado = new EstadoSubprefeitura(
+                sub,
+                new ScorePerigo { Valor = 48, Faixa = FaixaRisco.MODERADO, Timestamp = agoraUtc },
+                null),
             Previsao = Array.Empty<FaixaPrevisaoDto>(),
             AgoraUtc = agoraUtc,
         };

@@ -215,17 +215,15 @@ public class PulsarDbContext : DbContext
         modelBuilder.Entity<NotificacaoEnviada>(e =>
         {
             e.HasKey(n => n.Id);
-            // Único: é o que garante "exatamente uma vez por evento" mesmo se dois
-            // ciclos se sobrepuserem.
-            e.HasIndex(n => n.Chave).IsUnique();
-            // Serve as consultas de cooldown e do teto diário.
-            e.HasIndex(n => new { n.RegiaoId, n.Gatilho, n.EnviadoEm });
+            // Único por pessoa: "esta pessoa foi avisada deste evento" exatamente uma vez,
+            // mesmo com dois ciclos sobrepostos.
+            e.HasIndex(n => new { n.UsuarioId, n.Chave }).IsUnique();
+            // Serve dedup por cooldown e teto diário (sempre por pessoa e janela de tempo).
+            e.HasIndex(n => new { n.UsuarioId, n.EnviadoEm });
             e.Property(n => n.Gatilho).IsRequired().HasMaxLength(40);
             e.Property(n => n.Chave).IsRequired().HasMaxLength(160);
-            e.HasOne(n => n.Regiao)
-             .WithMany()
-             .HasForeignKey(n => n.RegiaoId)
-             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(n => n.Usuario).WithMany().HasForeignKey(n => n.UsuarioId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(n => n.Subprefeitura).WithMany().HasForeignKey(n => n.SubprefeituraId).OnDelete(DeleteBehavior.Cascade);
         });
 
         SeedData(modelBuilder);

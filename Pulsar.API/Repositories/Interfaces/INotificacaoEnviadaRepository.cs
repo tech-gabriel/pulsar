@@ -4,19 +4,14 @@ namespace Pulsar.API.Repositories.Interfaces;
 
 public interface INotificacaoEnviadaRepository
 {
-    /// <summary>Dedup por chave exata (chuva prevista, briefing).</summary>
-    Task<bool> ExisteChaveAsync(string chave);
-
-    /// <summary>Dedup por cooldown deslizante (score alto): já houve envio deste gatilho desde X?</summary>
-    Task<bool> ExisteDesdeAsync(Guid regiaoId, string gatilho, DateTime desdeUtc);
-
     /// <summary>
-    /// Envios da região nas últimas N horas. Serve o teto diário, que precisa converter
-    /// cada EnviadoEm para o dia local em vez de calcular meia-noite local em UTC.
+    /// Envios das pessoas nas últimas N horas: dedup por chave, cooldown e teto diário (o dia
+    /// local é calculado fora daqui, convertendo cada EnviadoEm).
     /// </summary>
-    Task<IReadOnlyList<NotificacaoEnviada>> ObterRecentesPorRegiaoAsync(Guid regiaoId, int horas);
+    Task<IReadOnlyList<NotificacaoEnviada>> ObterRecentesAsync(IReadOnlyCollection<Guid> usuarioIds, int horas);
 
-    Task RegistrarAsync(NotificacaoEnviada registro);
+    /// <summary>Grava as linhas de um push (um SaveChanges). Chave repetida da mesma pessoa lança.</summary>
+    Task RegistrarAsync(IReadOnlyList<NotificacaoEnviada> registros);
 
     Task<int> RemoverAntigasAsync(DateTime limiteUtc);
 }

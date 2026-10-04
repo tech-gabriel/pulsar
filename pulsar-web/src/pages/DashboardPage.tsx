@@ -112,7 +112,7 @@ export default function DashboardPage() {
                         <button key={s.id} type="button" onClick={() => navigate(`/app?regiao=${slugify(s.nome)}`)}
                           className="regiao-card regiao-card-linha text-left" style={{ marginBottom: 0 }}>
                           <span className="font-mono flex-shrink-0 w-5 text-center" style={{ fontSize: 13, color: 'var(--text-muted)' }}>{i + 1}</span>
-                          <div className="min-w-0" style={{ width: 120 }}>
+                          <div className="min-w-0" style={{ width: 'clamp(120px, 28%, 220px)' }}>
                             <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{s.nome}</p>
                             <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.zona}</p>
                           </div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import { track } from '../../analytics';
-import { detectarInstalacao, plataformaDe, type Plataforma, type SinaisInstalacao } from './instalacao';
+import { appIOSInstalado, detectarInstalacao, plataformaDe, type Plataforma, type SinaisInstalacao } from './instalacao';
 import type { Instalacao } from './passos';
 
 interface EventoInstalacao extends Event {
@@ -41,6 +41,11 @@ function sinais(): SinaisInstalacao {
     standalone: estaInstalado(),
     temPrompt: promptGuardado !== null,
   };
+}
+
+/** Retomada no iPhone instalado (texto próprio no login). */
+export function retomadaNoIPhone(): boolean {
+  return typeof window !== 'undefined' && appIOSInstalado(sinais());
 }
 
 /** Adaptador web da instalação. No app nativo, troca-se só este arquivo. */

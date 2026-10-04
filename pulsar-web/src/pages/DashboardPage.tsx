@@ -17,7 +17,7 @@ import ErrorBanner from '../components/ui/ErrorBanner';
 import EmptyState from '../components/ui/EmptyState';
 import CidadeAgora from '../features/cidade/CidadeAgora';
 import MapaCoropletico from '../features/cidade/MapaCoropletico';
-import { CIDADE_ATUAL } from '../features/cidade/cidade';
+import { CIDADE_ATUAL, idDaArea } from '../features/cidade/cidade';
 import { ordenarPorRisco, resumoCidade } from '../features/cidade/areas';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { coresParaFaixa } from '../utils/risco';
@@ -38,7 +38,7 @@ export default function DashboardPage() {
 
   const resumo = useMemo(() => resumoCidade(subs), [subs]);
   const top = useMemo(() => ordenarPorRisco(subs).filter((s) => s.scoreAtual != null).slice(0, 6), [subs]);
-  const cores = useMemo(() => Object.fromEntries(subs.map((s) => [slugify(s.nome), coresParaFaixa(s.faixaRisco).fill])), [subs]);
+  const cores = useMemo(() => Object.fromEntries(subs.map((s) => [idDaArea(s.nome), coresParaFaixa(s.faixaRisco).fill])), [subs]);
   const clima = useMemo(() => {
     const leituras = subs.map((s) => s.ultimaLeitura).filter((l): l is NonNullable<typeof l> => l != null);
     if (leituras.length === 0) return null;

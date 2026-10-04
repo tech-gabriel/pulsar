@@ -13,7 +13,7 @@ function jaViu(): boolean {
 
 /**
  * Controla a dica sutil do botão "usar minha localização", mostrada só na 1ª
- * visita ao mapa. Mesmo padrão de `useOnboarding`.
+ * visita ao mapa. Mesmo padrão da marca local do onboarding (`features/ativacao/passos.ts`).
  */
 export function useDicaLocalizacao() {
   const [mostrarDica, setMostrarDica] = useState<boolean>(() => !jaViu());

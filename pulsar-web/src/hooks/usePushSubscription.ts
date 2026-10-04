@@ -126,14 +126,16 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
     };
   }, []);
 
-  const ativar = useCallback(async () => {
-    if (!suportaPush() || !chaveRef.current) return;
+  // Devolve o estado final para quem precisa decidir o próximo passo (onboarding).
+  const ativar = useCallback(async (): Promise<EstadoPush> => {
+    if (!suportaPush() || !chaveRef.current) return 'indisponivel';
     setOcupado(true);
     try {
       const permissao = await Notification.requestPermission();
       if (permissao !== 'granted') {
-        setEstado(permissao === 'denied' ? 'negado' : 'inativo');
-        return;
+        const final: EstadoPush = permissao === 'denied' ? 'negado' : 'inativo';
+        setEstado(final);
+        return final;
       }
       const reg = await navigator.serviceWorker.ready;
       const chaveAtual = urlBase64ParaUint8Array(chaveRef.current);
@@ -151,8 +153,10 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
       await enviarAoBackend(sub);
       setEstado('ativo');
       track.ativouPush();
+      return 'ativo';
     } catch {
       setEstado('inativo');
+      return 'inativo';
     } finally {
       setOcupado(false);
     }

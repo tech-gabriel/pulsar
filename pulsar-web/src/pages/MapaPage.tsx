@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { GeoJsonObject, FeatureCollection } from 'geojson';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers } from 'lucide-react';
 import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
@@ -16,8 +16,10 @@ import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { useIsMobile } from '../hooks/useIsMobile';
-import { useOnboarding } from '../hooks/useOnboarding';
-import OnboardingModal from '../components/onboarding/OnboardingModal';
+import { useNotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
+import { usePushSubscription } from '../hooks/usePushSubscription';
+import { useInstalacao } from '../features/ativacao/useInstalacao';
+import { jaViuAtivacao, precisaDeAtivacao } from '../features/ativacao/passos';
 import ConvitePush from '../components/notificacoes/ConvitePush';
 import BannerEscolherSubprefeituras from '../components/mapa/BannerEscolherSubprefeituras';
 import { useGeolocalizacao, GeoError } from '../hooks/useGeolocalizacao';
@@ -39,7 +41,18 @@ export default function MapaPage() {
   const semFavoritas = !!usuario && !carregandoFavoritos && favoritos.length === 0;
   const favoritas = subprefeituras.filter((s) => isFavorito(s.id));
   const isMobile = useIsMobile(768);
-  const { aberto: onboardingAberto, concluir: concluirOnboarding } = useOnboarding();
+  const navigate = useNavigate();
+  const { search } = useLocation();
+  const { prefs } = useNotificacoesPrefs();
+  const push = usePushSubscription(prefs);
+  const { instalacao } = useInstalacao();
+  useEffect(() => {
+    // Espera os dados: decidir com favoritos/push carregando mandaria todo mundo ao onboarding.
+    if (!usuario || carregandoFavoritos || push.estado === 'carregando' || jaViuAtivacao()) return;
+    if (precisaDeAtivacao({ favoritas: favoritos.length, push: push.estado, instalacao })) {
+      navigate(`/app/boas-vindas${search}`, { replace: true });
+    }
+  }, [usuario, carregandoFavoritos, push.estado, favoritos.length, instalacao, navigate, search]);
   const { detectar, carregando: localizando } = useGeolocalizacao();
   const { showToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -181,14 +194,11 @@ export default function MapaPage() {
   return (
     <div className="relative h-screen overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
 
-      {/* Onboarding de boas-vindas — só na 1ª visita */}
-      {onboardingAberto && <OnboardingModal onConcluir={concluirOnboarding} />}
-
-      {/* Convite para ativar notificações push — só após o onboarding fechar */}
+      {/* Convite para ativar notificações push (o onboarding agora é a rota /app/boas-vindas). */}
       {/* Sem favorita o push não tem o que mandar: primeiro escolher, depois ativar. */}
-      {!onboardingAberto && (semFavoritas
+      {semFavoritas
         ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
-        : <ConvitePush />)}
+        : <ConvitePush />}
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header />

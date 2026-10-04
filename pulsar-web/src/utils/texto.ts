@@ -22,3 +22,10 @@ export function normalizarNome(nome: string): string {
 export function primeiraQueCabe(opcoes: string[], max = 155): string {
   return opcoes.find((o) => o.length <= max) ?? opcoes[opcoes.length - 1];
 }
+
+/** "Mooca", "Mooca e Penha", "Mooca, Penha e mais 2". */
+export function listaNomes(nomes: string[]): string {
+  if (nomes.length <= 1) return nomes[0] ?? '';
+  if (nomes.length === 2) return `${nomes[0]} e ${nomes[1]}`;
+  return `${nomes[0]}, ${nomes[1]} e mais ${nomes.length - 2}`;
+}

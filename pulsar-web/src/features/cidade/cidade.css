@@ -1,0 +1,29 @@
+/* Peças da cidade (SP3). Cores por variável: valem nos temas claro e escuro. */
+.cid-agora { display: flex; gap: 14px; align-items: center; border-radius: 18px; padding: 14px 16px; color: #fff;
+  background: linear-gradient(135deg, #0B3A5B, #052F4A); box-shadow: 0 12px 26px -14px rgba(5, 47, 74, .8); }
+.cid-agora-txt { flex: 1; min-width: 0; }
+.cid-rot { font: 600 10.5px var(--font-body); letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.cid-titulo { font: 800 21px/1.1 var(--font-heading); letter-spacing: -.025em; margin: 2px 0 3px; }
+.cid-sub { font-size: 12.5px; color: #B8E6FE; }
+.cid-radar { position: relative; width: 46px; height: 46px; flex: 0 0 auto; --c: #22C55E; }
+.cid-radar.alto { --c: #EF4444; } .cid-radar.moderado { --c: #F59E0B; } .cid-radar.sem { --c: #94A3B8; }
+.cid-radar i { position: absolute; inset: 17px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 25%, transparent); }
+.cid-radar span { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--c) 70%, transparent); animation: cid-pulso 2.8s cubic-bezier(.22, 1, .36, 1) infinite; }
+.cid-radar span:nth-child(2) { animation-delay: 1.4s; }
+@keyframes cid-pulso { from { transform: scale(.35); opacity: 1; } to { transform: scale(1.15); opacity: 0; } }
+.cid-dist { display: flex; gap: 3px; height: 9px; margin-top: 12px; }
+.cid-dist span { border-radius: 4px; transform-origin: left; animation: cid-cresce-x .9s cubic-bezier(.22, 1, .36, 1) .3s both; }
+.cid-dist-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11.5px; color: #B8E6FE; margin-top: 7px; }
+.cid-dist-leg i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+@keyframes cid-cresce-x { from { transform: scaleX(0); } }
+.linha-area { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 6px 0 12px; margin-bottom: 6px; border-radius: 14px; text-align: left;
+  background: color-mix(in srgb, var(--text-primary) 5%, transparent); transition: transform 100ms ease-out; }
+.linha-area:active { transform: scale(0.98); }
+.linha-area-nome { flex: 1; min-width: 0; font: 600 14px var(--font-body); color: var(--text-primary); line-height: 1.15; }
+.linha-area-nome small { display: block; font-weight: 400; font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+.linha-area-ponto { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+.mapa-coro path { animation: cid-aparece .5s ease both; }
+@keyframes cid-aparece { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .cid-radar span, .cid-dist span, .mapa-coro path { animation: none !important; }
+}

@@ -91,7 +91,7 @@ export default function DashboardPage() {
   const axisStrong = isLight ? '#475569' : '#B8E6FE';
 
   const { regioes, carregando, erro, recarregar, ultimaAtualizacao } = useRegioes();
-  const subs = useSubprefeituras(regioes);
+  const { subprefeituras: subs } = useSubprefeituras();
 
   const m = useMemo(() => {
     if (regioes.length === 0) return null;
@@ -294,7 +294,7 @@ export default function DashboardPage() {
                   {m.topSubs.map((s, i) => (
                     <button
                       key={s.id}
-                      onClick={() => navigate(`/app/historico/${s.id}`, { state: { subNome: s.nome, regiaoNome: s.regiaoNome } })}
+                      onClick={() => navigate(`/app/historico/${s.id}`, { state: { subNome: s.nome, regiaoNome: s.zona } })}
                       className="regiao-card regiao-card-linha text-left"
                       style={{ marginBottom: 0 }}
                     >
@@ -303,7 +303,7 @@ export default function DashboardPage() {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{s.nome}</p>
-                        <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.regiaoNome}</p>
+                        <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.zona}</p>
                       </div>
                       <BadgeRisco faixa={s.faixaRisco} score={s.scoreAtual?.valor} size="sm" />
                       <ChevronRight size={16} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />

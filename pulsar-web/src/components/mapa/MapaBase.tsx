@@ -76,7 +76,7 @@ interface Props {
   subSelecionada: SubprefeituraMapaDto | null;
   onSelecionarSub: (sub: SubprefeituraMapaDto) => void;
   camadaAtiva: Camada;
-  regiaoSelecionadaNome: string | null;
+  zonaEmFoco: string | null;
   subSelecionadaAtiva: boolean;
   pontoBusca: PontoBusca | null;
   overlayAlagamento: boolean;
@@ -91,12 +91,12 @@ interface Props {
  */
 function MapController({
   subprefeituras,
-  regiaoSelecionadaNome,
+  zonaEmFoco,
   subSelecionadaAtiva,
   pontoBusca,
 }: {
   subprefeituras: SubprefeituraMapaDto[];
-  regiaoSelecionadaNome: string | null;
+  zonaEmFoco: string | null;
   subSelecionadaAtiva: boolean;
   pontoBusca: PontoBusca | null;
 }) {
@@ -107,18 +107,18 @@ function MapController({
   });
 
   useEffect(() => {
-    if (!regiaoSelecionadaNome) {
+    if (!zonaEmFoco) {
       map.flyTo(SP_CENTER, SP_ZOOM, { duration: 0.6 });
       return;
     }
     if (subSelRef.current) return; // clique no mapa já centralizou na subprefeitura
     const daRegiao = subprefeituras.filter(
-      (s) => normalizarNome(s.regiaoNome) === normalizarNome(regiaoSelecionadaNome),
+      (s) => normalizarNome(s.zona) === normalizarNome(zonaEmFoco),
     );
     const centro = centroideRegiao(daRegiao);
     if (centro) map.flyTo([centro.lat, centro.lon], 11, { duration: 0.6 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [regiaoSelecionadaNome]);
+  }, [zonaEmFoco]);
 
   // Resultado da busca: voa até o endereço selecionado.
   useEffect(() => {
@@ -134,7 +134,7 @@ export default function MapaBase({
   subSelecionada,
   onSelecionarSub,
   camadaAtiva,
-  regiaoSelecionadaNome,
+  zonaEmFoco,
   subSelecionadaAtiva,
   pontoBusca,
   overlayAlagamento,
@@ -164,7 +164,7 @@ export default function MapaBase({
       />
       <MapController
         subprefeituras={subprefeituras}
-        regiaoSelecionadaNome={regiaoSelecionadaNome}
+        zonaEmFoco={zonaEmFoco}
         subSelecionadaAtiva={subSelecionadaAtiva}
         pontoBusca={pontoBusca}
       />
@@ -182,13 +182,13 @@ export default function MapaBase({
             subSelecionada={subSelecionada}
             onSelecionarSub={onSelecionarSub}
             camadaAtiva={camadaAtiva}
-            regiaoSelecionadaNome={regiaoSelecionadaNome}
+            zonaEmFoco={zonaEmFoco}
           />
           <ScoreLabel
             subprefeituras={subprefeituras}
             subSelecionada={subSelecionada}
             camadaAtiva={camadaAtiva}
-            regiaoSelecionadaNome={regiaoSelecionadaNome}
+            zonaEmFoco={zonaEmFoco}
             atenuado={overlayAlagamento}
           />
         </>

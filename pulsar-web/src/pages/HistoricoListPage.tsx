@@ -5,7 +5,6 @@ import Header from '../components/ui/Header';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import EmptyState from '../components/ui/EmptyState';
-import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { coresParaFaixa, labelFaixa } from '../utils/risco';
 import { fundoParaTextoBranco } from '../utils/contraste';
@@ -17,14 +16,13 @@ function normalizar(s: string): string {
 /** Lista de todas as subprefeituras com busca; clicar abre o histórico 24h. */
 export default function HistoricoListPage() {
   const navigate = useNavigate();
-  const { regioes, carregando, erro, recarregar } = useRegioes();
-  const subprefeituras = useSubprefeituras(regioes);
+  const { subprefeituras, carregando, erro, recarregar } = useSubprefeituras();
   const [busca, setBusca] = useState('');
 
   const lista = useMemo(() => {
     const filtro = normalizar(busca);
     return [...subprefeituras]
-      .filter((s) => !filtro || normalizar(s.nome).includes(filtro) || normalizar(s.regiaoNome).includes(filtro))
+      .filter((s) => !filtro || normalizar(s.nome).includes(filtro) || normalizar(s.zona).includes(filtro))
       .sort((a, b) => (b.scoreAtual?.valor ?? 0) - (a.scoreAtual?.valor ?? 0));
   }, [subprefeituras, busca]);
 
@@ -34,9 +32,9 @@ export default function HistoricoListPage() {
   const grupos = useMemo(() => {
     const porRegiao = new Map<string, typeof lista>();
     for (const sub of lista) {
-      const atual = porRegiao.get(sub.regiaoNome);
+      const atual = porRegiao.get(sub.zona);
       if (atual) atual.push(sub);
-      else porRegiao.set(sub.regiaoNome, [sub]);
+      else porRegiao.set(sub.zona, [sub]);
     }
     return [...porRegiao.entries()].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
   }, [lista]);
@@ -110,7 +108,7 @@ export default function HistoricoListPage() {
                   <button
                     key={sub.id}
                     type="button"
-                    onClick={() => navigate(`/app/historico/${sub.id}`, { state: { regiaoNome: sub.regiaoNome, subNome: sub.nome } })}
+                    onClick={() => navigate(`/app/historico/${sub.id}`, { state: { regiaoNome: sub.zona, subNome: sub.nome } })}
                     className="glass-card glass-card-hover w-full text-left flex items-center gap-3 px-4 py-3 active:scale-[0.99] transition-transform"
                   >
                     {/* Score pill */}

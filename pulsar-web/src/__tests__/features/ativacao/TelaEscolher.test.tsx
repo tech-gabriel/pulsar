@@ -3,9 +3,9 @@ import { describe, it, expect, vi } from 'vitest';
 import TelaEscolher from '../../../features/ativacao/telas/TelaEscolher';
 
 const subs = [
-  { id: 's1', nome: 'Mooca', regiaoNome: 'Leste', faixaRisco: 'BAIXO' as const },
-  { id: 's2', nome: 'Penha', regiaoNome: 'Leste', faixaRisco: 'MODERADO' as const },
-  { id: 's3', nome: 'São Miguel', regiaoNome: 'Leste', faixaRisco: 'BAIXO' as const },
+  { id: 's1', nome: 'Mooca', zona: 'Leste', faixaRisco: 'BAIXO' as const },
+  { id: 's2', nome: 'Penha', zona: 'Leste', faixaRisco: 'MODERADO' as const },
+  { id: 's3', nome: 'São Miguel', zona: 'Leste', faixaRisco: 'BAIXO' as const },
 ];
 
 describe('TelaEscolher', () => {

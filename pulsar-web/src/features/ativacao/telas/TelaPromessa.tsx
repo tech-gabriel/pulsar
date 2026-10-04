@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import MapaSP from '../MapaSP';
+import MapaCoropletico from '../../cidade/MapaCoropletico';
 
 /** Uma ideia, um botão (Calm/Headspace). O radar pulsa no centro (Sé): ainda não sabemos onde a pessoa está. */
 export default function TelaPromessa({ onComecar }: { onComecar: () => void }) {
@@ -8,7 +8,7 @@ export default function TelaPromessa({ onComecar }: { onComecar: () => void }) {
   return (
     <>
       <div className="at-hero">
-        <MapaSP destaques={{ se: 'color-mix(in srgb, var(--color-pulsar-400) 55%, var(--bg-primary))' }} />
+        <MapaCoropletico className="at-mapa" cores={{ se: 'color-mix(in srgb, var(--color-pulsar-400) 55%, var(--bg-primary))' }} />
         <span className="at-anel" /><span className="at-anel" /><span className="at-anel" /><span className="at-pino" />
       </div>
       <h1 ref={titulo} tabIndex={-1} className="at-titulo">Saiba antes de a <em>água chegar.</em></h1>

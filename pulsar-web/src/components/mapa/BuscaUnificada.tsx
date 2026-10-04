@@ -3,8 +3,13 @@ import { Search, X, MapPin, Landmark, Building2, Loader2, LocateFixed } from 'lu
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
 import { useDicaLocalizacao } from '../../hooks/useDicaLocalizacao';
 import type { EnderecoBusca } from '../../types';
+import BadgeRisco from '../ui/BadgeRisco';
+import { buscarAreas, type Area } from '../../features/cidade/areas';
 
 interface Props {
+  /** Subprefeituras para achar pelo nome (resultado local, aparece antes dos endereços). */
+  areas: Area[];
+  onSelecionarArea: (area: Area) => void;
   onSelecionar: (endereco: EnderecoBusca) => void;
   isMobile: boolean;
   onUsarLocalizacao?: () => void;
@@ -31,10 +36,10 @@ function contextoDe(r: EnderecoBusca): string {
 }
 
 /**
- * Caixa de busca de endereços sobreposta ao mapa, com autocomplete. Resolve o
- * endereço (geocoding via backend) e devolve o ponto selecionado via callback.
+ * Busca unificada sobreposta ao mapa (SP3): subprefeituras pelo nome primeiro, depois
+ * endereços (geocoding via backend), num campo só.
  */
-export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizacao, localizando = false }: Props) {
+export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false }: Props) {
   const { termo, setTermo, resultados, carregando, erro, limpar } = useBuscaEndereco();
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,16 +67,27 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
     setAberto(false);
   }
 
+  const subs = termo.trim().length >= 2 ? buscarAreas(termo, areas).slice(0, 5) : [];
+
+  function selecionarArea(area: Area) {
+    onSelecionarArea(area);
+    setTermo(area.nome);
+    setAberto(false);
+  }
+
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') {
       setAberto(false);
+    } else if (e.key === 'Enter' && subs.length > 0) {
+      e.preventDefault();
+      selecionarArea(subs[0]);
     } else if (e.key === 'Enter' && resultados.length > 0) {
       e.preventDefault();
       selecionar(resultados[0]);
     }
   }
 
-  const mostrarDropdown = aberto && termo.trim().length >= MIN_CHARS;
+  const mostrarDropdown = aberto && (subs.length > 0 || termo.trim().length >= MIN_CHARS);
 
   return (
     <div
@@ -96,8 +112,8 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
           }}
           onFocus={() => setAberto(true)}
           onKeyDown={onKeyDown}
-          placeholder="Buscar lugar, rua ou bairro em SP…"
-          aria-label="Buscar lugar, rua ou bairro"
+          placeholder="Subprefeitura, rua ou lugar…"
+          aria-label="Buscar subprefeitura ou endereço"
           className="mapa-input flex-1 h-11 bg-transparent text-sm outline-none min-w-0"
         />
         {carregando && (
@@ -137,7 +153,7 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
       {onUsarLocalizacao && mostrarDica && (
         <div className="mapa-controle mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
           <LocateFixed size={13} className="mapa-txt-suave flex-shrink-0" />
-          <span className="flex-1">Toque no alvo para ver a sua região</span>
+          <span className="flex-1">Toque no alvo para ver a sua subprefeitura</span>
           <button
             type="button"
             onClick={dispensar}
@@ -151,10 +167,27 @@ export default function BuscaEndereco({ onSelecionar, isMobile, onUsarLocalizaca
 
       {mostrarDropdown && (
         <ul className="mapa-controle mt-1.5 max-h-72 overflow-y-auto overflow-x-hidden">
+          {subs.length > 0 && (
+            <>
+              <li className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wider mapa-txt-suave">Subprefeituras</li>
+              {subs.map((a) => (
+                <li key={a.id}>
+                  <button type="button" onClick={() => selecionarArea(a)} className="mapa-item flex w-full items-center gap-2 px-3 py-2.5 text-left min-h-11">
+                    <span className="min-w-0 flex-1 leading-snug">
+                      <span className="mapa-txt block truncate text-xs font-semibold">{a.nome}</span>
+                      <span className="mapa-txt-suave block truncate text-[11px]">{a.zona}</span>
+                    </span>
+                    <BadgeRisco faixa={a.faixaRisco} size="sm" />
+                  </button>
+                </li>
+              ))}
+              {resultados.length > 0 && <li className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wider mapa-txt-suave">Endereços</li>}
+            </>
+          )}
           {erro && <li className="px-3 py-2.5 text-xs" style={{ color: '#EF4444' }}>{erro}</li>}
-          {!erro && !carregando && resultados.length === 0 && (
+          {!erro && !carregando && resultados.length === 0 && subs.length === 0 && termo.trim().length >= MIN_CHARS && (
             <li className="mapa-txt-suave px-3 py-2.5 text-xs">
-              Nada encontrado. Tente o nome de um lugar, rua ou bairro.
+              Nenhuma subprefeitura ou endereço com esse nome.
             </li>
           )}
           {resultados.map((r, i) => {

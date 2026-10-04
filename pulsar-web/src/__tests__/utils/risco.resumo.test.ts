@@ -17,4 +17,7 @@ describe('resumoAlertas', () => {
     expect(resumoAlertas([r('ALTO')], false)).toBe('1 alerta ativo');
     expect(resumoAlertas([r('ALTO'), r('ALTO'), r('BAIXO')], true)).toBe('2 alertas ativos');
   });
+  it('usa o nome da cidade recebido', () => {
+    expect(resumoAlertas([{ faixaRisco: 'BAIXO' }], false, 'Recife')).toBe('Tudo tranquilo em Recife');
+  });
 });

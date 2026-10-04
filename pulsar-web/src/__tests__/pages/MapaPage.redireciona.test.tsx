@@ -6,19 +6,6 @@ import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('../../hooks/useIsMobile', () => ({ useIsMobile: () => false }));
 
-vi.mock('../../hooks/useRegioes', () => ({
-  useRegioes: () => ({
-    regioes: [
-      { id: 'r1', nome: 'Leste', scoreAgregado: 20, faixaRisco: 'BAIXO', totalSubprefeituras: 12, ultimaAtualizacao: '2026-07-12T00:00:00Z' },
-      { id: 'r2', nome: 'Sul', scoreAgregado: 15, faixaRisco: 'BAIXO', totalSubprefeituras: 8, ultimaAtualizacao: '2026-07-12T00:00:00Z' },
-    ],
-    carregando: false,
-    erro: null,
-    recarregar: vi.fn(),
-    ultimaAtualizacao: null,
-  }),
-}));
-
 // Itaquera existe na "API" para o deep-link de subprefeitura achar pelo nome.
 const ITAQUERA = { id: 's1', nome: 'Itaquera', latitude: 0, longitude: 0, scoreAtual: null, faixaRisco: 'BAIXO', temperaturaAtual: 20, ultimaLeitura: null, zona: 'Leste' };
 const SUBS = [ITAQUERA];

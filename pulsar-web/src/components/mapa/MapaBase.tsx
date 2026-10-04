@@ -93,11 +93,13 @@ function MapController({
   subprefeituras,
   zonaEmFoco,
   subSelecionadaAtiva,
+  subSelecionada,
   pontoBusca,
 }: {
   subprefeituras: SubprefeituraMapaDto[];
   zonaEmFoco: string | null;
   subSelecionadaAtiva: boolean;
+  subSelecionada: SubprefeituraMapaDto | null;
   pontoBusca: PontoBusca | null;
 }) {
   const map = useMap();
@@ -119,6 +121,13 @@ function MapController({
     if (centro) map.flyTo([centro.lat, centro.lon], 11, { duration: 0.6 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zonaEmFoco]);
+
+  // SP3: a subprefeitura escolhida na lista, na busca ou no sino vira o foco do mapa
+  // (antes o foco era a zona dela). O clique no mapa já voou; repetir o destino é inofensivo.
+  useEffect(() => {
+    if (subSelecionada) map.flyTo([subSelecionada.latitude, subSelecionada.longitude], 13, { duration: 0.6 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subSelecionada?.id]);
 
   // Resultado da busca: voa até o endereço selecionado.
   useEffect(() => {
@@ -166,6 +175,7 @@ export default function MapaBase({
         subprefeituras={subprefeituras}
         zonaEmFoco={zonaEmFoco}
         subSelecionadaAtiva={subSelecionadaAtiva}
+        subSelecionada={subSelecionada}
         pontoBusca={pontoBusca}
       />
       {pontoBusca && (

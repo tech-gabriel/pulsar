@@ -12,7 +12,6 @@ import ErrorBanner from '../components/ui/ErrorBanner';
 import Header from '../components/ui/Header';
 import type { Camada } from '../utils/camadas';
 import { useAuth } from '../contexts/AuthContext';
-import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -35,8 +34,7 @@ import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from
 
 export default function MapaPage() {
   const { usuario } = useAuth();
-  const { regioes, carregando, erro, recarregar, ultimaAtualizacao } = useRegioes();
-  const { subprefeituras } = useSubprefeituras();
+  const { subprefeituras, carregando, erro, recarregar, ultimaAtualizacao } = useSubprefeituras();
   const { favoritos, isFavorito, toggleFavorito, carregando: carregandoFavoritos } = useFavoritos(usuario?.id ?? null);
   const semFavoritas = !!usuario && !carregandoFavoritos && favoritos.length === 0;
   const favoritas = subprefeituras.filter((s) => isFavorito(s.id));
@@ -58,25 +56,20 @@ export default function MapaPage() {
   const [searchParams] = useSearchParams();
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
-  // Deep-link de conversão: ?regiao=<slug> (vindo das páginas públicas de SEO,
-  // via useDestinoPosAuth) foca a zona já no estado inicial; slug de
-  // subprefeitura também a seleciona quando as subprefeituras chegarem da API.
-  // Slug inválido não repassa nada adiante — degradação limpa, sem foco.
-  const [deepLink] = useState(() => {
-    const slug = searchParams.get('regiao');
-    return slug ? resolverDeepLink(slug) : undefined;
-  });
-  const [regiaoSelecionadaNome, setRegiaoSelecionadaNome] = useState<string | null>(deepLink?.nomeRegiao ?? null);
+  // Deep link /app?regiao=<slug> (SEO, sino, busca): reage a CADA troca do parâmetro,
+  // não só ao primeiro carregamento. Subprefeitura abre o detalhe; zona só enquadra o mapa.
+  // Slug inválido não repassa nada adiante: degradação limpa, sem foco.
+  const slugParam = searchParams.get('regiao');
+  const [slugAplicado, setSlugAplicado] = useState<string | null>(null);
+  const [zonaEmFoco, setZonaEmFoco] = useState<string | null>(null);
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
-  const [subPendente, setSubPendente] = useState<string | null>(deepLink?.nomeSub ?? null);
-  // Ajuste de estado durante o render (padrão do React p/ derivar de props/dados
-  // que chegam depois): aplica a subprefeitura do deep-link uma única vez.
-  if (subPendente) {
-    const sub = subprefeituras.find((s) => s.nome === subPendente);
-    if (sub) {
-      setSubPendente(null);
-      setSubSelecionada(sub);
-    }
+  // Ajuste de estado durante o render (padrão do React p/ derivar de dados que chegam depois).
+  if (slugParam !== slugAplicado && (subprefeituras.length > 0 || !slugParam)) {
+    setSlugAplicado(slugParam);
+    const alvo = slugParam ? resolverDeepLink(slugParam) : undefined;
+    const sub = alvo?.nomeSub ? subprefeituras.find((s) => s.nome === alvo.nomeSub) ?? null : null;
+    setZonaEmFoco(alvo && !alvo.nomeSub ? alvo.nomeRegiao : null);
+    if (sub) setSubSelecionada(sub);
   }
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
   const [sidebarColapsada, setSidebarColapsada] = useState(false);
@@ -87,9 +80,7 @@ export default function MapaPage() {
   const [proximas, setProximas] = useState<OcorrenciasProximasDto | null>(null);
   const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
 
-  const regiaoSelecionada = regioes.find(
-    (r) => r.nome.toLowerCase() === regiaoSelecionadaNome?.toLowerCase()
-  ) ?? null;
+
 
 
   useEffect(() => {
@@ -107,7 +98,7 @@ export default function MapaPage() {
   }, []);
 
   function fecharDetalhe() {
-    setRegiaoSelecionadaNome(null);
+    setZonaEmFoco(null);
     setSubSelecionada(null);
     setPontoBusca(null);
     setAvisoBusca(null);
@@ -120,14 +111,13 @@ export default function MapaPage() {
     setPontoBusca({ lat, lon });
     const sel = resolverSelecao(lat, lon, geojson as FeatureCollection | null, subprefeituras, origem);
     if (sel.aviso) {
-      setRegiaoSelecionadaNome(null);
       setSubSelecionada(null);
       setAvisoBusca(sel.aviso);
       return;
     }
     setAvisoBusca(null);
     setSubSelecionada(sel.sub);
-    setRegiaoSelecionadaNome(sel.zona);
+    setZonaEmFoco(null);
     if (isMobile) setPainelMobileAberto(false);
   }
 
@@ -161,30 +151,13 @@ export default function MapaPage() {
     }
   }
 
-  // Clique em um label/polígono de subprefeitura: abre o detalhe da região e
-  // marca a subprefeitura selecionada (highlight do polígono + centralização).
+  // Toque numa subprefeitura (mapa, painel, busca): abre o detalhe dela e marca o
+  // polígono (highlight + centralização).
   function handleSelecionarSub(sub: SubprefeituraMapaDto) {
     setSubSelecionada(sub);
-    setRegiaoSelecionadaNome(sub.zona);
+    setZonaEmFoco(null);
     if (isMobile) setPainelMobileAberto(false);
   }
-
-  // Seleção via lista lateral (por nome de região) — sem subprefeitura específica.
-  function selecionarRegiaoPorNome(nome: string) {
-    setRegiaoSelecionadaNome(nome);
-    setSubSelecionada(null);
-  }
-
-  const painelProps = {
-    regioes,
-    carregando,
-    erro,
-    regiaoSelecionada: regiaoSelecionadaNome,
-    onRecarregar: recarregar,
-    ultimaAtualizacao,
-    nomeUsuario: usuario?.nome ?? '',
-    favoritas,
-  };
 
   // Classes do mapa: offset lateral conforme sidebar (tablet esquerda / desktop direita)
   const mapaOffsetClass = sidebarColapsada
@@ -215,7 +188,7 @@ export default function MapaPage() {
           subSelecionada={subSelecionada}
           onSelecionarSub={handleSelecionarSub}
           camadaAtiva={camadaAtiva}
-          zonaEmFoco={regiaoSelecionadaNome}
+          zonaEmFoco={zonaEmFoco}
           subSelecionadaAtiva={!!subSelecionada}
           pontoBusca={pontoBusca}
           overlayAlagamento={overlayAlagamento}
@@ -265,7 +238,7 @@ export default function MapaPage() {
       </div>
 
       {/* Banner de erro sobre o mapa */}
-      {erro && !regiaoSelecionada && (
+      {erro && !subSelecionada && (
         <div className="absolute top-14 md:top-20 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
           <div className="pointer-events-auto">
             <ErrorBanner mensagem={erro} onRetry={recarregar} />
@@ -329,8 +302,13 @@ export default function MapaPage() {
             />
           ) : (
             <PainelLateral
-              {...painelProps}
-              onSelecionarRegiao={selecionarRegiaoPorNome}
+              areas={subprefeituras}
+              favoritas={favoritas}
+              carregando={carregando}
+              erro={erro}
+              ultimaAtualizacao={ultimaAtualizacao}
+              onRecarregar={recarregar}
+              onSelecionar={handleSelecionarSub}
             />
           )
         )}
@@ -368,10 +346,10 @@ export default function MapaPage() {
             className="flex-1 min-w-0 flex items-center gap-2 pl-5 text-left transition-colors"
             onClick={() => setPainelMobileAberto((v) => !v)}
             aria-expanded={painelMobileAberto}
-            aria-label={painelMobileAberto ? 'Recolher painel de regiões' : 'Expandir painel de regiões'}
+            aria-label={painelMobileAberto ? 'Recolher painel' : 'Expandir painel'}
           >
             <span className="flex-1 text-sm font-semibold mt-1 truncate" style={{ color: 'var(--text-primary)' }}>
-              {resumoAlertas(regioes, carregando)}
+              {resumoAlertas(subprefeituras, carregando)}
             </span>
             {painelMobileAberto
               ? <ChevronDown size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
@@ -381,12 +359,17 @@ export default function MapaPage() {
 
         </div>
 
-        {/* Lista de regiões (sem header duplicado) */}
+        {/* Painel (sem header duplicado) */}
         <div className="flex-1 overflow-hidden flex flex-col">
           <PainelLateral
-            {...painelProps}
-            onSelecionarRegiao={(nome) => {
-              selecionarRegiaoPorNome(nome);
+            areas={subprefeituras}
+            favoritas={favoritas}
+            carregando={carregando}
+            erro={erro}
+            ultimaAtualizacao={ultimaAtualizacao}
+            onRecarregar={recarregar}
+            onSelecionar={(a) => {
+              handleSelecionarSub(a);
               setPainelMobileAberto(false);
             }}
             hideHeader
@@ -395,11 +378,11 @@ export default function MapaPage() {
       </div>
 
       {/* FAB: botão flutuante para abrir o drawer (visível quando fechado) */}
-      {!painelMobileAberto && !regiaoSelecionada && (
+      {!painelMobileAberto && !subSelecionada && (
         <button
           className="md:hidden fixed z-[600] right-4 bottom-[7rem] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
           onClick={() => setPainelMobileAberto(true)}
-          aria-label="Ver regiões"
+          aria-label="Ver subprefeituras"
         >
           <Layers size={20} className="text-white" />
         </button>

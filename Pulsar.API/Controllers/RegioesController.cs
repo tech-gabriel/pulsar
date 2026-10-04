@@ -118,30 +118,5 @@ public class RegioesController : ControllerBase
     }
 
     private static SubprefeituraDto MapearSubprefeituraDto(Subprefeitura sub)
-    {
-        var ultimoScore = sub.GetUltimoScore();
-        var ultimaLeitura = sub.GetUltimaLeitura();
-
-        return new SubprefeituraDto
-        {
-            Id = sub.Id,
-            Nome = sub.Nome,
-            Latitude = sub.Latitude,
-            Longitude = sub.Longitude,
-            FaixaRisco = ultimoScore?.Faixa ?? FaixaRisco.BAIXO,
-            TemperaturaAtual = ultimaLeitura?.TemperaturaC ?? 0.0,
-            ScoreAtual = ultimoScore is null ? null : ScoreDto.De(ultimoScore),
-            UltimaLeitura = ultimaLeitura is null ? null : new LeituraDto
-            {
-                ChuvaMmH = ultimaLeitura.ChuvaMmH,
-                VentoKmH = ultimaLeitura.VentoKmH,
-                VisibilidadeKm = ultimaLeitura.VisibilidadeKm,
-                IndiceUv = ultimaLeitura.IndiceUv,
-                TemperaturaC = ultimaLeitura.TemperaturaC,
-                SensacaoTermica = ultimaLeitura.SensacaoTermica,
-                Umidade = ultimaLeitura.Umidade,
-                Timestamp = ultimaLeitura.Timestamp
-            }
-        };
-    }
+        => SubprefeituraDto.Preencher(new SubprefeituraDto(), sub);
 }

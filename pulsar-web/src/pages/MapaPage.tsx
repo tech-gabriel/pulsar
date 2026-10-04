@@ -53,7 +53,7 @@ export default function MapaPage() {
   }, [usuario, carregandoFavoritos, push.estado, favoritos.length, instalacao, navigate, search]);
   const { detectar, carregando: localizando } = useGeolocalizacao();
   const { showToast } = useToast();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
   // Deep link /app?regiao=<slug> (SEO, sino, busca): reage a CADA troca do parâmetro,
@@ -97,7 +97,17 @@ export default function MapaPage() {
     return () => document.body.classList.remove('mapa-lock');
   }, []);
 
+  // O deep link já foi aplicado; tirá-lo da URL faz o próximo toque no mesmo link
+  // (sino, busca) contar como novo, em vez de cair numa URL que não mudou.
+  function limparDeepLink() {
+    if (!searchParams.has('regiao')) return;
+    const p = new URLSearchParams(searchParams);
+    p.delete('regiao');
+    setSearchParams(p, { replace: true });
+  }
+
   function fecharDetalhe() {
+    limparDeepLink();
     setZonaEmFoco(null);
     setSubSelecionada(null);
     setPontoBusca(null);
@@ -154,6 +164,7 @@ export default function MapaPage() {
   // Toque numa subprefeitura (mapa, painel, busca): abre o detalhe dela e marca o
   // polígono (highlight + centralização).
   function handleSelecionarSub(sub: SubprefeituraMapaDto) {
+    limparDeepLink();
     setSubSelecionada(sub);
     setZonaEmFoco(null);
     if (isMobile) setPainelMobileAberto(false);

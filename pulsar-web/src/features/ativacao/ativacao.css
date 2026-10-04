@@ -21,9 +21,9 @@
 .at-fato b { display: block; font: 800 18px var(--font-heading); letter-spacing: -0.02em; }
 .at-fato span { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
 .at-hero { position: relative; height: 262px; margin: 8px -22px 6px; overflow: hidden; background: radial-gradient(120% 90% at 50% 40%, color-mix(in srgb, var(--color-pulsar-400) 14%, transparent) 0%, transparent 70%); }
-.at-hero .at-mapa { position: absolute; width: 210px; left: calc(50% - 105px); top: 30px; opacity: .95; }
+.at-hero .at-mapa { position: absolute; width: 210px; left: calc(50% - 85px); top: 30px; /* Sé (centro 404,453 no viewBox, escala 0,21) cai no meio */ opacity: .95; }
 .at-hero::after { content: ''; position: absolute; inset: auto 0 0 0; height: 70px; background: linear-gradient(transparent, var(--bg-primary)); }
-.at-anel, .at-pino { position: absolute; left: 50%; top: 120px; border-radius: 50%; }
+.at-anel, .at-pino { position: absolute; left: 50%; top: 125px; border-radius: 50%; }
 .at-anel { width: 60px; height: 60px; margin: -30px 0 0 -30px; border: 1.5px solid color-mix(in srgb, var(--color-pulsar-600) 50%, transparent); animation: at-pulso 3.2s cubic-bezier(.22, 1, .36, 1) infinite; }
 .at-anel:nth-of-type(2) { animation-delay: 1.06s; } .at-anel:nth-of-type(3) { animation-delay: 2.13s; }
 .at-pino { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: var(--color-pulsar-600); box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-pulsar-600) 18%, transparent); z-index: 2; }

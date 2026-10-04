@@ -108,7 +108,9 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
         })}
       </ul>
 
-      <div style={{ position: 'sticky', bottom: 0, margin: '0 -22px', padding: '12px 22px 0', background: 'color-mix(in srgb, var(--bg-primary) 82%, transparent)', backdropFilter: 'blur(18px) saturate(180%)' }}>
+      <div style={{ position: 'sticky', bottom: 'calc(-1 * max(26px, env(safe-area-inset-bottom)))',
+        // Cobre o padding inferior da tela: sem isso a lista aparece embaixo do botão ao rolar.
+        margin: '0 -22px calc(-1 * max(26px, env(safe-area-inset-bottom)))', padding: '12px 22px max(26px, env(safe-area-inset-bottom))', background: 'color-mix(in srgb, var(--bg-primary) 82%, transparent)', backdropFilter: 'blur(18px) saturate(180%)' }}>
         {selecionadas.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
             {selecionadas.map((id) => (

@@ -25,6 +25,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.12.0',
+    data: '2026-10-03',
+    resumo: 'Um começo novo: em poucos toques você escolhe seus lugares e liga os alertas.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Boas-vindas que deixam tudo pronto',
+        descricao: 'Ao entrar, escolha as subprefeituras que acompanha, instale o app na tela inicial e ative os alertas, tudo em poucos passos.',
+      },
+    ],
+  },
+  {
     versao: '1.11.0',
     data: '2026-10-03',
     resumo: 'Agora você acompanha as subprefeituras que importam para você.',

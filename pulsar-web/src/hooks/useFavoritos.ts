@@ -8,6 +8,7 @@ interface UseFavoritosResult {
   favoritos: FavoritoDto[];
   isFavorito: (subprefeituraId: string) => boolean;
   toggleFavorito: (subprefeituraId: string) => Promise<void>;
+  adicionarVarios: (ids: string[]) => Promise<boolean>;
   carregando: boolean;
 }
 
@@ -65,5 +66,27 @@ export function useFavoritos(usuarioId: string | null): UseFavoritosResult {
     [usuarioId, isFavorito, showToast]
   );
 
-  return { favoritos, isFavorito, toggleFavorito, carregando };
+  // Onboarding: salva a lista final de uma vez, sem um toast por item (a tela dá o retorno).
+  const adicionarVarios = useCallback(
+    async (ids: string[]) => {
+      if (!usuarioId) return false;
+      const novos: FavoritoDto[] = [];
+      try {
+        for (const id of ids) {
+          if (favoritos.some((f) => f.subprefeituraId === id)) continue;
+          const { data } = await api.post<FavoritoDto>(`/usuarios/${usuarioId}/favoritos`, { subprefeituraId: id });
+          novos.push(data);
+          track.favoritouRegiao(id);
+        }
+        return true;
+      } catch {
+        return false;
+      } finally {
+        if (novos.length > 0) setFavoritos((prev) => [...prev, ...novos]);
+      }
+    },
+    [usuarioId, favoritos]
+  );
+
+  return { favoritos, isFavorito, toggleFavorito, adicionarVarios, carregando };
 }

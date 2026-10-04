@@ -82,6 +82,7 @@ export const routes: RouteObject[] = [
         HydrateFallback: CarregandoRota,
         children: [
           { path: 'app', lazy: async () => ({ Component: (await import('./pages/MapaPage')).default }) },
+          { path: 'app/boas-vindas', lazy: async () => ({ Component: (await import('./pages/BoasVindasPage')).default }) },
           { path: 'app/historico', lazy: async () => ({ Component: (await import('./pages/HistoricoListPage')).default }) },
           { path: 'app/historico/:subprefeituraId', lazy: async () => ({ Component: (await import('./pages/HistoricoPage')).default }) },
           { path: 'app/dashboard', lazy: async () => ({ Component: (await import('./pages/DashboardPage')).default }) },

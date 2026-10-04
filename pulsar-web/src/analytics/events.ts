@@ -1,4 +1,6 @@
 import { posthog, isAnalyticsEnabled } from './posthog';
+import type { Passo } from '../features/ativacao/passos';
+import type { Plataforma } from '../features/ativacao/instalacao';
 
 export type NomeEvento =
   | 'visitou_landing'
@@ -10,7 +12,11 @@ export type NomeEvento =
   | 'usou_geolocalizacao'
   | 'buscou_endereco'
   | 'viu_novidades'
-  | 'clicou_instagram';
+  | 'clicou_instagram'
+  | 'ativacao_passo_visto'
+  | 'ativacao_passo_pulado'
+  | 'ativacao_concluida'
+  | 'instalou_app';
 
 function capturar(nome: NomeEvento, props?: Record<string, unknown>): void {
   if (!isAnalyticsEnabled()) return;
@@ -35,4 +41,8 @@ export const track = {
   buscouEndereco: () => capturar('buscou_endereco'),
   viuNovidades: (versao: string) => capturar('viu_novidades', { versao }),
   clicouInstagram: (origem: string) => capturar('clicou_instagram', { origem }),
+  passoVisto: (passo: Passo, ordem: number, total: number) => capturar('ativacao_passo_visto', { passo, ordem, total }),
+  passoPulado: (passo: Passo) => capturar('ativacao_passo_pulado', { passo }),
+  ativacaoConcluida: (p: { favoritas: number; alerta: boolean; instalou: boolean }) => capturar('ativacao_concluida', p),
+  instalouApp: (plataforma: Plataforma) => capturar('instalou_app', { plataforma }),
 };

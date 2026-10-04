@@ -4,10 +4,12 @@ import { createHead, UnheadProvider } from '@unhead/react/client';
 import { createBrowserRouter, RouterProvider, type HydrationState } from 'react-router-dom';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import { initAnalytics } from './analytics';
+import { capturarPromptDeInstalacao } from './features/ativacao/useInstalacao';
 import { routes } from './routes';
 import './index.css';
 
 initAnalytics();
+capturarPromptDeInstalacao();
 
 const head = createHead();
 const hydrationData = (window as Window & {

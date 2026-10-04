@@ -55,6 +55,19 @@ beforeEach(() => {
 });
 
 describe('usePushSubscription', () => {
+  it('ativar() devolve o estado final: "ativo" quando concede, "negado" quando bloqueia', async () => {
+    const { result } = renderHook(() => usePushSubscription(prefs));
+    await waitFor(() => expect(result.current.estado).toBe('inativo'));
+    let estado = '';
+    await act(async () => { estado = await result.current.ativar(); });
+    expect(estado).toBe('ativo');
+
+    requestPermission.mockResolvedValueOnce('denied');
+    await act(async () => { estado = await result.current.ativar(); });
+    expect(estado).toBe('negado');
+    expect(result.current.estado).toBe('negado');
+  });
+
   it('fica inativo quando suportado, servidor habilitado e sem inscrição', async () => {
     const { result } = renderHook(() => usePushSubscription(prefs));
     await waitFor(() => expect(result.current.estado).toBe('inativo'));

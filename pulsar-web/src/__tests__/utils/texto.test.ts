@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizarNome, primeiraQueCabe } from '../../utils/texto';
+import { normalizarNome, primeiraQueCabe, listaNomes } from '../../utils/texto';
 
 describe('normalizarNome', () => {
   it('remove acentos e baixa a caixa (GeoJSON x banco)', () => {
@@ -31,5 +31,13 @@ describe('primeiraQueCabe', () => {
   });
   it('sem nenhuma dentro do limite, devolve a última', () => {
     expect(primeiraQueCabe(['a'.repeat(10), 'b'.repeat(8)], 6)).toBe('bbbbbbbb');
+  });
+});
+
+describe('listaNomes', () => {
+  it('1, 2 e 3+', () => {
+    expect(listaNomes(['Mooca'])).toBe('Mooca');
+    expect(listaNomes(['Mooca', 'Penha'])).toBe('Mooca e Penha');
+    expect(listaNomes(['Mooca', 'Penha', 'Sé', 'Lapa'])).toBe('Mooca, Penha e mais 2');
   });
 });

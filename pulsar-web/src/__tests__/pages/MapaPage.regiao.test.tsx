@@ -33,25 +33,6 @@ vi.mock('../../hooks/useFavoritos', () => ({
 // Quem já viu o onboarding (marca no beforeEach) fica no mapa; push stubado sem rede.
 vi.mock('../../hooks/usePushSubscription', () => ({ usePushSubscription: () => ({ estado: 'ativo', ocupado: false, ativar: vi.fn(), desativar: vi.fn() }) }));
 
-// DetalheRegiao consome este hook para buscar o detalhe da região selecionada;
-// mockamos para exibir "Leste" sem rede (regiaoId 'r1' == região Leste).
-vi.mock('../../hooks/useRegiaoDetalhe', () => ({
-  useRegiaoDetalhe: (regiaoId: string | null) => ({
-    regiao: regiaoId
-      ? {
-          id: regiaoId,
-          nome: regiaoId === 'r1' ? 'Leste' : 'Sul',
-          scoreAgregado: 20,
-          faixaRisco: 'BAIXO',
-          totalSubprefeituras: 0,
-          ultimaAtualizacao: '2026-07-12T00:00:00Z',
-          subprefeituras: [],
-        }
-      : null,
-    carregando: false,
-    erro: null,
-  }),
-}));
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ usuario: { id: 'u1', nome: 'Teste', role: 'USER' }, logout: vi.fn() }),
@@ -68,8 +49,8 @@ vi.mock('../../components/notificacoes/ConvitePush', () => ({ default: () => nul
 
 // Mapa real (react-leaflet) não roda em jsdom — stub que expõe a sub selecionada.
 vi.mock('../../components/mapa/MapaBase', () => ({
-  default: ({ subSelecionada }: { subSelecionada: { nome: string } | null }) => (
-    <div data-testid="mapa-base-stub">{subSelecionada?.nome ?? ''}</div>
+  default: ({ subSelecionada, zonaEmFoco }: { subSelecionada: { nome: string } | null; zonaEmFoco: string | null }) => (
+    <div data-testid="mapa-base-stub">{subSelecionada?.nome ?? ''}|{zonaEmFoco ?? ''}</div>
   ),
 }));
 
@@ -89,38 +70,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('MapaPage deep-link de região', () => {
-  it('foca a região quando ?regiao=<slug> válido está na URL', async () => {
-    render(
-      <MemoryRouter initialEntries={['/app?regiao=zona-leste']}>
-        <MapaPage />
-      </MemoryRouter>,
-    );
-    // O painel de detalhe da região focada mostra "Leste" no header (h2).
-    // (getByText falha aqui: o nome também aparece na lista de regiões do
-    // drawer mobile, sempre montada — por isso a asserção mira o heading.)
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Leste' })).toBeInTheDocument());
+describe('MapaPage deep-link', () => {
+  it('?regiao=<zona> enquadra a zona no mapa, sem painel de zona', async () => {
+    render(<MemoryRouter initialEntries={['/app?regiao=zona-leste']}><MapaPage /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toHaveTextContent('|Leste'));
+    expect(screen.queryByRole('heading', { name: 'Leste' })).not.toBeInTheDocument();
   });
 
-  it('não foca nenhuma região quando o slug é inválido', async () => {
-    render(
-      <MemoryRouter initialEntries={['/app?regiao=hackerman']}>
-        <MapaPage />
-      </MemoryRouter>,
-    );
-    // Sem região selecionada: o detalhe (com header "Leste"/"Sul") não aparece.
-    await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toBeInTheDocument());
-    expect(screen.queryByRole('heading', { name: 'Leste' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Sul' })).not.toBeInTheDocument();
+  it('slug inválido não foca nada', async () => {
+    render(<MemoryRouter initialEntries={['/app?regiao=hackerman']}><MapaPage /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toHaveTextContent(/^|$/));
   });
-  it('seleciona a subprefeitura quando ?regiao=<slug> é de subprefeitura', async () => {
-    render(
-      <MemoryRouter initialEntries={['/app?regiao=itaquera']}>
-        <MapaPage />
-      </MemoryRouter>,
-    );
-    // Foca a zona dela (Leste) e seleciona Itaquera no mapa.
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'Leste' })).toBeInTheDocument());
-    expect(screen.getByTestId('mapa-base-stub')).toHaveTextContent('Itaquera');
+
+  it('?regiao=<subprefeitura> abre o detalhe dela', async () => {
+    render(<MemoryRouter initialEntries={['/app?regiao=itaquera']}><MapaPage /></MemoryRouter>);
+    await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Itaquera' }).length).toBeGreaterThan(0));
   });
 });

@@ -88,6 +88,7 @@ describe('MapaPage deep-link', () => {
     const alca = await screen.findByRole('button', { name: 'Expandir painel' });
     expect(alca).toHaveTextContent('Tudo tranquilo em São Paulo');
     fireEvent.click(alca);
-    expect(screen.getByRole('button', { name: 'Recolher painel' })).toHaveTextContent('Monitoramento');
+    expect(alca).toHaveAttribute('aria-label', 'Recolher painel');
+    expect(alca).toHaveTextContent('Monitoramento');
   });
 });

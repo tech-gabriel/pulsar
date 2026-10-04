@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { GeoJsonObject, FeatureCollection } from 'geojson';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers } from 'lucide-react';
 import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
-import BuscaEndereco from '../components/mapa/BuscaEndereco';
+import BuscaUnificada from '../components/mapa/BuscaUnificada';
 import LayerControl from '../components/mapa/LayerControl';
 import MapLegend from '../components/mapa/MapLegend';
 import PainelLateral from '../components/painel/PainelLateral';
@@ -144,7 +144,7 @@ export default function MapaPage() {
       const tipo = err instanceof GeoError ? err.tipo : 'indisponivel';
       showToast(
         tipo === 'negado'
-          ? 'Permita o acesso à localização no navegador para ver sua região.'
+          ? 'Permita o acesso à localização no navegador para ver sua subprefeitura.'
           : 'Não consegui te localizar agora. Tente de novo ou busque pelo endereço.',
         'error',
       );
@@ -195,8 +195,10 @@ export default function MapaPage() {
           ocorrencias={ocorrencias}
         />
 
-        {/* Busca de rua/endereço sobreposta ao mapa */}
-        <BuscaEndereco
+        {/* Busca unificada (subprefeitura + endereço) sobreposta ao mapa */}
+        <BuscaUnificada
+          areas={subprefeituras}
+          onSelecionarArea={handleSelecionarSub}
           onSelecionar={handleSelecionarEndereco}
           isMobile={isMobile}
           onUsarLocalizacao={handleUsarLocalizacao}

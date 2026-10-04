@@ -10,7 +10,7 @@ interface Props {
   subprefeituras: SubprefeituraMapaDto[];
   subSelecionada: SubprefeituraMapaDto | null;
   camadaAtiva: Camada;
-  regiaoSelecionadaNome: string | null;
+  zonaEmFoco: string | null;
   /** Modo foco: oculta os números de score (ex.: quando o overlay de alagamentos está ligado). */
   atenuado?: boolean;
 }
@@ -47,7 +47,7 @@ function normalizar(nome: string): string {
   return nome.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
 }
 
-export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, regiaoSelecionadaNome, atenuado = false }: Props) {
+export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco, atenuado = false }: Props) {
   const map = useMap();
   const [zoom, setZoom] = useState<number>(() => map.getZoom());
   useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
@@ -58,7 +58,7 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
   if (!tamanho) return null; // mapa muito afastado: esconde os labels
 
   const { diametro, fonte, nomeFonte } = tamanho;
-  const regiaoNorm = regiaoSelecionadaNome ? normalizar(regiaoSelecionadaNome) : null;
+  const regiaoNorm = zonaEmFoco ? normalizar(zonaEmFoco) : null;
 
   return (
     <>
@@ -67,7 +67,7 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
         const glow = glowDaCor(estilo.corCirculo);
         const selecionada = subSelecionada?.id === sub.id;
         // Esmaecer labels de outras regiões quando há uma região selecionada (4.7).
-        const esmaecida = regiaoNorm != null && normalizar(sub.regiaoNome) !== regiaoNorm;
+        const esmaecida = regiaoNorm != null && normalizar(sub.zona) !== regiaoNorm;
         const opacidade = esmaecida ? 0.2 : 1;
 
         const classes = [

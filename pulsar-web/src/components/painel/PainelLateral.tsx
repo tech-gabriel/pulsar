@@ -130,7 +130,7 @@ export default function PainelLateral({
                   <motion.div key={s.id} variants={itemStagger}>
                     <button
                       type="button"
-                      onClick={() => onSelecionarRegiao(s.regiaoNome)}
+                      onClick={() => onSelecionarRegiao(s.zona)}
                       className="regiao-card w-full flex items-center gap-3 min-h-11 text-left"
                     >
                       <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, color: 'var(--text-primary)' }}>{s.nome}</span>

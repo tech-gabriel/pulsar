@@ -20,15 +20,14 @@ const sub: SubprefeituraMapaDto = {
     umidade: 60,
     timestamp: '2026-06-06T12:00:00Z',
   },
-  regiaoId: 'r1',
-  regiaoNome: 'Centro',
+  zona: 'Centro',
 };
 
 describe('tooltipSubprefeituraHtml', () => {
   it('inclui nome, região, score arredondado e variáveis climáticas', () => {
     const html = tooltipSubprefeituraHtml(sub, 'Fallback');
     expect(html).toContain('Sé');
-    expect(html).toContain('Região Centro');
+    expect(html).toContain('Zona Centro');
     expect(html).toContain('43'); // score 42.7 arredondado
     expect(html).toContain('24.3°C');
     expect(html).toContain('2.5 mm/h');

@@ -26,8 +26,7 @@ function sub(over: Partial<SubprefeituraMapaDto> = {}): SubprefeituraMapaDto {
     faixaRisco: 'MODERADO' as FaixaRisco,
     temperaturaAtual: 20,
     ultimaLeitura: leitura(),
-    regiaoId: 'r1',
-    regiaoNome: 'Centro',
+    zona: 'Centro',
     ...over,
   };
 }

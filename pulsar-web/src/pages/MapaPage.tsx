@@ -36,7 +36,7 @@ import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from
 export default function MapaPage() {
   const { usuario } = useAuth();
   const { regioes, carregando, erro, recarregar, ultimaAtualizacao } = useRegioes();
-  const subprefeituras = useSubprefeituras(regioes);
+  const { subprefeituras } = useSubprefeituras();
   const { favoritos, isFavorito, toggleFavorito, carregando: carregandoFavoritos } = useFavoritos(usuario?.id ?? null);
   const semFavoritas = !!usuario && !carregandoFavoritos && favoritos.length === 0;
   const favoritas = subprefeituras.filter((s) => isFavorito(s.id));
@@ -127,7 +127,7 @@ export default function MapaPage() {
     }
     setAvisoBusca(null);
     setSubSelecionada(sel.sub);
-    setRegiaoSelecionadaNome(sel.regiaoNome);
+    setRegiaoSelecionadaNome(sel.zona);
     if (isMobile) setPainelMobileAberto(false);
   }
 
@@ -165,7 +165,7 @@ export default function MapaPage() {
   // marca a subprefeitura selecionada (highlight do polígono + centralização).
   function handleSelecionarSub(sub: SubprefeituraMapaDto) {
     setSubSelecionada(sub);
-    setRegiaoSelecionadaNome(sub.regiaoNome);
+    setRegiaoSelecionadaNome(sub.zona);
     if (isMobile) setPainelMobileAberto(false);
   }
 
@@ -215,7 +215,7 @@ export default function MapaPage() {
           subSelecionada={subSelecionada}
           onSelecionarSub={handleSelecionarSub}
           camadaAtiva={camadaAtiva}
-          regiaoSelecionadaNome={regiaoSelecionadaNome}
+          zonaEmFoco={regiaoSelecionadaNome}
           subSelecionadaAtiva={!!subSelecionada}
           pontoBusca={pontoBusca}
           overlayAlagamento={overlayAlagamento}

@@ -17,27 +17,27 @@ const geojson: FeatureCollection = {
   ],
 };
 
-const subs = [{ nome: 'Centro', regiaoNome: 'Região Central', id: 'r1' }];
+const subs = [{ nome: 'Centro', zona: 'Região Central', id: 'r1' }];
 
 describe('resolverSelecao', () => {
   it('casa a subprefeitura quando o ponto está dentro e existe no backend', () => {
     const sel = resolverSelecao(0, 0, geojson, subs, 'busca');
     expect(sel.sub).toEqual(subs[0]);
-    expect(sel.regiaoNome).toBe('Região Central');
+    expect(sel.zona).toBe('Região Central');
     expect(sel.aviso).toBeNull();
   });
 
   it('usa a região do GeoJSON quando a subprefeitura não está no backend', () => {
     const sel = resolverSelecao(0, 0, geojson, [], 'busca');
     expect(sel.sub).toBeNull();
-    expect(sel.regiaoNome).toBe('Centro');
+    expect(sel.zona).toBe('Centro');
     expect(sel.aviso).toBeNull();
   });
 
   it('devolve aviso de busca quando o ponto está fora dos polígonos', () => {
     const sel = resolverSelecao(50, 50, geojson, subs, 'busca');
     expect(sel.sub).toBeNull();
-    expect(sel.regiaoNome).toBeNull();
+    expect(sel.zona).toBeNull();
     expect(sel.aviso).toMatch(/endereço está fora/i);
   });
 

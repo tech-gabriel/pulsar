@@ -23,6 +23,17 @@ describe('track', () => {
     expect(h.posthog.capture).toHaveBeenCalledWith('favoritou_regiao', { subprefeituraId: 's-123' });
   });
 
+  it('eventos da ativação', () => {
+    track.passoVisto('escolher', 2, 5);
+    expect(h.posthog.capture).toHaveBeenCalledWith('ativacao_passo_visto', { passo: 'escolher', ordem: 2, total: 5 });
+    track.passoPulado('instalar');
+    expect(h.posthog.capture).toHaveBeenCalledWith('ativacao_passo_pulado', { passo: 'instalar' });
+    track.ativacaoConcluida({ favoritas: 2, alerta: true, instalou: false });
+    expect(h.posthog.capture).toHaveBeenCalledWith('ativacao_concluida', { favoritas: 2, alerta: true, instalou: false });
+    track.instalouApp('ios');
+    expect(h.posthog.capture).toHaveBeenCalledWith('instalou_app', { plataforma: 'ios' });
+  });
+
   it('cadastrou emite cadastrou com metodo', () => {
     track.cadastrou('email');
     expect(h.posthog.capture).toHaveBeenCalledWith('cadastrou', { metodo: 'email' });

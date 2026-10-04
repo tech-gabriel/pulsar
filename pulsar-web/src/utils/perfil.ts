@@ -14,7 +14,7 @@ export const PERFIS: PerfilMeta[] = [
   {
     valor: 'CIDADAO',
     label: 'Cidadão',
-    descricao: 'Visão geral do risco na sua região',
+    descricao: 'Visão geral do risco nas suas subprefeituras',
     Icon: User,
     cor: '#00BCFF',
   },

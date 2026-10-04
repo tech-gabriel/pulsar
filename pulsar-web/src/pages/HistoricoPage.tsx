@@ -23,7 +23,7 @@ import ErrorBanner from '../components/ui/ErrorBanner';
 import EmptyState from '../components/ui/EmptyState';
 
 interface LocationState {
-  regiaoNome?: string;
+  zona?: string;
   subNome?: string;
 }
 
@@ -133,9 +133,7 @@ export default function HistoricoPage() {
                 {historico?.subprefeituraNome ?? state?.subNome ?? 'Histórico'}
               </h1>
             </div>
-            {state?.regiaoNome && (
-              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>Região: {state.regiaoNome}</p>
-            )}
+            {state?.zona && (<p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>Zona {state.zona}</p>)}
           </div>
           {ultima?.score && (
             <BadgeRisco faixa={ultima.score.faixa} score={ultima.score.valor} />

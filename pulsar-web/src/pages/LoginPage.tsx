@@ -4,7 +4,7 @@ import { Eye, EyeOff, XCircle, Mail, Lock, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDestinoPosAuth } from '../hooks/useDestinoPosAuth';
 import AuthLayout from '../components/auth/AuthLayout';
-import { estaInstalado } from '../features/ativacao/useInstalacao';
+import { retomadaNoIPhone } from '../features/ativacao/useInstalacao';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons';
 
 export default function LoginPage() {
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const destino = useDestinoPosAuth();
   // Primeira abertura pelo ícone (iPhone): o app não vê a sessão do Safari, então explica o porquê.
-  const noApp = estaInstalado();
+  const noApp = retomadaNoIPhone();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');

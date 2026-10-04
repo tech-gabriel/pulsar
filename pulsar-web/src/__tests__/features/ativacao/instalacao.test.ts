@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectarInstalacao, plataformaDe, type SinaisInstalacao } from '../../../features/ativacao/instalacao';
+import { detectarInstalacao, plataformaDe, appIOSInstalado, type SinaisInstalacao } from '../../../features/ativacao/instalacao';
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
 const IPAD_COMO_MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
@@ -24,4 +24,15 @@ describe('plataformaDe', () => {
   it('ios', () => expect(plataformaDe(s({ userAgent: IPHONE }))).toBe('ios'));
   it('android', () => expect(plataformaDe(s({ userAgent: ANDROID }))).toBe('android'));
   it('desktop', () => expect(plataformaDe(s({}))).toBe('desktop'));
+});
+
+describe('appIOSInstalado (texto de retomada no login)', () => {
+  it('só no iPhone/iPad em modo instalado', () => {
+    expect(appIOSInstalado(s({ userAgent: IPHONE, standalone: true }))).toBe(true);
+    expect(appIOSInstalado(s({ userAgent: IPHONE }))).toBe(false);
+  });
+  it('Android/computador instalado não fala de iPhone', () => {
+    expect(appIOSInstalado(s({ userAgent: ANDROID, standalone: true }))).toBe(false);
+    expect(appIOSInstalado(s({ standalone: true }))).toBe(false);
+  });
 });

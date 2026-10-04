@@ -23,6 +23,11 @@ export function detectarInstalacao(s: SinaisInstalacao): Instalacao {
   return 'indisponivel';
 }
 
+/** Primeira abertura pelo ícone no iPhone/iPad: lá o app não vê a sessão do Safari. */
+export function appIOSInstalado(s: SinaisInstalacao): boolean {
+  return s.standalone && ehIOS(s);
+}
+
 export function plataformaDe(s: SinaisInstalacao): Plataforma {
   if (ehIOS(s)) return 'ios';
   if (/Android/i.test(s.userAgent)) return 'android';

@@ -25,6 +25,28 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.13.0',
+    data: '2026-10-04',
+    resumo: 'O app agora fala só de subprefeituras, com a cidade como visão geral.',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Painel com o que importa',
+        descricao: 'Abra o mapa e veja como está a cidade agora, as suas subprefeituras e as que pedem atenção. Todas ficam a um toque, com busca.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Previsão da sua subprefeitura',
+        descricao: 'O detalhe de cada subprefeitura mostra a previsão dela própria para as próximas horas.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Sino e dashboard mais pessoais',
+        descricao: 'O sino avisa primeiro sobre as suas subprefeituras, e o dashboard mostra o mapa da cidade colorido pelo risco.',
+      },
+    ],
+  },
+  {
     versao: '1.12.0',
     data: '2026-10-03',
     resumo: 'Um começo novo: em poucos toques você escolhe seus lugares e liga os alertas.',

@@ -23,7 +23,7 @@ self.addEventListener('activate', (event) => {
 
 const PUSH_FALLBACK: PushPayload = {
   titulo: 'Pulsar',
-  corpo: 'Novo alerta de risco na sua região.',
+  corpo: 'Novo alerta de risco numa subprefeitura que você acompanha.',
 };
 
 self.addEventListener('push', (event) => {

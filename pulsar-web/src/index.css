@@ -144,7 +144,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Slide-in da direita — DetalheRegiao desktop */
+/* Slide-in da direita — DetalheSubprefeitura desktop */
 @keyframes slide-in {
   from { transform: translateX(100%); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }

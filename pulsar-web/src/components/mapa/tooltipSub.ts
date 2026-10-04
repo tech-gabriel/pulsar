@@ -44,7 +44,7 @@ export function tooltipSubprefeituraHtml(
 ): string {
   const nome = sub?.nome ?? nomeFallback ?? 'Subprefeitura';
   const cabecalho = `<div class="pt-head"><div class="pt-titulo">${nome}</div>${
-    sub ? `<div class="pt-regiao">Região ${sub.regiaoNome}</div>` : ''
+    sub ? `<div class="pt-regiao">Zona ${sub.zona}</div>` : ''
   }</div>`;
 
   if (!sub) {

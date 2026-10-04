@@ -6,7 +6,7 @@ export type OrigemPonto = 'busca' | 'localizacao';
 
 export interface Selecao<S> {
   sub: S | null;
-  regiaoNome: string | null;
+  zona: string | null;
   aviso: string | null;
 }
 
@@ -21,7 +21,7 @@ const AVISO_FORA: Record<OrigemPonto, string> = {
  * o aviso adequado à origem (busca × localização). Lógica antes embutida em
  * `handleSelecionarEndereco`, agora compartilhada por busca e geolocalização.
  */
-export function resolverSelecao<S extends { nome: string; regiaoNome: string }>(
+export function resolverSelecao<S extends { nome: string; zona: string }>(
   lat: number,
   lon: number,
   geojson: FeatureCollection | null,
@@ -30,7 +30,7 @@ export function resolverSelecao<S extends { nome: string; regiaoNome: string }>(
 ): Selecao<S> {
   const resolvido = resolverRegiaoPorPonto(lat, lon, geojson);
   if (!resolvido) {
-    return { sub: null, regiaoNome: null, aviso: AVISO_FORA[origem] };
+    return { sub: null, zona: null, aviso: AVISO_FORA[origem] };
   }
   const sub =
     subprefeituras.find(
@@ -38,7 +38,7 @@ export function resolverSelecao<S extends { nome: string; regiaoNome: string }>(
     ) ?? null;
   return {
     sub,
-    regiaoNome: sub ? sub.regiaoNome : resolvido.regiaoNome,
+    zona: sub ? sub.zona : resolvido.regiaoNome,
     aviso: null,
   };
 }

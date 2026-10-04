@@ -13,7 +13,7 @@ interface Props {
   subSelecionada: SubprefeituraMapaDto | null;
   onSelecionarSub: (sub: SubprefeituraMapaDto) => void;
   camadaAtiva: Camada;
-  regiaoSelecionadaNome: string | null;
+  zonaEmFoco: string | null;
 }
 
 function nomeFeature(feature: Feature): string {
@@ -26,7 +26,7 @@ export default function RegioesLayer({
   subSelecionada,
   onSelecionarSub,
   camadaAtiva,
-  regiaoSelecionadaNome,
+  zonaEmFoco,
 }: Props) {
   const map = useMap();
   const layerRef = useRef<L.GeoJSON | null>(null);
@@ -36,19 +36,19 @@ export default function RegioesLayer({
   const subsRef = useRef(subprefeituras);
   const selRef = useRef(subSelecionada);
   const camadaRef = useRef(camadaAtiva);
-  const regiaoRef = useRef(regiaoSelecionadaNome);
+  const regiaoRef = useRef(zonaEmFoco);
   useEffect(() => {
     subsRef.current = subprefeituras;
     selRef.current = subSelecionada;
     camadaRef.current = camadaAtiva;
-    regiaoRef.current = regiaoSelecionadaNome;
+    regiaoRef.current = zonaEmFoco;
   });
 
   // True quando a subprefeitura pertence à região atualmente selecionada (4.7).
   function naRegiaoAtiva(sub: SubprefeituraMapaDto | undefined): boolean {
     const regiao = regiaoRef.current;
     if (!regiao) return true;
-    return !!sub && normalizarNome(sub.regiaoNome) === normalizarNome(regiao);
+    return !!sub && normalizarNome(sub.zona) === normalizarNome(regiao);
   }
 
   function subDaFeature(feature: Feature): SubprefeituraMapaDto | undefined {
@@ -132,7 +132,7 @@ export default function RegioesLayer({
   useEffect(() => {
     layerRef.current?.eachLayer((layer) => aplicarEstilo(layer as L.Path));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subprefeituras, subSelecionada, camadaAtiva, regiaoSelecionadaNome]);
+  }, [subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco]);
 
   function onEachFeature(feature: Feature, layer: Layer) {
     const path = layer as L.Path;

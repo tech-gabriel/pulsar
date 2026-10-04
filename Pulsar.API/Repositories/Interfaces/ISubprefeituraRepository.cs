@@ -9,4 +9,7 @@ public interface ISubprefeituraRepository : IRepository<Subprefeitura>
 
     /// <summary>Subprefeitura com a região carregada (necessário para resolver o fuso).</summary>
     Task<Subprefeitura?> ObterComRegiaoAsync(Guid id);
+
+    /// <summary>Ativas com a região (legenda de zona), o último score e a última leitura.</summary>
+    Task<IReadOnlyList<Subprefeitura>> ObterAtivasComResumoAsync();
 }

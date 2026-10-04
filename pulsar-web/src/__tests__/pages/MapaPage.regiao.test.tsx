@@ -1,25 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 
 // Isola o teste do mapa/rede: mocka os hooks de dados e os componentes pesados
 // (Leaflet/GSI/push) que a MapaPage monta. O objetivo é só provar que
 // ?regiao=<slug> foca a região correta via setRegiaoSelecionadaNome.
 
 vi.mock('../../hooks/useIsMobile', () => ({ useIsMobile: () => false }));
-
-vi.mock('../../hooks/useRegioes', () => ({
-  useRegioes: () => ({
-    regioes: [
-      { id: 'r1', nome: 'Leste', scoreAgregado: 20, faixaRisco: 'BAIXO', totalSubprefeituras: 12, ultimaAtualizacao: '2026-07-12T00:00:00Z' },
-      { id: 'r2', nome: 'Sul', scoreAgregado: 15, faixaRisco: 'BAIXO', totalSubprefeituras: 8, ultimaAtualizacao: '2026-07-12T00:00:00Z' },
-    ],
-    carregando: false,
-    erro: null,
-    recarregar: vi.fn(),
-    ultimaAtualizacao: null,
-  }),
-}));
 
 // Itaquera existe na "API" para o deep-link de subprefeitura achar pelo nome.
 const ITAQUERA = { id: 's1', nome: 'Itaquera', latitude: 0, longitude: 0, scoreAtual: null, faixaRisco: 'BAIXO', temperaturaAtual: 20, ultimaLeitura: null, zona: 'Leste' };
@@ -84,6 +71,15 @@ describe('MapaPage deep-link', () => {
 
   it('?regiao=<subprefeitura> abre o detalhe dela', async () => {
     render(<MemoryRouter initialEntries={['/app?regiao=itaquera']}><MapaPage /></MemoryRouter>);
+    await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Itaquera' }).length).toBeGreaterThan(0));
+  });
+
+  it('reage à troca do parâmetro com o mapa já aberto (sino, busca)', async () => {
+    function Ir() { const navigate = useNavigate(); return <button onClick={() => navigate('/app?regiao=itaquera')}>ir</button>; }
+    render(<MemoryRouter initialEntries={['/app']}><Ir /><MapaPage /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toBeInTheDocument());
+    expect(screen.queryAllByRole('heading', { name: 'Itaquera' })).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'ir' }));
     await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Itaquera' }).length).toBeGreaterThan(0));
   });
 });

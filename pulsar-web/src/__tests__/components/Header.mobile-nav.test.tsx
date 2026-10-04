@@ -6,7 +6,8 @@ import Header from '../../components/ui/Header';
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ usuario: { nome: 'Adm', role: 'ADMIN' }, logout: vi.fn() }),
 }));
-vi.mock('../../contexts/AlertasContext', () => ({ useAlertas: () => ({ alertas: [], regioes: [], carregando: false }) }));
+vi.mock('../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => ({ subprefeituras: [], carregando: false, erro: null, recarregar: vi.fn(), ultimaAtualizacao: null }) }));
+vi.mock('../../hooks/useFavoritos', () => ({ useFavoritos: () => ({ favoritos: [], carregando: false }) }));
 vi.mock('../../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'dark', toggleTheme: vi.fn() }) }));
 
 function setup() {

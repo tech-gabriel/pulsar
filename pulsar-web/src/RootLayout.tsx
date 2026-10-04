@@ -4,7 +4,6 @@ import { useHead } from '@unhead/react';
 import { ThemeProvider } from './hooks/ThemeProvider';
 import { ToastProvider } from './contexts/ToastProvider';
 import { AuthProvider } from './contexts/AuthProvider';
-import { AlertasProvider } from './contexts/AlertasProvider';
 import { SubprefeiturasProvider } from './contexts/SubprefeiturasProvider';
 import { AnalyticsBridge } from './analytics';
 import TitleManager from './components/TitleManager';
@@ -27,7 +26,6 @@ export default function RootLayout() {
       <ThemeProvider>
         <ToastProvider>
           <AuthProvider>
-            <AlertasProvider>
             <SubprefeiturasProvider>
               <AnalyticsBridge />
               <TitleManager />
@@ -35,7 +33,6 @@ export default function RootLayout() {
               <Outlet />
               <ToastContainer />
             </SubprefeiturasProvider>
-            </AlertasProvider>
           </AuthProvider>
         </ToastProvider>
       </ThemeProvider>

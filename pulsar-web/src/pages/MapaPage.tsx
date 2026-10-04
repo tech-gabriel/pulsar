@@ -351,7 +351,8 @@ export default function MapaPage() {
             aria-label={painelMobileAberto ? 'Recolher painel' : 'Expandir painel'}
           >
             <span className="flex-1 text-sm font-semibold mt-1 truncate" style={{ color: 'var(--text-primary)' }}>
-              {resumoAlertas(subprefeituras, carregando)}
+              {/* Fechada, a alça é a única linha visível: mostra o resumo. Aberta, o cartão da cidade já resume. */}
+              {painelMobileAberto ? 'Monitoramento' : resumoAlertas(subprefeituras, carregando)}
             </span>
             {painelMobileAberto
               ? <ChevronDown size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />

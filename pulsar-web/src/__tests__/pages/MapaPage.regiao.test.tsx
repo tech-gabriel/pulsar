@@ -82,4 +82,12 @@ describe('MapaPage deep-link', () => {
     fireEvent.click(screen.getByRole('button', { name: 'ir' }));
     await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Itaquera' }).length).toBeGreaterThan(0));
   });
+
+  it('gaveta no celular: fechada mostra o resumo, aberta diz Monitoramento', async () => {
+    render(<MemoryRouter initialEntries={['/app']}><MapaPage /></MemoryRouter>);
+    const alca = await screen.findByRole('button', { name: 'Expandir painel' });
+    expect(alca).toHaveTextContent('Tudo tranquilo em São Paulo');
+    fireEvent.click(alca);
+    expect(screen.getByRole('button', { name: 'Recolher painel' })).toHaveTextContent('Monitoramento');
+  });
 });

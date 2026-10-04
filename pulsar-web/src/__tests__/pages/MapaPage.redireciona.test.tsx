@@ -24,25 +24,6 @@ const ITAQUERA = { id: 's1', nome: 'Itaquera', latitude: 0, longitude: 0, scoreA
 const SUBS = [ITAQUERA];
 vi.mock('../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => ({ subprefeituras: SUBS, carregando: false, erro: null, recarregar: vi.fn(), ultimaAtualizacao: null }) }));
 
-// DetalheRegiao consome este hook para buscar o detalhe da região selecionada;
-// mockamos para exibir "Leste" sem rede (regiaoId 'r1' == região Leste).
-vi.mock('../../hooks/useRegiaoDetalhe', () => ({
-  useRegiaoDetalhe: (regiaoId: string | null) => ({
-    regiao: regiaoId
-      ? {
-          id: regiaoId,
-          nome: regiaoId === 'r1' ? 'Leste' : 'Sul',
-          scoreAgregado: 20,
-          faixaRisco: 'BAIXO',
-          totalSubprefeituras: 0,
-          ultimaAtualizacao: '2026-07-12T00:00:00Z',
-          subprefeituras: [],
-        }
-      : null,
-    carregando: false,
-    erro: null,
-  }),
-}));
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ usuario: { id: 'u1', nome: 'Teste', role: 'USER' }, logout: vi.fn() }),

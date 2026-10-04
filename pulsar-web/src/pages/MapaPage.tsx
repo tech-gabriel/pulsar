@@ -7,7 +7,7 @@ import BuscaEndereco from '../components/mapa/BuscaEndereco';
 import LayerControl from '../components/mapa/LayerControl';
 import MapLegend from '../components/mapa/MapLegend';
 import PainelLateral from '../components/painel/PainelLateral';
-import DetalheRegiao from '../components/painel/DetalheRegiao';
+import DetalheSubprefeitura from '../components/painel/DetalheSubprefeitura';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import Header from '../components/ui/Header';
 import type { Camada } from '../utils/camadas';
@@ -319,10 +319,10 @@ export default function MapaPage() {
           </div>
         ) : (
           /* Conteúdo completo */
-          regiaoSelecionada ? (
-            <DetalheRegiao
-              key={regiaoSelecionada.id}
-              regiaoId={regiaoSelecionada.id}
+          subSelecionada ? (
+            <DetalheSubprefeitura
+              key={subSelecionada.id}
+              area={subSelecionada}
               onFechar={fecharDetalhe}
               isFavorito={isFavorito}
               onToggleFavorito={toggleFavorito}
@@ -409,11 +409,11 @@ export default function MapaPage() {
           MOBILE DETALHE — overlay fullscreen
           Aparece ao selecionar uma região no mobile
       ══════════════════════════════════════════ */}
-      {regiaoSelecionada && isMobile && (
+      {subSelecionada && isMobile && (
         <div className="fixed inset-0 z-[1100] flex flex-col animate-slide-up" style={{ background: 'var(--bg-primary)' }}>
-          <DetalheRegiao
-            key={regiaoSelecionada.id}
-            regiaoId={regiaoSelecionada.id}
+          <DetalheSubprefeitura
+            key={subSelecionada.id}
+            area={subSelecionada}
             onFechar={fecharDetalhe}
             isFavorito={isFavorito}
             onToggleFavorito={toggleFavorito}

@@ -13,7 +13,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useNotificacoesPrefs, type NotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../hooks/usePushSubscription';
 import { useFavoritos } from '../hooks/useFavoritos';
-import { useOnboarding } from '../hooks/useOnboarding';
+import { limparAtivacaoVista } from '../features/ativacao/passos';
 import { PERFIS, perfilMeta } from '../utils/perfil';
 import type { TipoPerfil } from '../types';
 
@@ -64,13 +64,12 @@ export default function ConfiguracoesPage() {
   const { prefs, toggle } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
   const { favoritos, toggleFavorito } = useFavoritos(usuario?.id ?? null);
-  const { reverNovamente } = useOnboarding();
   const navigate = useNavigate();
   const dark = theme === 'dark';
 
   function reverBoasVindas() {
-    reverNovamente();
-    navigate('/app');
+    limparAtivacaoVista();
+    navigate('/app/boas-vindas');
   }
 
   const metaAtual = perfilMeta(usuario?.perfil);

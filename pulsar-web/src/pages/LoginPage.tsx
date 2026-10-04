@@ -1,15 +1,18 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, XCircle, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, XCircle, Mail, Lock, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDestinoPosAuth } from '../hooks/useDestinoPosAuth';
 import AuthLayout from '../components/auth/AuthLayout';
+import { retomadaNoIPhone } from '../features/ativacao/useInstalacao';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const destino = useDestinoPosAuth();
+  // Primeira abertura pelo ícone (iPhone): o app não vê a sessão do Safari, então explica o porquê.
+  const noApp = retomadaNoIPhone();
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -37,11 +40,18 @@ export default function LoginPage() {
       {/* Cabeçalho */}
       <div className="mb-7">
         <h1 style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 26, color: 'var(--text-primary)' }}>
-          Bem-vindo de volta
+          {noApp ? 'Que bom te ver no app!' : 'Bem-vindo de volta'}
         </h1>
         <p className="mt-1.5" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-          Entre para acompanhar o clima da sua região
+          {noApp
+            ? 'Entre mais uma vez para continuar. É só desta vez: o iPhone guarda o app separado do Safari.'
+            : 'Entre para acompanhar o clima da sua região'}
         </p>
+        {noApp && (
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5" style={{ fontSize: 13, fontWeight: 600, color: '#166534', background: '#DCFCE7' }}>
+            <CheckCircle size={15} />Suas escolhas ficam salvas na sua conta
+          </p>
+        )}
       </div>
 
       {erro && (

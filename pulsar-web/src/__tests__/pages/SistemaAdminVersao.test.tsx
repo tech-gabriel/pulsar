@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { APP_VERSION } from '../../data/changelog';
 
-// Header carrega ThemeProvider/AlertasProvider próprios, que não fazem parte
+// Header carrega ThemeProvider/SubprefeiturasProvider próprios, que não fazem parte
 // deste teste (foco é só o chip de versão) — mockado como no teste irmão
 // SistemaAdminPage.test.tsx.
 vi.mock('../../components/ui/Header', () => ({ default: () => null }));

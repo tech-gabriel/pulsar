@@ -392,7 +392,7 @@ export default function MapaPage() {
 
       {/* ══════════════════════════════════════════
           MOBILE DETALHE — overlay fullscreen
-          Aparece ao selecionar uma região no mobile
+          Aparece ao selecionar uma subprefeitura no mobile
       ══════════════════════════════════════════ */}
       {subSelecionada && isMobile && (
         <div className="fixed inset-0 z-[1100] flex flex-col animate-slide-up" style={{ background: 'var(--bg-primary)' }}>

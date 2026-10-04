@@ -1,0 +1,51 @@
+/* Onboarding de ativação. Cores só por variável: vale nos temas claro e escuro. */
+.at-raiz { position: fixed; inset: 0; background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; overflow: hidden; }
+.at-topo { display: flex; align-items: center; gap: 12px; padding: max(16px, env(safe-area-inset-top)) 20px 0; min-height: 60px; }
+.at-voltar, .at-acao-topo { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); border-radius: 12px; }
+.at-acao-topo { font: 600 14px var(--font-body); padding: 0 6px; white-space: nowrap; }
+.at-prog { flex: 1; display: flex; gap: 5px; }
+.at-prog > span { flex: 1; height: 4px; border-radius: 4px; background: color-mix(in srgb, var(--text-primary) 10%, transparent); overflow: hidden; }
+.at-prog > span > i { display: block; height: 100%; background: var(--color-pulsar-600); transform-origin: left; border-radius: 4px; }
+.at-palco { position: relative; flex: 1; }
+.at-tela { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 8px 22px max(26px, env(safe-area-inset-bottom)); max-width: 520px; margin: 0 auto; width: 100%; overflow-y: auto; }
+.at-titulo { font: 800 clamp(26px, 7vw, 32px)/1.06 var(--font-heading); letter-spacing: -0.03em; outline: none; }
+.at-titulo em { font-style: normal; color: var(--color-pulsar-600); }
+.at-texto { font-size: 15.5px; line-height: 1.45; color: var(--text-secondary); margin-top: 12px; }
+.at-cta { margin-top: auto; min-height: 54px; border-radius: 16px; background: var(--color-pulsar-600); color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font: 700 16px var(--font-heading); box-shadow: 0 8px 22px -8px rgba(0, 132, 209, .6), inset 0 1px 0 rgba(255, 255, 255, .22); width: 100%; transition: transform 100ms ease-out; }
+.at-cta:active { transform: scale(0.97); }
+.at-cta:disabled { opacity: .5; }
+.at-cta2 { min-height: 44px; display: flex; align-items: center; justify-content: center; font: 600 14.5px var(--font-body); color: var(--text-secondary); margin-top: 6px; width: 100%; }
+.at-fatos { display: flex; gap: 8px; margin-top: 16px; }
+.at-fato { flex: 1; border-radius: 14px; background: color-mix(in srgb, var(--color-pulsar-500) 10%, transparent); padding: 10px 6px; text-align: center; }
+.at-fato b { display: block; font: 800 18px var(--font-heading); letter-spacing: -0.02em; }
+.at-fato span { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+.at-hero { position: relative; height: 262px; margin: 8px -22px 6px; overflow: hidden; background: radial-gradient(120% 90% at 50% 40%, color-mix(in srgb, var(--color-pulsar-400) 14%, transparent) 0%, transparent 70%); }
+.at-hero .at-mapa { position: absolute; width: 210px; left: calc(50% - 85px); top: 30px; /* Sé (centro 404,453 no viewBox, escala 0,21) cai no meio */ opacity: .95; }
+.at-hero::after { content: ''; position: absolute; inset: auto 0 0 0; height: 70px; background: linear-gradient(transparent, var(--bg-primary)); }
+.at-anel, .at-pino { position: absolute; left: 50%; top: 125px; border-radius: 50%; }
+.at-anel { width: 60px; height: 60px; margin: -30px 0 0 -30px; border: 1.5px solid color-mix(in srgb, var(--color-pulsar-600) 50%, transparent); animation: at-pulso 3.2s cubic-bezier(.22, 1, .36, 1) infinite; }
+.at-anel:nth-of-type(2) { animation-delay: 1.06s; } .at-anel:nth-of-type(3) { animation-delay: 2.13s; }
+.at-pino { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: var(--color-pulsar-600); box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-pulsar-600) 18%, transparent); z-index: 2; }
+@keyframes at-pulso { from { transform: scale(.4); opacity: .9; } to { transform: scale(4.4); opacity: 0; } }
+.at-icone-app { position: relative; width: 96px; height: 96px; margin: 26px auto 20px; animation: at-flutua 4s ease-in-out infinite; }
+.at-icone-app > div { width: 96px; height: 96px; border-radius: 24px; background: linear-gradient(145deg, #fff, #EEF7FD); display: grid; place-items: center; box-shadow: 0 18px 38px -14px rgba(0, 105, 168, .55); overflow: hidden; position: relative; }
+.at-icone-app > div::after { content: ''; position: absolute; top: -40%; left: -60%; width: 40%; height: 180%; transform: rotate(25deg); background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .75), transparent); animation: at-varre 2.6s ease-in-out .6s 1 both; }
+@keyframes at-flutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes at-varre { from { left: -60%; } to { left: 130%; } }
+.at-seta { margin-top: 14px; display: flex; justify-content: center; color: var(--color-pulsar-600); animation: at-aponta 1.6s ease-in-out infinite; }
+@keyframes at-aponta { 0%, 100% { transform: translateY(0); opacity: .6; } 50% { transform: translateY(6px); opacity: 1; } }
+.at-lista-gar { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.at-gar { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.35; color: var(--text-secondary); }
+.at-gar > svg { flex: 0 0 auto; margin-top: 1px; color: var(--color-pulsar-600); }
+.at-bloqueio { margin: 8px -22px 0; height: 230px; flex: 0 0 auto; position: relative; overflow: hidden; background: linear-gradient(160deg, #0B3A5B 0%, #052F4A 55%, #04263C 100%); color: #fff; }
+.at-notif { position: absolute; left: 14px; right: 14px; top: 104px; border-radius: 20px; padding: 11px 12px; display: flex; gap: 10px; background: rgba(255, 255, 255, .72); backdrop-filter: blur(20px) saturate(180%); color: #0B1B2B; box-shadow: 0 12px 30px rgba(0, 0, 0, .25); }
+.at-selo { margin: 26px auto 10px; width: 96px; height: 96px; flex: 0 0 auto; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #22C55E, #16A34A); display: grid; place-items: center; box-shadow: 0 16px 36px -12px rgba(22, 163, 74, .6); }
+.at-selo path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: at-traca .45s ease-out .35s forwards; }
+@keyframes at-traca { to { stroke-dashoffset: 0; } }
+.at-mapa-mini { width: 78px; }
+@media (prefers-reduced-motion: reduce) {
+  .at-anel, .at-icone-app, .at-icone-app > div::after, .at-seta, .at-selo path { animation: none !important; }
+  .at-selo path { stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-transparency: reduce) { .at-notif { background: #fff; backdrop-filter: none; } }

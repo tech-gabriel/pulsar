@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { BellRing, BellOff } from 'lucide-react';
 import BadgeRisco from '../../../components/ui/BadgeRisco';
 import type { FaixaRisco } from '../../../types';
-import { slugify } from '../../../data/regioes-seo';
+import { idDaArea } from '../../cidade/cidade';
 import MapaCoropletico from '../../cidade/MapaCoropletico';
 
 const COR: Record<FaixaRisco, string> = { BAIXO: '#22C55E', MODERADO: '#F59E0B', ALTO: '#EF4444' };
@@ -21,7 +21,7 @@ export default function TelaPronto({ primeiroNome, escolhidas, alerta, onVerMapa
     titulo.current?.focus();
     navigator.vibrate?.(10); // retorno tátil curto, só aqui (conclusão)
   }, []);
-  const destaques = Object.fromEntries(escolhidas.map((e) => [slugify(e.nome), COR[e.faixaRisco]]));
+  const destaques = Object.fromEntries(escolhidas.map((e) => [idDaArea(e.nome), COR[e.faixaRisco]]));
   return (
     <>
       <div className="at-selo" aria-hidden="true">

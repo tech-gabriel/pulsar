@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { useNotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../hooks/usePushSubscription';
-import { useRegioes } from '../hooks/useRegioes';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useGeolocalizacao } from '../hooks/useGeolocalizacao';
 import { resolverSelecao } from '../utils/selecaoPorPonto';
@@ -29,8 +28,7 @@ export default function BoasVindasPage() {
   const { prefs } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
   const { instalacao, instalar } = useInstalacao();
-  const { regioes } = useRegioes();
-  const subprefeituras = useSubprefeituras(regioes);
+  const { subprefeituras } = useSubprefeituras();
   const { detectar } = useGeolocalizacao();
   const [geojson, setGeojson] = useState<FeatureCollection | null>(null);
   const [alerta, setAlerta] = useState<'ativo' | 'negado' | 'nao-pedido'>('nao-pedido');

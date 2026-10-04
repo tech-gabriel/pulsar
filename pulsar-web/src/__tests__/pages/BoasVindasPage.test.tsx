@@ -15,8 +15,7 @@ vi.mock('../../hooks/useFavoritos', () => ({ useFavoritos: () => ({ favoritos: d
 vi.mock('../../hooks/useNotificacoesPrefs', () => ({ useNotificacoesPrefs: () => ({ prefs: { alertaAlto: true, alertaModerado: false, resumoDiario: false } }) }));
 vi.mock('../../hooks/usePushSubscription', () => ({ usePushSubscription: () => ({ estado: 'inativo', ocupado: false, ativar: dados.ativar, desativar: vi.fn() }) }));
 vi.mock('../../features/ativacao/useInstalacao', () => ({ useInstalacao: () => ({ instalacao: 'indisponivel', plataforma: 'desktop', instalar: vi.fn() }), estaInstalado: () => false }));
-vi.mock('../../hooks/useRegioes', () => ({ useRegioes: () => ({ regioes: [], carregando: false, erro: null }) }));
-vi.mock('../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => [{ id: 's1', nome: 'Mooca', regiaoNome: 'Leste', faixaRisco: 'BAIXO' }] }));
+vi.mock('../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => ({ subprefeituras: [{ id: 's1', nome: 'Mooca', zona: 'Leste', faixaRisco: 'BAIXO' }], carregando: false, erro: null, recarregar: vi.fn(), ultimaAtualizacao: null }) }));
 vi.mock('../../hooks/useGeolocalizacao', () => ({ useGeolocalizacao: () => ({ detectar: vi.fn(), carregando: false }) }));
 
 import BoasVindasPage from '../../pages/BoasVindasPage';

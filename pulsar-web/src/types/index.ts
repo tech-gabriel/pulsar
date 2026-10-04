@@ -167,10 +167,9 @@ export interface SubprefeituraDto {
   ultimaLeitura: LeituraDto | null;
 }
 
-/** SubprefeituraDto achatada com a região a que pertence — usada nos labels do mapa. */
+/** Retornado por GET /api/subprefeituras. A zona é só legenda (SP3). */
 export interface SubprefeituraMapaDto extends SubprefeituraDto {
-  regiaoId: string;
-  regiaoNome: string;
+  zona: string;
 }
 
 /** Endereço retornado pela busca de geocoding (GET /api/busca/enderecos). */

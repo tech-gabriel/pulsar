@@ -15,6 +15,7 @@ export function motivoPerigo(
   return null;
 }
 import { PALETA, comAlfa } from './paleta';
+import { CIDADE_ATUAL } from '../features/cidade/cidade';
 
 export interface RiscoCores {
   bg: string;
@@ -119,9 +120,13 @@ export function corLabelFaixa(faixa: FaixaRisco | null | undefined): string {
  * diz "tranquilo", porque lista vazia também não tem região em ALTO e um app de
  * alerta afirmando calma sem saber é o pior erro possível (falso negativo).
  */
-export function resumoAlertas(regioes: { faixaRisco: FaixaRisco | null }[], carregando: boolean): string {
-  const alertas = regioes.filter((r) => r.faixaRisco === 'ALTO').length;
+export function resumoAlertas(
+  areas: { faixaRisco: FaixaRisco | null }[],
+  carregando: boolean,
+  cidadeNome: string = CIDADE_ATUAL.nome,
+): string {
+  const alertas = areas.filter((r) => r.faixaRisco === 'ALTO').length;
   if (alertas > 0) return `${alertas} ${alertas === 1 ? 'alerta ativo' : 'alertas ativos'}`;
-  if (regioes.length === 0) return carregando ? 'Carregando o risco…' : 'Sem dados de risco agora';
-  return 'Tudo tranquilo em São Paulo';
+  if (areas.length === 0) return carregando ? 'Carregando o risco…' : 'Sem dados de risco agora';
+  return `Tudo tranquilo em ${cidadeNome}`;
 }

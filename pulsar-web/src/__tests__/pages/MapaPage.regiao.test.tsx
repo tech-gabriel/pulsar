@@ -30,9 +30,8 @@ vi.mock('../../hooks/useFavoritos', () => ({
   useFavoritos: () => ({ favoritos: [], isFavorito: () => false, toggleFavorito: vi.fn(), carregando: false }),
 }));
 
-vi.mock('../../hooks/useOnboarding', () => ({
-  useOnboarding: () => ({ aberto: false, concluir: vi.fn() }),
-}));
+// Quem já viu o onboarding (marca no beforeEach) fica no mapa; push stubado sem rede.
+vi.mock('../../hooks/usePushSubscription', () => ({ usePushSubscription: () => ({ estado: 'ativo', ocupado: false, ativar: vi.fn(), desativar: vi.fn() }) }));
 
 // DetalheRegiao consome este hook para buscar o detalhe da região selecionada;
 // mockamos para exibir "Leste" sem rede (regiaoId 'r1' == região Leste).
@@ -78,6 +77,7 @@ import MapaPage from '../../pages/MapaPage';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.setItem('pulsar-ativacao-vista-v1', '1');
   // O mount da MapaPage busca o geojson via fetch cru; sem stub, um fetch
   // relativo fora do browser derruba o teste. Rejeita pra cair no catch existente.
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('sem rede no teste'))));

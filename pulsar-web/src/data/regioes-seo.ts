@@ -242,6 +242,11 @@ export function getSubprefeituraPorSlug(slug: string): SubprefeituraSeo | undefi
   return subprefeituras.find((s) => s.slug === slug);
 }
 
+/** "na Mooca", "no Butantã", "em Itaquera" pelo nome de exibição. */
+export function emNomeDe(nome: string): string {
+  return getSubprefeituraPorSlug(slugify(nome))?.emNome ?? `em ${nome}`;
+}
+
 /**
  * Resolve o ?regiao=<slug> do deep-link: zona -> foca a região; subprefeitura ->
  * foca a região dela e seleciona a subprefeitura. Slug desconhecido -> undefined.

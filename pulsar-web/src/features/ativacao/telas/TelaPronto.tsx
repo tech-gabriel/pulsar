@@ -3,7 +3,7 @@ import { BellRing, BellOff } from 'lucide-react';
 import BadgeRisco from '../../../components/ui/BadgeRisco';
 import type { FaixaRisco } from '../../../types';
 import { slugify } from '../../../data/regioes-seo';
-import MapaSP from '../MapaSP';
+import MapaCoropletico from '../../cidade/MapaCoropletico';
 
 const COR: Record<FaixaRisco, string> = { BAIXO: '#22C55E', MODERADO: '#F59E0B', ALTO: '#EF4444' };
 
@@ -39,7 +39,7 @@ export default function TelaPronto({ primeiroNome, escolhidas, alerta, onVerMapa
               </li>
             ))}
           </ul>
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}><MapaSP className="at-mapa-mini" destaques={destaques} /></div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}><MapaCoropletico className="at-mapa-mini" cores={destaques} /></div>
         </>
       )}
       <p style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>

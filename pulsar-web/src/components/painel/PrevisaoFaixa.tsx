@@ -1,4 +1,4 @@
-import { usePrevisaoRegiao } from '../../hooks/usePrevisaoRegiao';
+import { usePrevisaoSubprefeitura } from '../../hooks/usePrevisaoSubprefeitura';
 import { iconeCondicao, corCondicao } from './iconeCondicao';
 import { PALETA, comAlfa } from '../../utils/paleta';
 import type { FaixaPrevisaoDto } from '../../types';
@@ -17,7 +17,7 @@ const PROBABILIDADE_MINIMA = 0.6;
 const IDADE_MAXIMA_MS = 3 * 60 * 60 * 1000;
 
 interface Props {
-  regiaoId: string;
+  subprefeituraId: string;
 }
 
 // Fuso do navegador de propósito: o backend grava UTC, com o Z na string, e a exibição
@@ -49,8 +49,8 @@ function destacar(f: FaixaPrevisaoDto): boolean {
   return f.chuvaMm >= CHUVA_FORTE_MM && f.probabilidadeChuva >= PROBABILIDADE_MINIMA;
 }
 
-export default function PrevisaoFaixa({ regiaoId }: Props) {
-  const { faixas, erro } = usePrevisaoRegiao(regiaoId);
+export default function PrevisaoFaixa({ subprefeituraId }: Props) {
+  const { faixas, erro } = usePrevisaoSubprefeitura(subprefeituraId);
 
   // Sem faixa futura a seção não existe, em vez de existir vazia. É o estado real nos
   // primeiros minutos depois do deploy, e casca vazia parece bug.

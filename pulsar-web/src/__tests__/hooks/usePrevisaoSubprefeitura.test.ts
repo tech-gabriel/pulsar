@@ -7,7 +7,7 @@ vi.mock('../../api/client', () => ({
 }));
 
 import api from '../../api/client';
-import { usePrevisaoRegiao } from '../../hooks/usePrevisaoRegiao';
+import { usePrevisaoSubprefeitura } from '../../hooks/usePrevisaoSubprefeitura';
 
 const mockedApi = api as unknown as { get: ReturnType<typeof vi.fn> };
 
@@ -33,25 +33,25 @@ beforeEach(() => {
   mockedApi.get.mockResolvedValue({ data: faixas });
 });
 
-describe('usePrevisaoRegiao', () => {
-  it('nao busca sem regiao selecionada', () => {
-    const { result } = renderHook(() => usePrevisaoRegiao(null));
+describe('usePrevisaoSubprefeitura', () => {
+  it('nao busca sem subprefeitura selecionada', () => {
+    const { result } = renderHook(() => usePrevisaoSubprefeitura(null));
     expect(mockedApi.get).not.toHaveBeenCalled();
     expect(result.current.faixas).toEqual([]);
   });
 
-  it('busca a rota da previsao da regiao e expoe as faixas', async () => {
-    const { result } = renderHook(() => usePrevisaoRegiao('r1'));
+  it('busca a rota da previsao da subprefeitura e expoe as faixas', async () => {
+    const { result } = renderHook(() => usePrevisaoSubprefeitura('r1'));
     await waitFor(() => expect(result.current.carregando).toBe(false));
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/regioes/r1/previsao');
+    expect(mockedApi.get).toHaveBeenCalledWith('/subprefeituras/r1/previsao');
     expect(result.current.faixas).toEqual(faixas);
     expect(result.current.erro).toBeNull();
   });
 
   it('trata lista vazia como resposta legitima, e nao como erro', async () => {
     mockedApi.get.mockResolvedValue({ data: [] });
-    const { result } = renderHook(() => usePrevisaoRegiao('r1'));
+    const { result } = renderHook(() => usePrevisaoSubprefeitura('r1'));
     await waitFor(() => expect(result.current.carregando).toBe(false));
 
     expect(result.current.faixas).toEqual([]);
@@ -60,16 +60,16 @@ describe('usePrevisaoRegiao', () => {
 
   it('expoe erro quando a requisicao falha', async () => {
     mockedApi.get.mockRejectedValue(new Error('500'));
-    const { result } = renderHook(() => usePrevisaoRegiao('r1'));
+    const { result } = renderHook(() => usePrevisaoSubprefeitura('r1'));
     await waitFor(() => expect(result.current.carregando).toBe(false));
 
     expect(result.current.erro).toBe('Não foi possível carregar a previsão.');
     expect(result.current.faixas).toEqual([]);
   });
 
-  it('limpa a previsao anterior ao trocar de regiao', async () => {
+  it('limpa a previsao anterior ao trocar de subprefeitura', async () => {
     let resolver: ((v: { data: FaixaPrevisaoDto[] }) => void) | undefined;
-    const { result, rerender } = renderHook(({ id }) => usePrevisaoRegiao(id), {
+    const { result, rerender } = renderHook(({ id }) => usePrevisaoSubprefeitura(id), {
       initialProps: { id: 'r1' },
     });
     await waitFor(() => expect(result.current.faixas).toHaveLength(1));
@@ -83,14 +83,14 @@ describe('usePrevisaoRegiao', () => {
     resolver?.({ data: faixas });
   });
 
-  it('ignora a resposta da regiao anterior que chega atrasada', async () => {
+  it('ignora a resposta da subprefeitura anterior que chega atrasada', async () => {
     // É para isto que serve a flag `cancelado` do cleanup: sem ela, a resposta lenta
     // da região que o usuário já deixou sobrescreve a previsão da região atual.
     const antiga: FaixaPrevisaoDto[] = [{ ...faixas[0], chuvaMm: 99 }];
     let resolverAntiga: ((v: { data: FaixaPrevisaoDto[] }) => void) | undefined;
     mockedApi.get.mockReturnValueOnce(new Promise((r) => { resolverAntiga = r; }));
 
-    const { result, rerender } = renderHook(({ id }) => usePrevisaoRegiao(id), {
+    const { result, rerender } = renderHook(({ id }) => usePrevisaoSubprefeitura(id), {
       initialProps: { id: 'r1' },
     });
     rerender({ id: 'r2' });
@@ -104,13 +104,13 @@ describe('usePrevisaoRegiao', () => {
     expect(result.current.faixas).toEqual(faixas);
   });
 
-  it('ignora o erro da regiao anterior que chega atrasado', async () => {
+  it('ignora o erro da subprefeitura anterior que chega atrasado', async () => {
     // Mesma flag, o outro lado: a falha da região abandonada não pode esconder a
     // previsão da região que o usuário está olhando agora.
     let rejeitarAntiga: ((e: Error) => void) | undefined;
     mockedApi.get.mockReturnValueOnce(new Promise((_, rej) => { rejeitarAntiga = rej; }));
 
-    const { result, rerender } = renderHook(({ id }) => usePrevisaoRegiao(id), {
+    const { result, rerender } = renderHook(({ id }) => usePrevisaoSubprefeitura(id), {
       initialProps: { id: 'r1' },
     });
     rerender({ id: 'r2' });
@@ -123,15 +123,15 @@ describe('usePrevisaoRegiao', () => {
     expect(result.current.faixas).toEqual(faixas);
   });
 
-  it('busca de novo quando a regiao muda', async () => {
-    const { result, rerender } = renderHook(({ id }) => usePrevisaoRegiao(id), {
+  it('busca de novo quando a subprefeitura muda', async () => {
+    const { result, rerender } = renderHook(({ id }) => usePrevisaoSubprefeitura(id), {
       initialProps: { id: 'r1' },
     });
     await waitFor(() => expect(result.current.carregando).toBe(false));
     rerender({ id: 'r2' });
     await waitFor(() => expect(result.current.carregando).toBe(false));
 
-    expect(mockedApi.get).toHaveBeenNthCalledWith(1, '/regioes/r1/previsao');
-    expect(mockedApi.get).toHaveBeenNthCalledWith(2, '/regioes/r2/previsao');
+    expect(mockedApi.get).toHaveBeenNthCalledWith(1, '/subprefeituras/r1/previsao');
+    expect(mockedApi.get).toHaveBeenNthCalledWith(2, '/subprefeituras/r2/previsao');
   });
 });

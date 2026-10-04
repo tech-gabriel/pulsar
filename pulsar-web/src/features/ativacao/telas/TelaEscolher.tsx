@@ -7,7 +7,7 @@ import { emNomeDe } from '../../../data/regioes-seo';
 const MAX = 10;
 const COR: Record<FaixaRisco, string> = { BAIXO: '#22C55E', MODERADO: '#F59E0B', ALTO: '#EF4444' };
 
-interface Sub { id: string; nome: string; regiaoNome: string; faixaRisco: FaixaRisco }
+interface Sub { id: string; nome: string; zona: string; faixaRisco: FaixaRisco }
 interface Props {
   subprefeituras: Sub[];
   localizar: () => Promise<string | null>;
@@ -96,7 +96,7 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
             <li key={s.id}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 52, borderBottom: '1px solid color-mix(in srgb, var(--text-primary) 8%, transparent)', cursor: 'pointer' }}>
                 <span style={{ width: 8, height: 8, borderRadius: 8, background: COR[s.faixaRisco] }} aria-hidden="true" />
-                <span style={{ flex: 1, fontWeight: 600 }}>{s.nome}<span style={{ display: 'block', fontWeight: 400, fontSize: 12, color: 'var(--text-muted)' }}>Zona {s.regiaoNome}</span></span>
+                <span style={{ flex: 1, fontWeight: 600 }}>{s.nome}<span style={{ display: 'block', fontWeight: 400, fontSize: 12, color: 'var(--text-muted)' }}>Zona {s.zona}</span></span>
                 <input type="checkbox" checked={marcada} onChange={() => alternar(s.id)} aria-label={s.nome} className="sr-only" />
                 <span aria-hidden="true" style={{ width: 24, height: 24, borderRadius: 24, display: 'grid', placeItems: 'center', color: '#fff',
                   border: marcada ? 'none' : '1.5px solid color-mix(in srgb, var(--text-primary) 25%, transparent)', background: marcada ? 'var(--color-pulsar-600)' : 'transparent' }}>

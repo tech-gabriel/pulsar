@@ -6,7 +6,7 @@ interface Props {
   size?: number;
 }
 
-/** Estrela de favorito das subprefeituras (DetalheRegiao). */
+/** Estrela de favorito das subprefeituras (DetalheSubprefeitura). */
 export default function BotaoFavorito({ ativo, onToggle, size = 18 }: Props) {
   return (
     <button

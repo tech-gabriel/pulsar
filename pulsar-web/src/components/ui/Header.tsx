@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Map, History, BarChart3, Newspaper, Settings, Bell, Sun, Moon, LogOut, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Map, History, BarChart3, Newspaper, Settings, Bell, Sun, Moon, LogOut, ShieldCheck, ChevronRight, Star } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useAlertas } from '../../contexts/AlertasContext';
+import { useSubprefeituras } from '../../hooks/useSubprefeituras';
+import { useFavoritos } from '../../hooks/useFavoritos';
+import { alertasDoSino, type Area } from '../../features/cidade/areas';
+import { slugify } from '../../data/regioes-seo';
 import { resumoAlertas } from '../../utils/risco';
 import { useTheme } from '../../hooks/useTheme';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
@@ -27,19 +30,22 @@ const TABS: { to: string; label: string; curto: string; Icon: LucideIcon; end?: 
  * Header de navegação principal (ETAPA B.1). No desktop/tablet é uma barra única
  * (logo + abas centrais + ações). No mobile divide-se em top bar (logo + ações)
  * e uma tab bar fixa no rodapé. O sino abre um painel ao vivo com as regiões em
- * risco alto (alimentado pelo AlertasProvider, global a todas as páginas).
+ * risco alto (alimentado pelo SubprefeiturasProvider e pelas favoritas: sino pessoal primeiro).
  */
 export default function Header() {
   const { usuario, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { alertas, regioes, carregando } = useAlertas();
+  const { subprefeituras, carregando } = useSubprefeituras();
+  const { favoritos } = useFavoritos(usuario?.id ?? null);
+  const sino = alertasDoSino(subprefeituras, favoritos.map((f) => f.subprefeituraId));
   const navigate = useNavigate();
 
   const [painelAberto, setPainelAberto] = useState(false);
   const sinoRef = useRef<HTMLDivElement>(null);
 
-  const temAlertas = alertas.length > 0;
-  const semDado = regioes.length === 0;
+  const temAlertas = sino.contagem > 0;
+  const temItens = sino.suas.length + sino.naCidade.length > 0;
+  const semDado = subprefeituras.length === 0;
 
   // Fecha o painel ao clicar fora ou pressionar Esc.
   useEffect(() => {
@@ -61,9 +67,9 @@ export default function Header() {
   // Acesso administrativo (ADMIN/SUPORTE) vive no top bar, não na tab bar inferior.
   const ehAdmin = usuario?.role === 'ADMIN' || usuario?.role === 'SUPORTE';
 
-  function irParaRegiao() {
+  function abrirArea(area: Area) {
     setPainelAberto(false);
-    navigate('/app');
+    navigate(`/app?regiao=${slugify(area.nome)}`);
   }
 
   return (
@@ -137,13 +143,13 @@ export default function Header() {
               onClick={() => setPainelAberto((v) => !v)}
               className="acao-header relative"
               title="Notificações"
-              aria-label={temAlertas ? `Notificações: ${alertas.length} em alerta` : 'Notificações'}
+              aria-label={temAlertas ? `Notificações: ${sino.contagem} em alerta` : 'Notificações'}
               aria-haspopup="true"
               aria-expanded={painelAberto}
             >
               <Bell size={20} />
               {temAlertas && (
-                <span className="notif-badge">{alertas.length > 9 ? '9+' : alertas.length}</span>
+                <span className="notif-badge">{sino.contagem > 9 ? '9+' : sino.contagem}</span>
               )}
             </button>
 
@@ -162,38 +168,45 @@ export default function Header() {
                     <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
                       Alertas
                     </span>
-                    {temAlertas && <span className="notif-count">{alertas.length}</span>}
+                    {temAlertas && <span className="notif-count">{sino.contagem}</span>}
                   </div>
 
-                  {!temAlertas ? (
+                  {!temItens ? (
                     <div className="notif-empty">
                       <ShieldCheck size={26} style={{ color: semDado ? 'var(--text-muted)' : '#22c55e' }} />
                       <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)' }}>
-                        {resumoAlertas(regioes, carregando)}
+                        {resumoAlertas(subprefeituras, carregando)}
                       </p>
                       <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
-                        {semDado ? 'Os alertas aparecem aqui assim que os dados chegarem.' : 'Nenhuma região em risco alto agora.'}
+                        {semDado ? 'Os alertas aparecem aqui assim que os dados chegarem.' : 'Nenhuma subprefeitura em risco alto agora.'}
                       </p>
                     </div>
                   ) : (
-                    <ul className="notif-list">
-                      {alertas.map((r) => (
-                        <li key={r.id}>
-                          <button type="button" className="notif-item" onClick={irParaRegiao}>
-                            <div className="min-w-0 flex-1 text-left">
-                              <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-                                {r.nome}
-                              </p>
-                              <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                {r.totalSubprefeituras} {r.totalSubprefeituras === 1 ? 'subprefeitura' : 'subprefeituras'}
-                              </p>
-                            </div>
-                            <BadgeRisco faixa={r.faixaRisco} score={r.scoreAgregado} size="sm" />
-                            <ChevronRight size={16} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="notif-list">
+                      {[{ titulo: 'Suas subprefeituras', itens: sino.suas, estrela: true }, { titulo: 'Na cidade', itens: sino.naCidade, estrela: false }]
+                        .filter((g) => g.itens.length > 0)
+                        .map((g) => (
+                          <section key={g.titulo}>
+                            <p className="px-3 pt-2 pb-1 flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: g.estrela ? '#CA8A04' : 'var(--text-muted)' }}>
+                              {g.estrela && <Star size={11} fill="#FACC15" stroke="#EAB308" aria-hidden="true" />}{g.titulo}
+                            </p>
+                            <ul>
+                              {g.itens.map((a) => (
+                                <li key={a.id}>
+                                  <button type="button" className="notif-item" onClick={() => abrirArea(a)}>
+                                    <div className="min-w-0 flex-1 text-left">
+                                      <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{a.nome}</p>
+                                      <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{a.zona}</p>
+                                    </div>
+                                    <BadgeRisco faixa={a.faixaRisco} score={a.scoreAtual?.valor} size="sm" />
+                                    <ChevronRight size={16} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        ))}
+                    </div>
                   )}
                 </motion.div>
               )}

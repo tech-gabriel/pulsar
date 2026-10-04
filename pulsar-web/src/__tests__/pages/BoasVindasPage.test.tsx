@@ -43,7 +43,8 @@ describe('BoasVindasPage', () => {
     await waitFor(() => expect(dados.adicionarVarios).toHaveBeenCalledWith(['s1']));
     fireEvent.click(await screen.findByRole('button', { name: 'Ativar alertas' }));
     expect(await screen.findByRole('heading', { name: 'Tudo pronto, Gabriel' })).toBeInTheDocument();
-    expect(localStorage.getItem('pulsar-ativacao-vista-v1')).toBe('1');
+    // A marca é gravada num efeito logo após a tela aparecer: em CI lento, esperar por ela.
+    await waitFor(() => expect(localStorage.getItem('pulsar-ativacao-vista-v1')).toBe('1'));
     fireEvent.click(screen.getByRole('button', { name: 'Ver o mapa' }));
     expect(navigate).toHaveBeenCalledWith('/app', { replace: true });
   });

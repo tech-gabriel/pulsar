@@ -37,6 +37,40 @@ beforeEach(() => {
 });
 
 describe('useFavoritos', () => {
+  it('adicionarVarios salva todas sem toast e devolve true', async () => {
+    mockedApi.post
+      .mockResolvedValueOnce({ data: fav('s1', 'Mooca') })
+      .mockResolvedValueOnce({ data: fav('s2', 'Penha') });
+    const { result } = renderHook(() => useFavoritos(USUARIO));
+    await waitFor(() => expect(result.current.carregando).toBe(false));
+
+    let ok = false;
+    await act(async () => { ok = await result.current.adicionarVarios(['s1', 's2']); });
+
+    expect(ok).toBe(true);
+    expect(mockedApi.post).toHaveBeenCalledTimes(2);
+    expect(result.current.favoritos.map((f) => f.subprefeituraId)).toEqual(['s1', 's2']);
+    expect(showToast).not.toHaveBeenCalled();
+  });
+
+  it('adicionarVarios com falha no meio: false, guarda a salva e não reenvia ao tentar de novo', async () => {
+    mockedApi.post
+      .mockResolvedValueOnce({ data: fav('s1', 'Mooca') })
+      .mockRejectedValueOnce(new Error('rede'))
+      .mockResolvedValueOnce({ data: fav('s2', 'Penha') });
+    const { result } = renderHook(() => useFavoritos(USUARIO));
+    await waitFor(() => expect(result.current.carregando).toBe(false));
+
+    let ok = true;
+    await act(async () => { ok = await result.current.adicionarVarios(['s1', 's2']); });
+    expect(ok).toBe(false);
+    expect(result.current.favoritos.map((f) => f.subprefeituraId)).toEqual(['s1']);
+
+    await act(async () => { ok = await result.current.adicionarVarios(['s1', 's2']); });
+    expect(ok).toBe(true);
+    expect(mockedApi.post).toHaveBeenCalledTimes(3); // s1 não foi reenviada
+  });
+
   it('não busca favoritos quando usuarioId é null', async () => {
     const { result } = renderHook(() => useFavoritos(null));
     expect(mockedApi.get).not.toHaveBeenCalled();

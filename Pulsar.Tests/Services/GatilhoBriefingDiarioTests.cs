@@ -265,7 +265,7 @@ public class GatilhoBriefingDiarioTests
         // prevista), então uma igualdade do parágrafo todo passaria a fixar também a
         // emenda entre as duas partes, que é acidental. Os dois fragmentos abaixo cobrem
         // cada palavra que é decisão de produto, e o StartWith fixa a ordem.
-        payload.Corpo.Should().StartWith("Risco moderado.",
+        payload.Corpo.Should().StartWith("Atenção.",
             "o risco de agora abre o resumo, antes da previsão");
         payload.Corpo.Should().Contain("Chuva mais forte prevista para as 18h, 14 mm.",
             "a hora é a LOCAL da janela (18h em SP), não a UTC (21h), e o volume vem junto");
@@ -273,14 +273,14 @@ public class GatilhoBriefingDiarioTests
 
     /// <summary>
     /// Cada faixa do enum tem a SUA palavra, uma linha por valor. Sem este teste o arm de
-    /// ALTO nunca é exercido, e trocá-lo por "moderado" sobrevive à suíte inteira: o
-    /// resultado seria alguém em risco alto lendo "Risco moderado." no briefing da manhã,
+    /// ALTO nunca é exercido, e trocá-lo por "Atenção" sobrevive à suíte inteira: o
+    /// resultado seria alguém em Alerta lendo "Atenção." no briefing da manhã,
     /// que é o erro mais caro que esta copy pode cometer.
     /// </summary>
     [Theory]
-    [InlineData(FaixaRisco.BAIXO, "Risco baixo.")]
-    [InlineData(FaixaRisco.MODERADO, "Risco moderado.")]
-    [InlineData(FaixaRisco.ALTO, "Risco alto.")]
+    [InlineData(FaixaRisco.BAIXO, "Tranquilo.")]
+    [InlineData(FaixaRisco.MODERADO, "Atenção.")]
+    [InlineData(FaixaRisco.ALTO, "Alerta.")]
     public async Task Copy_CadaFaixaTemASuaPalavra(FaixaRisco faixa, string esperado)
     {
         var pendencias = await new GatilhoBriefingDiario()
@@ -292,7 +292,7 @@ public class GatilhoBriefingDiarioTests
 
     /// <summary>
     /// Faixa sem braço no switch precisa falhar alto. Sem este teste, trocar o
-    /// <c>throw</c> de volta por <c>_ => "baixo"</c> sobrevive à suíte inteira, e o defeito
+    /// <c>throw</c> de volta por <c>_ => "Tranquilo"</c> sobrevive à suíte inteira, e o defeito
     /// que aquele arm existe para impedir volta calado: uma faixa nova sairia como a palavra
     /// mais calma justamente para quem está em risco. Hoje é inalcançável com três membros
     /// no enum, e o dia que importa é aquele em que alguém adiciona o quarto.
@@ -351,9 +351,9 @@ public class GatilhoBriefingDiarioTests
             "o escopo conferido são as próximas 24h, não o dia de hoje");
 
         // Igualdade exata: este ramo é frase inteira escrita à mão, sem interpolação
-        // nenhuma. Um Contain("baixo") passaria em corpo truncado, e é justamente o corpo
-        // truncado ("Risco baixo." e mais nada) que este teste existe para impedir de voltar.
-        payload.Corpo.Should().Be("Risco baixo. Sem chuva prevista nas próximas horas.");
+        // nenhuma. Um Contain("Tranquilo") passaria em corpo truncado, e é justamente o corpo
+        // truncado ("Tranquilo." e mais nada) que este teste existe para impedir de voltar.
+        payload.Corpo.Should().Be("Tranquilo. Sem chuva prevista nas próximas horas.");
     }
 
     [Fact]
@@ -396,7 +396,7 @@ public class GatilhoBriefingDiarioTests
         pendencias[0].Payload.Corpo.Should().NotContain("Sem chuva",
             "sem previsão nenhuma não dá para afirmar que não vai chover");
 
-        pendencias[0].Payload.Corpo.Should().Be("Risco moderado.");
+        pendencias[0].Payload.Corpo.Should().Be("Atenção.");
     }
 
     /// <summary>
@@ -414,7 +414,7 @@ public class GatilhoBriefingDiarioTests
 
         pendencias[0].Payload.Corpo.Should().NotContain("Chuva mais forte");
         pendencias[0].Payload.Corpo.Should().NotContain("Sem chuva");
-        pendencias[0].Payload.Corpo.Should().Be("Risco moderado.");
+        pendencias[0].Payload.Corpo.Should().Be("Atenção.");
     }
 
     [Fact]

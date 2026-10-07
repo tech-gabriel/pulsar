@@ -35,9 +35,9 @@ public interface IGatilhoNotificacao
     /// Esse try/catch por gatilho é parte do contrato, e não detalhe interno do motor: quem
     /// reestruturar o loop precisa preservá-lo, porque é ele que sustenta o isolamento
     /// descrito aqui. É também o que deixa um gatilho lançar DE PROPÓSITO diante de erro de
-    /// programação sem arriscar o resto: ver o switch de TextoDaFaixa em
-    /// GatilhoBriefingDiario, que prefere explodir a chamar de "baixo" uma faixa que não
-    /// sabe traduzir.
+    /// programação sem arriscar o resto: ver o switch de
+    /// ClassificacaoRisco.Rotulo, que prefere explodir a chamar de "Tranquilo" uma faixa que
+    /// não sabe traduzir.
     /// </remarks>
     Task<IReadOnlyList<NotificacaoPendente>> AvaliarAsync(
         ContextoGatilho ctx, CancellationToken ct = default);

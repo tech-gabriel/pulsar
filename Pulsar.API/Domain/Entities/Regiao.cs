@@ -1,6 +1,3 @@
-using Pulsar.API.Domain.Enums;
-using Pulsar.API.Domain.Score;
-
 namespace Pulsar.API.Domain.Entities;
 
 public class Regiao
@@ -18,26 +15,4 @@ public class Regiao
     public IList<Alerta> Alertas { get; set; } = new List<Alerta>();
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
-
-    public double GetScoreAgregado()
-    {
-        var scores = Subprefeituras
-            .Where(s => s.Ativa)
-            .Select(s => s.GetUltimoScore())
-            .Where(s => s != null)
-            .Select(s => s!.Valor)
-            .ToList();
-
-        return scores.Count == 0 ? 0 : scores.Max();
-    }
-
-    public FaixaRisco GetFaixaAgregada() => ClassificacaoRisco.Faixa(GetScoreAgregado());
-
-    /// <summary>Perigo da subprefeitura com o maior score (a que define a faixa da região).</summary>
-    public TipoPerigo GetPerigoPrincipalAgregado()
-        => Subprefeituras
-            .Where(s => s.Ativa)
-            .Select(s => s.GetUltimoScore())
-            .Where(s => s != null)
-            .MaxBy(s => s!.Valor)?.PerigoPrincipal ?? TipoPerigo.ALAGAMENTO;
 }

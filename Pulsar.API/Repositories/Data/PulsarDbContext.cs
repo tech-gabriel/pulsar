@@ -17,7 +17,6 @@ public class PulsarDbContext : DbContext
     public DbSet<Alerta> Alertas => Set<Alerta>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioSubprefeitura> UsuarioSubprefeituras => Set<UsuarioSubprefeitura>();
-    public DbSet<MigracaoFavoritoZona> MigracoesFavoritoZona => Set<MigracaoFavoritoZona>();
     public DbSet<AlertaSugestao> AlertaSugestoes => Set<AlertaSugestao>();
     public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
     public DbSet<AssinaturaPush> AssinaturasPush => Set<AssinaturaPush>();
@@ -107,13 +106,6 @@ public class PulsarDbContext : DbContext
             e.Property(s => s.Titulo).IsRequired().HasMaxLength(200);
             e.Property(s => s.Descricao).IsRequired().HasMaxLength(1000);
             e.HasIndex(s => new { s.Categoria, s.FaixaRisco });
-        });
-
-        modelBuilder.Entity<MigracaoFavoritoZona>(e =>
-        {
-            e.HasKey(m => m.Id);
-            e.HasOne(m => m.Usuario).WithMany().HasForeignKey(m => m.UsuarioId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(m => m.Regiao).WithMany().HasForeignKey(m => m.RegiaoId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<UsuarioSubprefeitura>(e =>

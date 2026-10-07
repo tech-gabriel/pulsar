@@ -40,17 +40,4 @@ public class ScoreDtoTests
         dto.Valor.Should().Be(40, "o principal antigo continua valendo");
     }
 
-    [Fact]
-    public void Regiao_PerigoAgregado_EhODaPiorSubprefeitura()
-    {
-        var regiao = new Regiao();
-        regiao.Subprefeituras.Add(new Subprefeitura { Ativa = true, Scores = [new ScorePerigo { Valor = 30, PerigoPrincipal = TipoPerigo.ALAGAMENTO, Timestamp = DateTime.UtcNow }] });
-        regiao.Subprefeituras.Add(new Subprefeitura { Ativa = true, Scores = [new ScorePerigo { Valor = 70, PerigoPrincipal = TipoPerigo.VENTO, Timestamp = DateTime.UtcNow }] });
-
-        regiao.GetPerigoPrincipalAgregado().Should().Be(TipoPerigo.VENTO);
-    }
-
-    [Fact]
-    public void Regiao_SemScores_PerigoAgregadoEhAlagamento()
-        => new Regiao().GetPerigoPrincipalAgregado().Should().Be(TipoPerigo.ALAGAMENTO);
 }

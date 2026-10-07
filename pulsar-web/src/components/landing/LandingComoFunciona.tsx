@@ -62,6 +62,9 @@ export default function LandingComoFunciona() {
               </Reveal>
             ))}
           </div>
+          <p className="mt-6" style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            Estimativa do Pulsar. Em emergência, ligue 199 (Defesa Civil) ou 193 (Bombeiros).
+          </p>
         </div>
 
         {/* Visual: print do painel/dashboard */}

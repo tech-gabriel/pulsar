@@ -43,11 +43,6 @@ const LEGENDAS: Record<Camada, LegendaConfig> = {
     gradiente: gradiente(PALETA.neutro, PALETA.amarelo, PALETA.ambar, PALETA.vermelho),
     labels: ['0', '20', '40', '60', '80+'],
   },
-  uv: {
-    titulo: 'Índice UV',
-    gradiente: gradiente(PALETA.verde, PALETA.amarelo, PALETA.ambar, PALETA.vermelho, PALETA.roxo),
-    labels: ['0', '3', '6', '8', '11+'],
-  },
 };
 
 // As cores do card vivem em `.mapa-controle` (index.css), que segue o tema.

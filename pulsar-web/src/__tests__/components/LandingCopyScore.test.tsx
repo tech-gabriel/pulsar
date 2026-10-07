@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import LandingFaq from '../../components/landing/LandingFaq';
 import LandingConfianca from '../../components/landing/LandingConfianca';
+import LandingComoFunciona from '../../components/landing/LandingComoFunciona';
+import { ThemeContext } from '../../hooks/useTheme';
 import { CENAS } from '../../data/landing-narrativa';
 
 // A landing não pode descrever a fórmula antiga (chuva 35%, vento 30%, neblina 20%, UV 15%)
@@ -19,5 +21,13 @@ describe('copy da landing sobre o score', () => {
     const { container } = render(<LandingConfianca />);
     expect(container.textContent).not.toMatch(/pesos definidos/);
     expect(CENAS.find((c) => c.id === 'score')!.texto).not.toMatch(/pesos/);
+  });
+
+  it('como funciona usa as faixas novas e avisa que é estimativa', () => {
+    const { container } = render(
+      <ThemeContext.Provider value={{ theme: 'dark', toggleTheme: () => {} }}><LandingComoFunciona /></ThemeContext.Provider>,
+    );
+    expect(container.textContent).toMatch(/Tranquilo, Atenção ou Alerta/);
+    expect(container.textContent).toMatch(/Estimativa do Pulsar\. Em emergência, ligue 199 \(Defesa Civil\) ou 193 \(Bombeiros\)\./);
   });
 });

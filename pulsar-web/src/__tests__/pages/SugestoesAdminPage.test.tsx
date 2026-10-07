@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { SugestaoAdminDto, UsuarioDto } from '../../types';
 
@@ -30,7 +30,7 @@ const usuarioDto = (role: UsuarioDto['role']): UsuarioDto => ({
 });
 
 const sugestao = (over: Partial<SugestaoAdminDto> = {}): SugestaoAdminDto => ({
-  id: 's1', categoria: 'GERAL', faixaRisco: 'BAIXO', titulo: 'Mantenha-se informado',
+  id: 's1', categoria: 'ALAGAMENTO', faixaRisco: 'MODERADO', ordem: 1, titulo: 'Mantenha-se informado',
   descricao: 'Acompanhe o Pulsar.', ativa: true, criadoEm: '2026-06-01T00:00:00Z',
   atualizadoEm: '2026-06-01T00:00:00Z', ...over,
 });
@@ -67,5 +67,17 @@ describe('SugestoesAdminPage', () => {
     expect(screen.getByRole('button', { name: /nova sugestão/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /editar sugestão/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /excluir sugestão/i })).toBeInTheDocument();
+  });
+
+  it('o formulário oferece só os perigos, Atenção/Alerta e a ordem', () => {
+    authState.usuario = usuarioDto('ADMIN');
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /nova sugestão/i }));
+
+    const categorias = within(screen.getByRole('combobox', { name: 'Categoria' })).getAllByRole('option').map((o) => o.textContent);
+    expect(categorias).toEqual(['ALAGAMENTO', 'VENTO', 'CALOR']);
+    const faixas = within(screen.getByRole('combobox', { name: 'Faixa de risco' })).getAllByRole('option').map((o) => o.textContent);
+    expect(faixas).toEqual(['Atenção', 'Alerta']);
+    expect(screen.getByRole('spinbutton', { name: 'Ordem' })).toHaveValue(1);
   });
 });

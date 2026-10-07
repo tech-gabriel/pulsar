@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Activity, Thermometer, CloudRain, Wind, Sun, ChevronDown } from 'lucide-react';
+import { Activity, Thermometer, CloudRain, Wind, ChevronDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Camada } from '../../utils/camadas';
 
@@ -9,7 +9,6 @@ const ITENS: { id: Camada; label: string; Icon: LucideIcon }[] = [
   { id: 'temperatura', label: 'Temp', Icon: Thermometer },
   { id: 'chuva', label: 'Chuva', Icon: CloudRain },
   { id: 'vento', label: 'Vento', Icon: Wind },
-  { id: 'uv', label: 'UV', Icon: Sun },
 ];
 
 interface Props {

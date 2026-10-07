@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.13.1',
+    data: '2026-10-07',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Sino em dia com suas favoritas',
+        descricao: 'Ao favoritar uma subprefeitura, o sino já passa a considerar ela na hora, sem precisar trocar de página.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Dashboard mais enxuto',
+        descricao: 'O resumo da cidade ocupa menos espaço no computador, e as mais críticas aparecem logo abaixo.',
+      },
+    ],
+  },
+  {
     versao: '1.13.0',
     data: '2026-10-04',
     resumo: 'O app agora fala só de subprefeituras, com a cidade como visão geral.',

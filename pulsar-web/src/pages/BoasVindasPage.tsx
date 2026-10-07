@@ -24,7 +24,7 @@ export default function BoasVindasPage() {
   // Deep-link (?regiao=) que trouxe a pessoa: devolvido ao mapa no fim.
   const { search } = useLocation();
   const { usuario } = useAuth();
-  const { favoritos, carregando, adicionarVarios } = useFavoritos(usuario?.id ?? null);
+  const { favoritos, carregando, adicionarVarios } = useFavoritos();
   const { prefs } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
   const { instalacao, instalar } = useInstalacao();

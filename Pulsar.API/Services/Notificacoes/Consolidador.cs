@@ -75,7 +75,7 @@ public static class Consolidador
         var (titulo, corpo) = gatilho switch
         {
             // Sem "de alagamento": o perigo de cada uma pode ser vento ou calor.
-            "score-alto" => ($"Risco alto em {lista}", "Toque para ver o que está acontecendo em cada uma."),
+            "score-alto" => ($"Alerta em {lista}", "Toque para ver o que está acontecendo em cada uma."),
             "chuva-prevista" => ($"Chuva forte prevista em {lista}", "Toque para ver o horário previsto em cada uma."),
             "briefing-diario" => ("Suas subprefeituras hoje",
                 string.Join(" ", grupo.Take(2).Select(p => $"{p.Local}: {p.Payload.Corpo}"))

@@ -31,7 +31,7 @@ public class ConsolidadorTests
 
         envio.Should().NotBeNull();
         envio!.Incluidas.Should().HaveCount(2);
-        envio.Payload.Titulo.Should().Be("Risco alto em Mooca e Penha");
+        envio.Payload.Titulo.Should().Be("Alerta em Mooca e Penha");
         envio.Payload.Tag.Should().Be("score-alto");
     }
 
@@ -170,7 +170,7 @@ public class ConsolidadorTests
 
         var envio = Consolidador.Consolidar(d, [.. subs.Select(s => P(s.Id, s.Nome))], Agora);
 
-        envio!.Payload.Titulo.Should().Be("Risco alto em Sub1, Sub2 e mais 8");
+        envio!.Payload.Titulo.Should().Be("Alerta em Sub1, Sub2 e mais 8");
     }
 
     [Theory]
@@ -179,4 +179,13 @@ public class ConsolidadorTests
     [InlineData(new[] { "A", "B", "C" }, "A, B e mais 1")]
     public void ListaNomes(string[] nomes, string esperado)
         => Consolidador.ListaNomes(nomes).Should().Be(esperado);
+
+    [Fact]
+    public void CooldownDoAlerta_ValeMesmoComPerigoDiferenteNaChave()
+    {
+        var anterior = new EnvioAnterior(Mooca, "score-alto", $"score:{Mooca}:ALAGAMENTO:202610031430", Guid.NewGuid(), Agora.AddMinutes(-30));
+        var nova = P(Mooca, "Mooca", cooldown: TimeSpan.FromHours(1), chave: $"score:{Mooca}:VENTO:202610031500");
+
+        Consolidador.Consolidar(D(recentes: anterior), [nova], Agora).Should().BeNull();
+    }
 }

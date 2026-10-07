@@ -84,10 +84,9 @@ export default function SistemaAdminPage() {
         ) : (
           <>
             {/* Métricas */}
-            <div className="mb-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="mb-5 grid grid-cols-2 lg:grid-cols-3 gap-3">
               <KpiCard Icon={Users} label="Usuários" valor={metricas.totalUsuarios} detalhe={`${metricas.usuariosAtivos} ativos · ${metricas.admins} admin · ${metricas.suportes} suporte`} cor="#a855f7" />
               <KpiCard Icon={Lightbulb} label="Sugestões" valor={metricas.totalSugestoes} detalhe={`${metricas.sugestoesAtivas} ativas`} cor="#f59e0b" />
-              <KpiCard Icon={Bell} label="Alertas (24h)" valor={metricas.alertasUltimas24h} cor="#ef4444" />
               <KpiCard Icon={Database} label="Leituras (24h)" valor={metricas.leiturasUltimas24h} cor="#00BCFF" />
             </div>
 

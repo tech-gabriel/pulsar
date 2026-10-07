@@ -55,7 +55,7 @@ export function useSistemaAdmin(): UseSistemaAdminResult {
     try {
       // A coleta percorre 32 subprefeituras sequencialmente; estende o timeout padrão.
       const { data } = await api.post<ColetaResultadoDto>('/admin/sistema/coletar', null, { timeout: 90000 });
-      showToast(`Coleta concluída: ${data.subprefeiturasProcessadas} subprefeituras, ${data.alertasGerados} alertas`, 'success');
+      showToast(`Coleta concluída: ${data.subprefeiturasProcessadas} subprefeituras`, 'success');
       recarregar();
     } catch {
       showToast('Não foi possível concluir a coleta', 'error');

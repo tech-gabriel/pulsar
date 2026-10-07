@@ -41,7 +41,7 @@ describe('estiloCamada — sem dados', () => {
 
   it('camadas de leitura sem ultimaLeitura retornam traço', () => {
     const s = sub({ ultimaLeitura: null });
-    for (const camada of ['temperatura', 'chuva', 'vento', 'uv'] as const) {
+    for (const camada of ['temperatura', 'chuva', 'vento'] as const) {
       expect(estiloCamada(s, camada).texto).toBe('—');
     }
   });
@@ -73,7 +73,7 @@ describe('estiloCamada — temperatura', () => {
   });
 });
 
-describe('estiloCamada — chuva/vento/uv', () => {
+describe('estiloCamada — chuva/vento', () => {
   it('chuva forte (>25) usa azul intenso', () => {
     const e = estiloCamada(sub({ ultimaLeitura: leitura({ chuvaMmH: 30 }) }), 'chuva');
     expect(e.texto).toBe('30.0');
@@ -86,25 +86,19 @@ describe('estiloCamada — chuva/vento/uv', () => {
     expect(e.fillColor).toBe('#ef4444');
   });
 
-  it('uv extremo (>10) usa roxo', () => {
-    const e = estiloCamada(sub({ ultimaLeitura: leitura({ indiceUv: 12 }) }), 'uv');
-    expect(e.texto).toBe('12');
-    expect(e.fillColor).toBe('#9333ea');
-  });
 });
 
 describe('metricasSubprefeitura', () => {
-  it('retorna as 5 métricas na ordem score → uv', () => {
+  it('retorna as 4 métricas na ordem score → vento (UV saiu: não é perigo do score)', () => {
     const m = metricasSubprefeitura(sub({
       scoreAtual: { valor: 42, faixa: 'MODERADO', timestamp: '' },
       ultimaLeitura: leitura({ temperaturaC: 21.4, chuvaMmH: 2.5, ventoKmH: 18.7, indiceUv: 6 }),
     }));
-    expect(m.map((x) => x.camada)).toEqual(['score', 'temperatura', 'chuva', 'vento', 'uv']);
+    expect(m.map((x) => x.camada)).toEqual(['score', 'temperatura', 'chuva', 'vento']);
     expect(m[0].valor).toContain('Atenção');
     expect(m[1].valor).toBe('21.4°C');
     expect(m[2].valor).toBe('2.5 mm/h');
     expect(m[3].valor).toBe('19 km/h');
-    expect(m[4].valor).toBe('6');
   });
 
   it('usa traço quando não há leitura', () => {
@@ -112,6 +106,5 @@ describe('metricasSubprefeitura', () => {
     expect(m[1].valor).toBe('—°C');
     expect(m[2].valor).toBe('— mm/h');
     expect(m[3].valor).toBe('— km/h');
-    expect(m[4].valor).toBe('—');
   });
 });

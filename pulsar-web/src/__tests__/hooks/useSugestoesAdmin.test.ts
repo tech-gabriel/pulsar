@@ -23,8 +23,9 @@ const mockedApi = api as unknown as {
 
 const sugestao = (over: Partial<SugestaoAdminDto> = {}): SugestaoAdminDto => ({
   id: 's1',
-  categoria: 'GERAL',
-  faixaRisco: 'BAIXO',
+  categoria: 'ALAGAMENTO',
+  faixaRisco: 'MODERADO',
+  ordem: 1,
   titulo: 'Título',
   descricao: 'Descrição',
   ativa: true,
@@ -56,7 +57,7 @@ describe('useSugestoesAdmin', () => {
 
     let ok = false;
     await act(async () => {
-      ok = await result.current.criar({ categoria: 'GERAL', faixaRisco: 'BAIXO', titulo: 'Nova', descricao: 'D', ativa: true });
+      ok = await result.current.criar({ categoria: 'ALAGAMENTO', faixaRisco: 'MODERADO', ordem: 1, titulo: 'Nova', descricao: 'D', ativa: true });
     });
 
     expect(ok).toBe(true);

@@ -61,6 +61,7 @@ export interface SugestaoAdminDto {
   titulo: string;
   descricao: string;
   ativa: boolean;
+  ordem: number;
   criadoEm: string;
   atualizadoEm: string;
 }
@@ -71,6 +72,7 @@ export interface SalvarSugestaoRequest {
   titulo: string;
   descricao: string;
   ativa: boolean;
+  ordem: number;
 }
 
 export interface SubprefeituraStatusDto {
@@ -94,14 +96,12 @@ export interface MetricasDto {
   suportes: number;
   totalSugestoes: number;
   sugestoesAtivas: number;
-  alertasUltimas24h: number;
   leiturasUltimas24h: number;
 }
 
 export interface ColetaResultadoDto {
   subprefeiturasProcessadas: number;
   scoresCalculados: number;
-  alertasGerados: number;
   concluidoEm: string;
 }
 

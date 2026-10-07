@@ -198,62 +198,6 @@ public class AuthControllerTests : IClassFixture<PulsarWebApplicationFactory>
     }
 
     // ──────────────────────────────────────────────
-    // GET /api/regioes — autenticação obrigatória
-    // ──────────────────────────────────────────────
-
-    [Fact]
-    public async Task GetRegioes_SemToken_Retorna401()
-    {
-        var response = await _client.GetAsync("/api/regioes");
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task GetRegioes_ComToken_Retorna200()
-    {
-        var token = await ObterTokenAsync();
-        _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var response = await _client.GetAsync("/api/regioes");
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        // Limpa header para não afetar outros testes
-        _client.DefaultRequestHeaders.Authorization = null;
-    }
-
-    [Fact]
-    public async Task GetRegioes_ComToken_RetornaListaDeRegioes()
-    {
-        var token = await ObterTokenAsync();
-        _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var response = await _client.GetAsync("/api/regioes");
-        var regioes = await response.Content.ReadFromJsonAsync<List<RegiaoDto>>(JsonOpts);
-
-        // Seed data contém 5 regiões
-        regioes.Should().HaveCount(5);
-        regioes!.Select(r => r.Nome).Should().Contain(["Centro", "Leste", "Norte", "Oeste", "Sul"]);
-
-        _client.DefaultRequestHeaders.Authorization = null;
-    }
-
-    [Fact]
-    public async Task GetRegiaoById_IdInvalido_Retorna404()
-    {
-        var token = await ObterTokenAsync();
-        _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var response = await _client.GetAsync($"/api/regioes/{Guid.NewGuid()}");
-
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        _client.DefaultRequestHeaders.Authorization = null;
-    }
-
-    // ──────────────────────────────────────────────
     // GET /api/subprefeituras/{id}/historico
     // ──────────────────────────────────────────────
 

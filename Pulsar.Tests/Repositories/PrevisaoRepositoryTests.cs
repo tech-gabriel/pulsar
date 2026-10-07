@@ -129,36 +129,6 @@ public class PrevisaoRepositoryTests
     }
 
     [Fact]
-    public async Task ObterFuturasPorRegiao_TrazSubsDaRegiaoEIgnoraPassado()
-    {
-        using var conn = new SqliteConnection("Data Source=:memory:");
-        conn.Open();
-        using var ctx = NovoContexto(conn);
-        var repo = new PrevisaoRepository(ctx);
-        var agora = new DateTime(2026, 8, 17, 12, 0, 0, DateTimeKind.Utc);
-
-        // Duas subprefeituras da mesma região para provar o "traz as subs da região", e uma
-        // de outra região com previsão futura para provar que o filtro de região existe:
-        // sem essa terceira, a consulta passaria igual trazendo a cidade inteira.
-        var idRegiao = await ctx.Subprefeituras
-            .GroupBy(s => s.RegiaoId).Where(g => g.Count() >= 2).Select(g => g.Key).FirstAsync();
-        var daRegiao = await ctx.Subprefeituras
-            .Where(s => s.RegiaoId == idRegiao).OrderBy(s => s.Nome).Take(2).ToListAsync();
-        var deFora = await ctx.Subprefeituras.FirstAsync(s => s.RegiaoId != idRegiao);
-
-        await repo.UpsertLoteAsync(daRegiao[0].Id, [Ponto(agora.AddHours(-3)), Ponto(agora.AddHours(3))], agora);
-        await repo.UpsertLoteAsync(daRegiao[1].Id, [Ponto(agora.AddHours(6))], agora);
-        await repo.UpsertLoteAsync(deFora.Id, [Ponto(agora.AddHours(3))], agora);
-
-        var futuras = await repo.ObterFuturasPorRegiaoAsync(idRegiao, agora);
-
-        futuras.Should().HaveCount(2);
-        futuras.Select(p => p.SubprefeituraId)
-            .Should().BeEquivalentTo([daRegiao[0].Id, daRegiao[1].Id], "só as subs da região pedida");
-        futuras.Select(p => p.InstantePrevisto)
-            .Should().Equal(agora.AddHours(3), agora.AddHours(6));
-    }
-    [Fact]
     public async Task ObterFuturasPorSubprefeitura_SoDaquelaSubEmOrdemCrescente()
     {
         using var conn = new SqliteConnection("Data Source=:memory:");

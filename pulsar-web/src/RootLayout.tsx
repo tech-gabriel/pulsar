@@ -5,6 +5,7 @@ import { ThemeProvider } from './hooks/ThemeProvider';
 import { ToastProvider } from './contexts/ToastProvider';
 import { AuthProvider } from './contexts/AuthProvider';
 import { SubprefeiturasProvider } from './contexts/SubprefeiturasProvider';
+import { FavoritosProvider } from './contexts/FavoritosProvider';
 import { AnalyticsBridge } from './analytics';
 import TitleManager from './components/TitleManager';
 import CanonicalManager from './components/CanonicalManager';
@@ -27,11 +28,13 @@ export default function RootLayout() {
         <ToastProvider>
           <AuthProvider>
             <SubprefeiturasProvider>
+            <FavoritosProvider>
               <AnalyticsBridge />
               <TitleManager />
               <CanonicalManager />
               <Outlet />
               <ToastContainer />
+            </FavoritosProvider>
             </SubprefeiturasProvider>
           </AuthProvider>
         </ToastProvider>

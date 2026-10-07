@@ -12,8 +12,11 @@ describe('copy da landing sobre o score', () => {
   it('FAQ explica os três perigos e não cita os pesos antigos', () => {
     const { container } = render(<LandingFaq />);
     fireEvent.click(screen.getByRole('button', { name: /como .*calculad/i }));
+    fireEvent.click(screen.getByRole('button', { name: /o que é o score de perigo/i }));
     const texto = container.textContent ?? '';
     expect(texto).toMatch(/alagamento, vento forte e calor extremo/);
+    expect(texto).toMatch(/Até 30 é Tranquilo, até 60 Atenção e acima disso, Alerta\./);
+    expect(texto).not.toMatch(/risco baixo|até 60 moderado/);
     expect(texto).not.toMatch(/35%|índice UV \(15%\)|visibilidade\/neblina/);
   });
 

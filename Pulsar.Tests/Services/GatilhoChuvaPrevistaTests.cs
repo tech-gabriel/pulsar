@@ -58,7 +58,7 @@ public class GatilhoChuvaPrevistaTests
         // Tag é carga: é ela que faz o aviso novo SUBSTITUIR o anterior na bandeja em vez
         // de empilhar dois avisos da mesma região.
         pendencias[0].Payload.Tag.Should().Be($"chuva-{ctx.Subprefeitura.Id}");
-        pendencias[0].Payload.Url.Should().Be("/");
+        pendencias[0].Payload.Url.Should().Be("/app?regiao=mooca");
     }
 
     [Fact]

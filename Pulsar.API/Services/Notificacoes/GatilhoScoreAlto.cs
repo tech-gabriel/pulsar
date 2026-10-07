@@ -35,7 +35,7 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             Payload: new PushPayload(
                 Titulo: titulo,
                 Corpo: corpo,
-                Url: "/",
+                Url: NomesSubprefeitura.UrlDetalhe(ctx.Subprefeitura.Nome),
                 Tag: $"alerta-{ctx.Subprefeitura.Id}"),
             Prioridade: LimiaresNotificacao.PrioridadeScoreAlto,
             Cooldown: LimiaresNotificacao.CooldownScoreAlto,

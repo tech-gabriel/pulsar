@@ -78,7 +78,7 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
                 Corpo: string.Create(
                     LimiaresNotificacao.CulturaCopy,
                     $"{faixa.ChuvaMm:0.#} mm previstos por volta das {horaLocal:HH}h. Se puder, antecipe a saída."),
-                Url: "/",
+                Url: NomesSubprefeitura.UrlDetalhe(ctx.Subprefeitura.Nome),
                 Tag: $"chuva-{ctx.Subprefeitura.Id}"),
             Prioridade: LimiaresNotificacao.PrioridadeChuvaPrevista,
             SubprefeituraId: ctx.Subprefeitura.Id,

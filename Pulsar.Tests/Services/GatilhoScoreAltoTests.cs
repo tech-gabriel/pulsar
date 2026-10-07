@@ -67,7 +67,7 @@ public class GatilhoScoreAltoTests
         // empilhar. Nenhuma das duas pode mudar por descuido de refatoração.
         pendencias[0].Chave.Should().Be($"score:{ctx.Subprefeitura.Id}:202608171800");
         pendencias[0].Payload.Tag.Should().Be($"alerta-{ctx.Subprefeitura.Id}");
-        pendencias[0].Payload.Url.Should().Be("/");
+        pendencias[0].Payload.Url.Should().Be("/app?regiao=mooca");
         pendencias[0].SubprefeituraId.Should().Be(ctx.Subprefeitura.Id);
         pendencias[0].Local.Should().Be("Mooca");
     }

@@ -19,7 +19,7 @@ const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: 'O que é o Score de Perigo?',
-    a: 'É um índice de 0 a 100 calculado por subprefeitura a partir dos dados climáticos mais recentes. Quanto maior, maior a atenção recomendada para aquela região naquele momento. Até 30 é risco baixo, até 60 moderado e acima disso, alto.',
+    a: 'É um índice de 0 a 100 calculado por subprefeitura a partir dos dados climáticos mais recentes. Quanto maior, maior a atenção recomendada para aquela região naquele momento. Até 30 é Tranquilo, até 60 Atenção e acima disso, Alerta.',
   },
   {
     q: 'Como o Score de Perigo é calculado?',

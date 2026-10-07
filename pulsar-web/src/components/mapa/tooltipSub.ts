@@ -1,5 +1,5 @@
 import type { FaixaRisco, SubprefeituraMapaDto } from '../../types';
-import { motivoPerigo } from '../../utils/risco';
+import { labelFaixa, motivoPerigo } from '../../utils/risco';
 
 /**
  * HTML do tooltip glass exibido ao passar o mouse sobre o polígono da
@@ -16,16 +16,6 @@ function classeFaixa(faixa: FaixaRisco | null | undefined): string {
     case 'MODERADO': return 'pt-MODERADO';
     case 'ALTO': return 'pt-ALTO';
     default: return 'pt-SEM';
-  }
-}
-
-/** Texto amigável da faixa de risco. */
-function rotuloFaixa(faixa: FaixaRisco | null | undefined): string {
-  switch (faixa) {
-    case 'BAIXO': return 'Risco baixo';
-    case 'MODERADO': return 'Risco moderado';
-    case 'ALTO': return 'Risco alto';
-    default: return 'Sem dados';
   }
 }
 
@@ -59,7 +49,7 @@ export function tooltipSubprefeituraHtml(
   return `<div class="pt">
     ${cabecalho}
     <div class="pt-score-row">
-      <span class="pt-faixa ${cls}">${rotuloFaixa(sub.faixaRisco)}</span>
+      <span class="pt-faixa ${cls}">${labelFaixa(sub.faixaRisco)}</span>
       ${motivo ? `<span class="pt-motivo">${motivo.icone} por ${motivo.rotulo}</span>` : ''}
       <span class="pt-score ${cls}">${score}</span>
     </div>

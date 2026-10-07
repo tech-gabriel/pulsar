@@ -25,6 +25,28 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.14.0',
+    data: '2026-10-07',
+    resumo: 'Avisos mais claros, com dicas para chuva, vento e calor.',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Tranquilo, Atenção e Alerta',
+        descricao: 'O risco agora aparece com nomes fáceis de entender, no app e nas notificações. Tocar no aviso abre a subprefeitura.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Dicas para cada perigo',
+        descricao: 'Quando chuva, vento ou calor pedem cuidado, a subprefeitura mostra o que fazer, com base nas orientações da Defesa Civil e do Ministério da Saúde.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Aviso de Atenção',
+        descricao: 'Quem ligar os avisos de atenção nas configurações também é avisado quando uma subprefeitura entra em Atenção, no máximo uma vez por dia para cada perigo.',
+      },
+    ],
+  },
+  {
     versao: '1.13.1',
     data: '2026-10-07',
     itens: [

@@ -4,7 +4,7 @@ import Reveal from './Reveal';
 const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
   { Icon: Gauge, title: 'Score de Perigo', desc: 'Um índice claro de 0 a 100 por subprefeitura, calculado a partir dos dados climáticos mais recentes.' },
   { Icon: Map, title: 'Mapa heatmap', desc: 'As 32 subprefeituras de São Paulo coloridas pelo nível de risco, do verde ao vermelho, num só olhar.' },
-  { Icon: BellRing, title: 'Alertas de risco', desc: 'Destaque automático das regiões em risco alto, com sugestões de segurança para o momento.' },
+  { Icon: BellRing, title: 'Alertas de risco', desc: 'Destaque automático das subprefeituras em Alerta, com dicas para chuva, vento e calor.' },
   { Icon: BellPlus, title: 'Notificações push', desc: 'Receba avisos no celular quando uma subprefeitura que você acompanha entrar em estado de atenção.' },
   { Icon: TrendingUp, title: 'Histórico & tendências', desc: 'Veja a evolução do risco por região ao longo do tempo e entenda os padrões.' },
   { Icon: Newspaper, title: 'Feed de notícias', desc: 'Boletins e ocorrências da CGE-SP reunidos para complementar o que o mapa mostra.' },

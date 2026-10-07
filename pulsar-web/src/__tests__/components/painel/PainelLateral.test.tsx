@@ -16,7 +16,7 @@ describe('PainelLateral (B)', () => {
   it('cidade agora, suas e em atenção; abre a área', () => {
     const onSelecionar = vi.fn();
     render(<PainelLateral {...base} areas={[itaquera, mooca, penha]} favoritas={[penha]} onSelecionar={onSelecionar} />);
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('1 em risco alto, 1 em atenção');
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('1 em alerta, 1 em atenção');
     expect(screen.getByText('Suas subprefeituras')).toBeInTheDocument();
     expect(screen.getByText('Em atenção agora')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Itaquera/ }));

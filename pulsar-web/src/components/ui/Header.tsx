@@ -178,7 +178,7 @@ export default function Header() {
                         {resumoAlertas(subprefeituras, carregando)}
                       </p>
                       <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
-                        {semDado ? 'Os alertas aparecem aqui assim que os dados chegarem.' : 'Nenhuma subprefeitura em risco alto agora.'}
+                        {semDado ? 'Os alertas aparecem aqui assim que os dados chegarem.' : 'Nenhuma subprefeitura em alerta agora.'}
                       </p>
                     </div>
                   ) : (

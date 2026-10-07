@@ -100,7 +100,7 @@ describe('metricasSubprefeitura', () => {
       ultimaLeitura: leitura({ temperaturaC: 21.4, chuvaMmH: 2.5, ventoKmH: 18.7, indiceUv: 6 }),
     }));
     expect(m.map((x) => x.camada)).toEqual(['score', 'temperatura', 'chuva', 'vento', 'uv']);
-    expect(m[0].valor).toContain('Moderado');
+    expect(m[0].valor).toContain('Atenção');
     expect(m[1].valor).toBe('21.4°C');
     expect(m[2].valor).toBe('2.5 mm/h');
     expect(m[3].valor).toBe('19 km/h');

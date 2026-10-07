@@ -268,7 +268,7 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
         >
           {SUBPREFEITURAS.map((s, i) => {
             const emFoco = mostraFoco && s.id === FOCO_ID;
-            // Na cena 5 o texto e o badge dizem "risco alto"; a faixa
+            // Na cena 5 o texto e o badge dizem "Alerta"; a faixa
             // determinística da Sé é 'moderado', então sem esta exceção o
             // alerta vermelho apontava para um polígono amarelo.
             const emAlerta = emFoco && cena === 'alerta';
@@ -402,7 +402,7 @@ export default function MapaCena({ cena, className, compacta = false }: Props) {
           }}
         >
           <AlertTriangle size={18} className="flex-shrink-0" />
-          <span className="text-sm font-medium">Risco alto na sua região</span>
+          <span className="text-sm font-medium">Alerta na sua subprefeitura</span>
         </div>
       )}
     </div>

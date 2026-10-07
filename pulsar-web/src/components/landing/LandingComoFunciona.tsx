@@ -15,7 +15,7 @@ const PASSOS = [
   {
     num: '02',
     title: 'Calculamos o Score',
-    desc: 'Cada uma das 32 subprefeituras recebe um Score de Perigo atualizado, do baixo ao crítico.',
+    desc: 'Cada uma das 32 subprefeituras recebe um Score de Perigo atualizado: Tranquilo, Atenção ou Alerta.',
   },
   {
     num: '03',

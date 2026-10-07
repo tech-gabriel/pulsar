@@ -134,7 +134,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             <ScoreRing score={score} cor={cores.fill} corEscura={cores.text} />
             <div className="min-w-0">
               <span className="inline-block rounded-full px-3 py-1" style={{ background: cores.bg, color: cores.text, fontWeight: 600, fontSize: 13 }}>
-                Risco {labelFaixa(area.faixaRisco).toLowerCase()}
+                {labelFaixa(area.faixaRisco)}
               </span>
               <div className="mt-2"><LinhasPerigo score={area.scoreAtual} leitura={l} /></div>
             </div>

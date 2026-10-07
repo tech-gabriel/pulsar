@@ -65,9 +65,9 @@ public class GatilhoScoreAltoTests
         // Chave e Tag são carga: a Chave é o que entra no índice único do livro-caixa,
         // e a Tag é o que faz o push novo SUBSTITUIR o anterior na bandeja em vez de
         // empilhar. Nenhuma das duas pode mudar por descuido de refatoração.
-        pendencias[0].Chave.Should().Be($"score:{ctx.Subprefeitura.Id}:202608171800");
+        pendencias[0].Chave.Should().Be($"score:{ctx.Subprefeitura.Id}:ALAGAMENTO:202608171800");
         pendencias[0].Payload.Tag.Should().Be($"alerta-{ctx.Subprefeitura.Id}");
-        pendencias[0].Payload.Url.Should().Be("/");
+        pendencias[0].Payload.Url.Should().Be("/app?regiao=mooca");
         pendencias[0].SubprefeituraId.Should().Be(ctx.Subprefeitura.Id);
         pendencias[0].Local.Should().Be("Mooca");
     }
@@ -129,7 +129,7 @@ public class GatilhoScoreAltoTests
         payload.Corpo.Should().NotContainEquivalentOf("score",
             "o número do score não diz a ninguém o que fazer");
 
-        payload.Titulo.Should().Be("Risco alto de alagamento na Mooca");
+        payload.Titulo.Should().Be("Alerta de alagamento na Mooca");
 
         // Igualdade exata: um Contain("18") passaria em corpo que perdeu a unidade ou a
         // cláusula do vento. Cobre também o caminho inteiro, em que "0.#" não imprime casa.
@@ -172,7 +172,7 @@ public class GatilhoScoreAltoTests
 
         pendencias.Should().HaveCount(1, "score alto sem leitura ainda merece aviso");
         pendencias[0].Payload.Corpo.Should().Be(
-            "Condições de risco alto agora. Evite áreas de alagamento.");
+            "Condições de alerta agora. Evite áreas de alagamento.");
     }
 
     [Fact]
@@ -188,7 +188,7 @@ public class GatilhoScoreAltoTests
     {
         var p = await new GatilhoScoreAlto().AvaliarAsync(
             Montar(LeituraPadrao(), (70, FaixaRisco.ALTO), TipoPerigo.VENTO));
-        p[0].Payload.Titulo.Should().Be("Vento forte na Mooca");
+        p[0].Payload.Titulo.Should().Be("Alerta de vento forte na Mooca");
         p[0].Payload.Corpo.Should().Be("Ventos de 45 km/h agora.");
     }
 
@@ -203,7 +203,7 @@ public class GatilhoScoreAltoTests
         {
             var p = await new GatilhoScoreAlto().AvaliarAsync(
                 Montar(leitura, (65, FaixaRisco.ALTO), TipoPerigo.CALOR));
-            p[0].Payload.Titulo.Should().Be("Calor extremo na Mooca");
+            p[0].Payload.Titulo.Should().Be("Alerta de calor extremo na Mooca");
             p[0].Payload.Corpo.Should().Be("Sensação térmica de 42 °C. Hidrate-se e evite sol forte.");
         }
         finally { CultureInfo.CurrentCulture = original; }
@@ -237,6 +237,16 @@ public class GatilhoScoreAltoTests
     {
         var p = await new GatilhoScoreAlto().AvaliarAsync(
             Montar(LeituraPadrao(), (78, FaixaRisco.ALTO), TipoPerigo.ALAGAMENTO, chuva3h: 0));
-        p[0].Payload.Corpo.Should().Be("Condições de risco alto agora. Evite áreas de alagamento.");
+        p[0].Payload.Corpo.Should().Be("Condições de alerta agora. Evite áreas de alagamento.");
+    }
+
+    [Fact]
+    public async Task ChaveCarregaOPerigo()
+    {
+        var ctx = Montar(LeituraPadrao(), (78, FaixaRisco.ALTO), perigo: TipoPerigo.CALOR);
+
+        var p = await new GatilhoScoreAlto().AvaliarAsync(ctx);
+
+        p[0].Chave.Should().Be($"score:{ctx.Subprefeitura.Id}:CALOR:202608171800");
     }
 }

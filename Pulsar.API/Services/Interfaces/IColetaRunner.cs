@@ -4,11 +4,10 @@ namespace Pulsar.API.Services.Interfaces;
 public record ColetaResultado(
     int SubprefeiturasProcessadas,
     int ScoresCalculados,
-    int AlertasGerados,
     DateTime ConcluidoEm);
 
 /// <summary>
-/// Executa um ciclo completo de coleta (clima → scores → agregado → previsão → alertas →
+/// Executa um ciclo completo de coleta (clima → scores → agregado → previsão →
 /// notificações). Reutilizado tanto pelo <c>DataCollectionJob</c> (a cada 15min) quanto
 /// pela coleta manual disparada por um ADMIN.
 /// </summary>

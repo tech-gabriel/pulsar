@@ -1,5 +1,6 @@
 using System.Globalization;
 using Pulsar.API.Domain.Enums;
+using Pulsar.API.Domain.Score;
 using Pulsar.API.Services.Push;
 
 namespace Pulsar.API.Services.Notificacoes;
@@ -48,7 +49,7 @@ public class GatilhoBriefingDiario : IGatilhoNotificacao
         if (pior?.Score is null)
             return vazio;
 
-        var corpo = $"Risco {TextoDaFaixa(pior.Score.Faixa)}.";
+        var corpo = $"{ClassificacaoRisco.Rotulo(pior.Score.Faixa)}.";
 
         // As faixas que caem dentro do horizonte do resumo. Materializada porque é lida
         // duas vezes: para achar a mais chuvosa e para saber se HOUVE previsão olhada.
@@ -114,7 +115,7 @@ public class GatilhoBriefingDiario : IGatilhoNotificacao
             Payload: new PushPayload(
                 Titulo: $"{ctx.Subprefeitura.Nome} hoje",
                 Corpo: corpo,
-                Url: "/",
+                Url: NomesSubprefeitura.UrlDetalhe(ctx.Subprefeitura.Nome),
                 Tag: $"briefing-{ctx.Subprefeitura.Id}"),
             Prioridade: LimiaresNotificacao.PrioridadeBriefing,
             SubprefeituraId: ctx.Subprefeitura.Id,
@@ -124,26 +125,4 @@ public class GatilhoBriefingDiario : IGatilhoNotificacao
 
         return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([pendencia]);
     }
-
-    /// <summary>
-    /// Nome da faixa em português corrido. Enum direto sairia "MODERADO" gritado no meio
-    /// da frase, que é o sistema falando consigo mesmo.
-    /// </summary>
-    private static string TextoDaFaixa(FaixaRisco faixa) => faixa switch
-    {
-        FaixaRisco.BAIXO => "baixo",
-        FaixaRisco.MODERADO => "moderado",
-        FaixaRisco.ALTO => "alto",
-        // Um arm por valor do enum, sem catch-all que traduza o desconhecido. O antigo
-        // "_ => baixo" errava sempre para o lado perigoso: uma faixa nova sairia como a
-        // palavra mais calma justamente para quem está em risco.
-        //
-        // O descarte que sobrou NÃO devolve conferência em tempo de compilação: mesmo com
-        // todos os arms escritos, o compilador continua exigindo um catch-all (variável de
-        // enum aceita qualquer int), então tirá-lo trocaria isto por um aviso CS8509. O que
-        // ele compra é falha BARULHENTA em vez de silenciosa. Mesma forma de
-        // WebPushNotificationService.OptouPeloCriterio.
-        _ => throw new ArgumentOutOfRangeException(
-            nameof(faixa), faixa, "Faixa de risco sem texto de copy."),
-    };
 }

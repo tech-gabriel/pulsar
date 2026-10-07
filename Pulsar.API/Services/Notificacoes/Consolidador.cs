@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Enums;
 using Pulsar.API.Services.Push;
 
 namespace Pulsar.API.Services.Notificacoes;
@@ -34,6 +35,7 @@ public static class Consolidador
             .Where(p => d.Favoritas.Contains(p.SubprefeituraId))
             .Where(p => d.Criterios.Contains(p.Criterio))
             .Where(p => !JaCoberta(d.Recentes, p, agoraUtc))
+            .Where(p => !SilenciadaPorAlerta(d.Recentes, p, agoraUtc))
             .OrderBy(p => p.Prioridade)
             .ThenBy(p => p.Criterio)
             .ToList();
@@ -55,6 +57,29 @@ public static class Consolidador
             ? recentes.Any(r => r.SubprefeituraId == p.SubprefeituraId && r.Gatilho == p.Gatilho && r.EnviadoEm >= agora - cooldown)
             : recentes.Any(r => r.Chave == p.Chave);
 
+    /// <summary>
+    /// Atenção do perigo P calada se houve Alerta do MESMO perigo na mesma subprefeitura há
+    /// menos de SilencioAtencaoAposAlertaHoras: é melhora, não aviso novo. Perigo diferente
+    /// passa. Chave antiga de score-alto (sem perigo, gravada antes desta versão) conta como
+    /// "qualquer perigo": cala por no máximo 6 h depois do deploy, e nunca lança.
+    /// </summary>
+    private static bool SilenciadaPorAlerta(IReadOnlyList<EnvioAnterior> recentes, NotificacaoPendente p, DateTime agora)
+    {
+        if (p.Gatilho != "atencao" || p.Perigo is not { } perigo) return false;
+        var desde = agora.AddHours(-LimiaresNotificacao.SilencioAtencaoAposAlertaHoras);
+        return recentes.Any(r => r.Gatilho == "score-alto"
+            && r.SubprefeituraId == p.SubprefeituraId
+            && r.EnviadoEm >= desde
+            && (PerigoDaChaveDeAlerta(r.Chave) is not { } doAlerta || doAlerta == perigo));
+    }
+
+    /// <summary>"score:{id}:{PERIGO}:{instante}" devolve o perigo; formato antigo devolve null.</summary>
+    private static TipoPerigo? PerigoDaChaveDeAlerta(string chave)
+    {
+        var partes = chave.Split(':');
+        return partes.Length == 4 && Enum.TryParse<TipoPerigo>(partes[2], out var perigo) ? perigo : null;
+    }
+
     /// <summary>Conta ENVIOS (EnvioId distintos) do dia local, inclusive os de risco alto.</summary>
     private static bool EstourouTeto(DestinatarioPush d, DateTime agora)
     {
@@ -70,12 +95,22 @@ public static class Consolidador
     {
         if (grupo.Count == 1) return grupo[0].Payload;
 
+        // Vários eventos de UMA subprefeitura (hoje só a Atenção, um por perigo): o push
+        // continua sendo dela, então abre o detalhe dela e fala com a preposição certa.
+        if (grupo[0].Gatilho == "atencao" && grupo.Select(p => p.SubprefeituraId).Distinct().Count() == 1)
+            return new PushPayload(
+                $"Atenção {NomesSubprefeitura.ComPreposicao(grupo[0].Local)}",
+                "Mais de um perigo pede cuidado. Toque para ver as dicas.",
+                Url: grupo[0].Payload.Url,
+                Tag: grupo[0].Payload.Tag);
+
         var gatilho = grupo[0].Gatilho;
-        var lista = ListaNomes([.. grupo.Select(p => p.Local)]);
+        var lista = ListaNomes([.. grupo.Select(p => p.Local).Distinct()]);
         var (titulo, corpo) = gatilho switch
         {
             // Sem "de alagamento": o perigo de cada uma pode ser vento ou calor.
-            "score-alto" => ($"Risco alto em {lista}", "Toque para ver o que está acontecendo em cada uma."),
+            "score-alto" => ($"Alerta em {lista}", "Toque para ver o que está acontecendo em cada uma."),
+            "atencao" => ($"Atenção em {lista}", "Toque para ver os detalhes."),
             "chuva-prevista" => ($"Chuva forte prevista em {lista}", "Toque para ver o horário previsto em cada uma."),
             "briefing-diario" => ("Suas subprefeituras hoje",
                 string.Join(" ", grupo.Take(2).Select(p => $"{p.Local}: {p.Payload.Corpo}"))

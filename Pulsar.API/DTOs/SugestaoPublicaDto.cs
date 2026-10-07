@@ -2,16 +2,13 @@ using Pulsar.API.Domain.Enums;
 
 namespace Pulsar.API.DTOs;
 
-/// <summary>Sugestão completa para a área administrativa (inclui inativas).</summary>
-public class SugestaoAdminDto
+/// <summary>Dica do catálogo como o app exibe: categoria = perigo, faixa = Atenção (MODERADO) ou Alerta (ALTO).</summary>
+public class SugestaoPublicaDto
 {
     public Guid Id { get; set; }
     public string Categoria { get; set; } = string.Empty;
-    public FaixaRisco FaixaRisco { get; set; }
+    public FaixaRisco Faixa { get; set; }
     public string Titulo { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
-    public bool Ativa { get; set; }
     public int Ordem { get; set; }
-    public DateTime CriadoEm { get; set; }
-    public DateTime AtualizadoEm { get; set; }
 }

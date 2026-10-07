@@ -36,7 +36,6 @@ public class ColetaRunnerAgregadoTests
         var runner = new ColetaRunner(
             Mock.Of<IClimateService>(),
             Mock.Of<IScoreService>(),
-            Mock.Of<IAlertaService>(),
             agregado.Object,
             Mock.Of<IPrevisaoService>(),
             Mock.Of<IMotorNotificacoes>(),

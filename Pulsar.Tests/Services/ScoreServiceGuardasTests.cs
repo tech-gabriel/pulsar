@@ -72,45 +72,4 @@ public class ScoreServiceGuardasTests
         await CriarScoreService().Invoking(s => s.CalcularEPersistirAsync(sub.Id))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("*Nenhuma leitura*");
     }
-
-    // ── Regiao.GetScoreAgregado: MAX das subprefeituras ativas ──
-
-    [Fact]
-    public void GetScoreAgregado_SemSubprefeituras_RetornaZero()
-        => new Regiao { Nome = "Norte" }.GetScoreAgregado().Should().Be(0);
-
-    [Fact]
-    public void GetScoreAgregado_SubprefeiturasSemScore_RetornaZero()
-    {
-        var regiao = new Regiao { Nome = "Sul" };
-        regiao.Subprefeituras.Add(new Subprefeitura { Ativa = true });
-        regiao.GetScoreAgregado().Should().Be(0);
-    }
-
-    [Fact]
-    public void GetScoreAgregado_MultiplasSubs_RetornaMax()
-    {
-        var regiao = new Regiao { Nome = "Leste" };
-        foreach (var v in new[] { 45.0, 75, 30 })
-        {
-            var sub = new Subprefeitura { Ativa = true };
-            sub.Scores.Add(new ScorePerigo { Valor = v, Timestamp = DateTime.UtcNow });
-            regiao.Subprefeituras.Add(sub);
-        }
-        regiao.GetScoreAgregado().Should().Be(75);
-    }
-
-    [Fact]
-    public void GetScoreAgregado_SubprefeituraInativa_NaoContabilizada()
-    {
-        var regiao = new Regiao { Nome = "Oeste" };
-        var subAtiva = new Subprefeitura { Ativa = true };
-        subAtiva.Scores.Add(new ScorePerigo { Valor = 40, Timestamp = DateTime.UtcNow });
-        var subInativa = new Subprefeitura { Ativa = false };
-        subInativa.Scores.Add(new ScorePerigo { Valor = 99, Timestamp = DateTime.UtcNow });
-        regiao.Subprefeituras.Add(subAtiva);
-        regiao.Subprefeituras.Add(subInativa);
-
-        regiao.GetScoreAgregado().Should().Be(40);
-    }
 }

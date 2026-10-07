@@ -10,11 +10,7 @@ public interface IPrevisaoService
     /// </summary>
     Task<bool> AtualizarAsync(Guid subprefeituraId, CancellationToken ct = default);
 
-    /// <summary>Faixas futuras da região, agregadas por pior caso, no máximo maxFaixas.</summary>
     /// <summary>Faixas futuras de UMA subprefeitura, em ordem crescente. Contexto do motor de notificações.</summary>
     Task<IReadOnlyList<FaixaPrevisaoDto>> ObterFaixasSubprefeituraAsync(
         Guid subprefeituraId, int maxFaixas, CancellationToken ct = default);
-
-    Task<IReadOnlyList<FaixaPrevisaoDto>> ObterFaixasRegiaoAsync(
-        Guid regiaoId, int maxFaixas, CancellationToken ct = default);
 }

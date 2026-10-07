@@ -121,8 +121,8 @@ export default function ConfiguracoesPage() {
   }
 
   const notifs: { chave: keyof NotificacoesPrefs; titulo: string; descricao: string }[] = [
-    { chave: 'alertaAlto', titulo: 'Alertas de risco alto', descricao: 'Avisar quando uma subprefeitura que você acompanha entrar em risco alto' },
-    { chave: 'alertaModerado', titulo: 'Alertas de risco moderado', descricao: 'Avisar já a partir da faixa moderada' },
+    { chave: 'alertaAlto', titulo: 'Alertas', descricao: 'Avisar quando uma subprefeitura que você acompanha entrar em Alerta' },
+    { chave: 'alertaModerado', titulo: 'Avisos de atenção', descricao: 'Avisar também quando entrar em Atenção, ou quando houver chuva forte prevista' },
     { chave: 'resumoDiario', titulo: 'Resumo diário', descricao: 'Um resumo do clima das suas subprefeituras, uma vez por dia' },
   ];
 

@@ -17,9 +17,9 @@ public class AdminServiceTests
     private AdminService CriarService() => new(_usuarioRepoMock.Object, _sugestaoRepoMock.Object);
 
     private static SalvarSugestaoRequestDto Req(
-        string categoria = "geral", string titulo = "Título", string descricao = "Descrição",
-        FaixaRisco faixa = FaixaRisco.BAIXO, bool ativa = true)
-        => new() { Categoria = categoria, Titulo = titulo, Descricao = descricao, FaixaRisco = faixa, Ativa = ativa };
+        string categoria = "alagamento", string titulo = "Título", string descricao = "Descrição",
+        FaixaRisco faixa = FaixaRisco.MODERADO, bool ativa = true, int ordem = 1)
+        => new() { Categoria = categoria, Titulo = titulo, Descricao = descricao, FaixaRisco = faixa, Ativa = ativa, Ordem = ordem };
 
     // ── Anti-lockout (usuários) ────────────────────────────────
 
@@ -92,9 +92,9 @@ public class AdminServiceTests
     {
         var sut = CriarService();
 
-        var dto = await sut.CriarSugestaoAsync(Req(categoria: " geral "));
+        var dto = await sut.CriarSugestaoAsync(Req(categoria: " calor "));
 
-        dto.Categoria.Should().Be("GERAL");
+        dto.Categoria.Should().Be("CALOR");
         _sugestaoRepoMock.Verify(r => r.AdicionarAsync(It.IsAny<Sugestao>()), Times.Once);
         _sugestaoRepoMock.Verify(r => r.SalvarAsync(), Times.Once);
     }
@@ -122,18 +122,15 @@ public class AdminServiceTests
         await acao.Should().ThrowAsync<KeyNotFoundException>();
     }
 
-    [Fact]
-    public async Task RemoverSugestaoAsync_VinculadaAAlertas_LancaInvalidOperation()
+    [Theory]
+    [InlineData("GERAL", FaixaRisco.MODERADO, 1)]
+    [InlineData("NEBLINA", FaixaRisco.ALTO, 1)]
+    [InlineData("ALAGAMENTO", FaixaRisco.BAIXO, 1)]
+    [InlineData("CALOR", FaixaRisco.ALTO, 0)]
+    public async Task CriarSugestaoAsync_ForaDoCatalogoPorPerigo_Lanca(string categoria, FaixaRisco faixa, int ordem)
     {
-        // Simula a violação de FK (AlertaSugestao -> Sugestao é Restrict).
-        _sugestaoRepoMock.Setup(r => r.ObterPorIdAsync(It.IsAny<Guid>()))
-            .ReturnsAsync(new Sugestao { Titulo = "T", Descricao = "D", Categoria = "GERAL" });
-        _sugestaoRepoMock.Setup(r => r.SalvarAsync())
-            .ThrowsAsync(new DbUpdateException("FK violation"));
-        var sut = CriarService();
+        var acao = () => CriarService().CriarSugestaoAsync(Req(categoria: categoria, faixa: faixa, ordem: ordem));
 
-        var acao = () => sut.RemoverSugestaoAsync(Guid.NewGuid());
-
-        await acao.Should().ThrowAsync<InvalidOperationException>();
+        await acao.Should().ThrowAsync<ArgumentException>();
     }
 }

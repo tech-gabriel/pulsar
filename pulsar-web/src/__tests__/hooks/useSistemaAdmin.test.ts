@@ -30,11 +30,11 @@ const status: SistemaStatusDto = {
 
 const metricas: MetricasDto = {
   totalUsuarios: 3, usuariosAtivos: 3, admins: 1, suportes: 1,
-  totalSugestoes: 45, sugestoesAtivas: 45, alertasUltimas24h: 2, leiturasUltimas24h: 120,
+  totalSugestoes: 18, sugestoesAtivas: 18, leiturasUltimas24h: 120,
 };
 
 const coleta: ColetaResultadoDto = {
-  subprefeiturasProcessadas: 32, scoresCalculados: 32, alertasGerados: 2, concluidoEm: '2026-06-13T01:00:00Z',
+  subprefeiturasProcessadas: 32, scoresCalculados: 32, concluidoEm: '2026-06-13T01:00:00Z',
 };
 
 function mockGets() {
@@ -74,6 +74,6 @@ describe('useSistemaAdmin', () => {
     await act(async () => { await result.current.forcarColeta(); });
 
     expect(mockedApi.post).toHaveBeenCalledWith('/admin/sistema/coletar', null, { timeout: 90000 });
-    expect(showToast).toHaveBeenCalledWith(expect.stringContaining('Coleta concluída'), 'success');
+    expect(showToast).toHaveBeenCalledWith('Coleta concluída: 32 subprefeituras', 'success');
   });
 });

@@ -3,7 +3,6 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Pulsar.API.Domain.Entities;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Services;
 using Pulsar.API.Services.Interfaces;
@@ -12,8 +11,8 @@ namespace Pulsar.Tests.Services;
 
 /// <summary>
 /// O ponto em que o motor de notificações entra no ciclo de coleta. O que estes testes
-/// protegem é o CONTRATO da chamada, não o motor em si: uma vez por ciclo, depois dos
-/// alertas, contida em try/catch e pulada quando o ciclo foi cancelado no meio.
+/// protegem é o CONTRATO da chamada, não o motor em si: uma vez por ciclo, depois da
+/// previsão, contida em try/catch e pulada quando o ciclo foi cancelado no meio.
 /// </summary>
 public class ColetaRunnerMotorTests
 {
@@ -26,13 +25,12 @@ public class ColetaRunnerMotorTests
     }
 
     private static ColetaRunner NovoRunner(
-        PulsarDbContext ctx, IMotorNotificacoes motor, IAlertaService? alerta = null)
+        PulsarDbContext ctx, IMotorNotificacoes motor, IPrevisaoService? previsao = null)
         => new(
             Mock.Of<IClimateService>(),
             Mock.Of<IScoreService>(),
-            alerta ?? Mock.Of<IAlertaService>(),
             Mock.Of<IAgregadoDiarioService>(),
-            Mock.Of<IPrevisaoService>(),
+            previsao ?? Mock.Of<IPrevisaoService>(),
             motor,
             ctx,
             NullLogger<ColetaRunner>.Instance);
@@ -57,31 +55,31 @@ public class ColetaRunnerMotorTests
     }
 
     [Fact]
-    public async Task ExecutarCiclo_ChamaOMotorDepoisDosAlertas()
+    public async Task ExecutarCiclo_ChamaOMotorDepoisDaPrevisao()
     {
         using var conn = new SqliteConnection("Data Source=:memory:");
         conn.Open();
         using var ctx = NovoContexto(conn);
 
-        // O motor lê estado consolidado do banco (scores, previsão, alertas). Chamá-lo
-        // antes do loop de alertas o faria decidir sobre o ciclo anterior.
+        // O motor lê estado consolidado do banco (scores e previsão). Chamá-lo antes do
+        // loop de previsão o faria decidir sobre o ciclo anterior.
         var ordem = new List<string>();
 
-        var alerta = new Mock<IAlertaService>();
-        alerta.Setup(a => a.GerarAlertaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-              .Callback(() => ordem.Add("alerta"))
-              .ReturnsAsync((Alerta?)null);
+        var previsao = new Mock<IPrevisaoService>();
+        previsao.Setup(p => p.AtualizarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .Callback(() => ordem.Add("previsao"))
+                .ReturnsAsync(true);
 
         var motor = new Mock<IMotorNotificacoes>();
         motor.Setup(m => m.AvaliarEDispararAsync(It.IsAny<CancellationToken>()))
              .Callback(() => ordem.Add("motor"))
              .ReturnsAsync(0);
 
-        var runner = NovoRunner(ctx, motor.Object, alerta.Object);
+        var runner = NovoRunner(ctx, motor.Object, previsao.Object);
 
         await runner.ExecutarCicloAsync();
 
-        ordem.Should().Contain("alerta");
+        ordem.Should().Contain("previsao");
         ordem[^1].Should().Be("motor");
     }
 
@@ -117,16 +115,16 @@ public class ColetaRunnerMotorTests
 
         using var cts = new CancellationTokenSource();
 
-        // Cancela durante o loop de alertas, que é o desligamento do serviço no meio do
+        // Cancela durante o loop de previsão, que é o desligamento do serviço no meio do
         // ciclo: os loops quebram e o banco fica com estado PELA METADE. Decidir push em
         // cima disso é decidir sobre dado que ainda não terminou de ser escrito.
-        var alerta = new Mock<IAlertaService>();
-        alerta.Setup(a => a.GerarAlertaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-              .Callback(() => cts.Cancel())
-              .ReturnsAsync((Alerta?)null);
+        var previsao = new Mock<IPrevisaoService>();
+        previsao.Setup(p => p.AtualizarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .Callback(() => cts.Cancel())
+                .ReturnsAsync(true);
 
         var motor = new Mock<IMotorNotificacoes>();
-        var runner = NovoRunner(ctx, motor.Object, alerta.Object);
+        var runner = NovoRunner(ctx, motor.Object, previsao.Object);
 
         await runner.ExecutarCicloAsync(cts.Token);
 

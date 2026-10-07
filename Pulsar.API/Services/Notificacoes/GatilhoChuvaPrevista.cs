@@ -72,13 +72,15 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
             Chave: $"chuva:{ctx.Subprefeitura.Id}:{faixa.InstantePrevisto.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture)}",
             Criterio: criterio,
             Payload: new PushPayload(
-                Titulo: $"Chuva forte prevista {em}",
+                Titulo: criterio == CriterioOptIn.RiscoAlto
+                    ? $"Alerta: chuva muito forte prevista {em}"
+                    : $"Atenção: chuva forte prevista {em}",
                 // Cultura explícita: sem ela o host sem locale escreveria "12.4 mm" no meio
                 // de uma frase em português. Ver LimiaresNotificacao.CulturaCopy.
                 Corpo: string.Create(
                     LimiaresNotificacao.CulturaCopy,
                     $"{faixa.ChuvaMm:0.#} mm previstos por volta das {horaLocal:HH}h. Se puder, antecipe a saída."),
-                Url: "/",
+                Url: NomesSubprefeitura.UrlDetalhe(ctx.Subprefeitura.Nome),
                 Tag: $"chuva-{ctx.Subprefeitura.Id}"),
             Prioridade: LimiaresNotificacao.PrioridadeChuvaPrevista,
             SubprefeituraId: ctx.Subprefeitura.Id,

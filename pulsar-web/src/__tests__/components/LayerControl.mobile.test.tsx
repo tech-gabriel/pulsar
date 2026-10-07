@@ -41,4 +41,11 @@ describe('LayerControl (mobile)', () => {
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('radio', { name: 'Chuva' })).toBeNull();
   });
+
+  it('não oferece a camada UV, que não é perigo do score', () => {
+    render(<LayerControl camadaAtiva="score" onChange={vi.fn()} isMobile />);
+    fireEvent.click(screen.getByRole('button', { name: /escolher camada/i }));
+    expect(screen.getByRole('radio', { name: 'Chuva' })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'UV' })).toBeNull();
+  });
 });

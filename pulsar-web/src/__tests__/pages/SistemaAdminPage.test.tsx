@@ -45,7 +45,7 @@ beforeEach(() => {
   };
   hookState.metricas = {
     totalUsuarios: 3, usuariosAtivos: 3, admins: 1, suportes: 1,
-    totalSugestoes: 45, sugestoesAtivas: 45, alertasUltimas24h: 2, leiturasUltimas24h: 100,
+    totalSugestoes: 18, sugestoesAtivas: 18, leiturasUltimas24h: 100,
   };
 });
 
@@ -76,5 +76,12 @@ describe('SistemaAdminPage', () => {
     renderPage();
 
     expect(screen.getByText(/push de verdade/i)).toBeInTheDocument();
+  });
+
+  it('não mostra mais o KPI de alertas (o histórico interno saiu na 1.14.0)', () => {
+    authState.usuario = usuarioDto('SUPORTE');
+    renderPage();
+
+    expect(screen.queryByText('Alertas (24h)')).not.toBeInTheDocument();
   });
 });

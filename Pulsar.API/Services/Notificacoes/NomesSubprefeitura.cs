@@ -1,3 +1,7 @@
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+
 namespace Pulsar.API.Services.Notificacoes;
 
 /// <summary>
@@ -21,4 +25,19 @@ public static class NomesSubprefeitura
 
     public static string ComPreposicao(string nome)
         => $"{(Preposicao.TryGetValue(nome, out var p) ? p : "em")} {nome}";
+
+    /// <summary>
+    /// Slug da subprefeitura para o deep link /app?regiao=. Espelha slugify de
+    /// pulsar-web/src/data/regioes-seo.ts (NFD sem acento, apóstrofo some, o resto vira hífen).
+    /// </summary>
+    public static string Slug(string nome)
+    {
+        var semAcento = new string(nome.Normalize(NormalizationForm.FormD)
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            .ToArray());
+        return Regex.Replace(semAcento.Replace("'", "").ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+    }
+
+    /// <summary>Destino do push de UMA subprefeitura: abre o detalhe com as dicas.</summary>
+    public static string UrlDetalhe(string nome) => $"/app?regiao={Slug(nome)}";
 }

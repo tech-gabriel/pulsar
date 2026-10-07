@@ -7,6 +7,7 @@ vi.mock('react-router-dom', async (orig) => ({ ...(await orig<typeof import('rea
 const push = vi.hoisted(() => ({ estado: 'ativo' }));
 vi.mock('../../../hooks/useNotificacoesPrefs', () => ({ useNotificacoesPrefs: () => ({ prefs: {} }) }));
 vi.mock('../../../hooks/usePushSubscription', () => ({ usePushSubscription: () => push }));
+vi.mock('../../../hooks/useCatalogoDicas', () => ({ useCatalogoDicas: () => [] }));
 vi.mock('../../../hooks/usePrevisaoSubprefeitura', () => ({ usePrevisaoSubprefeitura: () => ({ faixas: [], carregando: false, erro: null }) }));
 
 import DetalheSubprefeitura from '../../../components/painel/DetalheSubprefeitura';
@@ -26,7 +27,7 @@ describe('DetalheSubprefeitura', () => {
     renderiza();
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Itaquera');
     expect(screen.getByText('Zona Leste · São Paulo')).toBeInTheDocument();
-    expect(screen.getByText('Risco alto')).toBeInTheDocument();
+    expect(screen.getByText('Alerta')).toBeInTheDocument();
   });
 
   it('favoritar, voltar e histórico', () => {

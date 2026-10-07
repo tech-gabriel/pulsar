@@ -92,63 +92,6 @@ namespace Pulsar.API.Migrations
                     b.ToTable("AgregadosDiarios");
                 });
 
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.Alerta", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Mensagem")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid>("RegiaoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ScoreId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RegiaoId");
-
-                    b.HasIndex("ScoreId");
-
-                    b.ToTable("Alertas");
-                });
-
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.AlertaSugestao", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AlertaId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Ordem")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("SugestaoId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SugestaoId");
-
-                    b.HasIndex("AlertaId", "SugestaoId")
-                        .IsUnique();
-
-                    b.ToTable("AlertaSugestoes");
-                });
-
             modelBuilder.Entity("Pulsar.API.Domain.Entities.AssinaturaPush", b =>
                 {
                     b.Property<Guid>("Id")
@@ -920,6 +863,9 @@ namespace Pulsar.API.Migrations
                     b.Property<int>("FaixaRisco")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -934,498 +880,219 @@ namespace Pulsar.API.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000001"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000101"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "CHUVA",
+                            Categoria = "ALAGAMENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Precipitação leve esperada. Carregue um guarda-chuva ao sair de casa para evitar surpresas.",
-                            FaixaRisco = 0,
-                            Titulo = "Chuva leve prevista"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000016"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "CHUVA",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Mantenha um guarda-chuva próximo. Chuviscos podem ocorrer sem aviso prévio, especialmente no final da tarde.",
-                            FaixaRisco = 0,
-                            Titulo = "Guarde o guarda-chuva acessível"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000017"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "CHUVA",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Mesmo com chuva fraca, verifique o estado de bueiros na sua rua e evite caminhar próximo a calçadas alagadas.",
-                            FaixaRisco = 0,
-                            Titulo = "Atenção a bueiros e valetas"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000002"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "CHUVA",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Chuva moderada na região. Evite áreas historicamente alagáveis, reduza a velocidade ao dirigir e mantenha distância segura.",
+                            Descricao = "Se ela apertar, adie saídas e evite áreas baixas e margens de córregos.",
                             FaixaRisco = 1,
-                            Titulo = "Chuva moderada"
+                            Ordem = 1,
+                            Titulo = "Fique de olho na chuva"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000018"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000102"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "CHUVA",
+                            Categoria = "ALAGAMENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Verifique o histórico de alagamentos da sua rota antes de sair. Marginais, viadutos e pontos baixos são os primeiros a alagar.",
+                            Descricao = "Limpe calhas e ralos e tire do chão documentos e objetos que não podem molhar.",
                             FaixaRisco = 1,
-                            Titulo = "Evite áreas alagáveis"
+                            Ordem = 2,
+                            Titulo = "Prepare a casa"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000019"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000103"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "CHUVA",
+                            Categoria = "ALAGAMENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Pista molhada aumenta a distância de frenagem em até 2x. Reduza a velocidade e mantenha distância segura do veículo à frente.",
+                            Descricao = "Prefira trajetos que você sabe que não alagam e saia com o celular carregado.",
                             FaixaRisco = 1,
-                            Titulo = "Reduza a velocidade no trânsito"
+                            Ordem = 3,
+                            Titulo = "Planeje o caminho"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000003"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000104"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "CHUVA",
+                            Categoria = "ALAGAMENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Chuva intensa com risco elevado de alagamentos e deslizamentos. Evite viadutos e marginais. Procure abrigo seguro e afaste-se de encostas.",
+                            Descricao = "Nunca entre em rua alagada a pé ou de carro. Pouca água já pode arrastar um carro e esconder um bueiro aberto.",
                             FaixaRisco = 2,
-                            Titulo = "Chuva intensa — risco de alagamento"
+                            Ordem = 1,
+                            Titulo = "Não atravesse água"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000020"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000105"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "CHUVA",
+                            Categoria = "ALAGAMENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Em áreas de encosta, saia imediatamente e dirija-se ao abrigo mais próximo. Ligue para a Defesa Civil: 199.",
+                            Descricao = "Se a água subir, vá para um ponto elevado e deixe o carro longe de córregos e baixadas.",
                             FaixaRisco = 2,
-                            Titulo = "Risco de deslizamento"
+                            Ordem = 2,
+                            Titulo = "Procure um lugar alto"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000021"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000106"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "CHUVA",
+                            Categoria = "ALAGAMENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "30 cm de água em movimento podem derrubar um adulto e 60 cm podem arrastar um veículo. Nunca tente atravessar vias alagadas.",
+                            Descricao = "Se a água entrar em casa, desligue a chave geral e tire os aparelhos da tomada. Em perigo, ligue 199 ou 193.",
                             FaixaRisco = 2,
-                            Titulo = "Nunca atravesse enxurradas"
+                            Ordem = 3,
+                            Titulo = "Desligue a energia"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000004"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000107"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Categoria = "VENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Ventos fracos. Condições normais de circulação. Nenhuma medida especial necessária.",
-                            FaixaRisco = 0,
-                            Titulo = "Vento fraco"
+                            Descricao = "Guarde vasos, roupas do varal e objetos soltos em sacadas e quintais.",
+                            FaixaRisco = 1,
+                            Ordem = 1,
+                            Titulo = "Recolha o que pode voar"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000022"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000108"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Categoria = "VENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Vento suave. Atividades ao ar livre podem ser realizadas normalmente. Boa condição para caminhadas e esportes externos.",
-                            FaixaRisco = 0,
-                            Titulo = "Condições favoráveis ao ar livre"
+                            Descricao = "Feche portas e janelas e confira se telhas e antenas estão firmes.",
+                            FaixaRisco = 1,
+                            Ordem = 2,
+                            Titulo = "Feche bem a casa"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000023"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000109"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Categoria = "VENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Mesmo com vento fraco, objetos leves podem ser deslocados. Feche janelas e portas ao deixar o ambiente.",
-                            FaixaRisco = 0,
-                            Titulo = "Verifique janelas abertas"
+                            Descricao = "Na rua, não estacione nem espere o ônibus embaixo de árvores, placas ou fiação.",
+                            FaixaRisco = 1,
+                            Ordem = 3,
+                            Titulo = "Evite parar sob árvores"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000005"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000110"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Categoria = "VENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Rajadas moderadas de vento. Atenção a objetos soltos em janelas e sacadas. Motoristas de veículos altos devem redobrar cuidado.",
-                            FaixaRisco = 1,
-                            Titulo = "Rajadas de vento"
+                            Descricao = "Se puder, fique dentro de um prédio firme e longe das janelas.",
+                            FaixaRisco = 2,
+                            Ordem = 1,
+                            Titulo = "Fique abrigado"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000024"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000111"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Categoria = "VENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Recolha vasos, cadeiras e outros objetos de sacadas e áreas externas. Rajadas podem deslocar itens e causar acidentes.",
-                            FaixaRisco = 1,
-                            Titulo = "Proteja objetos em sacadas"
+                            Descricao = "Não se abrigue sob árvores, marquises, placas ou postes. Viu fio caído? Não toque e ligue 199.",
+                            FaixaRisco = 2,
+                            Ordem = 2,
+                            Titulo = "Longe de árvores e fios"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000025"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000112"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Categoria = "VENTO",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Rajadas de vento podem abrir portas com força inesperada. Segure a maçaneta ao abrir portas externas.",
+                            Descricao = "Tire aparelhos da tomada e evite usar o celular enquanto ele carrega.",
+                            FaixaRisco = 2,
+                            Ordem = 3,
+                            Titulo = "Cuidado com raios"
+                        },
+                        new
+                        {
+                            Id = new Guid("30000000-0000-0000-0000-000000000113"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Categoria = "CALOR",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Descricao = "Não espere ter sede e leve uma garrafa quando sair.",
                             FaixaRisco = 1,
-                            Titulo = "Cuidado ao abrir portas"
+                            Ordem = 1,
+                            Titulo = "Beba água o dia todo"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000006"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000114"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "VENTO",
+                            Categoria = "CALOR",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Ventos fortes com risco de queda de árvores, placas e estruturas. Evite áreas arborizadas e lugares abertos. Não fique próximo a construções.",
-                            FaixaRisco = 2,
-                            Titulo = "Ventos fortes — risco de queda"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000026"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "VENTO",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Ventos fortes podem derrubar galhos e árvores inteiras. Mantenha-se longe de árvores, postes e coberturas improvisadas.",
-                            FaixaRisco = 2,
-                            Titulo = "Evite ficar sob árvores"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000027"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "VENTO",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Caminhões, ônibus e veículos altos têm risco de tombamento. Motoristas devem reduzir velocidade e evitar pistas elevadas.",
-                            FaixaRisco = 2,
-                            Titulo = "Risco para veículos altos"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000007"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "NEBLINA",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Visibilidade dentro dos padrões normais. Condições de trânsito sem restrições por neblina.",
-                            FaixaRisco = 0,
-                            Titulo = "Visibilidade boa"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000028"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "NEBLINA",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Visibilidade adequada para todas as atividades. Continue com as atividades normais com a atenção de sempre.",
-                            FaixaRisco = 0,
-                            Titulo = "Sem restrições de visibilidade"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000029"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "NEBLINA",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Em dias frios e úmidos, neblina leve pode surgir nas primeiras horas da manhã. Fique atento ao sair cedo.",
-                            FaixaRisco = 0,
-                            Titulo = "Neblina matinal pode ocorrer"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000008"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "NEBLINA",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Neblina reduzindo visibilidade. Ative o farol baixo mesmo de dia, reduza a velocidade e aumente a distância do veículo à frente.",
+                            Descricao = "Evite o sol direto entre 10h e 16h e use roupa leve, chapéu e protetor solar.",
                             FaixaRisco = 1,
-                            Titulo = "Neblina leve"
+                            Ordem = 2,
+                            Titulo = "Fuja do sol forte"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000030"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000115"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "NEBLINA",
+                            Categoria = "CALOR",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Com neblina, o farol baixo melhora tanto sua visibilidade quanto a percepção dos outros motoristas. Nunca use farol alto — aumenta o ofuscamento.",
+                            Descricao = "Idosos, crianças, gestantes e pessoas com doenças crônicas sofrem primeiro com o calor. Ofereça água a eles.",
                             FaixaRisco = 1,
-                            Titulo = "Use farol baixo obrigatório"
+                            Ordem = 3,
+                            Titulo = "Cuide de quem sente mais"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000031"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000116"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "NEBLINA",
+                            Categoria = "CALOR",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Com visibilidade reduzida, aumente para pelo menos 4 segundos a distância do veículo à frente. Evite ultrapassagens.",
-                            FaixaRisco = 1,
-                            Titulo = "Aumente a distância segura"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000009"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "NEBLINA",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Neblina densa com visibilidade abaixo de 200m. Evite dirigir se possível. Se necessário, use faróis e pisca-alerta.",
+                            Descricao = "Deixe exercício e trabalho pesado ao ar livre para o começo da manhã ou o fim da tarde.",
                             FaixaRisco = 2,
-                            Titulo = "Neblina densa — visibilidade crítica"
+                            Ordem = 1,
+                            Titulo = "Diminua o esforço"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000032"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000117"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "NEBLINA",
+                            Categoria = "CALOR",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Se a visibilidade for inferior a 50m, pare o veículo em local seguro fora da pista e acione o pisca-alerta. Aguarde a neblina dissipar.",
+                            Descricao = "Fique em lugar ventilado ou na sombra e tome banhos frescos.",
                             FaixaRisco = 2,
-                            Titulo = "Pare em local seguro se necessário"
+                            Ordem = 2,
+                            Titulo = "Mantenha o corpo fresco"
                         },
                         new
                         {
-                            Id = new Guid("30000000-0000-0000-0000-000000000033"),
+                            Id = new Guid("30000000-0000-0000-0000-000000000118"),
                             Ativa = true,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "NEBLINA",
+                            Categoria = "CALOR",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Com neblina densa, pedestres devem usar roupas claras ou refletivas e evitar caminhar em vias com tráfego de veículos.",
+                            Descricao = "Tontura, fraqueza, náusea, dor de cabeça e cãibras pedem cuidado. Se aparecerem, procure a unidade de saúde mais próxima.",
                             FaixaRisco = 2,
-                            Titulo = "Pedestres: use roupas claras"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000010"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "UV",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Índice UV baixo. Proteção solar básica é recomendada, especialmente para pessoas de pele clara.",
-                            FaixaRisco = 0,
-                            Titulo = "Índice UV baixo"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000034"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "UV",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Com índice UV baixo, um protetor solar FPS 15 já oferece proteção adequada para a maioria das pessoas em atividades ao ar livre.",
-                            FaixaRisco = 0,
-                            Titulo = "Protetor solar FPS 15 suficiente"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000035"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "UV",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Índice UV favorável para atividades ao ar livre. Aproveite mas lembre-se de se hidratar bem.",
-                            FaixaRisco = 0,
-                            Titulo = "Bom momento para atividades externas"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000011"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "UV",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Use protetor solar FPS 30 ou superior. Evite exposição prolongada entre 10h e 16h. Utilize óculos de sol e chapéu.",
-                            FaixaRisco = 1,
-                            Titulo = "Índice UV moderado"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000036"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "UV",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Chapéu de aba larga e óculos com proteção UV são essenciais. Reaplicar protetor solar a cada 2 horas ou após suar.",
-                            FaixaRisco = 1,
-                            Titulo = "Use chapéu e óculos de sol"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000037"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "UV",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Crianças e idosos são mais sensíveis à radiação UV. Aplique protetor solar antes de sair e evite exposição direta nos horários de pico.",
-                            FaixaRisco = 1,
-                            Titulo = "Proteja crianças e idosos"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000012"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "UV",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Índice UV muito alto. Evite exposição ao sol entre 10h e 16h. Use protetor FPS 50+, roupas protetoras e procure a sombra.",
-                            FaixaRisco = 2,
-                            Titulo = "Índice UV elevado — proteção obrigatória"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000038"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "UV",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Com UV elevado, a pele pode queimar em menos de 15 minutos de exposição sem proteção. Mantenha-se na sombra ou em ambientes internos.",
-                            FaixaRisco = 2,
-                            Titulo = "Risco de queimaduras em minutos"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000039"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "UV",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Além da proteção solar, beba pelo menos 2 litros de água por dia. Calor intenso combinado com UV alto aumenta risco de desidratação e insolação.",
-                            FaixaRisco = 2,
-                            Titulo = "Hidratação reforçada"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000013"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "GERAL",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Condições climáticas dentro da normalidade. Aproveite o dia com cautela e mantenha-se informado sobre atualizações.",
-                            FaixaRisco = 0,
-                            Titulo = "Condições climáticas favoráveis"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000040"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "GERAL",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Mesmo com baixo risco, acompanhe as atualizações do Pulsar a cada 15 minutos. Condições climáticas podem mudar rapidamente.",
-                            FaixaRisco = 0,
-                            Titulo = "Mantenha-se informado"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000041"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "GERAL",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Dia com baixo risco climático. Ótimo para atividades ao ar livre. Leve água e protetor solar como precaução básica.",
-                            FaixaRisco = 0,
-                            Titulo = "Bom dia para atividades externas"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000014"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "GERAL",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Condições climáticas requerem atenção. Mantenha-se informado e siga as orientações dos órgãos competentes. Evite exposição desnecessária.",
-                            FaixaRisco = 1,
-                            Titulo = "Atenção às condições climáticas"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000042"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "GERAL",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Antes de sair, verifique o score da sua região no Pulsar. Com risco moderado, prefira horários com menor intensidade climática.",
-                            FaixaRisco = 1,
-                            Titulo = "Planeje suas saídas com antecedência"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000043"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "GERAL",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Mantenha no carro: lanternas, cobertor, kit de primeiros socorros, carregador portátil e água. Em situações moderadas, a preparação faz a diferença.",
-                            FaixaRisco = 1,
-                            Titulo = "Kit de emergência no carro"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000015"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "GERAL",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Alerta climático ativo na região. Siga as orientações da Defesa Civil, evite áreas de risco e mantenha crianças e idosos em local seguro.",
-                            FaixaRisco = 2,
-                            Titulo = "Alerta climático ativo"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000044"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "GERAL",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Em situação de risco, ligue 199 (Defesa Civil) ou 193 (Bombeiros). Não espere a situação piorar para pedir ajuda.",
-                            FaixaRisco = 2,
-                            Titulo = "Ligue para a Defesa Civil"
-                        },
-                        new
-                        {
-                            Id = new Guid("30000000-0000-0000-0000-000000000045"),
-                            Ativa = true,
-                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Categoria = "GERAL",
-                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Descricao = "Com alerta ativo, fique em local seguro. Se precisar sair, informe alguém sobre seu destino e rota. Prefira rotas conhecidas e seguras.",
-                            FaixaRisco = 2,
-                            Titulo = "Evite deslocamentos desnecessários"
+                            Ordem = 3,
+                            Titulo = "Conheça os sinais"
                         });
                 });
 
@@ -1547,44 +1214,6 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Subprefeitura");
                 });
 
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.Alerta", b =>
-                {
-                    b.HasOne("Pulsar.API.Domain.Entities.Regiao", "Regiao")
-                        .WithMany("Alertas")
-                        .HasForeignKey("RegiaoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Pulsar.API.Domain.Entities.ScorePerigo", "Score")
-                        .WithMany()
-                        .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Regiao");
-
-                    b.Navigation("Score");
-                });
-
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.AlertaSugestao", b =>
-                {
-                    b.HasOne("Pulsar.API.Domain.Entities.Alerta", "Alerta")
-                        .WithMany("AlertaSugestoes")
-                        .HasForeignKey("AlertaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Pulsar.API.Domain.Entities.Sugestao", "Sugestao")
-                        .WithMany("AlertaSugestoes")
-                        .HasForeignKey("SugestaoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Alerta");
-
-                    b.Navigation("Sugestao");
-                });
-
             modelBuilder.Entity("Pulsar.API.Domain.Entities.AssinaturaPush", b =>
                 {
                     b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
@@ -1697,15 +1326,8 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.Alerta", b =>
-                {
-                    b.Navigation("AlertaSugestoes");
-                });
-
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Regiao", b =>
                 {
-                    b.Navigation("Alertas");
-
                     b.Navigation("Subprefeituras");
                 });
 
@@ -1714,11 +1336,6 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Leituras");
 
                     b.Navigation("Scores");
-                });
-
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.Sugestao", b =>
-                {
-                    b.Navigation("AlertaSugestoes");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Usuario", b =>

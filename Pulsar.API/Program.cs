@@ -222,6 +222,7 @@ builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoScoreAlto>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaPrevista>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoBriefingDiario>();
+builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAtencao>();
 builder.Services.AddScoped<IMotorNotificacoes, MotorNotificacoes>();
 
 // --- Web Push (notificações) ---

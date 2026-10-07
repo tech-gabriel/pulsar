@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Pulsar.API.Domain.Enums;
 using Pulsar.API.Services.Notificacoes;
 using Pulsar.API.Services.Push;
 
@@ -12,10 +13,10 @@ public class ConsolidadorTests
 
     private static NotificacaoPendente P(Guid sub, string local, string gatilho = "score-alto",
         int prioridade = 1, CriterioOptIn criterio = CriterioOptIn.RiscoAlto, TimeSpan? cooldown = null,
-        string? chave = null, string corpo = "Corpo")
+        string? chave = null, string corpo = "Corpo", TipoPerigo? perigo = null)
         => new(gatilho, chave ?? $"{gatilho}:{sub}", criterio,
                new PushPayload($"Titulo {local}", corpo, "/", $"tag-{sub}"),
-               prioridade, cooldown, sub, local);
+               prioridade, cooldown, sub, local, perigo);
 
     private static DestinatarioPush D(Guid[]? favoritas = null, CriterioOptIn[]? criterios = null,
         params EnvioAnterior[] recentes)
@@ -187,5 +188,69 @@ public class ConsolidadorTests
         var nova = P(Mooca, "Mooca", cooldown: TimeSpan.FromHours(1), chave: $"score:{Mooca}:VENTO:202610031500");
 
         Consolidador.Consolidar(D(recentes: anterior), [nova], Agora).Should().BeNull();
+    }
+
+    private static NotificacaoPendente Atencao(Guid sub, string local, TipoPerigo perigo)
+        => P(sub, local, "atencao", 4, CriterioOptIn.RiscoModerado, chave: $"atencao:{sub}:{perigo}:2026-10-03", perigo: perigo);
+
+    private static EnvioAnterior AlertaHa(Guid sub, string perigo, double horas)
+        => new(sub, "score-alto", $"score:{sub}:{perigo}:202610031200", Guid.NewGuid(), Agora.AddHours(-horas));
+
+    [Fact]
+    public void AtencaoDoMesmoPerigo_CaladaLogoDepoisDoAlerta()
+        => Consolidador.Consolidar(D(recentes: AlertaHa(Mooca, "ALAGAMENTO", 2)),
+            [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO)], Agora).Should().BeNull();
+
+    [Fact]
+    public void AtencaoDoMesmoPerigo_VoltaDepoisDoSilencio()
+        => Consolidador.Consolidar(D(recentes: AlertaHa(Mooca, "ALAGAMENTO", 7)),
+            [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO)], Agora).Should().NotBeNull();
+
+    [Fact]
+    public void AtencaoDeOutroPerigo_AvisaMesmoLogoDepoisDoAlerta()
+        => Consolidador.Consolidar(D(recentes: AlertaHa(Mooca, "ALAGAMENTO", 1)),
+            [Atencao(Mooca, "Mooca", TipoPerigo.CALOR)], Agora).Should().NotBeNull();
+
+    [Fact]
+    public void AlertaDeOutraSubprefeitura_NaoCalaAAtencao()
+        => Consolidador.Consolidar(D(recentes: AlertaHa(Penha, "ALAGAMENTO", 1)),
+            [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO)], Agora).Should().NotBeNull();
+
+    [Fact]
+    public void ChaveAntigaDoAlertaSemPerigo_CalaSemLancar()
+    {
+        var antigo = new EnvioAnterior(Mooca, "score-alto", $"score:{Mooca}:202610031200", Guid.NewGuid(), Agora.AddHours(-1));
+
+        Consolidador.Consolidar(D(recentes: antigo), [Atencao(Mooca, "Mooca", TipoPerigo.CALOR)], Agora).Should().BeNull();
+    }
+
+    [Fact]
+    public void DoisPerigosNaMesmaSubprefeitura_UmPushSemRepetirONome()
+    {
+        var envio = Consolidador.Consolidar(D(),
+            [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO), Atencao(Mooca, "Mooca", TipoPerigo.CALOR)], Agora);
+
+        envio!.Incluidas.Should().HaveCount(2);
+        envio.Payload.Titulo.Should().Be("Atenção em Mooca");
+        envio.Payload.Corpo.Should().Be("Toque para ver os detalhes.");
+    }
+
+    [Fact]
+    public void AtencaoContaParaOTeto()
+    {
+        var tres = Enumerable.Range(0, 3)
+            .Select(i => new EnvioAnterior(Lapa, "chuva-prevista", $"c{i}", Guid.NewGuid(), Agora.AddHours(-1 - i)))
+            .ToArray();
+
+        Consolidador.Consolidar(D(recentes: tres), [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO)], Agora).Should().BeNull();
+    }
+
+    [Fact]
+    public void ChuvaPrevistaLideraSobreAtencao()
+    {
+        var envio = Consolidador.Consolidar(D(),
+            [Atencao(Mooca, "Mooca", TipoPerigo.CALOR), P(Penha, "Penha", "chuva-prevista", 2, CriterioOptIn.RiscoModerado)], Agora);
+
+        envio!.Incluidas.Should().ContainSingle().Which.Gatilho.Should().Be("chuva-prevista");
     }
 }

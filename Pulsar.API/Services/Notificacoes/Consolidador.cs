@@ -95,6 +95,15 @@ public static class Consolidador
     {
         if (grupo.Count == 1) return grupo[0].Payload;
 
+        // Vários eventos de UMA subprefeitura (hoje só a Atenção, um por perigo): o push
+        // continua sendo dela, então abre o detalhe dela e fala com a preposição certa.
+        if (grupo[0].Gatilho == "atencao" && grupo.Select(p => p.SubprefeituraId).Distinct().Count() == 1)
+            return new PushPayload(
+                $"Atenção {NomesSubprefeitura.ComPreposicao(grupo[0].Local)}",
+                "Mais de um perigo pede cuidado. Toque para ver as dicas.",
+                Url: grupo[0].Payload.Url,
+                Tag: grupo[0].Payload.Tag);
+
         var gatilho = grupo[0].Gatilho;
         var lista = ListaNomes([.. grupo.Select(p => p.Local).Distinct()]);
         var (titulo, corpo) = gatilho switch

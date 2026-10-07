@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Enums;
 using Pulsar.API.Services.Push;
 
 namespace Pulsar.API.Services.Notificacoes;
@@ -14,6 +15,8 @@ namespace Pulsar.API.Services.Notificacoes;
 ///
 /// SubprefeituraId e Local dizem de onde veio o evento: o consolidador cruza com as favoritas
 /// da pessoa e usa o nome no texto de várias subprefeituras.
+///
+/// Perigo diz de qual perigo é o evento; o consolidador usa no silêncio da Atenção.
 /// </summary>
 public record NotificacaoPendente(
     string Gatilho,
@@ -23,4 +26,5 @@ public record NotificacaoPendente(
     int Prioridade,
     TimeSpan? Cooldown = null,
     Guid SubprefeituraId = default,
-    string Local = "");
+    string Local = "",
+    TipoPerigo? Perigo = null);

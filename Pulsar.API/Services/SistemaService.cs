@@ -67,7 +67,6 @@ public class SistemaService : ISistemaService
             Suportes = await _db.Usuarios.CountAsync(u => u.Role == RoleAcesso.SUPORTE),
             TotalSugestoes = await _db.Sugestoes.CountAsync(),
             SugestoesAtivas = await _db.Sugestoes.CountAsync(s => s.Ativa),
-            AlertasUltimas24h = await _db.Alertas.CountAsync(a => a.CriadoEm >= limite24h),
             LeiturasUltimas24h = await _db.LeiturasClimaticas.CountAsync(l => l.CriadoEm >= limite24h)
         };
     }
@@ -79,7 +78,6 @@ public class SistemaService : ISistemaService
         {
             SubprefeiturasProcessadas = r.SubprefeiturasProcessadas,
             ScoresCalculados = r.ScoresCalculados,
-            AlertasGerados = r.AlertasGerados,
             ConcluidoEm = r.ConcluidoEm
         };
     }

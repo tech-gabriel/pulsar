@@ -9,6 +9,5 @@ public class MetricasDto
     public int Suportes { get; set; }
     public int TotalSugestoes { get; set; }
     public int SugestoesAtivas { get; set; }
-    public int AlertasUltimas24h { get; set; }
     public int LeiturasUltimas24h { get; set; }
 }

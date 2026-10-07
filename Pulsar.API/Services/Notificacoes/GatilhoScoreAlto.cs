@@ -29,13 +29,14 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             // O instante entra só para o registro ser único na tabela. Quem decide se
             // o push sai é o Cooldown, não a chave. InvariantCulture porque isto é
             // chave de banco, não texto: cultura com calendário não gregoriano mudaria
-            // o ano e quebraria a comparação com registros antigos.
-            Chave: $"score:{ctx.Subprefeitura.Id}:{ctx.AgoraUtc.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture)}",
+            // o ano e quebraria a comparação com registros antigos. O perigo entra para o
+            // silêncio da Atenção (Consolidador) saber de qual perigo foi o Alerta.
+            Chave: $"score:{ctx.Subprefeitura.Id}:{pior.Score.PerigoPrincipal}:{ctx.AgoraUtc.ToString("yyyyMMddHHmm", CultureInfo.InvariantCulture)}",
             Criterio: CriterioOptIn.RiscoAlto,
             Payload: new PushPayload(
                 Titulo: titulo,
                 Corpo: corpo,
-                Url: "/",
+                Url: NomesSubprefeitura.UrlDetalhe(ctx.Subprefeitura.Nome),
                 Tag: $"alerta-{ctx.Subprefeitura.Id}"),
             Prioridade: LimiaresNotificacao.PrioridadeScoreAlto,
             Cooldown: LimiaresNotificacao.CooldownScoreAlto,
@@ -53,16 +54,16 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
         var c = LimiaresNotificacao.CulturaCopy;
         return score.PerigoPrincipal switch
         {
-            TipoPerigo.VENTO => ($"Vento forte {em}", leitura is null
+            TipoPerigo.VENTO => ($"Alerta de vento forte {em}", leitura is null
                 ? "Ventos fortes agora. Cuidado com árvores e estruturas soltas."
                 : string.Create(c, $"Ventos de {leitura.VentoKmH:0} km/h agora.")),
-            TipoPerigo.CALOR => ($"Calor extremo {em}", leitura is null
+            TipoPerigo.CALOR => ($"Alerta de calor extremo {em}", leitura is null
                 ? "Calor extremo agora. Hidrate-se e evite sol forte."
                 : string.Create(c, $"Sensação térmica de {leitura.SensacaoTermica:0} °C. Hidrate-se e evite sol forte.")),
             // Cita o acumulado de 3h que está no score, e não a chuva do instante: o ALTO
             // pode vir de uma chuva que já parou, e "0 mm por hora" desmentiria o aviso.
-            _ => ($"Risco alto de alagamento {em}", score.Chuva3hMm <= 0
-                ? "Condições de risco alto agora. Evite áreas de alagamento."
+            _ => ($"Alerta de alagamento {em}", score.Chuva3hMm <= 0
+                ? "Condições de alerta agora. Evite áreas de alagamento."
                 : string.Create(c, $"Chuva de {score.Chuva3hMm:0.#} mm nas últimas 3 horas")
                   + (score.Chuva48hMm >= LimiaresNotificacao.SoloEncharcadoMm ? ", com o solo já encharcado." : ".")),
         };

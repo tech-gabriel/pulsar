@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Pulsar.API.Domain.Enums;
 using Pulsar.API.Services.Notificacoes;
 using Pulsar.API.Services.Push;
 
@@ -12,10 +13,10 @@ public class ConsolidadorTests
 
     private static NotificacaoPendente P(Guid sub, string local, string gatilho = "score-alto",
         int prioridade = 1, CriterioOptIn criterio = CriterioOptIn.RiscoAlto, TimeSpan? cooldown = null,
-        string? chave = null, string corpo = "Corpo")
+        string? chave = null, string corpo = "Corpo", TipoPerigo? perigo = null)
         => new(gatilho, chave ?? $"{gatilho}:{sub}", criterio,
                new PushPayload($"Titulo {local}", corpo, "/", $"tag-{sub}"),
-               prioridade, cooldown, sub, local);
+               prioridade, cooldown, sub, local, perigo);
 
     private static DestinatarioPush D(Guid[]? favoritas = null, CriterioOptIn[]? criterios = null,
         params EnvioAnterior[] recentes)
@@ -31,7 +32,7 @@ public class ConsolidadorTests
 
         envio.Should().NotBeNull();
         envio!.Incluidas.Should().HaveCount(2);
-        envio.Payload.Titulo.Should().Be("Risco alto em Mooca e Penha");
+        envio.Payload.Titulo.Should().Be("Alerta em Mooca e Penha");
         envio.Payload.Tag.Should().Be("score-alto");
     }
 
@@ -170,7 +171,7 @@ public class ConsolidadorTests
 
         var envio = Consolidador.Consolidar(d, [.. subs.Select(s => P(s.Id, s.Nome))], Agora);
 
-        envio!.Payload.Titulo.Should().Be("Risco alto em Sub1, Sub2 e mais 8");
+        envio!.Payload.Titulo.Should().Be("Alerta em Sub1, Sub2 e mais 8");
     }
 
     [Theory]
@@ -179,4 +180,82 @@ public class ConsolidadorTests
     [InlineData(new[] { "A", "B", "C" }, "A, B e mais 1")]
     public void ListaNomes(string[] nomes, string esperado)
         => Consolidador.ListaNomes(nomes).Should().Be(esperado);
+
+    [Fact]
+    public void CooldownDoAlerta_ValeMesmoComPerigoDiferenteNaChave()
+    {
+        var anterior = new EnvioAnterior(Mooca, "score-alto", $"score:{Mooca}:ALAGAMENTO:202610031430", Guid.NewGuid(), Agora.AddMinutes(-30));
+        var nova = P(Mooca, "Mooca", cooldown: TimeSpan.FromHours(1), chave: $"score:{Mooca}:VENTO:202610031500");
+
+        Consolidador.Consolidar(D(recentes: anterior), [nova], Agora).Should().BeNull();
+    }
+
+    private static NotificacaoPendente Atencao(Guid sub, string local, TipoPerigo perigo)
+        => P(sub, local, "atencao", 4, CriterioOptIn.RiscoModerado, chave: $"atencao:{sub}:{perigo}:2026-10-03", perigo: perigo)
+            with { Payload = new PushPayload($"Titulo {local}", "Corpo", NomesSubprefeitura.UrlDetalhe(local), $"tag-{sub}") };
+
+    private static EnvioAnterior AlertaHa(Guid sub, string perigo, double horas)
+        => new(sub, "score-alto", $"score:{sub}:{perigo}:202610031200", Guid.NewGuid(), Agora.AddHours(-horas));
+
+    [Fact]
+    public void AtencaoDoMesmoPerigo_CaladaLogoDepoisDoAlerta()
+        => Consolidador.Consolidar(D(recentes: AlertaHa(Mooca, "ALAGAMENTO", 2)),
+            [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO)], Agora).Should().BeNull();
+
+    [Fact]
+    public void AtencaoDoMesmoPerigo_VoltaDepoisDoSilencio()
+        => Consolidador.Consolidar(D(recentes: AlertaHa(Mooca, "ALAGAMENTO", 7)),
+            [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO)], Agora).Should().NotBeNull();
+
+    [Fact]
+    public void AtencaoDeOutroPerigo_AvisaMesmoLogoDepoisDoAlerta()
+        => Consolidador.Consolidar(D(recentes: AlertaHa(Mooca, "ALAGAMENTO", 1)),
+            [Atencao(Mooca, "Mooca", TipoPerigo.CALOR)], Agora).Should().NotBeNull();
+
+    [Fact]
+    public void AlertaDeOutraSubprefeitura_NaoCalaAAtencao()
+        => Consolidador.Consolidar(D(recentes: AlertaHa(Penha, "ALAGAMENTO", 1)),
+            [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO)], Agora).Should().NotBeNull();
+
+    [Fact]
+    public void ChaveAntigaDoAlertaSemPerigo_CalaSemLancar()
+    {
+        var antigo = new EnvioAnterior(Mooca, "score-alto", $"score:{Mooca}:202610031200", Guid.NewGuid(), Agora.AddHours(-1));
+
+        Consolidador.Consolidar(D(recentes: antigo), [Atencao(Mooca, "Mooca", TipoPerigo.CALOR)], Agora).Should().BeNull();
+    }
+
+    [Fact]
+    public void DoisPerigosNaMesmaSubprefeitura_UmPushSemRepetirONome()
+    {
+        var envio = Consolidador.Consolidar(D(),
+            [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO), Atencao(Mooca, "Mooca", TipoPerigo.CALOR)], Agora);
+
+        envio!.Incluidas.Should().HaveCount(2);
+        // Uma subprefeitura só: o push abre o detalhe dela (spec §1), com preposição no
+        // título, em vez de cair no mapa como o consolidado de várias subprefeituras.
+        envio.Payload.Titulo.Should().Be("Atenção na Mooca");
+        envio.Payload.Corpo.Should().Be("Mais de um perigo pede cuidado. Toque para ver as dicas.");
+        envio.Payload.Url.Should().Be("/app?regiao=mooca");
+        envio.Payload.Tag.Should().Be($"tag-{Mooca}");
+    }
+
+    [Fact]
+    public void AtencaoContaParaOTeto()
+    {
+        var tres = Enumerable.Range(0, 3)
+            .Select(i => new EnvioAnterior(Lapa, "chuva-prevista", $"c{i}", Guid.NewGuid(), Agora.AddHours(-1 - i)))
+            .ToArray();
+
+        Consolidador.Consolidar(D(recentes: tres), [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO)], Agora).Should().BeNull();
+    }
+
+    [Fact]
+    public void ChuvaPrevistaLideraSobreAtencao()
+    {
+        var envio = Consolidador.Consolidar(D(),
+            [Atencao(Mooca, "Mooca", TipoPerigo.CALOR), P(Penha, "Penha", "chuva-prevista", 2, CriterioOptIn.RiscoModerado)], Agora);
+
+        envio!.Incluidas.Should().ContainSingle().Which.Gatilho.Should().Be("chuva-prevista");
+    }
 }

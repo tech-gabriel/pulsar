@@ -45,6 +45,6 @@ export const CENAS: Cena[] = [
     olho: 'O AVISO',
     titulo: 'Você sabe antes de sair de casa',
     texto:
-      'Quando a sua região entra em risco alto, o alerta chega no seu celular, mesmo com o app fechado.',
+      'Quando a sua subprefeitura entra em Alerta, o aviso chega no seu celular, mesmo com o app fechado.',
   },
 ];

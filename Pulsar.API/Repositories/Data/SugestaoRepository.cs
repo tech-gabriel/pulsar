@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Pulsar.API.Domain.Entities;
-using Pulsar.API.Domain.Enums;
 using Pulsar.API.Repositories.Interfaces;
 
 namespace Pulsar.API.Repositories.Data;
@@ -17,21 +16,17 @@ public class SugestaoRepository : ISugestaoRepository
     public async Task<IEnumerable<Sugestao>> ObterTodosAsync()
         => await _context.Sugestoes.Where(s => s.Ativa).ToListAsync();
 
-    public async Task<IEnumerable<Sugestao>> ObterPorCategoriaEFaixaAsync(string categoria, FaixaRisco faixa)
+    public async Task<IReadOnlyList<Sugestao>> ListarAtivasAsync()
         => await _context.Sugestoes
-            .Where(s => s.Ativa && s.Categoria == categoria && s.FaixaRisco == faixa)
-            .ToListAsync();
-
-    public async Task<IEnumerable<Sugestao>> ObterPorFaixaAsync(FaixaRisco faixa)
-        => await _context.Sugestoes
-            .Where(s => s.Ativa && s.FaixaRisco == faixa)
+            .Where(s => s.Ativa)
+            .OrderBy(s => s.Categoria).ThenBy(s => s.FaixaRisco).ThenBy(s => s.Ordem)
             .ToListAsync();
 
     public async Task<IEnumerable<Sugestao>> ListarTodasAsync()
         => await _context.Sugestoes
             .OrderBy(s => s.Categoria)
             .ThenBy(s => s.FaixaRisco)
-            .ThenBy(s => s.Titulo)
+            .ThenBy(s => s.Ordem)
             .ToListAsync();
 
     public async Task AdicionarAsync(Sugestao entidade)

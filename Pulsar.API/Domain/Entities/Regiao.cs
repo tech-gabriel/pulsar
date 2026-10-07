@@ -12,7 +12,6 @@ public class Regiao
     public string FusoHorario { get; set; } = "America/Sao_Paulo";
 
     public IList<Subprefeitura> Subprefeituras { get; set; } = new List<Subprefeitura>();
-    public IList<Alerta> Alertas { get; set; } = new List<Alerta>();
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
 }

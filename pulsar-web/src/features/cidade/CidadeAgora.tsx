@@ -5,7 +5,7 @@ import './cidade.css';
 interface Props {
   resumo: ResumoCidade;
   cidadeNome: string;
-  /** Barra alto/moderado/baixo (dashboard). */
+  /** Barra alerta/atenção/tranquilo (dashboard). */
   distribuicao?: boolean;
   /** Slot à direita (o mapa coroplético no dashboard). */
   children?: ReactNode;
@@ -19,7 +19,7 @@ export default function CidadeAgora({ resumo, cidadeNome, distribuicao = false, 
   const titulo = semDados
     ? 'Sem dados de risco agora'
     : alto > 0
-      ? `${alto} em risco alto${moderado > 0 ? `, ${moderado} em atenção` : ''}`
+      ? `${alto} em alerta${moderado > 0 ? `, ${moderado} em atenção` : ''}`
       : moderado > 0
         ? `${moderado} em atenção`
         : `Tudo tranquilo em ${cidadeNome}`;
@@ -47,9 +47,9 @@ export default function CidadeAgora({ resumo, cidadeNome, distribuicao = false, 
               {baixo > 0 && <span style={{ flex: baixo, background: COR.baixo }} />}
             </div>
             <div className="cid-dist-leg">
-              <span><i style={{ background: COR.alto }} />{alto} alto</span>
-              <span><i style={{ background: COR.moderado }} />{moderado} moderado</span>
-              <span><i style={{ background: COR.baixo }} />{baixo} baixo</span>
+              <span><i style={{ background: COR.alto }} />{alto} alerta</span>
+              <span><i style={{ background: COR.moderado }} />{moderado} atenção</span>
+              <span><i style={{ background: COR.baixo }} />{baixo} tranquilo</span>
             </div>
           </>
         )}

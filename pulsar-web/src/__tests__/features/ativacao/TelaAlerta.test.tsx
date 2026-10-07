@@ -6,7 +6,7 @@ describe('TelaAlerta', () => {
   it('mostra o aviso real, as garantias com os lugares e ativa', () => {
     const onAtivar = vi.fn();
     render(<TelaAlerta nomes={['Mooca', 'Penha']} ocupado={false} onAtivar={onAtivar} />);
-    expect(screen.getByText('Risco alto de alagamento na Mooca')).toBeInTheDocument();
+    expect(screen.getByText('Alerta de alagamento na Mooca')).toBeInTheDocument();
     expect(screen.getByText(/Só sobre Mooca e Penha/)).toBeInTheDocument();
     expect(screen.getByText(/No máximo 3 avisos por dia/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Ativar alertas' }));

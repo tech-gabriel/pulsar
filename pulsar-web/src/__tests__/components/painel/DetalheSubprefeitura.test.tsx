@@ -26,7 +26,7 @@ describe('DetalheSubprefeitura', () => {
     renderiza();
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Itaquera');
     expect(screen.getByText('Zona Leste · São Paulo')).toBeInTheDocument();
-    expect(screen.getByText('Risco alto')).toBeInTheDocument();
+    expect(screen.getByText('Alerta')).toBeInTheDocument();
   });
 
   it('favoritar, voltar e histórico', () => {

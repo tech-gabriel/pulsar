@@ -19,7 +19,7 @@ describe('DashboardPage (B)', () => {
     estado.subs = [s('s1', 'Itaquera', 78, 'ALTO'), s('s2', 'Mooca', 49, 'MODERADO'), s('s3', 'Penha', 12, 'BAIXO')];
     estado.erro = null;
     const { container } = render(<MemoryRouter><DashboardPage /></MemoryRouter>);
-    expect(screen.getByText('1 em risco alto, 1 em atenção')).toBeInTheDocument();
+    expect(screen.getByText('1 em alerta, 1 em atenção')).toBeInTheDocument();
     expect(screen.getByText('Mais críticas agora')).toBeInTheDocument();
     expect(screen.getByText('Clima na cidade')).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/regi(ão|ões)/i);

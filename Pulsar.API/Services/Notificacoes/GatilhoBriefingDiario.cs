@@ -115,7 +115,7 @@ public class GatilhoBriefingDiario : IGatilhoNotificacao
             Payload: new PushPayload(
                 Titulo: $"{ctx.Subprefeitura.Nome} hoje",
                 Corpo: corpo,
-                Url: "/",
+                Url: NomesSubprefeitura.UrlDetalhe(ctx.Subprefeitura.Nome),
                 Tag: $"briefing-{ctx.Subprefeitura.Id}"),
             Prioridade: LimiaresNotificacao.PrioridadeBriefing,
             SubprefeituraId: ctx.Subprefeitura.Id,

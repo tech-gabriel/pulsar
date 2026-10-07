@@ -98,7 +98,7 @@ public class GatilhoBriefingDiarioTests
         // Tag é carga: é ela que faz o briefing de hoje SUBSTITUIR o de ontem na bandeja
         // em vez de empilhar.
         pendencias[0].Payload.Tag.Should().Be($"briefing-{ctx.Subprefeitura.Id}");
-        pendencias[0].Payload.Url.Should().Be("/");
+        pendencias[0].Payload.Url.Should().Be("/app?regiao=mooca");
     }
 
     /// <summary>

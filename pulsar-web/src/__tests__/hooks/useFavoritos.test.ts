@@ -15,10 +15,12 @@ vi.mock('../../api/client', () => ({
 
 // Mock do analytics: capturamos as chamadas para validar o evento de favoritar.
 const analyticsMock = vi.hoisted(() => ({ favoritouRegiao: vi.fn() }));
+vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ usuario: { id: 'user-1' } }) }));
 vi.mock('../../analytics', () => ({ track: { favoritouRegiao: analyticsMock.favoritouRegiao } }));
 
 import api from '../../api/client';
-import { useFavoritos } from '../../hooks/useFavoritos';
+import { useFavoritosEstado as useFavoritos, useFavoritos as useFavoritosDoProvider } from '../../hooks/useFavoritos';
+import { FavoritosProvider } from '../../contexts/FavoritosProvider';
 
 const mockedApi = api as unknown as {
   get: ReturnType<typeof vi.fn>;
@@ -157,5 +159,17 @@ describe('useFavoritos', () => {
     await act(() => result.current.toggleFavorito('s11'));
 
     expect(showToast).toHaveBeenCalledWith('Você já acompanha 10 subprefeituras. Remova uma para adicionar outra.', 'error');
+  });
+});
+
+describe('FavoritosProvider', () => {
+  it('sino e página dividem uma busca e o mesmo estado', async () => {
+    const { result } = renderHook(() => ({ sino: useFavoritosDoProvider(), pagina: useFavoritosDoProvider() }), { wrapper: FavoritosProvider });
+    await waitFor(() => expect(result.current.sino.carregando).toBe(false));
+
+    await act(async () => { await result.current.pagina.toggleFavorito('r1'); });
+
+    expect(mockedApi.get).toHaveBeenCalledTimes(1);
+    expect(result.current.sino.isFavorito('r1')).toBe(true);
   });
 });

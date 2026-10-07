@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext, useMemo } from 'react';
 import api from '../api/client';
 import type { FavoritoDto } from '../types';
 import { useToast } from '../contexts/ToastContext';
 import { track } from '../analytics';
+import { FavoritosContext } from '../contexts/FavoritosContext';
 
-interface UseFavoritosResult {
+export interface UseFavoritosResult {
   favoritos: FavoritoDto[];
   isFavorito: (subprefeituraId: string) => boolean;
   toggleFavorito: (subprefeituraId: string) => Promise<void>;
@@ -12,7 +13,15 @@ interface UseFavoritosResult {
   carregando: boolean;
 }
 
-export function useFavoritos(usuarioId: string | null): UseFavoritosResult {
+/** Favoritas do app logado, vindas do FavoritosProvider (uma busca e um estado para o app todo). */
+export function useFavoritos(): UseFavoritosResult {
+  const ctx = useContext(FavoritosContext);
+  if (!ctx) throw new Error('useFavoritos deve ser usado dentro de FavoritosProvider');
+  return ctx;
+}
+
+/** Estado das favoritas. Só o FavoritosProvider chama; telas usam useFavoritos(). */
+export function useFavoritosEstado(usuarioId: string | null): UseFavoritosResult {
   const [favoritos, setFavoritos] = useState<FavoritoDto[]>([]);
   // Começa carregando quando há usuário: quem decide "sem favoritas" (banner) não pode
   // concluir isso antes da primeira resposta.
@@ -88,5 +97,8 @@ export function useFavoritos(usuarioId: string | null): UseFavoritosResult {
     [usuarioId, favoritos]
   );
 
-  return { favoritos, isFavorito, toggleFavorito, adicionarVarios, carregando };
+  return useMemo(
+    () => ({ favoritos, isFavorito, toggleFavorito, adicionarVarios, carregando }),
+    [favoritos, isFavorito, toggleFavorito, adicionarVarios, carregando]
+  );
 }

@@ -91,8 +91,8 @@ export default function DashboardPage() {
         {subs.length > 0 && (
           <>
             <CidadeAgora resumo={resumo} cidadeNome={CIDADE_ATUAL.nome} distribuicao>
-              <div className="hidden sm:block" style={{ width: 150, flex: '0 0 auto' }}>
-                <MapaCoropletico cores={cores} />
+              <div className="hidden sm:block" style={{ height: 120, flex: '0 0 auto' }}>
+                <MapaCoropletico cores={cores} className="h-full w-auto" />
               </div>
             </CidadeAgora>
 

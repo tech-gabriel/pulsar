@@ -63,7 +63,7 @@ export default function ConfiguracoesPage() {
   const { showToast } = useToast();
   const { prefs, toggle } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
-  const { favoritos, toggleFavorito } = useFavoritos(usuario?.id ?? null);
+  const { favoritos, toggleFavorito } = useFavoritos();
   const navigate = useNavigate();
   const dark = theme === 'dark';
 

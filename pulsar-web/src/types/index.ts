@@ -109,6 +109,19 @@ export interface ColetaResultadoDto {
 
 export type TipoPerigo = 'ALAGAMENTO' | 'VENTO' | 'CALOR';
 
+/** Categoria do catálogo de dicas: uma por perigo do score. */
+export type CategoriaDica = TipoPerigo;
+
+/** Retornado por GET /api/sugestoes: dica por perigo, faixa MODERADO (Atenção) ou ALTO (Alerta). */
+export interface DicaDto {
+  id: string;
+  categoria: CategoriaDica;
+  faixa: FaixaRisco;
+  titulo: string;
+  descricao: string;
+  ordem: number;
+}
+
 export interface ComponenteScoreDto {
   valor: number;
   faixa: FaixaRisco;

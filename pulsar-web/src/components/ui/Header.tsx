@@ -36,7 +36,7 @@ export default function Header() {
   const { usuario, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { subprefeituras, carregando } = useSubprefeituras();
-  const { favoritos } = useFavoritos(usuario?.id ?? null);
+  const { favoritos } = useFavoritos();
   const sino = alertasDoSino(subprefeituras, favoritos.map((f) => f.subprefeituraId));
   const navigate = useNavigate();
 

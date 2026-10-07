@@ -239,33 +239,6 @@ namespace Pulsar.API.Migrations
                     b.ToTable("LeiturasClimaticas");
                 });
 
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.MigracaoFavoritoZona", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("EmailAvisadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("PushAvisadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("RegiaoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RegiaoId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("MigracoesFavoritoZona");
-                });
-
             modelBuilder.Entity("Pulsar.API.Domain.Entities.NotificacaoEnviada", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1632,25 +1605,6 @@ namespace Pulsar.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Subprefeitura");
-                });
-
-            modelBuilder.Entity("Pulsar.API.Domain.Entities.MigracaoFavoritoZona", b =>
-                {
-                    b.HasOne("Pulsar.API.Domain.Entities.Regiao", "Regiao")
-                        .WithMany()
-                        .HasForeignKey("RegiaoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Regiao");
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.NotificacaoEnviada", b =>

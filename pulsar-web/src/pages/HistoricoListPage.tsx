@@ -7,7 +7,6 @@ import ErrorBanner from '../components/ui/ErrorBanner';
 import EmptyState from '../components/ui/EmptyState';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
-import { useAuth } from '../contexts/AuthContext';
 import { normalizarNome } from '../utils/texto';
 import { coresParaFaixa, labelFaixa } from '../utils/risco';
 import { fundoParaTextoBranco } from '../utils/contraste';
@@ -18,8 +17,7 @@ export default function HistoricoListPage() {
   const { subprefeituras, carregando, erro, recarregar } = useSubprefeituras();
   const [busca, setBusca] = useState('');
 
-  const { usuario } = useAuth();
-  const { favoritos } = useFavoritos(usuario?.id ?? null);
+  const { favoritos } = useFavoritos();
   const favIds = useMemo(() => new Set(favoritos.map((f) => f.subprefeituraId)), [favoritos]);
 
   // Lista única (SP3): as que a pessoa acompanha no topo, depois ordem alfabética.

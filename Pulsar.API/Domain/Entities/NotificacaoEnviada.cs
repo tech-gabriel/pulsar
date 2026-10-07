@@ -5,9 +5,9 @@ namespace Pulsar.API.Domain.Entities;
 /// sustentado de risco viraria um push a cada ciclo de 15 min.
 /// </summary>
 /// <remarks>
-/// Tabela própria em vez de reaproveitar a <see cref="Alerta"/>: a Alerta tem FK
-/// não-nulável para o score, e nem o briefing diário nem a chuva prevista nascem
-/// de um score. A Alerta segue sendo o histórico de risco alto.
+/// Tabela própria porque nem o briefing diário nem a chuva prevista nascem de um score.
+/// O antigo histórico de alertas (tabela Alertas) saiu na 1.14.0: o livro-caixa é o
+/// único registro do que foi avisado.
 /// </remarks>
 public class NotificacaoEnviada
 {

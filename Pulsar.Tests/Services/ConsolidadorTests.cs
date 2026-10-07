@@ -191,7 +191,8 @@ public class ConsolidadorTests
     }
 
     private static NotificacaoPendente Atencao(Guid sub, string local, TipoPerigo perigo)
-        => P(sub, local, "atencao", 4, CriterioOptIn.RiscoModerado, chave: $"atencao:{sub}:{perigo}:2026-10-03", perigo: perigo);
+        => P(sub, local, "atencao", 4, CriterioOptIn.RiscoModerado, chave: $"atencao:{sub}:{perigo}:2026-10-03", perigo: perigo)
+            with { Payload = new PushPayload($"Titulo {local}", "Corpo", NomesSubprefeitura.UrlDetalhe(local), $"tag-{sub}") };
 
     private static EnvioAnterior AlertaHa(Guid sub, string perigo, double horas)
         => new(sub, "score-alto", $"score:{sub}:{perigo}:202610031200", Guid.NewGuid(), Agora.AddHours(-horas));
@@ -231,8 +232,12 @@ public class ConsolidadorTests
             [Atencao(Mooca, "Mooca", TipoPerigo.ALAGAMENTO), Atencao(Mooca, "Mooca", TipoPerigo.CALOR)], Agora);
 
         envio!.Incluidas.Should().HaveCount(2);
-        envio.Payload.Titulo.Should().Be("Atenção em Mooca");
-        envio.Payload.Corpo.Should().Be("Toque para ver os detalhes.");
+        // Uma subprefeitura só: o push abre o detalhe dela (spec §1), com preposição no
+        // título, em vez de cair no mapa como o consolidado de várias subprefeituras.
+        envio.Payload.Titulo.Should().Be("Atenção na Mooca");
+        envio.Payload.Corpo.Should().Be("Mais de um perigo pede cuidado. Toque para ver as dicas.");
+        envio.Payload.Url.Should().Be("/app?regiao=mooca");
+        envio.Payload.Tag.Should().Be($"tag-{Mooca}");
     }
 
     [Fact]

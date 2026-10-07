@@ -106,6 +106,14 @@ public static class LimiaresNotificacao
     public const int PrioridadeScoreAlto = 1;
     public const int PrioridadeChuvaPrevista = 2;
     public const int PrioridadeBriefing = 3;
+    public const int PrioridadeAtencao = 4;
+
+    /// <summary>
+    /// Depois de um Alerta de um perigo, quanto tempo a Atenção DO MESMO PERIGO fica calada
+    /// naquela subprefeitura. Alerta que vira Atenção é melhora, e um push "Atenção" logo
+    /// depois do "Alerta" pareceria aviso novo. Perigo diferente não é afetado: é risco novo.
+    /// </summary>
+    public const int SilencioAtencaoAposAlertaHoras = 6;
 
     /// <summary>
     /// Cultura em que os números da copy são escritos. Está amarrada ao IDIOMA do texto,

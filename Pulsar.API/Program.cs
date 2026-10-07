@@ -177,7 +177,6 @@ builder.Services.Configure<RecuperacaoSenhaOptions>(
 
 // --- Repositories ---
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-builder.Services.AddScoped<IRegiaoRepository, RegiaoRepository>();
 builder.Services.AddScoped<ISubprefeituraRepository, SubprefeituraRepository>();
 builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
@@ -211,7 +210,6 @@ builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionServi
 builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
 builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
-builder.Services.AddScoped<IAvisoMigracaoService, AvisoMigracaoService>();
 
 // --- Motor de notificações ---
 // A ordem do registro não importa para a escolha: o motor ordena por Prioridade da
@@ -255,7 +253,6 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 // --- Scheduler ---
 builder.Services.AddHostedService<DataCollectionJob>();
 builder.Services.AddHostedService<SincronizacaoOcorrenciasJob>();
-builder.Services.AddHostedService<AvisoMigracaoJob>();
 
 // --- Build ---
 var app = builder.Build();

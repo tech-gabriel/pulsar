@@ -14,9 +14,6 @@ public interface IPrevisaoRepository
     /// <summary>Apaga pontos da subprefeitura com InstantePrevisto anterior ao limite. Devolve quantos.</summary>
     Task<int> RemoverAntigasAsync(Guid subprefeituraId, DateTime limiteUtc);
 
-    /// <summary>Pontos de todas as subprefeituras da região com InstantePrevisto >= desdeUtc, ordenados.</summary>
-    Task<IReadOnlyList<PrevisaoClimatica>> ObterFuturasPorRegiaoAsync(Guid regiaoId, DateTime desdeUtc);
-
     /// <summary>Previsões futuras de UMA subprefeitura, em ordem crescente de instante.</summary>
     Task<IReadOnlyList<PrevisaoClimatica>> ObterFuturasPorSubprefeituraAsync(Guid subprefeituraId, DateTime desdeUtc);
 }

@@ -67,37 +67,6 @@ public class PrevisaoService : IPrevisaoService
         return true;
     }
 
-    public async Task<IReadOnlyList<FaixaPrevisaoDto>> ObterFaixasRegiaoAsync(
-        Guid regiaoId, int maxFaixas, CancellationToken ct = default)
-    {
-        var linhas = await _previsaoRepo.ObterFuturasPorRegiaoAsync(regiaoId, DateTime.UtcNow);
-        if (linhas.Count == 0) return [];
-
-        return linhas
-            .GroupBy(p => p.InstantePrevisto)
-            .OrderBy(g => g.Key)
-            .Take(maxFaixas)
-            .Select(g =>
-            {
-                // Pior caso, e a condição textual vem da sub de pior chuva para o
-                // rótulo casar com o número exibido ao lado dele.
-                var pior = g.OrderByDescending(p => p.ChuvaMm).First();
-                return new FaixaPrevisaoDto
-                {
-                    InstantePrevisto = g.Key,
-                    ChuvaMm = g.Max(p => p.ChuvaMm),
-                    ProbabilidadeChuva = g.Max(p => p.ProbabilidadeChuva),
-                    VentoKmH = g.Max(p => p.VentoKmH),
-                    RajadaKmH = g.Max(p => p.RajadaKmH),
-                    TemperaturaC = g.Max(p => p.TemperaturaC),
-                    CondicaoCodigo = pior.CondicaoCodigo,
-                    CondicaoDescricao = pior.CondicaoDescricao,
-                    ColetadoEm = g.Min(p => p.ColetadoEm),
-                };
-            })
-            .ToList();
-    }
-
     /// <summary>Faixas futuras de UMA subprefeitura, em ordem crescente. Contexto do motor de notificações.</summary>
     public async Task<IReadOnlyList<FaixaPrevisaoDto>> ObterFaixasSubprefeituraAsync(
         Guid subprefeituraId, int maxFaixas, CancellationToken ct = default)

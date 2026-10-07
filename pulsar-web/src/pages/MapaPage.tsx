@@ -35,7 +35,7 @@ import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from
 export default function MapaPage() {
   const { usuario } = useAuth();
   const { subprefeituras, carregando, erro, recarregar, ultimaAtualizacao } = useSubprefeituras();
-  const { favoritos, isFavorito, toggleFavorito, carregando: carregandoFavoritos } = useFavoritos(usuario?.id ?? null);
+  const { favoritos, isFavorito, toggleFavorito, carregando: carregandoFavoritos } = useFavoritos();
   const semFavoritas = !!usuario && !carregandoFavoritos && favoritos.length === 0;
   const favoritas = subprefeituras.filter((s) => isFavorito(s.id));
   const isMobile = useIsMobile(768);

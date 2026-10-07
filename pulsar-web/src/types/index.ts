@@ -136,24 +136,6 @@ export interface LeituraDto {
   timestamp: string;
 }
 
-// ── Região ────────────────────────────────────────────────────────────────────
-
-/** Retornado por GET /api/regioes (lista resumida) */
-export interface RegiaoDto {
-  id: string;
-  nome: string;
-  scoreAgregado: number;
-  faixaRisco: FaixaRisco;
-  perigoPrincipal?: TipoPerigo;
-  totalSubprefeituras: number;
-  ultimaAtualizacao: string;
-}
-
-/** Retornado por GET /api/regioes/{id} (detalhe completo) */
-export interface RegiaoDetalheDto extends RegiaoDto {
-  subprefeituras: SubprefeituraDto[];
-}
-
 // ── Subprefeitura ─────────────────────────────────────────────────────────────
 
 export interface SubprefeituraDto {
@@ -253,9 +235,9 @@ export interface OcorrenciasProximasDto {
 // ── Previsão ──────────────────────────────────────────────────────────────────
 
 /**
- * Retornado por GET /api/regioes/{id}/previsao: faixa de 3h já agregada por pior
- * caso entre as subprefeituras da região. Lista vazia é resposta legítima, e não
- * erro, quando ainda não houve coleta.
+ * Retornado por GET /api/subprefeituras/{id}/previsao: faixa de 3h da própria
+ * subprefeitura. Lista vazia é resposta legítima, e não erro, quando ainda não
+ * houve coleta.
  */
 export interface FaixaPrevisaoDto {
   /** Instante da faixa, em UTC e com sufixo Z. Exibir sempre no fuso do navegador. */

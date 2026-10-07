@@ -86,13 +86,6 @@ public class PrevisaoRepository : IPrevisaoRepository
         return antigas.Count;
     }
 
-    public async Task<IReadOnlyList<PrevisaoClimatica>> ObterFuturasPorRegiaoAsync(
-        Guid regiaoId, DateTime desdeUtc)
-        => await _context.PrevisoesClimaticas
-            .Where(p => p.Subprefeitura.RegiaoId == regiaoId && p.InstantePrevisto >= desdeUtc)
-            .OrderBy(p => p.InstantePrevisto)
-            .ToListAsync();
-
     public async Task<IReadOnlyList<PrevisaoClimatica>> ObterFuturasPorSubprefeituraAsync(Guid subprefeituraId, DateTime desdeUtc)
         => await _context.PrevisoesClimaticas
             .Where(p => p.SubprefeituraId == subprefeituraId && p.InstantePrevisto >= desdeUtc)

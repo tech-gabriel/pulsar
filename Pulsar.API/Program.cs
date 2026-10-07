@@ -181,7 +181,6 @@ builder.Services.AddScoped<ISubprefeituraRepository, SubprefeituraRepository>();
 builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
 builder.Services.AddScoped<ISugestaoRepository, SugestaoRepository>();
-builder.Services.AddScoped<IAlertaRepository, AlertaRepository>();
 builder.Services.AddScoped<ITokenRecuperacaoSenhaRepository, TokenRecuperacaoSenhaRepository>();
 builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>();
 builder.Services.AddScoped<IOcorrenciaAlagamentoRepository, OcorrenciaAlagamentoRepository>();
@@ -204,8 +203,6 @@ builder.Services.AddScoped<IColetaRunner, ColetaRunner>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IClimateService, ClimateService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
-builder.Services.AddScoped<ISugestaoService, SugestaoService>();
-builder.Services.AddScoped<IAlertaService, AlertaService>();
 builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionService>();
 builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
@@ -222,6 +219,7 @@ builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoScoreAlto>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaPrevista>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoBriefingDiario>();
+builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAtencao>();
 builder.Services.AddScoped<IMotorNotificacoes, MotorNotificacoes>();
 
 // --- Web Push (notificações) ---

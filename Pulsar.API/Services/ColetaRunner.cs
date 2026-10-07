@@ -6,9 +6,9 @@ namespace Pulsar.API.Services;
 
 /// <summary>
 /// Orquestra um ciclo de coleta, nesta ordem: coleta climática das subprefeituras ativas,
-/// recalcula os scores, atualiza o agregado diário e a previsão, gera os alertas por região
-/// e, por último, roda o motor de notificações. Resiliente a falhas parciais (uma
-/// subprefeitura, região ou etapa com erro não interrompe as demais).
+/// recalcula os scores, atualiza o agregado diário e a previsão e, por último, roda o motor
+/// de notificações. Resiliente a falhas parciais (uma subprefeitura ou etapa com erro não
+/// interrompe as demais).
 /// </summary>
 /// <remarks>
 /// A ordem não é arbitrária: o motor de notificações lê do banco o estado que as etapas
@@ -19,7 +19,6 @@ public class ColetaRunner : IColetaRunner
 {
     private readonly IClimateService _climateService;
     private readonly IScoreService _scoreService;
-    private readonly IAlertaService _alertaService;
     private readonly IAgregadoDiarioService _agregadoService;
     private readonly IPrevisaoService _previsaoService;
     private readonly IMotorNotificacoes _motor;
@@ -29,7 +28,6 @@ public class ColetaRunner : IColetaRunner
     public ColetaRunner(
         IClimateService climateService,
         IScoreService scoreService,
-        IAlertaService alertaService,
         IAgregadoDiarioService agregadoService,
         IPrevisaoService previsaoService,
         IMotorNotificacoes motor,
@@ -38,7 +36,6 @@ public class ColetaRunner : IColetaRunner
     {
         _climateService = climateService;
         _scoreService = scoreService;
-        _alertaService = alertaService;
         _agregadoService = agregadoService;
         _previsaoService = previsaoService;
         _motor = motor;
@@ -91,22 +88,6 @@ public class ColetaRunner : IColetaRunner
             }
         }
 
-        var regioes = await _db.Regioes.ToListAsync(ct);
-        var alertasGerados = 0;
-        foreach (var regiao in regioes)
-        {
-            if (ct.IsCancellationRequested) break;
-            try
-            {
-                var alerta = await _alertaService.GerarAlertaAsync(regiao.Id, ct);
-                if (alerta is not null) alertasGerados++;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Falha ao gerar alerta para região {Nome}.", regiao.Nome);
-            }
-        }
-
         var pushEnviados = await AvaliarNotificacoesAsync(ct);
 
         // "pelo menos": uma exceção que estoure DEPOIS de o push sair (a limpeza de inscrições
@@ -116,18 +97,18 @@ public class ColetaRunner : IColetaRunner
         _logger.LogInformation(
             "Ciclo de coleta concluído. Push enviados: pelo menos {Push}.", pushEnviados);
 
-        return new ColetaResultado(subprefeituras.Count, scoresCalculados, alertasGerados, DateTime.UtcNow);
+        return new ColetaResultado(subprefeituras.Count, scoresCalculados, DateTime.UtcNow);
     }
 
     /// <summary>
-    /// Um disparo por ciclo, depois de score, agregado, previsão e alertas estarem gravados:
+    /// Um disparo por ciclo, depois de score, agregado e previsão estarem gravados:
     /// o motor lê estado consolidado, não estado a meio caminho. Devolve quantos push saíram,
     /// ou zero quando o ciclo foi cancelado ou o motor falhou.
     /// </summary>
     private async Task<int> AvaliarNotificacoesAsync(CancellationToken ct)
     {
         // Ciclo cancelado é desligamento no meio do caminho, e os loops acima já quebraram:
-        // parte das subprefeituras ficou sem score e parte das regiões sem alerta. Notificar
+        // parte das subprefeituras ficou sem score ou sem previsão. Notificar
         // em cima disso é decidir sobre dado pela metade, e o custo de esperar é de 15 min.
         if (ct.IsCancellationRequested)
             return 0;

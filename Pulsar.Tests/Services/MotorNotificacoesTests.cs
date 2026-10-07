@@ -156,7 +156,7 @@ public class MotorNotificacoesTests
         (await motor.AvaliarEDispararAsync()).Should().Be(1);
 
         _pushMock.Verify(p => p.NotificarUsuarioAsync(pessoa, CriterioOptIn.RiscoAlto,
-            It.Is<PushPayload>(x => x.Titulo == "Risco alto em Mooca e Penha" || x.Titulo == "Risco alto em Penha e Mooca"),
+            It.Is<PushPayload>(x => x.Titulo == "Alerta em Mooca e Penha" || x.Titulo == "Alerta em Penha e Mooca"),
             It.IsAny<CancellationToken>()), Times.Once);
         var linhas = await ctx.NotificacoesEnviadas.Where(n => n.UsuarioId == pessoa).ToListAsync();
         linhas.Should().HaveCount(2);

@@ -32,7 +32,6 @@ public class ColetaRunnerPrevisaoTests
         var runner = new ColetaRunner(
             Mock.Of<IClimateService>(),
             Mock.Of<IScoreService>(),
-            Mock.Of<IAlertaService>(),
             Mock.Of<IAgregadoDiarioService>(),
             previsao.Object,
             Mock.Of<IMotorNotificacoes>(),
@@ -62,7 +61,6 @@ public class ColetaRunnerPrevisaoTests
         var runner = new ColetaRunner(
             Mock.Of<IClimateService>(),
             Mock.Of<IScoreService>(),
-            Mock.Of<IAlertaService>(),
             Mock.Of<IAgregadoDiarioService>(),
             previsao.Object,
             Mock.Of<IMotorNotificacoes>(),

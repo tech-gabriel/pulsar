@@ -10,7 +10,9 @@ public class Sugestao
     public string Titulo { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
     public bool Ativa { get; set; } = true;
-    public IList<AlertaSugestao> AlertaSugestoes { get; set; } = new List<AlertaSugestao>();
+
+    /// <summary>Ordem de exibição dentro de categoria e faixa (1 = primeira).</summary>
+    public int Ordem { get; set; }
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
 }

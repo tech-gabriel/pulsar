@@ -190,9 +190,9 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var sugestoes = await response.Content.ReadFromJsonAsync<List<SugestaoAdminDto>>(JsonOpts);
-        // O seed traz 45 sugestões (5 categorias × 3 faixas × 3).
+        // O seed traz 18 dicas (3 perigos × Atenção/Alerta × 3).
         sugestoes.Should().NotBeNull();
-        sugestoes!.Should().HaveCountGreaterThanOrEqualTo(45);
+        sugestoes!.Should().HaveCountGreaterThanOrEqualTo(18);
     }
 
     [Fact]
@@ -200,11 +200,11 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
     {
         var token = await TokenAdminAsync();
         var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", token,
-            new SalvarSugestaoRequestDto { Categoria = "geral", FaixaRisco = FaixaRisco.BAIXO, Titulo = "Nova", Descricao = "Desc", Ativa = true });
+            new SalvarSugestaoRequestDto { Ordem = 1, Categoria = "alagamento", FaixaRisco = FaixaRisco.MODERADO, Titulo = "Nova", Descricao = "Desc", Ativa = true });
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var criada = await response.Content.ReadFromJsonAsync<SugestaoAdminDto>(JsonOpts);
-        criada!.Categoria.Should().Be("GERAL");
+        criada!.Categoria.Should().Be("ALAGAMENTO");
         criada.Id.Should().NotBeEmpty();
     }
 
@@ -213,7 +213,7 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
     {
         var token = (await CadastrarAsync($"comum_{Guid.NewGuid()}@test.com", "Senha@123")).Token;
         var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", token,
-            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "X", Descricao = "Y" });
+            new SalvarSugestaoRequestDto { Ordem = 1, Categoria = "ALAGAMENTO", FaixaRisco = FaixaRisco.MODERADO, Titulo = "X", Descricao = "Y" });
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -222,7 +222,7 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
     {
         var token = await TokenAdminAsync();
         var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", token,
-            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "   ", Descricao = "Y" });
+            new SalvarSugestaoRequestDto { Ordem = 1, Categoria = "ALAGAMENTO", FaixaRisco = FaixaRisco.MODERADO, Titulo = "   ", Descricao = "Y" });
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -233,7 +233,7 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
         var criada = await CriarSugestaoAsync(token);
 
         var response = await EnviarComTokenAsync(HttpMethod.Put, $"/api/admin/sugestoes/{criada.Id}", token,
-            new SalvarSugestaoRequestDto { Categoria = "VENTO", FaixaRisco = FaixaRisco.ALTO, Titulo = "Editada", Descricao = "Nova desc", Ativa = false });
+            new SalvarSugestaoRequestDto { Ordem = 1, Categoria = "VENTO", FaixaRisco = FaixaRisco.ALTO, Titulo = "Editada", Descricao = "Nova desc", Ativa = false });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var atualizada = await response.Content.ReadFromJsonAsync<SugestaoAdminDto>(JsonOpts);
@@ -247,7 +247,7 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
     {
         var token = await TokenAdminAsync();
         var response = await EnviarComTokenAsync(HttpMethod.Put, $"/api/admin/sugestoes/{Guid.NewGuid()}", token,
-            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "X", Descricao = "Y" });
+            new SalvarSugestaoRequestDto { Ordem = 1, Categoria = "ALAGAMENTO", FaixaRisco = FaixaRisco.MODERADO, Titulo = "X", Descricao = "Y" });
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -275,7 +275,7 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
         leitura.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var escrita = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", suporteToken,
-            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "X", Descricao = "Y" });
+            new SalvarSugestaoRequestDto { Ordem = 1, Categoria = "ALAGAMENTO", FaixaRisco = FaixaRisco.MODERADO, Titulo = "X", Descricao = "Y" });
         escrita.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
@@ -319,7 +319,7 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var metricas = await response.Content.ReadFromJsonAsync<MetricasDto>(JsonOpts);
         metricas!.TotalUsuarios.Should().BeGreaterThan(0);
-        metricas.TotalSugestoes.Should().BeGreaterThanOrEqualTo(45);
+        metricas.TotalSugestoes.Should().BeGreaterThanOrEqualTo(18);
     }
 
     [Fact]
@@ -365,7 +365,7 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
     private async Task<SugestaoAdminDto> CriarSugestaoAsync(string adminToken)
     {
         var response = await EnviarComTokenAsync(HttpMethod.Post, "/api/admin/sugestoes", adminToken,
-            new SalvarSugestaoRequestDto { Categoria = "GERAL", FaixaRisco = FaixaRisco.BAIXO, Titulo = "Base", Descricao = "Base desc", Ativa = true });
+            new SalvarSugestaoRequestDto { Ordem = 1, Categoria = "ALAGAMENTO", FaixaRisco = FaixaRisco.MODERADO, Titulo = "Base", Descricao = "Base desc", Ativa = true });
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<SugestaoAdminDto>(JsonOpts))!;
     }

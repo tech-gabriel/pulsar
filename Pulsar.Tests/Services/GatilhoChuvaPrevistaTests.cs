@@ -58,7 +58,7 @@ public class GatilhoChuvaPrevistaTests
         // Tag é carga: é ela que faz o aviso novo SUBSTITUIR o anterior na bandeja em vez
         // de empilhar dois avisos da mesma região.
         pendencias[0].Payload.Tag.Should().Be($"chuva-{ctx.Subprefeitura.Id}");
-        pendencias[0].Payload.Url.Should().Be("/");
+        pendencias[0].Payload.Url.Should().Be("/app?regiao=mooca");
     }
 
     [Fact]
@@ -223,7 +223,7 @@ public class GatilhoChuvaPrevistaTests
         // "faixa", que é vocabulário do nosso modelo de dados vazando para o usuário.
         payload.Corpo.Should().NotContain("faixa", "'faixa' é palavra do modelo, não de quem lê");
 
-        payload.Titulo.Should().Be("Chuva forte prevista na Mooca");
+        payload.Titulo.Should().Be("Atenção: chuva forte prevista na Mooca");
 
         // Igualdade exata: um Contain("15h") passaria em corpo que perdeu o volume ou a
         // orientação do que fazer, e cada palavra aqui é decisão de produto.
@@ -253,5 +253,14 @@ public class GatilhoChuvaPrevistaTests
         {
             CultureInfo.CurrentCulture = original;
         }
+    }
+
+    [Fact]
+    public async Task ChuvaMuitoForte_TituloDeAlerta()
+    {
+        var p = await new GatilhoChuvaPrevista().AvaliarAsync(Contexto(Faixa(3, chuva: 25, pop: 0.9)));
+
+        p[0].Criterio.Should().Be(CriterioOptIn.RiscoAlto);
+        p[0].Payload.Titulo.Should().Be("Alerta: chuva muito forte prevista na Mooca");
     }
 }

@@ -10,12 +10,14 @@ import AdminSubnav from '../../components/admin/AdminSubnav';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSugestoesAdmin } from '../../hooks/useSugestoesAdmin';
 import type { FaixaRisco, SalvarSugestaoRequest, SugestaoAdminDto } from '../../types';
+import { labelFaixa } from '../../utils/risco';
 
-const CATEGORIAS = ['CHUVA', 'VENTO', 'NEBLINA', 'UV', 'GERAL'] as const;
-const FAIXAS: FaixaRisco[] = ['BAIXO', 'MODERADO', 'ALTO'];
+// Uma categoria por perigo do score; Tranquilo não tem dica (spec S3 + N1).
+const CATEGORIAS = ['ALAGAMENTO', 'VENTO', 'CALOR'] as const;
+const FAIXAS: FaixaRisco[] = ['MODERADO', 'ALTO'];
 
 const FORM_VAZIO: SalvarSugestaoRequest = {
-  categoria: 'GERAL', faixaRisco: 'BAIXO', titulo: '', descricao: '', ativa: true,
+  categoria: 'ALAGAMENTO', faixaRisco: 'MODERADO', ordem: 1, titulo: '', descricao: '', ativa: true,
 };
 
 export default function SugestoesAdminPage() {
@@ -122,7 +124,7 @@ export default function SugestoesAdminPage() {
 }
 
 function toRequest(s: SugestaoAdminDto): SalvarSugestaoRequest {
-  return { categoria: s.categoria, faixaRisco: s.faixaRisco, titulo: s.titulo, descricao: s.descricao, ativa: s.ativa };
+  return { categoria: s.categoria, faixaRisco: s.faixaRisco, ordem: s.ordem, titulo: s.titulo, descricao: s.descricao, ativa: s.ativa };
 }
 
 function SugestaoCard({ s, podeEditar, onEditar, onRemover }: {
@@ -208,7 +210,7 @@ function SugestaoForm({ inicial, titulo, onSalvar, onCancelar }: {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <h2 style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-secondary)' }}>{titulo}</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block mb-1.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Categoria</label>
             <select className="input-glass" value={form.categoria} onChange={(e) => set('categoria', e.target.value)} aria-label="Categoria">
@@ -218,8 +220,12 @@ function SugestaoForm({ inicial, titulo, onSalvar, onCancelar }: {
           <div>
             <label className="block mb-1.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Faixa de risco</label>
             <select className="input-glass" value={form.faixaRisco} onChange={(e) => set('faixaRisco', e.target.value as FaixaRisco)} aria-label="Faixa de risco">
-              {FAIXAS.map((f) => <option key={f} value={f}>{f}</option>)}
+              {FAIXAS.map((f) => <option key={f} value={f}>{labelFaixa(f)}</option>)}
             </select>
+          </div>
+          <div>
+            <label className="block mb-1.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Ordem</label>
+            <input type="number" min={1} max={99} className="input-glass" value={form.ordem} onChange={(e) => set('ordem', Number(e.target.value))} aria-label="Ordem" required />
           </div>
         </div>
 

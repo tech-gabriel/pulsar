@@ -19,7 +19,7 @@ const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: 'O que é o Score de Perigo?',
-    a: 'É um índice de 0 a 100 calculado por subprefeitura a partir dos dados climáticos mais recentes. Quanto maior, maior a atenção recomendada para aquela região naquele momento. Até 30 é risco baixo, até 60 moderado e acima disso, alto.',
+    a: 'É um índice de 0 a 100 calculado por subprefeitura a partir dos dados climáticos mais recentes. Quanto maior, maior a atenção recomendada para aquela região naquele momento. Até 30 é Tranquilo, até 60 Atenção e acima disso, Alerta.',
   },
   {
     q: 'Como o Score de Perigo é calculado?',
@@ -27,7 +27,7 @@ const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: 'Como recebo os alertas?',
-    a: 'Dentro do app você vê em destaque as regiões em risco alto. Você também escolhe as subprefeituras que acompanha, como casa e trabalho, e ativa notificações para ser avisado quando elas mudarem de patamar.',
+    a: 'Dentro do app você vê em destaque as subprefeituras em Alerta. Você também escolhe as subprefeituras que acompanha, como casa e trabalho, e ativa notificações para ser avisado quando elas mudarem de patamar.',
   },
   {
     q: 'O Pulsar substitui a Defesa Civil?',

@@ -7,10 +7,12 @@ import { useCountUp } from '../../hooks/useCountUp';
 import { useNotificacoesPrefs } from '../../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../../hooks/usePushSubscription';
 import { coresParaFaixa, labelFaixa } from '../../utils/risco';
-import { gerarSugestoes, type CategoriaSugestao } from '../../utils/sugestoes';
+import { useCatalogoDicas } from '../../hooks/useCatalogoDicas';
+import { blocosDeDicas } from '../../utils/dicas';
 import { DURACAO, EASE_SUAVE, containerStagger, itemStagger } from '../../motion/presets';
 import { CIDADE_ATUAL } from '../../features/cidade/cidade';
 import type { Area } from '../../features/cidade/areas';
+import type { TipoPerigo } from '../../types';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
 import LinhasPerigo from './LinhasPerigo';
@@ -78,11 +80,10 @@ function LinhaClima({
   );
 }
 
-const ICONE_CATEGORIA: Record<CategoriaSugestao, React.ElementType> = {
-  chuva: CloudRain,
-  vento: Wind,
-  visibilidade: Eye,
-  uv: Sun,
+const PERIGO: Record<TipoPerigo, { nome: string; Icon: React.ElementType }> = {
+  ALAGAMENTO: { nome: 'Alagamento', Icon: CloudRain },
+  VENTO: { nome: 'Vento', Icon: Wind },
+  CALOR: { nome: 'Calor', Icon: Thermometer },
 };
 
 
@@ -104,7 +105,8 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
   const cores = coresParaFaixa(area.faixaRisco);
   const score = area.scoreAtual?.valor ?? 0;
   const l = area.ultimaLeitura;
-  const sugestoes = gerarSugestoes([area]);
+  const catalogo = useCatalogoDicas();
+  const blocos = blocosDeDicas(area.scoreAtual, catalogo);
   const alertaLigado = push.estado === 'ativo';
 
   return (
@@ -134,7 +136,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             <ScoreRing score={score} cor={cores.fill} corEscura={cores.text} />
             <div className="min-w-0">
               <span className="inline-block rounded-full px-3 py-1" style={{ background: cores.bg, color: cores.text, fontWeight: 600, fontSize: 13 }}>
-                Risco {labelFaixa(area.faixaRisco).toLowerCase()}
+                {labelFaixa(area.faixaRisco)}
               </span>
               <div className="mt-2"><LinhasPerigo score={area.scoreAtual} leitura={l} /></div>
             </div>
@@ -157,26 +159,34 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             <PrevisaoFaixa subprefeituraId={area.id} />
           </motion.div>
 
-          {score > 60 && sugestoes.length > 0 && (
+          {blocos.length > 0 && (
             <motion.div variants={itemStagger} className="mt-4">
               <div className="flex items-center gap-1.5 mb-2">
                 <ShieldAlert size={15} className="text-red-400" />
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>Sugestões de segurança</h3>
+                <h3 style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>Como se proteger</h3>
               </div>
-              {sugestoes.map((s, i) => {
-                const Icon = ICONE_CATEGORIA[s.categoria as CategoriaSugestao];
+              {blocos.map(({ perigo, faixa, dicas }) => {
+                const { nome, Icon } = PERIGO[perigo];
                 return (
-                  <div key={i} className="sugestao-card flex gap-2.5">
-                    <Icon size={16} className="text-red-300 flex-shrink-0 mt-0.5" />
-                    <div className="min-w-0">
-                      <p className="font-semibold" style={{ fontSize: 13, color: 'var(--text-primary)' }}>{s.titulo}</p>
-                      <p style={{ fontSize: 12, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{s.descricao}</p>
-                    </div>
+                  <div key={perigo} className="mb-3">
+                    <h4 className="flex items-center gap-1.5 mb-1.5" style={{ fontSize: 12.5, fontWeight: 600, color: coresParaFaixa(faixa).text }}>
+                      <Icon size={14} aria-hidden="true" />{`${nome} · ${labelFaixa(faixa)}`}
+                    </h4>
+                    {dicas.map((d) => (
+                      <div key={d.id} className="sugestao-card">
+                        <p className="font-semibold" style={{ fontSize: 13, color: 'var(--text-primary)' }}>{d.titulo}</p>
+                        <p style={{ fontSize: 12, lineHeight: 1.45, color: 'var(--text-secondary)' }}>{d.descricao}</p>
+                      </div>
+                    ))}
                   </div>
                 );
               })}
             </motion.div>
           )}
+
+          <motion.p variants={itemStagger} className="mt-3" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+            Estimativa do Pulsar. Em emergência, ligue 199 (Defesa Civil) ou 193 (Bombeiros).
+          </motion.p>
 
           <motion.div variants={itemStagger} className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" className="rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold"

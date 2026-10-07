@@ -15,7 +15,7 @@ const PASSOS = [
   {
     num: '02',
     title: 'Calculamos o Score',
-    desc: 'Cada uma das 32 subprefeituras recebe um Score de Perigo atualizado, do baixo ao crítico.',
+    desc: 'Cada uma das 32 subprefeituras recebe um Score de Perigo atualizado: Tranquilo, Atenção ou Alerta.',
   },
   {
     num: '03',
@@ -62,6 +62,9 @@ export default function LandingComoFunciona() {
               </Reveal>
             ))}
           </div>
+          <p className="mt-6" style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            Estimativa do Pulsar. Em emergência, ligue 199 (Defesa Civil) ou 193 (Bombeiros).
+          </p>
         </div>
 
         {/* Visual: print do painel/dashboard */}

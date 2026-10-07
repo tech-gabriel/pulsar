@@ -69,7 +69,7 @@ export function coresParaFaixa(faixa: FaixaRisco | null | undefined): RiscoCores
 
 export function labelFaixa(faixa: FaixaRisco | null | undefined): string {
   if (!faixa) return 'Sem dados';
-  return { BAIXO: 'Baixo', MODERADO: 'Moderado', ALTO: 'Alto' }[faixa];
+  return { BAIXO: 'Tranquilo', MODERADO: 'Atenção', ALTO: 'Alerta' }[faixa];
 }
 
 export function scoreFormatado(score: number | null | undefined): string {

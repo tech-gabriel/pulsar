@@ -6,7 +6,7 @@ import { corLabelFaixa, estiloPoligono, labelFaixa, scoreFormatado } from './ris
 // Inspirado no OpenWeatherMap: apenas uma camada ativa por vez. Cada camada
 // troca o valor exibido no label, a cor do label e a cor do polígono.
 
-export type Camada = 'score' | 'temperatura' | 'chuva' | 'vento' | 'uv';
+export type Camada = 'score' | 'temperatura' | 'chuva' | 'vento';
 
 /** Estilo resolvido para uma subprefeitura conforme a camada ativa. */
 export interface EstiloCamada {
@@ -57,14 +57,6 @@ function faixaVento(v: number): FaixaCamada {
   return faixa(PALETA.vermelho, 0.9, 0.35);
 }
 
-function faixaUv(u: number): FaixaCamada {
-  if (u <= 2) return faixa(PALETA.verde, 0.7, 0.2);
-  if (u <= 5) return faixa(PALETA.amarelo, 0.7, 0.25);
-  if (u <= 7) return faixa(PALETA.ambar, 0.8, 0.3);
-  if (u <= 10) return faixa(PALETA.vermelho, 0.85, 0.35);
-  return faixa(PALETA.roxo, 0.9, 0.35);
-}
-
 // Extratores do valor bruto de cada camada (null quando não há leitura).
 // temperaturaAtual vem como 0.0 do backend quando não há leitura, então só é
 // confiável se houver ultimaLeitura — caso contrário, retornamos null ("—").
@@ -78,10 +70,6 @@ function valorChuva(sub: SubprefeituraMapaDto): number | null {
 function valorVento(sub: SubprefeituraMapaDto): number | null {
   return sub.ultimaLeitura?.ventoKmH ?? null;
 }
-function valorUv(sub: SubprefeituraMapaDto): number | null {
-  return sub.ultimaLeitura?.indiceUv ?? null;
-}
-
 function semDado(): EstiloCamada {
   return {
     texto: '—',
@@ -138,11 +126,6 @@ export function estiloCamada(sub: SubprefeituraMapaDto, camada: Camada): EstiloC
       if (v == null) return semDado();
       return montar(String(Math.round(v)), faixaVento(v));
     }
-    case 'uv': {
-      const u = valorUv(sub);
-      if (u == null) return semDado();
-      return montar(String(Math.round(u)), faixaUv(u));
-    }
   }
 }
 
@@ -153,17 +136,15 @@ export interface LinhaMetrica {
   valor: string;
 }
 
-/** Lista das métricas de uma subprefeitura na ordem padrão (score → uv). */
+/** Lista das métricas de uma subprefeitura na ordem padrão (score → vento). */
 export function metricasSubprefeitura(sub: SubprefeituraMapaDto): LinhaMetrica[] {
   const temp = valorTemperatura(sub);
   const chuva = valorChuva(sub);
   const vento = valorVento(sub);
-  const uv = valorUv(sub);
   return [
     { camada: 'score', label: 'Score', valor: `${scoreFormatado(sub.scoreAtual?.valor)} (${labelFaixa(sub.faixaRisco)})` },
     { camada: 'temperatura', label: 'Temperatura', valor: `${temp != null ? temp.toFixed(1) : '—'}°C` },
     { camada: 'chuva', label: 'Chuva', valor: `${chuva != null ? chuva.toFixed(1) : '—'} mm/h` },
     { camada: 'vento', label: 'Vento', valor: `${vento != null ? Math.round(vento) : '—'} km/h` },
-    { camada: 'uv', label: 'UV', valor: `${uv != null ? Math.round(uv) : '—'}` },
   ];
 }

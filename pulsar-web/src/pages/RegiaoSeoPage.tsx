@@ -155,7 +155,7 @@ function ComoAjuda() {
       <h2>Como o Pulsar ajuda</h2>
       <p><strong>O que é risco de alagamento:</strong> a combinação de chuva forte, solo saturado e escoamento que pode causar pontos de alagamento e transtorno na mobilidade.</p>
       <p><strong>Como calculamos:</strong> o Pulsar mede três perigos por subprefeitura, com dados meteorológicos do OpenWeatherMap coletados a cada 15 minutos: alagamento (chuva da última hora, das últimas 3 horas e acumulada em 48 horas, mais o histórico de ocorrências da região), vento forte e calor extremo. O risco exibido é o pior dos três.</p>
-      <p><strong>O que fazer em risco alto:</strong> evite áreas historicamente alagáveis, replaneje deslocamentos e acompanhe o alerta do Pulsar.</p>
+      <p><strong>O que fazer em Alerta:</strong> evite áreas historicamente alagáveis, replaneje deslocamentos e acompanhe o alerta do Pulsar.</p>
     </section>
   );
 }

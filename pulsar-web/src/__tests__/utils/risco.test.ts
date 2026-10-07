@@ -33,9 +33,9 @@ describe('coresParaFaixa', () => {
 
 describe('labelFaixa', () => {
   it.each([
-    ['BAIXO' as const, 'Baixo'],
-    ['MODERADO' as const, 'Moderado'],
-    ['ALTO' as const, 'Alto'],
+    ['BAIXO' as const, 'Tranquilo'],
+    ['MODERADO' as const, 'Atenção'],
+    ['ALTO' as const, 'Alerta'],
   ])('retorna "%s" para faixa %s', (faixa, esperado) => {
     expect(labelFaixa(faixa)).toBe(esperado);
   });

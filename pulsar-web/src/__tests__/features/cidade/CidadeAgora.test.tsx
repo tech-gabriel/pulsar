@@ -7,10 +7,10 @@ const itaquera = { id: 's1', nome: 'Itaquera', zona: 'Leste', faixaRisco: 'ALTO'
 const r = (o: Partial<ResumoCidade>): ResumoCidade => ({ alto: 0, moderado: 0, baixo: 30, pior: null, semDados: false, ...o });
 
 describe('CidadeAgora', () => {
-  it('risco alto: número, pior e quantas em atenção', () => {
+  it('alerta: número, pior e quantas em atenção', () => {
     render(<CidadeAgora cidadeNome="São Paulo" resumo={r({ alto: 1, moderado: 5, pior: itaquera })} />);
     expect(screen.getByText('São Paulo agora')).toBeInTheDocument();
-    expect(screen.getByRole('heading')).toHaveTextContent('1 em risco alto, 5 em atenção');
+    expect(screen.getByRole('heading')).toHaveTextContent('1 em alerta, 5 em atenção');
     expect(screen.getByText('Pior: Itaquera · alagamento')).toBeInTheDocument();
   });
   it('dia tranquilo', () => {
@@ -23,6 +23,6 @@ describe('CidadeAgora', () => {
   });
   it('distribuição opcional', () => {
     render(<CidadeAgora cidadeNome="São Paulo" distribuicao resumo={r({ alto: 1, moderado: 5, baixo: 26, pior: itaquera })} />);
-    expect(screen.getByText('26 baixo')).toBeInTheDocument();
+    expect(screen.getByText('26 tranquilo')).toBeInTheDocument();
   });
 });

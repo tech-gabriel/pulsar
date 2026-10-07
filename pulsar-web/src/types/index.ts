@@ -61,6 +61,7 @@ export interface SugestaoAdminDto {
   titulo: string;
   descricao: string;
   ativa: boolean;
+  ordem: number;
   criadoEm: string;
   atualizadoEm: string;
 }
@@ -71,6 +72,7 @@ export interface SalvarSugestaoRequest {
   titulo: string;
   descricao: string;
   ativa: boolean;
+  ordem: number;
 }
 
 export interface SubprefeituraStatusDto {
@@ -94,20 +96,31 @@ export interface MetricasDto {
   suportes: number;
   totalSugestoes: number;
   sugestoesAtivas: number;
-  alertasUltimas24h: number;
   leiturasUltimas24h: number;
 }
 
 export interface ColetaResultadoDto {
   subprefeiturasProcessadas: number;
   scoresCalculados: number;
-  alertasGerados: number;
   concluidoEm: string;
 }
 
 // ── Score / Leitura ───────────────────────────────────────────────────────────
 
 export type TipoPerigo = 'ALAGAMENTO' | 'VENTO' | 'CALOR';
+
+/** Categoria do catálogo de dicas: uma por perigo do score. */
+export type CategoriaDica = TipoPerigo;
+
+/** Retornado por GET /api/sugestoes: dica por perigo, faixa MODERADO (Atenção) ou ALTO (Alerta). */
+export interface DicaDto {
+  id: string;
+  categoria: CategoriaDica;
+  faixa: FaixaRisco;
+  titulo: string;
+  descricao: string;
+  ordem: number;
+}
 
 export interface ComponenteScoreDto {
   valor: number;

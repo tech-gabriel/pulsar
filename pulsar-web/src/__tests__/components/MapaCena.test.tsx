@@ -78,8 +78,8 @@ describe('MapaCena', () => {
     vi.unstubAllGlobals();
   });
 
-  it('na cena "alerta" a subprefeitura em foco fica em risco alto', () => {
-    // O badge e o texto da cena dizem "risco alto"; a faixa determinística da
+  it('na cena "alerta" a subprefeitura em foco fica em Alerta', () => {
+    // O badge e o texto da cena dizem "Alerta"; a faixa determinística da
     // Sé é 'moderado', então sem a exceção o alerta vermelho apontava para um
     // polígono amarelo.
     const { container } = render(<MapaCena cena="alerta" />);
@@ -100,7 +100,7 @@ describe('MapaCena', () => {
 
   it('na cena "alerta" anuncia o alerta em texto acessível', () => {
     render(<MapaCena cena="alerta" />);
-    expect(screen.getByRole('status')).toHaveTextContent(/risco alto/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/alerta na sua subprefeitura/i);
   });
 
   it('o SVG é decorativo para leitores de tela', () => {

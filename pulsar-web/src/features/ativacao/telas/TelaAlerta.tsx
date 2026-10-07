@@ -31,7 +31,7 @@ export default function TelaAlerta({ nomes, ocupado, onAtivar, retomada = false 
           <img src={iconePulsar} alt="" width={30} height={30} style={{ borderRadius: 8, background: '#fff' }} />
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#3d4b59' }}><span>PULSAR</span><span>agora</span></div>
-            <b style={{ display: 'block', fontSize: 13 }}>Risco alto de alagamento {emNomeDe(exemplo)}</b>
+            <b style={{ display: 'block', fontSize: 13 }}>Alerta de alagamento {emNomeDe(exemplo)}</b>
             <p style={{ fontSize: 12, lineHeight: 1.3 }}>Chuva de 20 mm nas últimas 3 horas, com o solo já encharcado.</p>
           </div>
         </motion.div>
@@ -39,7 +39,7 @@ export default function TelaAlerta({ nomes, ocupado, onAtivar, retomada = false 
       <h1 ref={titulo} tabIndex={-1} className="at-titulo" style={{ marginTop: 18, fontSize: 25 }}>{retomada ? 'Agora sim: ative os alertas' : 'Seja avisado antes da chuva forte'}</h1>
       <div className="at-lista-gar">
         {nomes.length > 0 && <p className="at-gar"><MapPin size={16} />Só sobre {listaNomes(nomes)}, os lugares que você escolheu.</p>}
-        <p className="at-gar"><BellOff size={16} />No máximo 3 avisos por dia. Risco alto sempre chega.</p>
+        <p className="at-gar"><BellOff size={16} />No máximo 3 avisos por dia. Alerta sempre chega.</p>
         <p className="at-gar"><SlidersHorizontal size={16} />Desligue quando quiser, em Configurações.</p>
       </div>
       <button type="button" className="at-cta" onClick={onAtivar} disabled={ocupado}>{ocupado ? 'Ativando…' : 'Ativar alertas'}</button>

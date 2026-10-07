@@ -4,9 +4,9 @@ import BadgeRisco from '../../components/ui/BadgeRisco';
 
 describe('BadgeRisco', () => {
   it.each([
-    ['BAIXO' as const, 'Baixo'],
-    ['MODERADO' as const, 'Moderado'],
-    ['ALTO' as const, 'Alto'],
+    ['BAIXO' as const, 'Tranquilo'],
+    ['MODERADO' as const, 'Atenção'],
+    ['ALTO' as const, 'Alerta'],
   ])('exibe label correto para faixa %s', (faixa, label) => {
     render(<BadgeRisco faixa={faixa} />);
     expect(screen.getByText(label)).toBeInTheDocument();

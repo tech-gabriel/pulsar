@@ -13,6 +13,7 @@ import { DURACAO, EASE_SUAVE, containerStagger, itemStagger } from '../../motion
 import { CIDADE_ATUAL } from '../../features/cidade/cidade';
 import type { Area } from '../../features/cidade/areas';
 import type { TipoPerigo } from '../../types';
+import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
 import LinhasPerigo from './LinhasPerigo';
@@ -188,12 +189,13 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             Estimativa do Pulsar. Em emergência, ligue 199 (Defesa Civil) ou 193 (Bombeiros).
           </motion.p>
 
-          <motion.div variants={itemStagger} className="mt-4 grid grid-cols-2 gap-2">
+          <motion.div variants={itemStagger} className="mt-4 grid grid-cols-3 gap-2">
             <button type="button" className="rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold"
               style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}
               onClick={() => navigate(`/app/historico/${area.id}`, { state: { subNome: area.nome, zona: area.zona } })}>
               <History size={15} /> Histórico
             </button>
+            <BotaoCompartilhar area={area} />
             {alertaLigado ? (
               <span className="rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold" style={{ background: '#DCFCE7', color: '#166534', fontSize: 13 }}>
                 <BellRing size={15} /> Alertas ligados

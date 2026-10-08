@@ -8,6 +8,7 @@ const push = vi.hoisted(() => ({ estado: 'ativo' }));
 vi.mock('../../../hooks/useNotificacoesPrefs', () => ({ useNotificacoesPrefs: () => ({ prefs: {} }) }));
 vi.mock('../../../hooks/usePushSubscription', () => ({ usePushSubscription: () => push }));
 vi.mock('../../../hooks/useCatalogoDicas', () => ({ useCatalogoDicas: () => [] }));
+vi.mock('../../../features/compartilhar/BotaoCompartilhar', () => ({ default: () => null }));
 vi.mock('../../../hooks/usePrevisaoSubprefeitura', () => ({ usePrevisaoSubprefeitura: () => ({ faixas: [], carregando: false, erro: null }) }));
 
 import DetalheSubprefeitura from '../../../components/painel/DetalheSubprefeitura';

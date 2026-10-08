@@ -6,6 +6,7 @@ import type { DicaDto } from '../../../types';
 const dados = vi.hoisted(() => ({ catalogo: [] as DicaDto[] }));
 vi.mock('../../../hooks/useNotificacoesPrefs', () => ({ useNotificacoesPrefs: () => ({ prefs: {} }) }));
 vi.mock('../../../hooks/usePushSubscription', () => ({ usePushSubscription: () => ({ estado: 'ativo' }) }));
+vi.mock('../../../features/compartilhar/BotaoCompartilhar', () => ({ default: () => null }));
 vi.mock('../../../hooks/usePrevisaoSubprefeitura', () => ({ usePrevisaoSubprefeitura: () => ({ faixas: [], carregando: false, erro: null }) }));
 vi.mock('../../../hooks/useCatalogoDicas', () => ({ useCatalogoDicas: () => dados.catalogo }));
 

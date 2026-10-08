@@ -129,10 +129,10 @@ public class AdminService : IAdminService
         await _sugestaoRepository.SalvarAsync();
     }
 
-    /// <summary>Normaliza e valida os campos de uma sugestão. Lança ArgumentException se inválido.</summary>
     /// <summary>Uma categoria por perigo do score. Tranquilo (BAIXO) não tem dica.</summary>
     private static readonly HashSet<string> CategoriasValidas = ["ALAGAMENTO", "VENTO", "CALOR"];
 
+    /// <summary>Normaliza e valida os campos de uma sugestão. Lança ArgumentException se inválido.</summary>
     private static (string Categoria, string Titulo, string Descricao, FaixaRisco Faixa, int Ordem) ValidarSugestao(
         SalvarSugestaoRequestDto request)
     {

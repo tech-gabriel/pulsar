@@ -10,6 +10,8 @@ export interface DadosCard {
   slug: string; idArea: string; nome: string; legenda: string;
   faixa: FaixaRisco; rotuloFaixa: string; perigo: string | null; dado: string;
   caixa: CaixaCard; horario: string; texto: string; link: string;
+  /** "RISCO AGORA" ou, com leitura de outro dia, "ÚLTIMA LEITURA": o card não chama de agora um dado velho. */
+  topo: string;
 }
 
 const ORIGEM = 'https://app-pulsar.com.br';
@@ -63,16 +65,20 @@ export function dadosDoCard(area: Area, catalogo: DicaDto[], agora: Date = new D
       };
 
   const perigo = emRisco ? NOME_PERIGO[principal] : null;
+  const quando = score ? new Date(score.timestamp) : agora;
+  const deHoje = quando.toDateString() === agora.toDateString();
+  const quandoTexto = deHoje ? 'agora' : `em ${quando.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`;
   const texto = emRisco
     // Uma ideia por linha: no WhatsApp a mensagem chega limpa e o link fica sozinho na última.
-    ? `${area.nome} agora: ${labelFaixa(faixa)} de ${perigo!.toLowerCase()}\nVeja o risco da sua subprefeitura no Pulsar:\n${link}`
-    : `${area.nome} agora: Tranquilo\nSaiba antes que a água chegue:\n${link}`;
+    ? `${area.nome} ${quandoTexto}: ${labelFaixa(faixa)} de ${perigo!.toLowerCase()}\nVeja o risco da sua subprefeitura no Pulsar:\n${link}`
+    : `${area.nome} ${quandoTexto}: Tranquilo\nSaiba antes que a água chegue:\n${link}`;
 
   return {
     slug, idArea: idDaArea(area.nome), nome: area.nome,
     legenda: `${area.zona === 'Centro' ? 'Centro' : `Zona ${area.zona}`} · São Paulo`.toUpperCase(),
     faixa, rotuloFaixa: labelFaixa(faixa).toUpperCase(), perigo, dado, caixa,
-    horario: horario(score ? new Date(score.timestamp) : agora, agora),
+    horario: horario(quando, agora),
     texto, link,
+    topo: deHoje ? 'RISCO AGORA' : 'ÚLTIMA LEITURA',
   };
 }

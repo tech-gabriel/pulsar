@@ -258,4 +258,16 @@ public class ConsolidadorTests
 
         envio!.Incluidas.Should().ContainSingle().Which.Gatilho.Should().Be("chuva-prevista");
     }
+
+    [Theory]
+    [InlineData(CriterioOptIn.RiscoModerado, "Atenção: chuva forte prevista em Mooca e Penha")]
+    [InlineData(CriterioOptIn.RiscoAlto, "Alerta: chuva muito forte prevista em Mooca e Penha")]
+    public void ChuvaPrevistaEmVarias_TituloSegueAFaixa(CriterioOptIn criterio, string titulo)
+    {
+        var envio = Consolidador.Consolidar(D(),
+            [P(Mooca, "Mooca", "chuva-prevista", 2, criterio), P(Penha, "Penha", "chuva-prevista", 2, criterio)], Agora);
+
+        envio!.Payload.Titulo.Should().Be(titulo);
+    }
 }
+

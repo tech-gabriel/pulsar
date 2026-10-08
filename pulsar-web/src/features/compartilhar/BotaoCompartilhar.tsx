@@ -32,6 +32,8 @@ export default function BotaoCompartilhar({ area }: { area: Area }) {
       const r = await compartilharCard(await gerarPng(canvas), dados);
       if (r === 'baixado') showToast('Imagem salva e link copiado', 'success');
       if (r === 'baixado-sem-link') showToast('Imagem salva', 'success');
+      if (r === 'aberto') showToast('Toque e segure a imagem para salvar. Link copiado.', 'success');
+      if (r === 'aberto-sem-link') showToast('Toque e segure a imagem para salvar.', 'success');
     } catch (e) {
       console.error('Falha ao gerar o card compartilhável', e);
       showToast('Não foi possível gerar a imagem agora', 'error');
@@ -42,7 +44,7 @@ export default function BotaoCompartilhar({ area }: { area: Area }) {
   }
 
   return (
-    <button type="button" onClick={compartilhar} disabled={gerando} aria-busy={gerando}
+    <button type="button" onClick={compartilhar} aria-disabled={gerando} aria-busy={gerando}
       className="rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold"
       style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}>
       {gerando ? <Loader2 size={15} className="animate-spin" /> : <Share2 size={15} />} Compartilhar

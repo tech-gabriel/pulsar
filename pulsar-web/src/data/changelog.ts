@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.15.0',
+    data: '2026-10-08',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Compartilhe o risco da sua subprefeitura',
+        descricao: 'Um card pronto para o WhatsApp e o Instagram, com o risco de agora e uma dica do que fazer.',
+      },
+    ],
+  },
+  {
     versao: '1.14.0',
     data: '2026-10-07',
     resumo: 'Avisos mais claros, com dicas para chuva, vento e calor.',

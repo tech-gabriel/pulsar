@@ -58,14 +58,15 @@ export function dadosDoCard(area: Area, catalogo: DicaDto[], agora: Date = new D
     ? { rotulo: 'O QUE FAZER AGORA', titulo: primeira.titulo, texto: primeira.descricao }
     : {
         rotulo: 'FIQUE AVISADO',
-        titulo: 'Saiba antes de a água chegar',
+        titulo: 'Saiba antes que a água chegue',
         texto: `O Pulsar avisa no seu celular quando ${comArtigo(area.nome)} entrar em Atenção ou Alerta. De graça.`,
       };
 
   const perigo = emRisco ? NOME_PERIGO[principal] : null;
   const texto = emRisco
-    ? `${area.nome} agora: ${labelFaixa(faixa)} de ${perigo!.toLowerCase()}. Veja o risco da sua subprefeitura no Pulsar: ${link}`
-    : `${area.nome} agora: Tranquilo. Saiba antes de a água chegar: ${link}`;
+    // Uma ideia por linha: no WhatsApp a mensagem chega limpa e o link fica sozinho na última.
+    ? `${area.nome} agora: ${labelFaixa(faixa)} de ${perigo!.toLowerCase()}\nVeja o risco da sua subprefeitura no Pulsar:\n${link}`
+    : `${area.nome} agora: Tranquilo\nSaiba antes que a água chegue:\n${link}`;
 
   return {
     slug, idArea: idDaArea(area.nome), nome: area.nome,

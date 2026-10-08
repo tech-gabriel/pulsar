@@ -41,7 +41,8 @@ describe('dadosDoCard', () => {
       caixa: { rotulo: 'O QUE FAZER AGORA', titulo: 'Não atravesse água', texto: 'Não atravesse água descrição' },
       horario: 'HOJE · 17H40', link: 'https://app-pulsar.com.br/cadastro?regiao=mooca',
     });
-    expect(d.texto).toBe('Mooca agora: Alerta de alagamento. Veja o risco da sua subprefeitura no Pulsar: https://app-pulsar.com.br/cadastro?regiao=mooca');
+    // Uma ideia por linha: no WhatsApp a mensagem chega limpa e o link fica sozinho na última.
+    expect(d.texto).toBe('Mooca agora: Alerta de alagamento\nVeja o risco da sua subprefeitura no Pulsar:\nhttps://app-pulsar.com.br/cadastro?regiao=mooca');
   });
 
   it('chuva com decimal usa vírgula; sem chuva em 3 h, frase de condição', () => {
@@ -62,10 +63,10 @@ describe('dadosDoCard', () => {
     const d = dadosDoCard(area({ faixa: 'BAIXO' }), CATALOGO, AGORA);
     expect(d).toMatchObject({
       perigo: null, rotuloFaixa: 'TRANQUILO', dado: 'Sem risco de chuva forte, vento ou calor agora',
-      caixa: { rotulo: 'FIQUE AVISADO', titulo: 'Saiba antes de a água chegar',
+      caixa: { rotulo: 'FIQUE AVISADO', titulo: 'Saiba antes que a água chegue',
         texto: 'O Pulsar avisa no seu celular quando a Mooca entrar em Atenção ou Alerta. De graça.' },
     });
-    expect(d.texto).toBe('Mooca agora: Tranquilo. Saiba antes de a água chegar: https://app-pulsar.com.br/cadastro?regiao=mooca');
+    expect(d.texto).toBe('Mooca agora: Tranquilo\nSaiba antes que a água chegue:\nhttps://app-pulsar.com.br/cadastro?regiao=mooca');
   });
 
   it('artigo: "o Butantã"; sem preposição conhecida, só o nome', () => {

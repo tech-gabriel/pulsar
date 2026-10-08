@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.15.1',
+    data: '2026-10-08',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Mensagem do compartilhar mais limpa',
+        descricao: 'O texto que vai junto do card agora chega em linhas separadas, com o link sozinho no fim.',
+      },
+    ],
+  },
+  {
     versao: '1.15.0',
     data: '2026-10-08',
     itens: [

@@ -46,7 +46,7 @@ describe('BotaoCompartilhar', () => {
     fireEvent.click(botao);
     soltar();
     await waitFor(() => expect(m.compartilhar).toHaveBeenCalledOnce());
-    expect(m.carregar).toHaveBeenCalledOnce();
+    expect(m.gerar).toHaveBeenCalledOnce();
   });
 
   it('baixado: avisa que a imagem foi salva e o link copiado', async () => {
@@ -62,5 +62,19 @@ describe('BotaoCompartilhar', () => {
     fireEvent.click(screen.getByRole('button', { name: /compartilhar/i }));
     await waitFor(() => expect(showToast).toHaveBeenCalledWith('Não foi possível gerar a imagem agora', 'error'));
     expect(screen.getByRole('button', { name: /compartilhar/i })).not.toBeDisabled();
+  });
+
+  it('já começa a carregar as fontes ao aparecer, para o primeiro toque não perder o gesto', () => {
+    render(<BotaoCompartilhar area={area} />);
+    expect(m.carregar).toHaveBeenCalledOnce();
+  });
+
+  it('falha ao gerar fica registrada no console para diagnóstico', async () => {
+    const erro = vi.spyOn(console, 'error').mockImplementation(() => {});
+    m.gerar.mockRejectedValue(new Error('toBlob'));
+    render(<BotaoCompartilhar area={area} />);
+    fireEvent.click(screen.getByRole('button', { name: /compartilhar/i }));
+    await waitFor(() => expect(erro).toHaveBeenCalled());
+    erro.mockRestore();
   });
 });

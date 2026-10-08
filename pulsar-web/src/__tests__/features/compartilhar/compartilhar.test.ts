@@ -54,9 +54,20 @@ describe('compartilharCard', () => {
     expect(clique).toHaveBeenCalledOnce();
   });
 
-  it('erro do share que não é cancelamento sobe para quem chamou', async () => {
+  it('sistema recusa o compartilhar (gesto expirou, NotAllowedError): baixa e copia em vez de dar erro', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
     nav.canShare = vi.fn(() => true);
     nav.share = vi.fn().mockRejectedValue(Object.assign(new Error('x'), { name: 'NotAllowedError' }));
+    nav.clipboard = { writeText };
+
+    expect(await compartilharCard(png, dados)).toBe('baixado');
+    expect(clique).toHaveBeenCalledOnce();
+    expect(writeText).toHaveBeenCalledWith(dados.texto);
+  });
+
+  it('outro erro do share sobe para quem chamou', async () => {
+    nav.canShare = vi.fn(() => true);
+    nav.share = vi.fn().mockRejectedValue(Object.assign(new Error('x'), { name: 'DataError' }));
 
     await expect(compartilharCard(png, dados)).rejects.toThrow();
   });

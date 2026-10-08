@@ -189,23 +189,25 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             Estimativa do Pulsar. Em emergência, ligue 199 (Defesa Civil) ou 193 (Bombeiros).
           </motion.p>
 
-          <motion.div variants={itemStagger} className="mt-4 grid grid-cols-3 gap-2">
+          {/* Ação principal na linha inteira (não quebra o texto no painel estreito do PC);
+              histórico e compartilhar dividem a linha de baixo. */}
+          <motion.div variants={itemStagger} className="mt-4 grid grid-cols-2 gap-2">
+            {alertaLigado ? (
+              <span className="col-span-2 rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold" style={{ background: '#DCFCE7', color: '#166534', fontSize: 14 }}>
+                <BellRing size={16} /> Alertas ligados
+              </span>
+            ) : (
+              <button type="button" className="col-span-2 rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold"
+                style={{ background: 'var(--color-pulsar-600)', color: '#fff', fontSize: 14 }} onClick={() => navigate('/app/boas-vindas')}>
+                <Bell size={16} /> Ativar alertas
+              </button>
+            )}
             <button type="button" className="rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold"
               style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}
               onClick={() => navigate(`/app/historico/${area.id}`, { state: { subNome: area.nome, zona: area.zona } })}>
               <History size={15} /> Histórico
             </button>
             <BotaoCompartilhar area={area} />
-            {alertaLigado ? (
-              <span className="rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold" style={{ background: '#DCFCE7', color: '#166534', fontSize: 13 }}>
-                <BellRing size={15} /> Alertas ligados
-              </span>
-            ) : (
-              <button type="button" className="rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold"
-                style={{ background: 'var(--color-pulsar-600)', color: '#fff', fontSize: 13 }} onClick={() => navigate('/app/boas-vindas')}>
-                <Bell size={15} /> Ativar alertas
-              </button>
-            )}
           </motion.div>
         </motion.div>
       </div>

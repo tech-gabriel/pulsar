@@ -3,12 +3,9 @@ import { getRegiaoView, getSubprefeituraView, type RegiaoView, type Subprefeitur
 import { zonas, subprefeituras, PREFIXO_REGIAO } from '../data/regioes-seo';
 import { useSeoHead } from '../hooks/useSeoHead';
 import { primeiraQueCabe } from '../utils/texto';
+import { labelFaixa } from '../utils/risco';
 
 const ORIGIN = 'https://app-pulsar.com.br';
-
-const FAIXA_LABEL: Record<string, string> = {
-  BAIXO: 'baixo', MODERADO: 'moderado', ALTO: 'alto',
-};
 
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 /** "2026-03" -> "mar/2026" */
@@ -21,7 +18,7 @@ const fmtData = (ymd: string) => `${fmtDiaMes(ymd)}/${ymd.slice(0, 4)}`;
 
 // O bloco de estatísticas fica OCULTO até haver histórico suficiente. Por design,
 // o banco só retém dados brutos recentes (poucos dias, para economizar espaço no
-// Supabase), então "dias de risco alto / chuva nos últimos 90 dias" não tem lastro
+// Supabase), então "dias em Alerta / chuva nos últimos 90 dias" não tem lastro
 // e sairia zerado e enganoso (ainda mais no inverno seco de SP). Reativar quando a
 // frente de ROLLUP (agregado diário persistido, que não pesa no banco) alimentar o
 // snapshot com histórico real — idealmente perto da estação chuvosa, quando os
@@ -213,7 +210,7 @@ function ZonaView({ view }: { view: RegiaoView }) {
           <section className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4" aria-label="Panorama recente">
             <div className="landing-stat">
               <div className="landing-stat-num">{snapshot.diasRiscoAlto}</div>
-              <div className="landing-stat-label">dias de risco alto</div>
+              <div className="landing-stat-label">dias em Alerta</div>
               <div className="landing-stat-sub">nos últimos {janelaDias} dias</div>
             </div>
             <div className="landing-stat">
@@ -223,7 +220,7 @@ function ZonaView({ view }: { view: RegiaoView }) {
             </div>
             <div className="landing-stat">
               <div className="landing-stat-num" style={{ textTransform: 'capitalize' }}>
-                {FAIXA_LABEL[snapshot.faixaPredominante]}
+                {labelFaixa(snapshot.faixaPredominante)}
               </div>
               <div className="landing-stat-label">nível de risco predominante</div>
               <div className="landing-stat-sub">na janela recente</div>

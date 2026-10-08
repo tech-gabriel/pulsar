@@ -55,4 +55,17 @@ describe('DetalheSubprefeitura', () => {
     const { container } = renderiza();
     expect(container.textContent).not.toMatch(/regi(ão|ões)/i);
   });
+
+  it('ação principal (alertas) vem primeiro, na linha inteira; histórico e compartilhar embaixo', () => {
+    push.estado = 'inativo';
+    renderiza();
+    const ativar = screen.getByRole('button', { name: /Ativar alertas/ });
+    const historico = screen.getByRole('button', { name: /Histórico/ });
+    expect(ativar.compareDocumentPosition(historico) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(ativar.className).toContain('col-span-2');
+    push.estado = 'ativo';
+    renderiza();
+    expect(screen.getAllByText('Alertas ligados')[0].className).toContain('col-span-2');
+  });
 });
+

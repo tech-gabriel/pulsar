@@ -61,7 +61,7 @@ export function desenharCard(canvas: HTMLCanvasElement, dados: DadosCard, areas:
 
   // Topo.
   c.font = MONO(700, 30); c.fillStyle = '#9FE3FF';
-  c.fillText('PULSAR · RISCO AGORA', M, M + 20);
+  c.fillText(`PULSAR · ${dados.topo}`, M, M + 20);
   c.textAlign = 'right'; c.fillText(dados.horario, W - M, M + 20); c.textAlign = 'left';
 
   // Mapa à direita, a área da subprefeitura na cor da faixa.

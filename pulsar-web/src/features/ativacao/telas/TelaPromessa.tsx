@@ -11,7 +11,7 @@ export default function TelaPromessa({ onComecar }: { onComecar: () => void }) {
         <MapaCoropletico className="at-mapa" cores={{ se: 'color-mix(in srgb, var(--color-pulsar-400) 55%, var(--bg-primary))' }} />
         <span className="at-anel" /><span className="at-anel" /><span className="at-anel" /><span className="at-pino" />
       </div>
-      <h1 ref={titulo} tabIndex={-1} className="at-titulo">Saiba antes de a <em>água chegar.</em></h1>
+      <h1 ref={titulo} tabIndex={-1} className="at-titulo">Saiba antes que a <em>água chegue.</em></h1>
       <p className="at-texto">Acompanhamos a chuva em São Paulo e avisamos você antes do risco, nos lugares que importam para você.</p>
       <div className="at-fatos">
         <div className="at-fato"><b>32</b><span>subprefeituras</span></div>

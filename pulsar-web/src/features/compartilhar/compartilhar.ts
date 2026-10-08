@@ -1,6 +1,10 @@
 import type { DadosCard } from './dadosDoCard';
 
-export type ResultadoCompartilhar = 'nativo' | 'baixado' | 'baixado-sem-link' | 'cancelado';
+export type ResultadoCompartilhar = 'nativo' | 'baixado' | 'baixado-sem-link' | 'aberto' | 'aberto-sem-link' | 'cancelado';
+
+// Navegadores embutidos (Instagram, Facebook, TikTok, LINE) ignoram o download de um blob:
+// a imagem não salvaria e o aviso mentiria. Lá ela abre numa aba, para tocar e segurar.
+const NAVEGADOR_EMBUTIDO = /Instagram|FBAN|FBAV|FB_IAB|musical_ly|TikTok|Line\//i;
 
 // Fontes do card só no primeiro compartilhar: o app não paga ~60 KB em toda página por
 // uma imagem que pouca gente gera. Em public/ por causa do SSG (ver CLAUDE.md).
@@ -48,15 +52,24 @@ export async function compartilharCard(png: Blob, dados: Pick<DadosCard, 'slug' 
     }
   }
   const url = URL.createObjectURL(png);
+  if (NAVEGADOR_EMBUTIDO.test(navigator.userAgent)) {
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return (await copiar(dados.texto)) ? 'aberto' : 'aberto-sem-link';
+  }
   const a = document.createElement('a');
   a.href = url;
   a.download = arquivo.name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return (await copiar(dados.texto)) ? 'baixado' : 'baixado-sem-link';
+}
+
+async function copiar(texto: string): Promise<boolean> {
   try {
-    await navigator.clipboard.writeText(dados.texto);
-    return 'baixado';
+    await navigator.clipboard.writeText(texto);
+    return true;
   } catch {
-    return 'baixado-sem-link';
+    return false;
   }
 }

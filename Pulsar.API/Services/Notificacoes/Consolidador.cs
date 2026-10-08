@@ -111,7 +111,10 @@ public static class Consolidador
             // Sem "de alagamento": o perigo de cada uma pode ser vento ou calor.
             "score-alto" => ($"Alerta em {lista}", "Toque para ver o que está acontecendo em cada uma."),
             "atencao" => ($"Atenção em {lista}", "Toque para ver os detalhes."),
-            "chuva-prevista" => ($"Chuva forte prevista em {lista}", "Toque para ver o horário previsto em cada uma."),
+            // O grupo tem um critério só (ver Consolidar), então a faixa vale para todas.
+            "chuva-prevista" => (grupo[0].Criterio == CriterioOptIn.RiscoAlto
+                    ? $"Alerta: chuva muito forte prevista em {lista}"
+                    : $"Atenção: chuva forte prevista em {lista}", "Toque para ver o horário previsto em cada uma."),
             "briefing-diario" => ("Suas subprefeituras hoje",
                 string.Join(" ", grupo.Take(2).Select(p => $"{p.Local}: {p.Payload.Corpo}"))
                 + (grupo.Count > 2 ? $" E mais {grupo.Count - 2}." : "")),

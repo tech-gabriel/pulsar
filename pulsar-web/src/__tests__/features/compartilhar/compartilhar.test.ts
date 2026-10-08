@@ -71,4 +71,16 @@ describe('compartilharCard', () => {
 
     await expect(compartilharCard(png, dados)).rejects.toThrow();
   });
+
+  it('navegador embutido (Instagram/Facebook): abre a imagem numa aba em vez de baixar, e copia o link', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone) AppleWebKit Instagram 300.0');
+    nav.clipboard = { writeText };
+
+    expect(await compartilharCard(png, dados)).toBe('aberto');
+    expect(abrir).toHaveBeenCalledWith('blob:x', '_blank');
+    expect(clique).not.toHaveBeenCalled();
+    expect(writeText).toHaveBeenCalledWith(dados.texto);
+  });
 });

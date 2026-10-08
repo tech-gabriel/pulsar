@@ -91,4 +91,13 @@ describe('dadosDoCard', () => {
     expect(d.link).toBe('https://app-pulsar.com.br/cadastro?regiao=mboi-mirim');
     expect(d.texto + d.dado + d.caixa.texto).not.toMatch(/[—–]/);
   });
+
+  it('leitura de outro dia: topo "ÚLTIMA LEITURA" e texto com a data, sem "agora"', () => {
+    const ontem = new Date(2026, 9, 6, 21, 5).toISOString();
+    const d = dadosDoCard(area({ quando: ontem }), CATALOGO, AGORA);
+    expect(d.topo).toBe('ÚLTIMA LEITURA');
+    expect(d.texto.startsWith('Mooca em 06/10: Alerta de alagamento')).toBe(true);
+    expect(d.texto).not.toMatch(/agora/);
+    expect(dadosDoCard(area(), CATALOGO, AGORA).topo).toBe('RISCO AGORA');
+  });
 });

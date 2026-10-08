@@ -40,8 +40,11 @@ export async function compartilharCard(png: Blob, dados: Pick<DadosCard, 'slug' 
       await navigator.share({ files: [arquivo], text: dados.texto });
       return 'nativo';
     } catch (e) {
-      if ((e as { name?: string }).name === 'AbortError') return 'cancelado';
-      throw e;
+      const nome = (e as { name?: string }).name;
+      if (nome === 'AbortError') return 'cancelado';
+      // O navegador só deixa compartilhar logo depois do toque; se a geração passou desse
+      // limite (aparelho lento, rede ruim), a imagem existe: cai no baixar e copiar.
+      if (nome !== 'NotAllowedError') throw e;
     }
   }
   const url = URL.createObjectURL(png);

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2, Share2 } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { useCatalogoDicas } from '../../hooks/useCatalogoDicas';
@@ -16,6 +16,10 @@ export default function BotaoCompartilhar({ area }: { area: Area }) {
   // O state só muda no próximo render; o ref barra o segundo toque no mesmo tick.
   const ocupado = useRef(false);
 
+  // Fontes já no aparecer do botão: o compartilhar nativo exige o gesto recente, e esperar
+  // a rede depois do toque pode estourar esse limite. A falha aqui é ignorada: o toque tenta de novo.
+  useEffect(() => { carregarFontesCard().catch(() => {}); }, []);
+
   async function compartilhar() {
     if (ocupado.current) return;
     ocupado.current = true;
@@ -28,7 +32,8 @@ export default function BotaoCompartilhar({ area }: { area: Area }) {
       const r = await compartilharCard(await gerarPng(canvas), dados);
       if (r === 'baixado') showToast('Imagem salva e link copiado', 'success');
       if (r === 'baixado-sem-link') showToast('Imagem salva', 'success');
-    } catch {
+    } catch (e) {
+      console.error('Falha ao gerar o card compartilhável', e);
       showToast('Não foi possível gerar a imagem agora', 'error');
     } finally {
       ocupado.current = false;

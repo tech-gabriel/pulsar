@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.15.2',
+    data: '2026-10-08',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Botões mais fáceis de tocar',
+        descricao: 'No detalhe da subprefeitura, ativar os alertas ganhou a linha inteira, e histórico e compartilhar ficaram mais largos, no celular e no computador.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Compartilhar dentro do Instagram',
+        descricao: 'Aberto pelo navegador do Instagram ou do Facebook, o card agora abre numa aba para você tocar e segurar para salvar.',
+      },
+    ],
+  },
+  {
     versao: '1.15.1',
     data: '2026-10-08',
     itens: [

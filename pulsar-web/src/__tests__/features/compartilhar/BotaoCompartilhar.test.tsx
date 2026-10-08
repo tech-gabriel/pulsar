@@ -77,4 +77,25 @@ describe('BotaoCompartilhar', () => {
     await waitFor(() => expect(erro).toHaveBeenCalled());
     erro.mockRestore();
   });
+
+  it('enquanto gera, fica ocupado sem perder o foco do teclado (aria-disabled, não disabled)', async () => {
+    let soltar!: () => void;
+    m.gerar.mockReturnValue(new Promise<Blob>((r) => { soltar = () => r(new Blob(['x'])); }));
+    render(<BotaoCompartilhar area={area} />);
+    const botao = screen.getByRole('button', { name: /compartilhar/i });
+    botao.focus();
+    fireEvent.click(botao);
+    await waitFor(() => expect(botao).toHaveAttribute('aria-disabled', 'true'));
+    expect(botao).not.toBeDisabled();
+    expect(document.activeElement).toBe(botao);
+    soltar();
+    await waitFor(() => expect(botao).toHaveAttribute('aria-disabled', 'false'));
+  });
+
+  it('aberto no navegador embutido: explica como salvar', async () => {
+    m.compartilhar.mockResolvedValue('aberto');
+    render(<BotaoCompartilhar area={area} />);
+    fireEvent.click(screen.getByRole('button', { name: /compartilhar/i }));
+    await waitFor(() => expect(showToast).toHaveBeenCalledWith('Toque e segure a imagem para salvar. Link copiado.', 'success'));
+  });
 });

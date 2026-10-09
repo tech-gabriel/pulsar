@@ -19,8 +19,11 @@ namespace Pulsar.Tests.Helpers;
 /// </summary>
 public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
 {
-    /// <summary>E-mail configurado em Admin:Emails — promovido a ADMIN no cadastro/login.</summary>
+    /// <summary>E-mail configurado em Admin:Emails: nasce ADMIN quando a conta é criada com ele.</summary>
     public const string EmailAdminBootstrap = "admin.bootstrap@pulsar.test";
+
+    /// <summary>Segundo e-mail de Admin:Emails que nenhum teste cadastra (alvo de ataques de troca de e-mail).</summary>
+    public const string EmailAdminSemDono = "admin.semdono@pulsar.test";
 
     // Conexão persistida durante toda a sessão de testes da fixture
     private readonly SqliteConnection _connection = new("Data Source=:memory:");
@@ -41,6 +44,7 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
                 ["Jwt:ExpirationHours"] = "1",
                 // E-mail de bootstrap de admin usado pelos testes de autorização.
                 ["Admin:Emails:0"]      = EmailAdminBootstrap,
+                ["Admin:Emails:1"]      = EmailAdminSemDono,
             });
         });
 

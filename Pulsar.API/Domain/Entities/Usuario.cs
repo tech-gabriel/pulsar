@@ -19,4 +19,7 @@ public class Usuario
     public IList<UsuarioSubprefeitura> Favoritos { get; set; } = new List<UsuarioSubprefeitura>();
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
+
+    /// <summary>Forma canônica do e-mail (sem espaços nas pontas, minúsculas): a única que se grava e se busca.</summary>
+    public static string NormalizarEmail(string email) => email.Trim().ToLowerInvariant();
 }

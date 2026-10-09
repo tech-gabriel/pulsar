@@ -163,13 +163,14 @@ public class AuthService : IAuthService
 
     /// <summary>
     /// Indica se o e-mail consta na lista <c>Admin:Emails</c> da configuração
-    /// (comparação case-insensitive). Usado para o bootstrap do primeiro admin.
+    /// pela mesma forma canônica do banco (<see cref="Usuario.NormalizarEmail"/>): um segundo jeito
+    /// de comparar abriria brecha entre "parece igual aqui" e "é diferente lá". Bootstrap do primeiro admin.
     /// </summary>
     private bool EhEmailAdmin(string email)
     {
         var emails = _configuration.GetSection("Admin:Emails").Get<string[]>();
-        return emails is not null
-            && emails.Any(e => string.Equals(e, email, StringComparison.OrdinalIgnoreCase));
+        var alvo = Usuario.NormalizarEmail(email);
+        return emails is not null && emails.Any(e => Usuario.NormalizarEmail(e) == alvo);
     }
 
     private string GerarToken(Usuario usuario)

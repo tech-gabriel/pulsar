@@ -93,6 +93,17 @@ public class SegurancaAuthTests : IClassFixture<PulsarWebApplicationFactory>
         login.Usuario.Role.Should().Be(RoleAcesso.USUARIO);
     }
 
+    [Theory]
+    [InlineData("admin.bootſtrap@pulsar.test")]   // ſ (s longo): maiúscula dele é "S"
+    [InlineData("admin.bootstrap@pulsar.teſt")]
+    public async Task Cadastro_ComUnicodeQueSoCasaSemCaixa_NaoViraAdmin(string email)
+    {
+        var resp = await Cadastrar(email);
+
+        if (resp.IsSuccessStatusCode)
+            (await Ler(resp)).Usuario.Role.Should().Be(RoleAcesso.USUARIO);
+    }
+
     private Task<HttpResponseMessage> AtualizarPerfil(LoginResponseDto sessao, string novoEmail)
     {
         var req = new HttpRequestMessage(HttpMethod.Put, $"/api/usuarios/{sessao.Usuario.Id}")

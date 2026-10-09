@@ -29,7 +29,7 @@ import { resolverDeepLink } from '../data/regioes-seo';
 import OverlayAlagamentoToggle from '../components/mapa/OverlayAlagamentoToggle';
 import CardAlagamentoProximo from '../components/mapa/CardAlagamentoProximo';
 import { useOcorrenciasAlagamento } from '../hooks/useOcorrenciasAlagamento';
-import { buscarOcorrenciasProximas } from '../api/ocorrencias';
+import { buscarOcorrenciasProximas, RAIO_PROXIMAS_M } from '../api/ocorrencias';
 import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from '../types';
 
 export default function MapaPage() {
@@ -116,40 +116,54 @@ export default function MapaPage() {
   }
 
   // Núcleo compartilhado por busca e geolocalização: resolve o ponto para uma
-  // seleção de região (ou aviso) e aplica no estado do mapa.
-  function selecionarPorPonto(lat: number, lon: number, origem: 'busca' | 'localizacao') {
-    setPontoBusca({ lat, lon });
-    const sel = resolverSelecao(lat, lon, geojson as FeatureCollection | null, subprefeituras, origem);
+  // seleção de região (ou aviso) e aplica no estado do mapa. Devolve se caiu na área.
+  function selecionarPorPonto(ponto: PontoBusca, origem: 'busca' | 'localizacao') {
+    setPontoBusca(ponto);
+    const sel = resolverSelecao(ponto.lat, ponto.lon, geojson as FeatureCollection | null, subprefeituras, origem);
     if (sel.aviso) {
       setSubSelecionada(null);
       setAvisoBusca(sel.aviso);
-      return;
+      return false;
     }
     setAvisoBusca(null);
     setSubSelecionada(sel.sub);
     setZonaEmFoco(null);
     if (isMobile) setPainelMobileAberto(false);
+    return true;
+  }
+
+  // Pin arrastado: o ponto passa a ser exato (sem círculo nem aviso) e o mapa não voa.
+  function handleMoverPonto(lat: number, lon: number) {
+    selecionarPorPonto({ lat, lon, ajustado: true }, 'busca');
+    void atualizarProximas(lat, lon);
   }
 
   // Seleção de um endereço na busca: marca o ponto no mapa, voa até ele e resolve
   // a subprefeitura/região correspondente (point-in-polygon sobre o GeoJSON já
   // carregado), abrindo o painel de detalhe. Fora dos polígonos → aviso.
   function handleSelecionarEndereco(endereco: EnderecoBusca) {
-    selecionarPorPonto(endereco.latitude, endereco.longitude, 'busca');
+    selecionarPorPonto({ lat: endereco.latitude, lon: endereco.longitude }, 'busca');
+  }
+
+  async function atualizarProximas(lat: number, lon: number) {
+    if (!overlayAlagamento) return;
+    try {
+      setProximas(await buscarOcorrenciasProximas(lat, lon));
+    } catch {
+      // silencioso: o card de proximidade é complementar; a região já foi resolvida
+    }
   }
 
   // Botão "usar minha localização": detecta o ponto e reusa selecionarPorPonto.
+  // Leitura pior que o raio do "perto de mim" pede ajuste manual do pin.
   async function handleUsarLocalizacao() {
     try {
-      const { lat, lon } = await detectar();
-      selecionarPorPonto(lat, lon, 'localizacao');
-      if (overlayAlagamento) {
-        try {
-          setProximas(await buscarOcorrenciasProximas(lat, lon));
-        } catch {
-          // silencioso: o card de proximidade é complementar; a região já foi resolvida
-        }
+      const { lat, lon, precisao } = await detectar();
+      const dentro = selecionarPorPonto({ lat, lon, precisao }, 'localizacao');
+      if (dentro && precisao > RAIO_PROXIMAS_M) {
+        setAvisoBusca(`Localização aproximada (±${Math.round(precisao)} m). Arraste o pin para ajustar.`);
       }
+      await atualizarProximas(lat, lon);
     } catch (err) {
       const tipo = err instanceof GeoError ? err.tipo : 'indisponivel';
       showToast(
@@ -202,6 +216,7 @@ export default function MapaPage() {
           zonaEmFoco={zonaEmFoco}
           subSelecionadaAtiva={!!subSelecionada}
           pontoBusca={pontoBusca}
+          onMoverPonto={handleMoverPonto}
           overlayAlagamento={overlayAlagamento}
           ocorrencias={ocorrencias}
         />

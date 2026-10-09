@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, ZoomControl, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { GeoJsonObject } from 'geojson';
@@ -21,6 +21,10 @@ const BUSCA_ZOOM = 16;
 export interface PontoBusca {
   lat: number;
   lon: number;
+  /** Raio de erro (m) quando o ponto veio da geolocalização: desenha o círculo. */
+  precisao?: number;
+  /** Ponto arrastado à mão: o mapa já está nele, então não voa de novo. */
+  ajustado?: boolean;
 }
 
 // Pin custom para o resultado da busca. Usamos divIcon (SVG inline) para evitar
@@ -79,6 +83,8 @@ interface Props {
   zonaEmFoco: string | null;
   subSelecionadaAtiva: boolean;
   pontoBusca: PontoBusca | null;
+  /** Pin solto depois de arrastado, para corrigir uma localização imprecisa. */
+  onMoverPonto: (lat: number, lon: number) => void;
   overlayAlagamento: boolean;
   ocorrencias: OcorrenciaAlagamentoDto[];
 }
@@ -131,7 +137,14 @@ function MapController({
 
   // Resultado da busca: voa até o endereço selecionado.
   useEffect(() => {
-    if (pontoBusca) map.flyTo([pontoBusca.lat, pontoBusca.lon], BUSCA_ZOOM, { duration: 0.8 });
+    if (!pontoBusca || pontoBusca.ajustado) return;
+    const centro = L.latLng(pontoBusca.lat, pontoBusca.lon);
+    // Com precisão, enquadra o círculo inteiro: no zoom da busca um erro grande cobriria a tela.
+    if (pontoBusca.precisao !== undefined) {
+      map.flyToBounds(centro.toBounds(pontoBusca.precisao * 2), { maxZoom: BUSCA_ZOOM, duration: 0.8 });
+    } else {
+      map.flyTo(centro, BUSCA_ZOOM, { duration: 0.8 });
+    }
   }, [pontoBusca, map]);
 
   return null;
@@ -146,6 +159,7 @@ export default function MapaBase({
   zonaEmFoco,
   subSelecionadaAtiva,
   pontoBusca,
+  onMoverPonto,
   overlayAlagamento,
   ocorrencias,
 }: Props) {
@@ -178,8 +192,27 @@ export default function MapaBase({
         subSelecionada={subSelecionada}
         pontoBusca={pontoBusca}
       />
+      {pontoBusca?.precisao !== undefined && (
+        <Circle
+          center={[pontoBusca.lat, pontoBusca.lon]}
+          radius={pontoBusca.precisao}
+          pathOptions={{ color: '#00BCFF', weight: 1, fillOpacity: 0.12 }}
+          interactive={false}
+        />
+      )}
       {pontoBusca && (
-        <Marker position={[pontoBusca.lat, pontoBusca.lon]} icon={pinBusca} />
+        <Marker
+          position={[pontoBusca.lat, pontoBusca.lon]}
+          icon={pinBusca}
+          draggable
+          title="Arraste para ajustar o ponto"
+          eventHandlers={{
+            dragend: (e) => {
+              const { lat, lng } = (e.target as L.Marker).getLatLng();
+              onMoverPonto(lat, lng);
+            },
+          }}
+        />
       )}
       {overlayAlagamento && ocorrencias.length > 0 && (
         <OcorrenciasLayer ocorrencias={ocorrencias} />

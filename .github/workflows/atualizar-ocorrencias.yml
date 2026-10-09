@@ -1,9 +1,10 @@
 name: Atualizar ocorrências (SEO)
 
-# Redeploy semanal do Render só para regerar o snapshot de ocorrências da Defesa
-# Civil (GeoSampa) nas páginas de subprefeitura. O snapshot é gerado no próprio
-# build (npm run build), então basta disparar um deploy do master: nada é
-# commitado por bot. Se o GeoSampa estiver fora, o build mantém o JSON anterior.
+# Redeploy semanal do Render só para regerar os snapshots das páginas de SEO: as
+# ocorrências da Defesa Civil (GeoSampa) e as estatísticas do rollup (endpoint
+# público /api/estatisticas/regioes). Os dois são gerados no próprio build
+# (npm run build), então basta disparar um deploy do master: nada é commitado por
+# bot. Se uma fonte estiver fora, o build mantém o JSON anterior dela.
 #
 # Requer o secret RENDER_DEPLOY_HOOK_URL (Render > serviço pulsar-web > Settings >
 # Deploy Hook).

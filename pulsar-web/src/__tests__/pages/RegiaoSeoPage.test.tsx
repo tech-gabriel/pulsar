@@ -29,14 +29,6 @@ describe('RegiaoSeoPage', () => {
     await waitFor(() => expect(document.title).toContain('Zona Leste'));
   });
 
-  it('mantém o bloco de estatísticas oculto até haver histórico suficiente', () => {
-    // Enquanto ESTATISTICAS_PRONTAS = false (falta rollup de histórico), os cards
-    // de "dias de risco alto / chuva acumulada" não devem aparecer.
-    renderRota('/risco-de-alagamento/zona-leste');
-    expect(screen.queryByText(/dias de risco alto/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/chuva acumulada/i)).not.toBeInTheDocument();
-  });
-
   it('cross-linka para as outras zonas', () => {
     renderRota('/risco-de-alagamento/zona-leste');
     expect(screen.getByRole('link', { name: /Zona Sul/ })).toHaveAttribute(

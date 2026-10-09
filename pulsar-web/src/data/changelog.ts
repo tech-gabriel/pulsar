@@ -25,6 +25,27 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.16.0',
+    data: '2026-10-09',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Sua localização mais precisa',
+        descricao: 'O mapa refina o GPS por alguns segundos, mostra um círculo com a margem de erro e deixa você arrastar o pin para o ponto certo.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Números da sua região',
+        descricao: 'As páginas de cada subprefeitura e zona mostram dias em alerta, chuva acumulada, faixa mais comum e o dia mais chuvoso dos últimos 90 dias, assim que houver histórico suficiente.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Mais segurança',
+        descricao: 'Reforçamos a proteção das contas, dos alertas e do e-mail de recuperação de senha, e atualizamos as dependências do site.',
+      },
+    ],
+  },
+  {
     versao: '1.15.2',
     data: '2026-10-08',
     itens: [

@@ -3,7 +3,7 @@ import { getRegiaoView, getSubprefeituraView, type RegiaoView, type Subprefeitur
 import { zonas, subprefeituras, PREFIXO_REGIAO } from '../data/regioes-seo';
 import { useSeoHead } from '../hooks/useSeoHead';
 import { primeiraQueCabe } from '../utils/texto';
-import { labelFaixa } from '../utils/risco';
+import BlocoEstatisticas from '../components/seo/BlocoEstatisticas';
 
 const ORIGIN = 'https://app-pulsar.com.br';
 
@@ -15,16 +15,6 @@ const fmtMes = (ym: string) => `${MESES[Number(ym.slice(5, 7)) - 1]}/${ym.slice(
 const fmtDiaMes = (ymd: string) => `${ymd.slice(8, 10)}/${ymd.slice(5, 7)}`;
 /** "2026-05-11" -> "11/05/2026" */
 const fmtData = (ymd: string) => `${fmtDiaMes(ymd)}/${ymd.slice(0, 4)}`;
-
-// O bloco de estatísticas fica OCULTO até haver histórico suficiente. Por design,
-// o banco só retém dados brutos recentes (poucos dias, para economizar espaço no
-// Supabase), então "dias em Alerta / chuva nos últimos 90 dias" não tem lastro
-// e sairia zerado e enganoso (ainda mais no inverno seco de SP). Reativar quando a
-// frente de ROLLUP (agregado diário persistido, que não pesa no banco) alimentar o
-// snapshot com histórico real — idealmente perto da estação chuvosa, quando os
-// números ficam diferenciados por zona. Todo o pipeline (snapshot/merge/JSX) já
-// está pronto; basta virar esta flag (ou torná-la data-driven pelo snapshot).
-const ESTATISTICAS_PRONTAS = false;
 
 const h1Style = { fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(28px, 5vw, 42px)', color: 'var(--text-primary)' };
 const h2Style = { fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 26px)', color: 'var(--text-primary)' };
@@ -186,7 +176,7 @@ function LinksNav({ titulo, itens }: { titulo: string; itens: { slug: string; no
 }
 
 function ZonaView({ view }: { view: RegiaoView }) {
-  const { slug, nome, snapshot, janelaDias } = view;
+  const { slug, nome, estatisticas } = view;
   const subsDaZona = subprefeituras.filter((s) => s.zonaSlug === slug);
   const outrasZonas = zonas.filter((z) => z.slug !== slug);
 
@@ -206,27 +196,7 @@ function ZonaView({ view }: { view: RegiaoView }) {
           O Pulsar calcula o risco de chuva forte e alagamento em cada uma, com alerta antecipado.
         </p>
 
-        {ESTATISTICAS_PRONTAS && snapshot && (
-          <section className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4" aria-label="Panorama recente">
-            <div className="landing-stat">
-              <div className="landing-stat-num">{snapshot.diasRiscoAlto}</div>
-              <div className="landing-stat-label">dias em Alerta</div>
-              <div className="landing-stat-sub">nos últimos {janelaDias} dias</div>
-            </div>
-            <div className="landing-stat">
-              <div className="landing-stat-num">{snapshot.chuvaAcumuladaMm} mm</div>
-              <div className="landing-stat-label">chuva acumulada estimada</div>
-              <div className="landing-stat-sub">no período</div>
-            </div>
-            <div className="landing-stat">
-              <div className="landing-stat-num" style={{ textTransform: 'capitalize' }}>
-                {labelFaixa(snapshot.faixaPredominante)}
-              </div>
-              <div className="landing-stat-label">nível de risco predominante</div>
-              <div className="landing-stat-sub">na janela recente</div>
-            </div>
-          </section>
-        )}
+        <BlocoEstatisticas estatisticas={estatisticas} escopo="zona" />
 
         <section className="mt-10">
           <h2 style={h2Style}>Subprefeituras da {nome}</h2>
@@ -248,7 +218,7 @@ function ZonaView({ view }: { view: RegiaoView }) {
 }
 
 function SubprefeituraSeoView({ view }: { view: SubprefeituraView }) {
-  const { slug, nome, emNome, zona, distritos, descricao, ocorrencias, periodo, geradoEm } = view;
+  const { slug, nome, emNome, zona, distritos, descricao, ocorrencias, periodo, geradoEm, estatisticas } = view;
   const vizinhas = subprefeituras.filter((s) => s.zonaSlug === zona.slug && s.slug !== slug);
   // Sé é a única da Zona Centro: sem vizinhas, cruza para as outras zonas.
   const links = vizinhas.length > 0
@@ -272,6 +242,8 @@ function SubprefeituraSeoView({ view }: { view: SubprefeituraView }) {
         <p className="mt-3 max-w-2xl" style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
           {descricao}
         </p>
+
+        <BlocoEstatisticas estatisticas={estatisticas} escopo="subprefeitura" />
 
         <section className="mt-10" aria-labelledby="ocorrencias">
           <h2 id="ocorrencias" style={h2Style}>Alagamentos registrados {emNome}</h2>

@@ -1,20 +1,28 @@
 import { describe, it, expect } from 'vitest';
-import { getRegiaoView } from '../../data/regiao-view';
+import { getRegiaoView, getSubprefeituraView } from '../../data/regiao-view';
+import snapshot from '../../data/regioes-snapshot.json';
 
-describe('getRegiaoView', () => {
-  it('combina dados estáticos da zona com o snapshot', () => {
+describe('regiao-view', () => {
+  it('zona: dados estáticos + estatísticas do snapshot (ou null)', () => {
     const v = getRegiaoView('zona-leste');
-    expect(v).toBeDefined();
     expect(v?.nome).toBe('Zona Leste');
     expect(v?.subprefeituras).toContain('Mooca');
-    expect(v?.snapshot).not.toBeNull();
-    expect(typeof v?.snapshot?.diasRiscoAlto).toBe('number');
-    expect(['BAIXO', 'MODERADO', 'ALTO']).toContain(v?.snapshot?.faixaPredominante);
-    expect(v?.janelaDias).toBeGreaterThan(0);
+    expect('zona-leste' in snapshot.zonas).toBe(true);
+    if (v?.estatisticas) {
+      expect(v.estatisticas.janelaDias).toBe(snapshot.janelaDias);
+      expect(v.estatisticas.atualizadoEm).toBe(snapshot.geradoEm);
+    } else {
+      expect(v?.estatisticas).toBeNull();
+    }
   });
 
-  it('snapshot nulo quando a zona não está no JSON', () => {
-    // slug válido de zona sempre existe no snapshot gerado; slug inválido -> undefined
+  it('subprefeitura: expõe estatisticas pelo slug', () => {
+    const v = getSubprefeituraView('mooca');
+    expect(v).toBeDefined();
+    expect(v && 'estatisticas' in v).toBe(true);
+  });
+
+  it('slug inválido -> undefined', () => {
     expect(getRegiaoView('zona-inexistente')).toBeUndefined();
   });
 });

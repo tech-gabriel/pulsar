@@ -13,41 +13,87 @@ export class GeoError extends Error {
   }
 }
 
+/** Erro (m) a partir do qual a leitura é boa o bastante para parar de refinar. */
+const PRECISAO_BOA_M = 50;
+/** Tempo máximo refinando antes de entregar a melhor leitura. */
+const REFINO_MAX_MS = 10_000;
+
+export interface PontoDetectado {
+  lat: number;
+  lon: number;
+  /** Raio de erro da leitura, em metros (`coords.accuracy`). */
+  precisao: number;
+}
+
 /**
- * Encapsula `navigator.geolocation.getCurrentPosition` como uma Promise, com
- * timeout e erros tipados. Detecção one-shot, em primeiro plano - sem rastreio
- * contínuo. `carregando` fica true enquanto o navegador resolve a posição.
+ * Detecta a posição em primeiro plano, refinando: escuta `watchPosition` e fica
+ * com a leitura de menor erro, até ela chegar a PRECISAO_BOA_M ou o tempo acabar
+ * (aí entrega a melhor que tiver). Sem leitura nenhuma no prazo → `timeout`.
+ * Sempre encerra o watch: não é rastreio contínuo. `carregando` fica true enquanto refina.
  */
 export function useGeolocalizacao() {
   const [carregando, setCarregando] = useState(false);
 
   const detectar = useCallback(
     () =>
-      new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+      new Promise<PontoDetectado>((resolve, reject) => {
         if (typeof navigator === 'undefined' || !navigator.geolocation) {
           reject(new GeoError('sem-suporte'));
           return;
         }
         setCarregando(true);
-        navigator.geolocation.getCurrentPosition(
+        let melhor: PontoDetectado | null = null;
+        let id: number | undefined = undefined;
+        let terminou = false;
+
+        function encerrar() {
+          terminou = true;
+          clearTimeout(prazo);
+          if (id !== undefined) navigator.geolocation.clearWatch(id);
+          setCarregando(false);
+        }
+        function entregar(ponto: PontoDetectado) {
+          encerrar();
+          track.usouGeolocalizacao(true);
+          resolve(ponto);
+        }
+        function falhar(tipo: ErroGeo) {
+          encerrar();
+          track.usouGeolocalizacao(false);
+          reject(new GeoError(tipo));
+        }
+
+        const prazo = setTimeout(
+          () => (melhor ? entregar(melhor) : falhar('timeout')),
+          REFINO_MAX_MS,
+        );
+        id = navigator.geolocation.watchPosition(
           (pos) => {
-            setCarregando(false);
-            track.usouGeolocalizacao(true);
-            resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+            if (terminou) return;
+            const leitura = {
+              lat: pos.coords.latitude,
+              lon: pos.coords.longitude,
+              precisao: pos.coords.accuracy,
+            };
+            if (!melhor || leitura.precisao < melhor.precisao) melhor = leitura;
+            if (melhor.precisao <= PRECISAO_BOA_M) entregar(melhor);
           },
           (err) => {
-            setCarregando(false);
-            track.usouGeolocalizacao(false);
-            const tipo: ErroGeo =
+            if (terminou) return;
+            // Falha no meio do refino não descarta o que já foi lido.
+            if (melhor) return entregar(melhor);
+            falhar(
               err.code === err.PERMISSION_DENIED
                 ? 'negado'
                 : err.code === err.TIMEOUT
                   ? 'timeout'
-                  : 'indisponivel';
-            reject(new GeoError(tipo));
+                  : 'indisponivel',
+            );
           },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+          { enableHighAccuracy: true, timeout: REFINO_MAX_MS, maximumAge: 0 },
         );
+        // O callback pode ter rodado síncrono antes de `id` existir.
+        if (terminou) navigator.geolocation.clearWatch(id);
       }),
     [],
   );

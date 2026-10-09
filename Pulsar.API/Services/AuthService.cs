@@ -29,13 +29,15 @@ public class AuthService : IAuthService
 
         PoliticaSenha.Validar(request.Senha);
 
+        var email = Usuario.NormalizarEmail(request.Email);
         var usuario = new Usuario
         {
             Nome = request.Nome,
-            Email = request.Email,
+            Email = email,
             Perfil = request.Perfil,
-            // Bootstrap: e-mails listados em Admin:Emails nascem como ADMIN.
-            Role = EhEmailAdmin(request.Email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
+            // Bootstrap: e-mails listados em Admin:Emails nascem como ADMIN. Só na criação:
+            // promover conta existente deixava virar admin trocando o e-mail no perfil.
+            Role = EhEmailAdmin(email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
             SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.Senha)
         };
 
@@ -75,7 +77,7 @@ public class AuthService : IAuthService
         }
 
         usuario.Nome = request.Nome;
-        usuario.Email = request.Email;
+        usuario.Email = Usuario.NormalizarEmail(request.Email);
         usuario.Perfil = request.Perfil;
 
         await _usuarioRepository.AtualizarAsync(usuario);
@@ -97,15 +99,6 @@ public class AuthService : IAuthService
 
         if (!usuario.Ativo)
             throw new UnauthorizedAccessException("Conta desativada. Entre em contato com o suporte.");
-
-        // Auto-heal do bootstrap: se o e-mail está na lista de admins mas a conta
-        // ainda não é ADMIN (ex.: criada antes da configuração), promove agora.
-        if (EhEmailAdmin(usuario.Email) && usuario.Role != RoleAcesso.ADMIN)
-        {
-            usuario.Role = RoleAcesso.ADMIN;
-            await _usuarioRepository.AtualizarAsync(usuario);
-            await _usuarioRepository.SalvarAsync();
-        }
 
         return new LoginResponseDto
         {
@@ -145,7 +138,7 @@ public class AuthService : IAuthService
             usuario = new Usuario
             {
                 Nome = string.IsNullOrWhiteSpace(payload.Name) ? payload.Email : payload.Name,
-                Email = payload.Email,
+                Email = Usuario.NormalizarEmail(payload.Email),
                 Perfil = TipoPerfil.CIDADAO,
                 Role = EhEmailAdmin(payload.Email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
                 // Sem login por senha: hash aleatório e inutilizável (não corresponde a nenhuma senha).
@@ -158,14 +151,6 @@ public class AuthService : IAuthService
         {
             if (!usuario.Ativo)
                 throw new UnauthorizedAccessException("Conta desativada. Entre em contato com o suporte.");
-
-            // Auto-heal do bootstrap de admin (mesma regra do login por senha).
-            if (EhEmailAdmin(usuario.Email) && usuario.Role != RoleAcesso.ADMIN)
-            {
-                usuario.Role = RoleAcesso.ADMIN;
-                await _usuarioRepository.AtualizarAsync(usuario);
-                await _usuarioRepository.SalvarAsync();
-            }
         }
 
         return new LoginResponseDto

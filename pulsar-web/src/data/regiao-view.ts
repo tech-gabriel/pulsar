@@ -2,17 +2,25 @@
 import {
   getZonaPorSlug, getSubprefeituraPorSlug, type ZonaSeo, type SubprefeituraSeo,
 } from './regioes-seo';
+import type { FaixaRisco } from '../types';
 import snapshot from './regioes-snapshot.json';
 import ocorrenciasSnapshot from './ocorrencias-snapshot.json';
 
-export interface SnapshotZona {
-  diasRiscoAlto: number;
-  chuvaAcumuladaMm: number;
-  faixaPredominante: 'BAIXO' | 'MODERADO' | 'ALTO';
+/** Estatísticas do rollup de uma página (GET /api/estatisticas/regioes, via snapshot). */
+export interface EstatisticasRegiao {
+  diasCompletos: number;
+  diasAlerta: number;
+  chuvaTotalMm: number;
+  faixaPredominante: FaixaRisco;
+  diaMaisChuvoso: { dia: string; mm: number } | null;
+}
+/** Estatísticas + o contexto da janela, prontas para o BlocoEstatisticas. */
+export interface PainelEstatisticas extends EstatisticasRegiao {
+  janelaDias: number;
+  atualizadoEm: string; // "2026-10-13"
 }
 export interface RegiaoView extends ZonaSeo {
-  snapshot: SnapshotZona | null;
-  janelaDias: number;
+  estatisticas: PainelEstatisticas | null;
 }
 
 export interface OcorrenciasSub {
@@ -25,12 +33,14 @@ export interface SubprefeituraView extends SubprefeituraSeo {
   ocorrencias: OcorrenciasSub | null;
   periodo: { de: string | null; ate: string | null };
   geradoEm: string;
+  estatisticas: PainelEstatisticas | null;
 }
 
-const dados = snapshot as {
+const dados = snapshot as unknown as {
   geradoEm: string;
   janelaDias: number;
-  zonas: Record<string, SnapshotZona>;
+  subprefeituras: Record<string, EstatisticasRegiao | null>;
+  zonas: Record<string, EstatisticasRegiao | null>;
 };
 
 const ocorrencias = ocorrenciasSnapshot as {
@@ -39,10 +49,14 @@ const ocorrencias = ocorrenciasSnapshot as {
   subprefeituras: Record<string, OcorrenciasSub>;
 };
 
+function painel(e: EstatisticasRegiao | null | undefined): PainelEstatisticas | null {
+  return e ? { ...e, janelaDias: dados.janelaDias, atualizadoEm: dados.geradoEm } : null;
+}
+
 export function getRegiaoView(slug: string): RegiaoView | undefined {
   const zona = getZonaPorSlug(slug);
   if (!zona) return undefined;
-  return { ...zona, snapshot: dados.zonas[slug] ?? null, janelaDias: dados.janelaDias };
+  return { ...zona, estatisticas: painel(dados.zonas[slug]) };
 }
 
 export function getSubprefeituraView(slug: string): SubprefeituraView | undefined {
@@ -54,5 +68,6 @@ export function getSubprefeituraView(slug: string): SubprefeituraView | undefine
     ocorrencias: ocorrencias.subprefeituras[slug] ?? null,
     periodo: ocorrencias.periodo,
     geradoEm: ocorrencias.geradoEm,
+    estatisticas: painel(dados.subprefeituras[slug]),
   };
 }

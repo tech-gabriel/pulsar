@@ -89,6 +89,17 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Estatísticas públicas das páginas de SEO: o build chama ~1x/semana. O limite
+    // só existe para conter chamada em loop (a resposta já vem de cache).
+    options.AddPolicy("estatisticas", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 // --- JWT Authentication ---

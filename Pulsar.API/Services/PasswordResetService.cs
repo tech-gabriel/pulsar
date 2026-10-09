@@ -97,7 +97,7 @@ public class PasswordResetService : IPasswordResetService
     public static string MontarEmailHtml(string nome, string link, int expiracaoMinutos) => $$"""
         <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; color: #1e293b;">
           <h1 style="color: #0ea5e9; font-size: 22px;">Pulsar</h1>
-          <p>Olá, {{nome}}!</p>
+          <p>Olá, {{System.Net.WebUtility.HtmlEncode(nome)}}!</p>
           <p>Recebemos um pedido para redefinir a senha da sua conta. Clique no botão abaixo para criar uma nova senha:</p>
           <p style="text-align: center; margin: 28px 0;">
             <a href="{{link}}" style="background: #0ea5e9; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; display: inline-block;">Redefinir senha</a>

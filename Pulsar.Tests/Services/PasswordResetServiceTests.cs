@@ -211,4 +211,16 @@ public class PasswordResetServiceTests
         html.Should().Contain("http://localhost:5173/redefinir-senha?token=abc");
         html.Should().Contain("60 minutos");
     }
+
+    [Fact]
+    public void MontarEmailHtml_EscapaONome_ParaNaoInjetarLinkNoEmailLegitimo()
+    {
+        // Sem verificação de e-mail, quem cadastra o e-mail da vítima escolhe o nome que
+        // aparece no e-mail de reset enviado pelo Pulsar (auditoria 2026-10-09).
+        var html = PasswordResetService.MontarEmailHtml(
+            "<a href=\"https://golpe.example\">Clique aqui</a>", "http://localhost:5173/redefinir-senha?token=abc", 60);
+
+        html.Should().NotContain("https://golpe.example\">");
+        html.Should().Contain("&lt;a href=");
+    }
 }

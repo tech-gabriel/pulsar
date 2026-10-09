@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/gerar-snapshot-ocorrencias.mjs --manter-se-falhar && node scripts/gerar-sitemap.mjs && tsc -b && vite build",
+    "build": "node scripts/gerar-snapshot-ocorrencias.mjs --manter-se-falhar && node scripts/gerar-snapshot-regioes.mjs --manter-se-falhar && node scripts/gerar-sitemap.mjs && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
@@ -47,7 +47,6 @@
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "lightningcss": "^1.32.0",
-    "pg": "^8.22.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",

@@ -1,31 +1,378 @@
 {
-  "geradoEm": "2026-07-14",
+  "geradoEm": "2026-10-09",
   "janelaDias": 90,
+  "subprefeituras": {
+    "se": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 26.7,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 20
+      }
+    },
+    "aricanduva-formosa-carrao": {
+      "diasCompletos": 1,
+      "diasAlerta": 1,
+      "chuvaTotalMm": 34.1,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 25.9
+      }
+    },
+    "cidade-tiradentes": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 29.4,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 23.8
+      }
+    },
+    "ermelino-matarazzo": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 27.9,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-09-30",
+        "mm": 14.3
+      }
+    },
+    "guaianases": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 30.9,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 16.8
+      }
+    },
+    "itaim-paulista": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 30.9,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 16.8
+      }
+    },
+    "itaquera": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 29.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 18.6
+      }
+    },
+    "mooca": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 33.5,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-09-30",
+        "mm": 16.8
+      }
+    },
+    "penha": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 27.9,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-09-30",
+        "mm": 14.3
+      }
+    },
+    "sapopemba": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 29.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 18.6
+      }
+    },
+    "sao-mateus": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 29.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 18.6
+      }
+    },
+    "sao-miguel": {
+      "diasCompletos": 1,
+      "diasAlerta": 1,
+      "chuvaTotalMm": 31.1,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 16.8
+      }
+    },
+    "vila-prudente": {
+      "diasCompletos": 1,
+      "diasAlerta": 1,
+      "chuvaTotalMm": 34,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 25.9
+      }
+    },
+    "casa-verde-limao-cachoeirinha": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 26.9,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 14.2
+      }
+    },
+    "freguesia-brasilandia": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 27.2,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 14.2
+      }
+    },
+    "jacana-tremembe": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 30.3,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 15.7
+      }
+    },
+    "perus-anhanguera": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 16.1,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 9.6
+      }
+    },
+    "pirituba-jaragua": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 16.1,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 9.6
+      }
+    },
+    "santana-tucuruvi": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 33.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-09-30",
+        "mm": 16.8
+      }
+    },
+    "vila-maria-vila-guilherme": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 33.5,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-09-30",
+        "mm": 16.8
+      }
+    },
+    "butanta": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 22.5,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 13.3
+      }
+    },
+    "lapa": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 24.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-09-30",
+        "mm": 12.6
+      }
+    },
+    "pinheiros": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 26.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 20
+      }
+    },
+    "campo-limpo": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 22.4,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 13.2
+      }
+    },
+    "capela-do-socorro": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 34.9,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 21.4
+      }
+    },
+    "cidade-ademar": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 32.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 27
+      }
+    },
+    "ipiranga": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 28.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 21.5
+      }
+    },
+    "jabaquara": {
+      "diasCompletos": 1,
+      "diasAlerta": 1,
+      "chuvaTotalMm": 28.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 21.5
+      }
+    },
+    "mboi-mirim": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 30,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 22.6
+      }
+    },
+    "parelheiros": {
+      "diasCompletos": 1,
+      "diasAlerta": 1,
+      "chuvaTotalMm": 47,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 32.9
+      }
+    },
+    "santo-amaro": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 21.4,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 17.2
+      }
+    },
+    "vila-mariana": {
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 26.8,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 20
+      }
+    }
+  },
   "zonas": {
     "zona-centro": {
-      "diasRiscoAlto": 0,
-      "chuvaAcumuladaMm": 0,
-      "faixaPredominante": "BAIXO"
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 26.7,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 20
+      }
     },
     "zona-leste": {
-      "diasRiscoAlto": 0,
-      "chuvaAcumuladaMm": 0,
-      "faixaPredominante": "BAIXO"
+      "diasCompletos": 1,
+      "diasAlerta": 1,
+      "chuvaTotalMm": 30.7,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 25.9
+      }
     },
     "zona-norte": {
-      "diasRiscoAlto": 0,
-      "chuvaAcumuladaMm": 0,
-      "faixaPredominante": "BAIXO"
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 26.2,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-09-30",
+        "mm": 16.8
+      }
     },
     "zona-oeste": {
-      "diasRiscoAlto": 0,
-      "chuvaAcumuladaMm": 0,
-      "faixaPredominante": "BAIXO"
+      "diasCompletos": 1,
+      "diasAlerta": 0,
+      "chuvaTotalMm": 24.6,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 20
+      }
     },
     "zona-sul": {
-      "diasRiscoAlto": 0,
-      "chuvaAcumuladaMm": 0,
-      "faixaPredominante": "BAIXO"
+      "diasCompletos": 1,
+      "diasAlerta": 1,
+      "chuvaTotalMm": 30.2,
+      "faixaPredominante": "BAIXO",
+      "diaMaisChuvoso": {
+        "dia": "2026-10-01",
+        "mm": 32.9
+      }
     }
   }
 }

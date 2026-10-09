@@ -15,6 +15,9 @@ namespace Pulsar.API.Controllers;
 [Authorize]
 public class NotificacoesController : ControllerBase
 {
+    /// <summary>Navegadores com push por pessoa: celular, notebook e folga para troca de aparelho.</summary>
+    private const int MaxInscricoesPorUsuario = 10;
+
     private readonly IAssinaturaPushRepository _assinaturaRepo;
     private readonly IPushNotificationService _push;
 
@@ -40,6 +43,7 @@ public class NotificacoesController : ControllerBase
     [HttpPost("subscriptions")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Inscrever([FromBody] AssinaturaPushRequestDto request)
     {
@@ -55,6 +59,10 @@ public class NotificacoesController : ControllerBase
         var existente = await _assinaturaRepo.ObterPorEndpointAsync(request.Endpoint);
         if (existente is null)
         {
+            // Teto por pessoa: sem ele um script cria inscrições sem fim e incha o banco.
+            if ((await _assinaturaRepo.ObterPorUsuarioAsync(usuarioId)).Count >= MaxInscricoesPorUsuario)
+                return Conflict(new { mensagem = "Limite de navegadores com alertas atingido. Desative em outro aparelho para ativar aqui." });
+
             await _assinaturaRepo.AdicionarAsync(new AssinaturaPush
             {
                 UsuarioId = usuarioId,

@@ -88,6 +88,7 @@ public class AuthService : IAuthService
 
             PoliticaSenha.Validar(request.NovaSenha);
             usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
+            usuario.RenovarCarimbo(); // SEC2: derruba os outros aparelhos; este recebe o token novo abaixo.
         }
 
         usuario.Nome = request.Nome;
@@ -186,6 +187,7 @@ public class AuthService : IAuthService
                 usuario.EmailVerificado = true;
                 usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N"));
                 usuario.EmailPendente = null;
+                usuario.RenovarCarimbo(); // SEC2: as sessões de quem cadastrou com senha caem junto
                 if (AdminBootstrap.EhEmailAdmin(_configuration, usuario.Email))
                     usuario.Role = RoleAcesso.ADMIN;
                 await _usuarioRepository.AtualizarAsync(usuario);
@@ -199,6 +201,15 @@ public class AuthService : IAuthService
             Usuario = MapearUsuarioDto(usuario),
             NovoUsuario = novoUsuario
         };
+    }
+
+    public async Task SairDeTodosAsync(Guid usuarioId)
+    {
+        var usuario = await _usuarioRepository.ObterPorIdAsync(usuarioId)
+            ?? throw new KeyNotFoundException("Usuário não encontrado.");
+        usuario.RenovarCarimbo();
+        await _usuarioRepository.AtualizarAsync(usuario);
+        await _usuarioRepository.SalvarAsync();
     }
 
     public async Task<UsuarioDto> ObterUsuarioAsync(Guid usuarioId)

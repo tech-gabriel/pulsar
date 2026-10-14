@@ -35,6 +35,7 @@ public class AdminService : IAdminService
             ?? throw new KeyNotFoundException("Usuário não encontrado.");
 
         usuario.Role = novaRole;
+        usuario.RenovarCarimbo(); // SEC2: a pessoa entra de novo com o papel novo
         await _usuarioRepository.AtualizarAsync(usuario);
         await _usuarioRepository.SalvarAsync();
 
@@ -50,6 +51,7 @@ public class AdminService : IAdminService
             ?? throw new KeyNotFoundException("Usuário não encontrado.");
 
         usuario.Ativo = ativo;
+        usuario.RenovarCarimbo(); // SEC2: desativar derruba as sessões abertas
         await _usuarioRepository.AtualizarAsync(usuario);
         await _usuarioRepository.SalvarAsync();
 

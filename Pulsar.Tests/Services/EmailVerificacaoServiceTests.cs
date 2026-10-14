@@ -95,10 +95,12 @@ public class EmailVerificacaoServiceTests
     {
         var u = NovoUsuario();
         var t = TokenNoRepo("bruto", u, u.Email);
+        var carimboAntes = u.CarimboSeguranca;
 
         await Criar().ConfirmarAsync("bruto");
 
         u.EmailVerificado.Should().BeTrue();
+        u.CarimboSeguranca.Should().Be(carimboAntes); // sem promoção, ninguém é deslogado
         t.UsadoEm.Should().NotBeNull();
         _tokens.Verify(r => r.SalvarAsync(), Times.Once);
     }
@@ -172,10 +174,12 @@ public class EmailVerificacaoServiceTests
     {
         var u = NovoUsuario("admin@x.com");
         TokenNoRepo("bruto", u, u.Email);
+        var carimboAntes = u.CarimboSeguranca;
 
         await Criar("admin@x.com").ConfirmarAsync("bruto");
 
         u.Role.Should().Be(RoleAcesso.ADMIN);
+        u.CarimboSeguranca.Should().NotBe(carimboAntes); // token novo sai com o papel novo
     }
 
     // ── Reenviar ──

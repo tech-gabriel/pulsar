@@ -50,6 +50,17 @@ public class UsuariosController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Encerra a sessão em todos os aparelhos, inclusive o atual (SEC2).</summary>
+    [HttpPost("me/sair-de-todos")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> SairDeTodos()
+    {
+        if (IdDoToken() is not Guid id)
+            return Unauthorized();
+        await _authService.SairDeTodosAsync(id);
+        return NoContent();
+    }
+
     /// <summary>Atualiza o perfil do usuário (nome, e-mail, persona e, opcionalmente, senha).</summary>
     [HttpPut("{usuarioId:guid}")]
     [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]

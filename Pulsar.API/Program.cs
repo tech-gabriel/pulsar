@@ -193,6 +193,7 @@ builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
 builder.Services.AddScoped<ISugestaoRepository, SugestaoRepository>();
 builder.Services.AddScoped<ITokenRecuperacaoSenhaRepository, TokenRecuperacaoSenhaRepository>();
+builder.Services.AddScoped<ITokenVerificacaoEmailRepository, TokenVerificacaoEmailRepository>();
 builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>();
 builder.Services.AddScoped<IOcorrenciaAlagamentoRepository, OcorrenciaAlagamentoRepository>();
 builder.Services.AddScoped<IAgregadoDiarioRepository, AgregadoDiarioRepository>();

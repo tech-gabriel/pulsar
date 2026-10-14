@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -123,13 +124,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             // claim de role explicitamente para que [Authorize(Roles="...")] funcione.
             RoleClaimType = ClaimTypes.Role
         };
+        // SEC2: token com carimbo velho, de conta desativada ou excluída para de valer na hora.
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async ctx =>
+            {
+                var sub = ctx.Principal?.FindFirstValue(JwtRegisteredClaimNames.Sub);
+                var carimbo = ctx.Principal?.FindFirstValue(AuthService.ClaimCarimbo);
+                var validador = ctx.HttpContext.RequestServices.GetRequiredService<Pulsar.API.Services.Interfaces.IValidadorSessao>();
+                if (!Guid.TryParse(sub, out var usuarioId) || !await validador.SessaoValidaAsync(usuarioId, carimbo))
+                    ctx.Fail("Sessão encerrada.");
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
 
 // --- Database ---
-builder.Services.AddDbContext<PulsarDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddSingleton<InvalidaSessaoInterceptor>();
+builder.Services.AddSingleton<Pulsar.API.Services.Interfaces.IValidadorSessao, ValidadorSessao>();
+builder.Services.AddDbContext<PulsarDbContext>((sp, options) =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .AddInterceptors(sp.GetRequiredService<InvalidaSessaoInterceptor>()));
 
 // --- HTTP Clients ---
 builder.Services.AddHttpClient("openweathermap", (sp, client) =>
@@ -193,6 +209,7 @@ builder.Services.AddScoped<ILeituraRepository, LeituraRepository>();
 builder.Services.AddScoped<IScoreRepository, ScoreRepository>();
 builder.Services.AddScoped<ISugestaoRepository, SugestaoRepository>();
 builder.Services.AddScoped<ITokenRecuperacaoSenhaRepository, TokenRecuperacaoSenhaRepository>();
+builder.Services.AddScoped<ITokenVerificacaoEmailRepository, TokenVerificacaoEmailRepository>();
 builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>();
 builder.Services.AddScoped<IOcorrenciaAlagamentoRepository, OcorrenciaAlagamentoRepository>();
 builder.Services.AddScoped<IAgregadoDiarioRepository, AgregadoDiarioRepository>();
@@ -212,6 +229,7 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ISistemaService, SistemaService>();
 builder.Services.AddScoped<IColetaRunner, ColetaRunner>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddScoped<IEmailVerificacaoService, EmailVerificacaoService>();
 builder.Services.AddScoped<IClimateService, ClimateService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionService>();

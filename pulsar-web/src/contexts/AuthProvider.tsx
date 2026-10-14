@@ -1,5 +1,6 @@
 import { useState, useCallback, type ReactNode } from 'react';
-import api from '../api/client';
+import api, { URL_SESSAO_ENCERRADA } from '../api/client';
+import { irPara } from '../utils/navegacao';
 import { track } from '../analytics';
 import type {
   AtualizarPerfilRequestDto,
@@ -61,6 +62,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     salvarSessao(data);
   }, [usuario, salvarSessao]);
 
+  const recarregarUsuario = useCallback(async () => {
+    const { data } = await api.get<UsuarioDto>('/usuarios/me');
+    localStorage.setItem('pulsar_usuario', JSON.stringify(data));
+    setUsuario(data);
+  }, []);
+
+  const reenviarConfirmacao = useCallback(async () => {
+    await api.post('/usuarios/me/reenviar-confirmacao');
+  }, []);
+
+  // SEC2: o servidor renova o carimbo; este aparelho também sai e vê o aviso no login.
+  const sairDeTodosOsAparelhos = useCallback(async () => {
+    await api.post('/usuarios/me/sair-de-todos');
+    localStorage.removeItem('pulsar_token');
+    localStorage.removeItem('pulsar_usuario');
+    irPara(URL_SESSAO_ENCERRADA);
+  }, []);
+
   const logout = useCallback(() => {
     api.post('/auth/logout').catch(() => {});
     localStorage.removeItem('pulsar_token');
@@ -78,6 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginGoogle,
         cadastrar,
         atualizarPerfil,
+        recarregarUsuario,
+        reenviarConfirmacao,
+        sairDeTodosOsAparelhos,
         logout,
         estaAutenticado: !!token,
       }}

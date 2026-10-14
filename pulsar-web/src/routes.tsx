@@ -76,6 +76,13 @@ export const routes: RouteObject[] = [
         ],
       },
 
+      // Confirmação de e-mail: vale logado ou não (o link pode ser aberto em outro aparelho).
+      {
+        path: 'confirmar-email',
+        HydrateFallback: CarregandoRota,
+        lazy: async () => ({ Component: (await import('./pages/ConfirmarEmailPage')).default }),
+      },
+
       // App autenticado (CSR, lazy).
       {
         element: <RotaProtegida />,

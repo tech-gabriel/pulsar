@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Scheduler;
+using Pulsar.API.Services.Interfaces;
 
 namespace Pulsar.Tests.Helpers;
 
@@ -19,8 +20,14 @@ namespace Pulsar.Tests.Helpers;
 /// </summary>
 public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
 {
-    /// <summary>E-mail configurado em Admin:Emails: nasce ADMIN quando a conta é criada com ele.</summary>
+    /// <summary>E-mail configurado em Admin:Emails: vira ADMIN quando a posse dele é confirmada.</summary>
     public const string EmailAdminBootstrap = "admin.bootstrap@pulsar.test";
+
+    /// <summary>Segredo do JWT nos testes (fabricar tokens à mão, ex.: token sem carimbo).</summary>
+    public const string JwtSecretTeste = "pulsar-chave-secreta-para-testes-unitarios-longa-o-suficiente-32chars";
+
+    /// <summary>Remetente falso: os testes leem daqui o link de confirmação.</summary>
+    public CapturaEmailSender Emails { get; } = new();
 
     /// <summary>Segundo e-mail de Admin:Emails que nenhum teste cadastra (alvo de ataques de troca de e-mail).</summary>
     public const string EmailAdminSemDono = "admin.semdono@pulsar.test";
@@ -68,8 +75,9 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
             foreach (var d in paraRemover)
                 services.Remove(d);
 
-            services.AddDbContext<PulsarDbContext>(options =>
-                options.UseSqlite(_connection));
+            services.AddDbContext<PulsarDbContext>((sp, options) =>
+                options.UseSqlite(_connection)
+                       .AddInterceptors(sp.GetRequiredService<Pulsar.API.Repositories.Data.InvalidaSessaoInterceptor>()));
 
             // Remover os jobs agendados: sem ciclos em background nem chamada real ao GeoSampa
             foreach (var job in services.Where(d => d.ImplementationType == typeof(DataCollectionJob)
@@ -92,11 +100,14 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
                 services.Remove(d);
             services.AddScoped<IGeocodingClient, FakeGeocodingClient>();
 
+            foreach (var d in services.Where(d => d.ServiceType == typeof(IEmailSender)).ToList())
+                services.Remove(d);
+            services.AddSingleton<IEmailSender>(Emails);
+
             // Sobrescrever JWT validation para usar secret/issuer/audience de teste.
             // Program.cs captura builder.Configuration em tempo de registro; o
             // PostConfigure garante que os valores de teste prevalecem em runtime.
-            const string testSecret =
-                "pulsar-chave-secreta-para-testes-unitarios-longa-o-suficiente-32chars";
+            const string testSecret = JwtSecretTeste;
             services.PostConfigure<JwtBearerOptions>(
                 JwtBearerDefaults.AuthenticationScheme, options =>
                 {

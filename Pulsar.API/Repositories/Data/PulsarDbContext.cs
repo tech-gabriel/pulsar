@@ -17,6 +17,7 @@ public class PulsarDbContext : DbContext
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioSubprefeitura> UsuarioSubprefeituras => Set<UsuarioSubprefeitura>();
     public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
+    public DbSet<TokenVerificacaoEmail> TokensVerificacaoEmail => Set<TokenVerificacaoEmail>();
     public DbSet<AssinaturaPush> AssinaturasPush => Set<AssinaturaPush>();
     public DbSet<OcorrenciaAlagamento> OcorrenciasAlagamento => Set<OcorrenciaAlagamento>();
     public DbSet<PrevisaoClimatica> PrevisoesClimaticas => Set<PrevisaoClimatica>();
@@ -34,6 +35,8 @@ public class PulsarDbContext : DbContext
             e.Property(u => u.Email).IsRequired().HasMaxLength(200);
             e.Property(u => u.SenhaHash).IsRequired();
             e.Property(u => u.Ativo).HasDefaultValue(true);
+            e.Property(u => u.EmailPendente).HasMaxLength(200);
+            e.Property(u => u.CarimboSeguranca).IsRequired().HasMaxLength(32);
             e.HasIndex(u => u.Role);
         });
 
@@ -110,6 +113,18 @@ public class PulsarDbContext : DbContext
             e.HasKey(t => t.Id);
             e.Property(t => t.TokenHash).IsRequired().HasMaxLength(64);
             e.HasIndex(t => t.TokenHash);
+            e.HasOne(t => t.Usuario)
+             .WithMany()
+             .HasForeignKey(t => t.UsuarioId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TokenVerificacaoEmail>(e =>
+        {
+            e.HasKey(t => t.Id);
+            e.Property(t => t.TokenHash).IsRequired().HasMaxLength(64);
+            e.HasIndex(t => t.TokenHash).IsUnique();
+            e.Property(t => t.Email).IsRequired().HasMaxLength(200);
             e.HasOne(t => t.Usuario)
              .WithMany()
              .HasForeignKey(t => t.UsuarioId)

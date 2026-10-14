@@ -41,6 +41,13 @@ describe('tooltipSubprefeituraHtml', () => {
     expect(html).toContain('Ainda sem dados');
   });
 
+  it('escapa HTML no nome e na zona', () => {
+    const html = tooltipSubprefeituraHtml({ ...sub, nome: '<img src=x onerror=alert(1)>', zona: '"x"' }, 'X');
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&#60;img');
+    expect(html).toContain('Zona &#34;x&#34;');
+  });
+
   it('mostra traço para variáveis quando não há leitura', () => {
     const html = tooltipSubprefeituraHtml({ ...sub, ultimaLeitura: null, scoreAtual: null }, 'X');
     expect(html).toContain('—');

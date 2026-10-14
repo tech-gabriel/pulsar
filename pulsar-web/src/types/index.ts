@@ -13,6 +13,10 @@ export interface UsuarioDto {
   email: string;
   perfil: TipoPerfil;
   role: RoleAcesso;
+  /** Ausente em sessões gravadas antes do SEC1: tratar como verificado. */
+  emailVerificado?: boolean;
+  /** E-mail novo aguardando o clique no link. */
+  emailPendente?: string | null;
 }
 
 export interface LoginRequestDto {

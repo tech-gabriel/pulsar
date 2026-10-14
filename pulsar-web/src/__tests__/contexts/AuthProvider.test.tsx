@@ -8,7 +8,9 @@ const h = vi.hoisted(() => ({
   get: vi.fn(),
 }));
 vi.mock('../../analytics', () => ({ track: h.track }));
-vi.mock('../../api/client', () => ({ default: { post: h.post, get: h.get } }));
+vi.mock('../../api/client', () => ({ default: { post: h.post, get: h.get }, URL_SESSAO_ENCERRADA: '/login?sessao=encerrada' }));
+const nav = vi.hoisted(() => ({ irPara: vi.fn() }));
+vi.mock('../../utils/navegacao', () => nav);
 
 import { AuthProvider } from '../../contexts/AuthProvider';
 import { useAuth } from '../../contexts/AuthContext';
@@ -90,5 +92,38 @@ describe('AuthProvider verificação de e-mail', () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
     await act(async () => { await result.current.reenviarConfirmacao(); });
     expect(h.post).toHaveBeenCalledWith('/usuarios/me/reenviar-confirmacao');
+  });
+});
+
+describe('AuthProvider sair de todos os aparelhos (SEC2)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    h.post.mockReset();
+    nav.irPara.mockReset();
+  });
+
+  it('chama o endpoint, limpa a sessão e vai ao login com o aviso', async () => {
+    h.post.mockResolvedValue({ data: respostaLogin });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await act(async () => { await result.current.login({ email: 'a', senha: 'b' }); });
+    h.post.mockResolvedValue({ status: 204 });
+
+    await act(async () => { await result.current.sairDeTodosOsAparelhos(); });
+
+    expect(h.post).toHaveBeenCalledWith('/usuarios/me/sair-de-todos');
+    expect(localStorage.getItem('pulsar_token')).toBeNull();
+    expect(nav.irPara).toHaveBeenCalledWith('/login?sessao=encerrada');
+  });
+
+  it('falha não apaga a sessão local', async () => {
+    h.post.mockResolvedValue({ data: respostaLogin });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await act(async () => { await result.current.login({ email: 'a', senha: 'b' }); });
+    h.post.mockRejectedValue(new Error('rede'));
+
+    await act(async () => { await expect(result.current.sairDeTodosOsAparelhos()).rejects.toThrow(); });
+
+    expect(localStorage.getItem('pulsar_token')).toBe('jwt');
+    expect(nav.irPara).not.toHaveBeenCalled();
   });
 });

@@ -13,6 +13,9 @@ namespace Pulsar.API.Services;
 
 public class AuthService : IAuthService
 {
+    /// <summary>Claim do JWT com o carimbo de segurança da conta (SEC2).</summary>
+    public const string ClaimCarimbo = "carimbo";
+
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IConfiguration _configuration;
     private readonly IEmailVerificacaoService _emailVerificacao;
@@ -85,6 +88,7 @@ public class AuthService : IAuthService
 
             PoliticaSenha.Validar(request.NovaSenha);
             usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
+            usuario.RenovarCarimbo(); // SEC2: derruba os outros aparelhos; este recebe o token novo abaixo.
         }
 
         usuario.Nome = request.Nome;
@@ -183,6 +187,7 @@ public class AuthService : IAuthService
                 usuario.EmailVerificado = true;
                 usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N"));
                 usuario.EmailPendente = null;
+                usuario.RenovarCarimbo(); // SEC2: as sessões de quem cadastrou com senha caem junto
                 if (AdminBootstrap.EhEmailAdmin(_configuration, usuario.Email))
                     usuario.Role = RoleAcesso.ADMIN;
                 await _usuarioRepository.AtualizarAsync(usuario);
@@ -196,6 +201,16 @@ public class AuthService : IAuthService
             Usuario = MapearUsuarioDto(usuario),
             NovoUsuario = novoUsuario
         };
+    }
+
+    public async Task SairDeTodosAsync(Guid usuarioId)
+    {
+        var usuario = await _usuarioRepository.ObterPorIdAsync(usuarioId)
+            ?? throw new KeyNotFoundException("Usuário não encontrado.");
+        usuario.RenovarCarimbo();
+        usuario.EmailPendente = null; // o link de troca de e-mail deixado por um invasor deixa de valer
+        await _usuarioRepository.AtualizarAsync(usuario);
+        await _usuarioRepository.SalvarAsync();
     }
 
     public async Task<UsuarioDto> ObterUsuarioAsync(Guid usuarioId)
@@ -234,6 +249,7 @@ public class AuthService : IAuthService
             new Claim(JwtRegisteredClaimNames.Name, usuario.Nome),
             new Claim("perfil", usuario.Perfil.ToString()),
             new Claim(ClaimTypes.Role, usuario.Role.ToString()),
+            new Claim(ClaimCarimbo, usuario.CarimboSeguranca),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

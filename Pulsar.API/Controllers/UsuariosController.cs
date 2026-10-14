@@ -89,7 +89,8 @@ public class UsuariosController : ControllerBase
         }
         catch (UnauthorizedAccessException ex)
         {
-            return Unauthorized(new { mensagem = ex.Message });
+            // Senha atual errada é validação, não sessão: 401 com token faz o app deslogar a pessoa (SEC2).
+            return BadRequest(new { mensagem = ex.Message });
         }
         catch (ArgumentException ex)
         {

@@ -83,6 +83,8 @@ public class PasswordResetService : IPasswordResetService
         token.Usuario.EmailVerificado = true;
         // SEC2: senha redefinida derruba todas as sessões.
         token.Usuario.RenovarCarimbo();
+        // Um e-mail pendente pode ter sido deixado por quem invadiu: o link dele deixa de valer.
+        token.Usuario.EmailPendente = null;
         token.UsadoEm = DateTime.UtcNow;
 
         await _tokenRepository.SalvarAsync();

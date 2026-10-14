@@ -208,6 +208,7 @@ public class AuthService : IAuthService
         var usuario = await _usuarioRepository.ObterPorIdAsync(usuarioId)
             ?? throw new KeyNotFoundException("Usuário não encontrado.");
         usuario.RenovarCarimbo();
+        usuario.EmailPendente = null; // o link de troca de e-mail deixado por um invasor deixa de valer
         await _usuarioRepository.AtualizarAsync(usuario);
         await _usuarioRepository.SalvarAsync();
     }

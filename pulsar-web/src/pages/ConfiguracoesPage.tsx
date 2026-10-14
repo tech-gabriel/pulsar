@@ -2,8 +2,9 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, Mail, LogOut, Pencil, Check, X, Eye, EyeOff,
-  Lock, Star, ChevronRight, Bell, BellRing, HelpCircle, Smartphone,
+  Lock, Star, ChevronRight, Bell, BellRing, HelpCircle, Smartphone, Loader2,
 } from 'lucide-react';
+import FolhaInferior from '../components/ui/FolhaInferior';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
 import SobreCard from '../components/ui/SobreCard';
@@ -59,7 +60,7 @@ function SwitchRow({ titulo, descricao, ligado, onToggle }: {
 }
 
 export default function ConfiguracoesPage() {
-  const { usuario, logout, atualizarPerfil } = useAuth();
+  const { usuario, logout, atualizarPerfil, sairDeTodosOsAparelhos } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useToast();
   const { prefs, toggle } = useNotificacoesPrefs();
@@ -85,6 +86,18 @@ export default function ConfiguracoesPage() {
   const [novaSenha, setNovaSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [folhaSairTodos, setFolhaSairTodos] = useState(false);
+  const [saindoTodos, setSaindoTodos] = useState(false);
+
+  async function confirmarSairDeTodos() {
+    setSaindoTodos(true);
+    try {
+      await sairDeTodosOsAparelhos(); // sucesso recarrega a página no login
+    } catch {
+      showToast('Não foi possível sair de todos os aparelhos agora. Tente de novo em instantes.', 'error');
+      setSaindoTodos(false);
+    }
+  }
 
   function abrirEdicao() {
     setNome(usuario?.nome ?? '');
@@ -435,6 +448,49 @@ export default function ConfiguracoesPage() {
           <LogOut size={18} />
           <span style={{ fontWeight: 600, fontSize: 14 }}>Sair da conta</span>
         </button>
+
+        {/* SEC2 (opção 1): ação rara, colada no "Sair" de sempre; a confirmação explica em uma folha. */}
+        <button
+          type="button"
+          onClick={() => setFolhaSairTodos(true)}
+          className="block mx-auto mt-3 min-h-[44px] underline underline-offset-[3px]"
+          style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-secondary)' }}
+        >
+          Sair de todos os aparelhos
+        </button>
+
+        <FolhaInferior
+          aberta={folhaSairTodos}
+          onFechar={() => { if (!saindoTodos) setFolhaSairTodos(false); }}
+          tituloId="titulo-sair-todos"
+        >
+          <h2 id="titulo-sair-todos" className="text-center" style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>
+            Sair de todos os aparelhos?
+          </h2>
+          <p className="mt-1.5 text-center" style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+            A sessão termina no celular, no computador e aqui. Seus lugares e alertas continuam salvos.
+          </p>
+          <button
+            type="button"
+            onClick={confirmarSairDeTodos}
+            disabled={saindoTodos}
+            className="mt-5 w-full min-h-[50px] rounded-xl inline-flex items-center justify-center gap-2 disabled:opacity-80"
+            style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444', fontWeight: 700, fontSize: 15 }}
+          >
+            {saindoTodos && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+            {saindoTodos ? 'Saindo…' : 'Sair de todos'}
+          </button>
+          <button
+            type="button"
+            data-foco-inicial
+            onClick={() => setFolhaSairTodos(false)}
+            disabled={saindoTodos}
+            className="mt-2.5 w-full min-h-[50px] rounded-xl"
+            style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 15 }}
+          >
+            Cancelar
+          </button>
+        </FolhaInferior>
       </main>
     </div>
   );

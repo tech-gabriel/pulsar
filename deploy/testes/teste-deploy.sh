@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2015  # ok() só faz echo e nunca falha, então A && ok || erro é seguro aqui
 # Testa o deploy.sh com docker, curl e sleep falsos. Uso: bash deploy/testes/teste-deploy.sh
 set -euo pipefail
 RAIZ="$(cd "$(dirname "$0")/../.." && pwd)"

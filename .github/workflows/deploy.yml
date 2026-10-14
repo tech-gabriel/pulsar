@@ -1,0 +1,106 @@
+name: Deploy (VPS)
+
+# Gera as imagens, publica no GHCR e faz o deploy na VPS pelo deploy.sh.
+# - push na master: deploy do release.
+# - segunda 10:00 UTC: rebuild do site para regerar os snapshots de SEO (ocorrências
+#   do GeoSampa e estatísticas do rollup), que são gerados no npm run build.
+# - manual: com "tag", pula o build e faz deploy daquela tag (rollback).
+# Agendamento e disparo manual rodam na branch padrão (develop), por isso os dois
+# jobs fazem checkout da master: produção nunca recebe código da develop.
+# Trava: só roda com a variable DEPLOY_VPS=true.
+
+on:
+  push:
+    branches: [master]
+  schedule:
+    - cron: '0 10 * * 1'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag já publicada (ex.: sha-abc1234) para deploy direto. Vazio = build da master.'
+        required: false
+        default: ''
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  imagens:
+    name: Imagens
+    if: vars.DEPLOY_VPS == 'true' && inputs.tag == ''
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - id: tag
+        run: echo "tag=sha-$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: API
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ghcr.io/tech-gabriel/pulsar-api:${{ steps.tag.outputs.tag }}
+
+      - name: Site
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile.web
+          push: true
+          tags: ghcr.io/tech-gabriel/pulsar-web:${{ steps.tag.outputs.tag }}
+          build-args: |
+            VITE_MAPTILER_KEY=${{ vars.VITE_MAPTILER_KEY }}
+            VITE_GOOGLE_CLIENT_ID=${{ vars.VITE_GOOGLE_CLIENT_ID }}
+            VITE_POSTHOG_KEY=${{ vars.VITE_POSTHOG_KEY }}
+            PULSAR_API_URL=https://app-pulsar.com.br
+
+  deploy:
+    name: Deploy
+    needs: imagens
+    if: always() && vars.DEPLOY_VPS == 'true' && (needs.imagens.result == 'success' || inputs.tag != '')
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || needs.imagens.outputs.tag }}
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Chave SSH
+        env:
+          CHAVE: ${{ secrets.VPS_SSH_KEY }}
+          HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$CHAVE" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$HOSTS" > ~/.ssh/known_hosts
+
+      - name: Copiar compose e scripts
+        run: scp docker-compose.prod.yml deploy/deploy.sh deploy/backup.sh "deploy@$VPS_HOST:pulsar/"
+
+      - name: Deploy
+        # A tag é expandida aqui no runner de propósito (SC2029).
+        run: |
+          # shellcheck disable=SC2029
+          ssh "deploy@$VPS_HOST" "bash pulsar/deploy.sh $TAG"

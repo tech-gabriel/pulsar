@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2015  # ok() só faz echo e nunca falha, então A && ok || erro é seguro aqui
 # Testa o backup.sh com docker, rclone, df e curl falsos. Uso: bash deploy/testes/teste-backup.sh
 set -euo pipefail
 RAIZ="$(cd "$(dirname "$0")/../.." && pwd)"

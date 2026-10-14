@@ -86,7 +86,7 @@ public class PasswordResetService : IPasswordResetService
     }
 
     /// <summary>Token aleatório seguro (256 bits) em Base64 URL-safe.</summary>
-    private static string GerarTokenBruto()
+    public static string GerarTokenBruto()
     {
         var bytes = RandomNumberGenerator.GetBytes(32);
         return Convert.ToBase64String(bytes)

@@ -10,6 +10,8 @@ namespace Pulsar.API.Services;
 
 public class PasswordResetService : IPasswordResetService
 {
+    public const int MaxPedidosPorHora = 3;
+
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly ITokenRecuperacaoSenhaRepository _tokenRepository;
     private readonly IEmailSender _emailSender;
@@ -36,7 +38,17 @@ public class PasswordResetService : IPasswordResetService
         if (usuario is null)
         {
             // Não revela se o e-mail existe — resposta idêntica para qualquer entrada.
-            _logger.LogInformation("Recuperação solicitada para e-mail não cadastrado: {Email}", request.Email);
+            // O e-mail digitado não vai para o log: é dado pessoal de quem nem tem conta (LGPD).
+            _logger.LogInformation("Recuperação solicitada para e-mail não cadastrado.");
+            return;
+        }
+
+        // Teto por conta, além do limite por IP: sem ele, quem troca de IP bombardeia a caixa
+        // da vítima e gasta a cota do Resend. Mesma resposta silenciosa para não revelar a conta.
+        var pedidosNaHora = await _tokenRepository.ContarCriadosDesdeAsync(usuario.Id, DateTime.UtcNow.AddHours(-1));
+        if (pedidosNaHora >= MaxPedidosPorHora)
+        {
+            _logger.LogWarning("Recuperação ignorada: usuário {UsuarioId} passou do teto por hora.", usuario.Id);
             return;
         }
 

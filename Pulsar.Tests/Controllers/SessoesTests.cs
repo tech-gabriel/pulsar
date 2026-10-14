@@ -113,6 +113,20 @@ public class SessoesTests : IClassFixture<PulsarWebApplicationFactory>
     }
 
     [Fact]
+    public async Task SenhaAtualErradaNoPerfil_Responde400_ENaoParecesSessaoEncerrada()
+    {
+        // Com token, o front trata 401 como sessão encerrada e desloga: senha atual errada é validação (400).
+        var email = NovoEmail("errada");
+        var a = await Cadastrar(email);
+
+        var resp = await Enviar(HttpMethod.Put, $"/api/usuarios/{a.Usuario.Id}", a.Token,
+            new AtualizarPerfilRequestDto { Nome = "Fulano", Email = email, SenhaAtual = "Errada#2026xx", NovaSenha = "Nova#2026xx" });
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await Me(a.Token)).Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task TrocaSoDeNome_NaoDerrubaNada()
     {
         var email = NovoEmail("nome");

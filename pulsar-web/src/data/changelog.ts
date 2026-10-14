@@ -25,6 +25,33 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.17.0',
+    data: '2026-10-14',
+    resumo: 'Depois desta atualização, você vai precisar entrar de novo uma vez. Seus lugares e alertas continuam salvos.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Confirme seu e-mail',
+        descricao: 'Mandamos um link para o e-mail do cadastro. Confirmando, só você consegue usar esse endereço no Pulsar. Se o link se perdeu, dá para pedir outro em Configurações.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Sair de todos os aparelhos',
+        descricao: 'Esqueceu a conta aberta em outro celular ou computador? Em Configurações, logo abaixo de "Sair da conta", você encerra todas as sessões de uma vez.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Senha nova vale na hora',
+        descricao: 'Quando você troca ou redefine a senha, os outros aparelhos saem da conta na mesma hora.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Mais segurança',
+        descricao: 'Limitamos os pedidos de nova senha e reforçamos a proteção do mapa e das notícias.',
+      },
+    ],
+  },
+  {
     versao: '1.16.0',
     data: '2026-10-09',
     itens: [

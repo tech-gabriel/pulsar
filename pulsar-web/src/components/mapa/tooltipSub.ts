@@ -28,13 +28,18 @@ function metrica(emoji: string, valor: string): string {
   return `<div class="pt-metric"><span class="pt-ico">${emoji}</span><span class="pt-val">${valor}</span></div>`;
 }
 
+/** Texto vindo do banco vai para innerHTML: escapa antes, mesmo que hoje seja só seed. */
+function esc(texto: string): string {
+  return texto.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+
 export function tooltipSubprefeituraHtml(
   sub: SubprefeituraMapaDto | undefined,
   nomeFallback: string,
 ): string {
-  const nome = sub?.nome ?? nomeFallback ?? 'Subprefeitura';
+  const nome = esc(sub?.nome ?? nomeFallback ?? 'Subprefeitura');
   const cabecalho = `<div class="pt-head"><div class="pt-titulo">${nome}</div>${
-    sub ? `<div class="pt-regiao">Zona ${sub.zona}</div>` : ''
+    sub ? `<div class="pt-regiao">Zona ${esc(sub.zona)}</div>` : ''
   }</div>`;
 
   if (!sub) {

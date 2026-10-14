@@ -7,6 +7,7 @@ import {
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
 import SobreCard from '../components/ui/SobreCard';
+import CartaoConfirmarEmail from '../components/auth/CartaoConfirmarEmail';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { useToast } from '../contexts/ToastContext';
@@ -140,6 +141,8 @@ export default function ConfiguracoesPage() {
         <h1 className="mb-5" style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 22, color: 'var(--text-primary)' }}>
           Configurações
         </h1>
+
+        <CartaoConfirmarEmail variante="configuracoes" className="mb-4" />
 
         {/* ── PERFIL ──────────────────────────────────────────────────────── */}
         <GlassCard hover={false} padding="lg" className="mb-4">

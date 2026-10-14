@@ -4,7 +4,8 @@ import { MemoryRouter } from 'react-router-dom';
 
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock('react-router-dom', async (orig) => ({ ...(await orig<typeof import('react-router-dom')>()), useNavigate: () => navigate }));
-vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ usuario: { id: 'u1', nome: 'Gabriel Leite' } }) }));
+vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ usuario: { id: 'u1', nome: 'Gabriel Leite' }, recarregarUsuario: vi.fn(), reenviarConfirmacao: vi.fn() }) }));
+vi.mock('../../contexts/ToastContext', () => ({ useToast: () => ({ showToast: vi.fn() }) }));
 vi.mock('../../analytics', () => ({ track: { passoVisto: vi.fn(), passoPulado: vi.fn(), ativacaoConcluida: vi.fn() } }));
 const dados = vi.hoisted(() => ({
   adicionarVarios: vi.fn(),

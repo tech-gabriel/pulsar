@@ -4,6 +4,7 @@ import BadgeRisco from '../../../components/ui/BadgeRisco';
 import type { FaixaRisco } from '../../../types';
 import { idDaArea } from '../../cidade/cidade';
 import MapaCoropletico from '../../cidade/MapaCoropletico';
+import CartaoConfirmarEmail from '../../../components/auth/CartaoConfirmarEmail';
 
 const COR: Record<FaixaRisco, string> = { BAIXO: '#22C55E', MODERADO: '#F59E0B', ALTO: '#EF4444' };
 
@@ -47,6 +48,8 @@ export default function TelaPronto({ primeiroNome, escolhidas, alerta, onVerMapa
           : alerta === 'negado' ? <><BellOff size={16} />Os alertas ficaram bloqueados; dá para liberar nas configurações do navegador.</>
           : null}
       </p>
+      {/* Pico de motivação: a pessoa acabou de configurar tudo (SEC1, opção D). Some se já confirmou. */}
+      <CartaoConfirmarEmail variante="boas-vindas" className="mt-5 w-full" />
       <button type="button" className="at-cta" onClick={onVerMapa}>Ver o mapa</button>
     </>
   );

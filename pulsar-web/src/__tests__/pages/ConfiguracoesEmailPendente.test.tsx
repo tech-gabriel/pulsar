@@ -9,7 +9,10 @@ const h = vi.hoisted(() => ({
   },
 }));
 vi.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({ usuario: h.usuario, logout: vi.fn(), atualizarPerfil: vi.fn() }),
+  useAuth: () => ({
+    usuario: h.usuario, logout: vi.fn(), atualizarPerfil: vi.fn(),
+    recarregarUsuario: vi.fn().mockResolvedValue(undefined), reenviarConfirmacao: vi.fn(),
+  }),
 }));
 vi.mock('../../components/ui/Header', () => ({ default: () => null }));
 vi.mock('../../components/ui/SobreCard', () => ({ default: () => null }));
@@ -35,5 +38,20 @@ describe('ConfiguracoesPage e-mail pendente', () => {
     h.usuario.emailPendente = null;
     render(<MemoryRouter><ConfiguracoesPage /></MemoryRouter>);
     expect(screen.queryByText(/Enviamos um link para/)).toBeNull();
+  });
+});
+
+describe('ConfiguracoesPage lembrete de confirmação (SEC1, opção D)', () => {
+  it('conta não verificada: cartão "Confirme seu e-mail" no topo', () => {
+    h.usuario.emailVerificado = false;
+    h.usuario.emailPendente = null;
+    render(<MemoryRouter><ConfiguracoesPage /></MemoryRouter>);
+    expect(screen.getByRole('heading', { name: 'Confirme seu e-mail' })).toBeInTheDocument();
+  });
+
+  it('conta verificada: sem cartão', () => {
+    h.usuario.emailVerificado = true;
+    render(<MemoryRouter><ConfiguracoesPage /></MemoryRouter>);
+    expect(screen.queryByRole('heading', { name: 'Confirme seu e-mail' })).toBeNull();
   });
 });

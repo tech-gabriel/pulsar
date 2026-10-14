@@ -37,7 +37,7 @@ public class AuthService : IAuthService
             Perfil = request.Perfil,
             // Bootstrap: e-mails listados em Admin:Emails nascem como ADMIN. Só na criação:
             // promover conta existente deixava virar admin trocando o e-mail no perfil.
-            Role = EhEmailAdmin(email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
+            Role = AdminBootstrap.EhEmailAdmin(_configuration, email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
             SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.Senha)
         };
 
@@ -140,7 +140,7 @@ public class AuthService : IAuthService
                 Nome = string.IsNullOrWhiteSpace(payload.Name) ? payload.Email : payload.Name,
                 Email = Usuario.NormalizarEmail(payload.Email),
                 Perfil = TipoPerfil.CIDADAO,
-                Role = EhEmailAdmin(payload.Email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
+                Role = AdminBootstrap.EhEmailAdmin(_configuration, payload.Email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
                 // Sem login por senha: hash aleatório e inutilizável (não corresponde a nenhuma senha).
                 SenhaHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N"))
             };
@@ -161,17 +161,6 @@ public class AuthService : IAuthService
         };
     }
 
-    /// <summary>
-    /// Indica se o e-mail consta na lista <c>Admin:Emails</c> da configuração
-    /// pela mesma forma canônica do banco (<see cref="Usuario.NormalizarEmail"/>): um segundo jeito
-    /// de comparar abriria brecha entre "parece igual aqui" e "é diferente lá". Bootstrap do primeiro admin.
-    /// </summary>
-    private bool EhEmailAdmin(string email)
-    {
-        var emails = _configuration.GetSection("Admin:Emails").Get<string[]>();
-        var alvo = Usuario.NormalizarEmail(email);
-        return emails is not null && emails.Any(e => Usuario.NormalizarEmail(e) == alvo);
-    }
 
     private string GerarToken(Usuario usuario)
     {

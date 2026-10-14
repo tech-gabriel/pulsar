@@ -153,6 +153,21 @@ public class EmailVerificacaoServiceTests
     }
 
     [Fact]
+    public async Task Confirmar_TrocaParaEmailDaListaEmContaJaVerificada_NaoPromove()
+    {
+        // Admin rebaixado não pode se repromover trocando o e-mail de volta para o da lista.
+        var u = NovoUsuario("outro@x.com");
+        u.EmailVerificado = true;
+        u.EmailPendente = "admin@x.com";
+        TokenNoRepo("bruto", u, "admin@x.com");
+
+        await Criar("admin@x.com").ConfirmarAsync("bruto");
+
+        u.Email.Should().Be("admin@x.com");
+        u.Role.Should().Be(RoleAcesso.USUARIO);
+    }
+
+    [Fact]
     public async Task Confirmar_EmailDaListaAdmin_PromoveAAdmin()
     {
         var u = NovoUsuario("admin@x.com");

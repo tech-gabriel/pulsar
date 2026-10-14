@@ -1,0 +1,3 @@
+# Scripts e Caddyfile rodam em Linux (VPS, CI, containers): sempre LF, mesmo com autocrlf no Windows.
+*.sh text eol=lf
+deploy/Caddyfile text eol=lf

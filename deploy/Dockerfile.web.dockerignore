@@ -1,0 +1,8 @@
+# Contexto do build do site: só o front e o Caddyfile.
+*
+!pulsar-web/
+!deploy/Caddyfile
+pulsar-web/node_modules
+pulsar-web/dist
+pulsar-web/.env
+pulsar-web/.env.*

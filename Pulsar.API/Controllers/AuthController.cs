@@ -12,11 +12,38 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IPasswordResetService _passwordResetService;
+    private readonly IEmailVerificacaoService _emailVerificacao;
 
-    public AuthController(IAuthService authService, IPasswordResetService passwordResetService)
+    public AuthController(
+        IAuthService authService,
+        IPasswordResetService passwordResetService,
+        IEmailVerificacaoService emailVerificacao)
     {
         _authService = authService;
         _passwordResetService = passwordResetService;
+        _emailVerificacao = emailVerificacao;
+    }
+
+    /// <summary>Confirma a posse do e-mail pelo link. Não autentica: só marca a conta.</summary>
+    [HttpPost("confirmar-email")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ConfirmarEmail([FromBody] ConfirmarEmailRequestDto request)
+    {
+        try
+        {
+            await _emailVerificacao.ConfirmarAsync(request.Token);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { mensagem = ex.Message });
+        }
     }
 
     /// <summary>Cadastra um novo usuário.</summary>

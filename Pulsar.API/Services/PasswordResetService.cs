@@ -79,6 +79,8 @@ public class PasswordResetService : IPasswordResetService
         PoliticaSenha.Validar(request.NovaSenha);
 
         token.Usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
+        // O link chegou ao e-mail da conta: isso prova a posse (SEC1, regra 8).
+        token.Usuario.EmailVerificado = true;
         token.UsadoEm = DateTime.UtcNow;
 
         await _tokenRepository.SalvarAsync();

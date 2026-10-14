@@ -68,4 +68,23 @@ public class SessoesTests : IClassFixture<PulsarWebApplicationFactory>
 
         jwt.Claims.Should().Contain(c => c.Type == "carimbo" && c.Value.Length == 32);
     }
+
+    [Fact]
+    public async Task TokenSemCarimbo_Recebe401()
+    {
+        var sessao = await Cadastrar(NovoEmail("semcarimbo"));
+        var handler = new JwtSecurityTokenHandler();
+        var original = handler.ReadJwtToken(sessao.Token);
+        var chave = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+            System.Text.Encoding.UTF8.GetBytes(PulsarWebApplicationFactory.JwtSecretTeste));
+        var semCarimbo = new JwtSecurityToken(
+            issuer: "Pulsar.Tests", audience: "Pulsar.Tests",
+            claims: original.Claims.Where(c => c.Type is not ("carimbo" or "aud" or "iss" or "exp" or "nbf" or "iat")),
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: new Microsoft.IdentityModel.Tokens.SigningCredentials(
+                chave, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256));
+
+        (await Me(handler.WriteToken(semCarimbo))).Should().Be(HttpStatusCode.Unauthorized);
+        (await Me(sessao.Token)).Should().Be(HttpStatusCode.OK);
+    }
 }

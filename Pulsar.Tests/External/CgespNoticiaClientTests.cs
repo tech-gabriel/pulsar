@@ -56,6 +56,22 @@ public class CgespNoticiaClientTests
         noticia.Link.Should().Be("https://www.cgesp.org/v3/noticias.jsp?id=55070");
     }
 
+    [Theory]
+    [InlineData("javascript:alert(1)", "https://www.cgesp.org/v3/")]
+    [InlineData("data:text/html,oi", "https://www.cgesp.org/v3/")]
+    [InlineData("https://www.cgesp.org/v3/noticias.jsp?id=2", "https://www.cgesp.org/v3/noticias.jsp?id=2")]
+    [InlineData("/noticias.jsp?id=3", "https://www.cgesp.org/v3/noticias.jsp?id=3")]
+    public void ParseRss_Link_SoSaiHttpOuHttps(string link, string esperado)
+    {
+        var xml = $"""
+            <rss version="2.0"><channel>
+              <item><title>T</title><link>{link}</link><pubDate>Seg, 01 jun 2026 10:00:00 GMT</pubDate></item>
+            </channel></rss>
+            """;
+
+        CgespNoticiaClient.ParseRss(xml).Single().Link.Should().Be(esperado);
+    }
+
     [Fact]
     public void ParseRss_DescricaoComHtml_RemoveTagsEDecodifica()
     {

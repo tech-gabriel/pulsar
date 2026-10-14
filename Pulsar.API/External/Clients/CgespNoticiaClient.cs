@@ -63,15 +63,19 @@ public partial class CgespNoticiaClient : INoticiaClient
             .ToList();
     }
 
-    /// <summary>Resolve um link relativo do feed (ex.: "noticias.jsp?id=55070") em URL absoluta.</summary>
+    /// <summary>
+    /// Resolve um link relativo do feed (ex.: "noticias.jsp?id=55070") em URL absoluta. Só sai
+    /// http(s): o link vira href no site, e um "javascript:" vindo do feed viraria script.
+    /// </summary>
     private static string ResolverLink(string? link)
     {
-        link = link?.Trim();
+        // Sem a barra inicial, "/x" não vira file:///x no Linux nem "//host" vira outro domínio.
+        link = link?.Trim().TrimStart('/');
         if (string.IsNullOrWhiteSpace(link))
             return BaseSite;
-        if (link.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            return link;
-        return BaseSite + link.TrimStart('/');
+        if (!Uri.TryCreate(link, UriKind.Absolute, out var uri))
+            uri = new Uri(BaseSite + link);
+        return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps ? uri.AbsoluteUri : BaseSite;
     }
 
     /// <summary>Remove tags HTML, decodifica entidades e trunca o resumo.</summary>

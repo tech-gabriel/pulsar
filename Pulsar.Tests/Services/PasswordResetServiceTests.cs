@@ -69,6 +69,22 @@ public class PasswordResetServiceTests
     }
 
     [Fact]
+    public async Task SolicitarReset_PassouDoTetoPorHora_NaoCriaTokenNemEnviaEmail()
+    {
+        var usuario = NovoUsuario();
+        _usuarioRepoMock.Setup(r => r.ObterPorEmailAsync(usuario.Email)).ReturnsAsync(usuario);
+        _tokenRepoMock.Setup(r => r.ContarCriadosDesdeAsync(usuario.Id, It.IsAny<DateTime>()))
+            .ReturnsAsync(PasswordResetService.MaxPedidosPorHora);
+
+        var sut = CriarService();
+        await sut.SolicitarResetAsync(new EsqueciSenhaRequestDto { Email = usuario.Email });
+
+        _tokenRepoMock.Verify(r => r.AdicionarAsync(It.IsAny<TokenRecuperacaoSenha>()), Times.Never);
+        _emailSenderMock.Verify(s => s.EnviarAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task SolicitarReset_NaoArmazenaTokenEmTextoPuro()
     {
         var usuario = NovoUsuario();

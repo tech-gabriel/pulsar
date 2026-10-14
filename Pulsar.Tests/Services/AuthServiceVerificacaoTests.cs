@@ -45,9 +45,11 @@ public class AuthServiceVerificacaoTests
     {
         var conta = new Usuario { Nome = "Atacante", Email = "vitima@x.com", SenhaHash = BCrypt.Net.BCrypt.HashPassword("senhaDoAtacante1!"), EmailPendente = "outro@x.com" };
         _usuarios.Setup(r => r.ObterPorEmailAsync("vitima@x.com")).ReturnsAsync(conta);
+        var carimboAntes = conta.CarimboSeguranca;
 
         await Criar().EntrarComEmailGoogleAsync("vitima@x.com", "Vítima");
 
+        conta.CarimboSeguranca.Should().NotBe(carimboAntes); // SEC2: o atacante perde as sessões abertas
         conta.EmailVerificado.Should().BeTrue();
         BCrypt.Net.BCrypt.Verify("senhaDoAtacante1!", conta.SenhaHash).Should().BeFalse();
         conta.EmailPendente.Should().BeNull();

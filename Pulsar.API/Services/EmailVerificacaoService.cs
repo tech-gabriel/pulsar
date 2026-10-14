@@ -90,7 +90,10 @@ public class EmailVerificacaoService : IEmailVerificacaoService
 
         usuario.EmailVerificado = true;
         if (primeiraVerificacao && AdminBootstrap.EhEmailAdmin(_configuration, usuario.Email))
+        {
             usuario.Role = RoleAcesso.ADMIN;
+            usuario.RenovarCarimbo(); // SEC2: o token novo sai com o papel novo
+        }
         token.UsadoEm = DateTime.UtcNow;
 
         await _tokens.SalvarAsync();

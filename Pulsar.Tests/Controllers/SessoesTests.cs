@@ -70,6 +70,98 @@ public class SessoesTests : IClassFixture<PulsarWebApplicationFactory>
     }
 
     [Fact]
+    public async Task SairComum_NaoDerrubaOutroAparelho()
+    {
+        var email = NovoEmail("sair");
+        await Cadastrar(email);
+        var a = await Entrar(email); var b = await Entrar(email);
+
+        await Enviar(HttpMethod.Post, "/api/auth/logout", a.Token);
+
+        (await Me(b.Token)).Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task SairDeTodos_DerrubaTodosInclusiveOAtual()
+    {
+        var email = NovoEmail("todos");
+        await Cadastrar(email);
+        var a = await Entrar(email); var b = await Entrar(email);
+
+        (await Enviar(HttpMethod.Post, "/api/usuarios/me/sair-de-todos", a.Token)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        (await Me(a.Token)).Should().Be(HttpStatusCode.Unauthorized);
+        (await Me(b.Token)).Should().Be(HttpStatusCode.Unauthorized);
+        (await Me((await Entrar(email)).Token)).Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task TrocaDeSenha_DerrubaOutros_EMantemEste()
+    {
+        var email = NovoEmail("troca");
+        await Cadastrar(email);
+        var a = await Entrar(email); var b = await Entrar(email);
+
+        var resp = await Enviar(HttpMethod.Put, $"/api/usuarios/{a.Usuario.Id}", a.Token,
+            new AtualizarPerfilRequestDto { Nome = "Fulano", Email = email, SenhaAtual = Senha, NovaSenha = "Nova#2026xx" });
+        resp.EnsureSuccessStatusCode();
+        var novo = (await resp.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!;
+
+        (await Me(novo.Token)).Should().Be(HttpStatusCode.OK);
+        (await Me(b.Token)).Should().Be(HttpStatusCode.Unauthorized);
+        (await Me(a.Token)).Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task TrocaSoDeNome_NaoDerrubaNada()
+    {
+        var email = NovoEmail("nome");
+        await Cadastrar(email);
+        var a = await Entrar(email); var b = await Entrar(email);
+
+        (await Enviar(HttpMethod.Put, $"/api/usuarios/{a.Usuario.Id}", a.Token,
+            new AtualizarPerfilRequestDto { Nome = "Outro Nome", Email = email })).EnsureSuccessStatusCode();
+
+        (await Me(b.Token)).Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ResetDeSenha_DerrubaTodas()
+    {
+        var email = NovoEmail("reset");
+        await Cadastrar(email);
+        var a = await Entrar(email);
+        await _client.PostAsJsonAsync("/api/auth/esqueci-senha", new EsqueciSenhaRequestDto { Email = email });
+        var html = _factory.Emails.Enviados.Last(e => e.Para == email && e.Html.Contains("redefinir-senha")).Html;
+        var token = Uri.UnescapeDataString(System.Text.RegularExpressions.Regex.Match(html, "token=([^\"&]+)").Groups[1].Value);
+
+        (await _client.PostAsJsonAsync("/api/auth/redefinir-senha", new RedefinirSenhaRequestDto { Token = token, NovaSenha = "Nova#2026xx" }))
+            .EnsureSuccessStatusCode();
+
+        (await Me(a.Token)).Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Theory]
+    [InlineData("desativar")]
+    [InlineData("papel")]
+    [InlineData("excluir")]
+    public async Task AcaoDoAdmin_DerrubaASessaoDoAlvo(string acao)
+    {
+        var admin = await SessaoAdmin.ObterAsync(_factory, _client);
+        var alvo = await Cadastrar(NovoEmail("alvo"));
+
+        var resp = acao switch
+        {
+            "desativar" => await Enviar(HttpMethod.Put, $"/api/admin/usuarios/{alvo.Usuario.Id}/ativo", admin.Token, new AlterarAtivoRequestDto { Ativo = false }),
+            "papel" => await Enviar(HttpMethod.Put, $"/api/admin/usuarios/{alvo.Usuario.Id}/role", admin.Token, new AlterarRoleRequestDto { Role = Pulsar.API.Domain.Enums.RoleAcesso.SUPORTE }),
+            _ => await Enviar(HttpMethod.Delete, $"/api/admin/usuarios/{alvo.Usuario.Id}", admin.Token),
+        };
+        resp.IsSuccessStatusCode.Should().BeTrue();
+
+        (await Me(alvo.Token)).Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
     public async Task TokenSemCarimbo_Recebe401()
     {
         var sessao = await Cadastrar(NovoEmail("semcarimbo"));

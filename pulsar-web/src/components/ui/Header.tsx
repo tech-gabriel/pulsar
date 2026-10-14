@@ -12,7 +12,6 @@ import { resumoAlertas } from '../../utils/risco';
 import { useTheme } from '../../hooks/useTheme';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import BadgeRisco from './BadgeRisco';
-import AvisoConfirmarEmail from '../auth/AvisoConfirmarEmail';
 import iconePulsar from '../../assets/logos/pulsar-icone.svg';
 
 // Abas de navegação principal (ETAPA B.1.2). O rótulo curto (tab bar do mobile)
@@ -27,6 +26,27 @@ const TABS: { to: string; label: string; curto: string; Icon: LucideIcon; end?: 
   { to: '/app/configuracoes', label: 'Configurações', curto: 'Config.', Icon: Settings },
 ];
 
+const ABA_CONFIG = '/app/configuracoes';
+
+/**
+ * Ícone da aba com um ponto ciano quando falta confirmar o e-mail (SEC1, opção D): o lembrete
+ * mora em Configurações. Ciano de propósito: vermelho no Pulsar é a cor do Alerta de risco.
+ */
+function IconeAba({ Icon, size, pendente }: { Icon: LucideIcon; size: number; pendente: boolean }) {
+  return (
+    <span className="relative inline-flex">
+      <Icon size={size} />
+      {pendente && (
+        <span
+          aria-hidden="true"
+          className="absolute -top-0.5 -right-1 w-[9px] h-[9px] rounded-full"
+          style={{ background: 'var(--text-accent)', boxShadow: '0 0 0 2px var(--bg-primary)' }}
+        />
+      )}
+    </span>
+  );
+}
+
 /**
  * Header de navegação principal (ETAPA B.1). No desktop/tablet é uma barra única
  * (logo + abas centrais + ações). No mobile divide-se em top bar (logo + ações)
@@ -35,6 +55,7 @@ const TABS: { to: string; label: string; curto: string; Icon: LucideIcon; end?: 
  */
 export default function Header() {
   const { usuario, logout } = useAuth();
+  const emailPendente = usuario?.emailVerificado === false;
   const { theme, toggleTheme } = useTheme();
   const { subprefeituras, carregando } = useSubprefeituras();
   const { favoritos } = useFavoritos();
@@ -104,8 +125,9 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
           {TABS.map(({ to, label, Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => ['nav-tab', isActive ? 'ativa' : ''].join(' ')}>
-              <Icon size={18} />
+              <IconeAba Icon={Icon} size={18} pendente={to === ABA_CONFIG && emailPendente} />
               <span>{label}</span>
+              {to === ABA_CONFIG && emailPendente && <span className="sr-only">, e-mail não confirmado</span>}
             </NavLink>
           ))}
         </nav>
@@ -237,9 +259,6 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Só monta para conta não verificada (SEC1): quem já confirmou não paga o efeito nem o toast. */}
-      {usuario?.emailVerificado === false && <AvisoConfirmarEmail />}
-
       {/* ── TAB BAR INFERIOR (mobile) ───────────────────────────────────────── */}
       <nav className="tabbar-mobile md:hidden fixed bottom-0 left-0 right-0 z-[1000] flex items-stretch h-12">
         {TABS.map(({ to, curto, Icon, end }) => (
@@ -249,8 +268,9 @@ export default function Header() {
             end={end}
             className={({ isActive }) => ['tabbar-item justify-center', isActive ? 'ativa' : ''].join(' ')}
           >
-            <Icon size={22} />
+            <IconeAba Icon={Icon} size={22} pendente={to === ABA_CONFIG && emailPendente} />
             <span>{curto}</span>
+            {to === ABA_CONFIG && emailPendente && <span className="sr-only">, e-mail não confirmado</span>}
           </NavLink>
         ))}
       </nav>

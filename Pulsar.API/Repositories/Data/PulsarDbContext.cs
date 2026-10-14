@@ -36,6 +36,7 @@ public class PulsarDbContext : DbContext
             e.Property(u => u.SenhaHash).IsRequired();
             e.Property(u => u.Ativo).HasDefaultValue(true);
             e.Property(u => u.EmailPendente).HasMaxLength(200);
+            e.Property(u => u.CarimboSeguranca).IsRequired().HasMaxLength(32);
             e.HasIndex(u => u.Role);
         });
 

@@ -81,6 +81,10 @@ public class PasswordResetService : IPasswordResetService
         token.Usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
         // O link chegou ao e-mail da conta: isso prova a posse (SEC1, regra 8).
         token.Usuario.EmailVerificado = true;
+        // SEC2: senha redefinida derruba todas as sessões.
+        token.Usuario.RenovarCarimbo();
+        // Um e-mail pendente pode ter sido deixado por quem invadiu: o link dele deixa de valer.
+        token.Usuario.EmailPendente = null;
         token.UsadoEm = DateTime.UtcNow;
 
         await _tokenRepository.SalvarAsync();

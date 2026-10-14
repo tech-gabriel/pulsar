@@ -22,6 +22,15 @@ public class Usuario
     /// <summary>E-mail novo pedido no perfil, aguardando o clique no link. <see cref="Email"/> só muda na confirmação.</summary>
     public string? EmailPendente { get; set; }
 
+    /// <summary>
+    /// Carimbo de segurança (SEC2): vai no JWT como claim <c>carimbo</c>. Trocar o carimbo invalida
+    /// todos os tokens já emitidos para a conta. Só muda por <see cref="RenovarCarimbo"/>.
+    /// </summary>
+    public string CarimboSeguranca { get; set; } = Guid.NewGuid().ToString("N");
+
+    /// <summary>Derruba todas as sessões da conta: tokens com o carimbo antigo passam a receber 401.</summary>
+    public void RenovarCarimbo() => CarimboSeguranca = Guid.NewGuid().ToString("N");
+
     public IList<UsuarioSubprefeitura> Favoritos { get; set; } = new List<UsuarioSubprefeitura>();
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }

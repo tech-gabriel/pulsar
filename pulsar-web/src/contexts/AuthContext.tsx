@@ -15,6 +15,7 @@ export interface AuthContextValue {
   atualizarPerfil: (dto: AtualizarPerfilRequestDto) => Promise<void>;
   recarregarUsuario: () => Promise<void>;
   reenviarConfirmacao: () => Promise<void>;
+  sairDeTodosOsAparelhos: () => Promise<void>;
   logout: () => void;
   estaAutenticado: boolean;
 }

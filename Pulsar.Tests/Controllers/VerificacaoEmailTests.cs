@@ -159,6 +159,9 @@ public class VerificacaoEmailTests : IClassFixture<PulsarWebApplicationFactory>
         (await _client.PostAsJsonAsync("/api/auth/redefinir-senha", new RedefinirSenhaRequestDto { Token = token, NovaSenha = "Outra#2026xx" }))
             .EnsureSuccessStatusCode();
 
-        (await Me(sessao.Token)).EmailVerificado.Should().BeTrue();
+        // Desde o SEC2 o reset derruba as sessões abertas: confere entrando com a senha nova.
+        var login = await _client.PostAsJsonAsync("/api/auth/login", new LoginRequestDto { Email = email, Senha = "Outra#2026xx" });
+        var novaSessao = (await login.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!;
+        (await Me(novaSessao.Token)).EmailVerificado.Should().BeTrue();
     }
 }

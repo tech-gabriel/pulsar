@@ -23,6 +23,9 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
     /// <summary>E-mail configurado em Admin:Emails: vira ADMIN quando a posse dele é confirmada.</summary>
     public const string EmailAdminBootstrap = "admin.bootstrap@pulsar.test";
 
+    /// <summary>Segredo do JWT nos testes (fabricar tokens à mão, ex.: token sem carimbo).</summary>
+    public const string JwtSecretTeste = "pulsar-chave-secreta-para-testes-unitarios-longa-o-suficiente-32chars";
+
     /// <summary>Remetente falso: os testes leem daqui o link de confirmação.</summary>
     public CapturaEmailSender Emails { get; } = new();
 
@@ -72,8 +75,9 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
             foreach (var d in paraRemover)
                 services.Remove(d);
 
-            services.AddDbContext<PulsarDbContext>(options =>
-                options.UseSqlite(_connection));
+            services.AddDbContext<PulsarDbContext>((sp, options) =>
+                options.UseSqlite(_connection)
+                       .AddInterceptors(sp.GetRequiredService<Pulsar.API.Repositories.Data.InvalidaSessaoInterceptor>()));
 
             // Remover os jobs agendados: sem ciclos em background nem chamada real ao GeoSampa
             foreach (var job in services.Where(d => d.ImplementationType == typeof(DataCollectionJob)
@@ -103,8 +107,7 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
             // Sobrescrever JWT validation para usar secret/issuer/audience de teste.
             // Program.cs captura builder.Configuration em tempo de registro; o
             // PostConfigure garante que os valores de teste prevalecem em runtime.
-            const string testSecret =
-                "pulsar-chave-secreta-para-testes-unitarios-longa-o-suficiente-32chars";
+            const string testSecret = JwtSecretTeste;
             services.PostConfigure<JwtBearerOptions>(
                 JwtBearerDefaults.AuthenticationScheme, options =>
                 {

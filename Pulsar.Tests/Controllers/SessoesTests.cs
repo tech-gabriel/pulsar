@@ -161,6 +161,47 @@ public class SessoesTests : IClassFixture<PulsarWebApplicationFactory>
         (await Me(alvo.Token)).Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    /// <summary>Invasor com sessão aberta deixa um e-mail dele pendente; o link chega na caixa dele.</summary>
+    private async Task<(string emailVitima, string emailInvasor, string linkInvasor, LoginResponseDto sessaoInvasor)> InvasorPendurouEmail()
+    {
+        var vitima = NovoEmail("vitima");
+        var invasor = NovoEmail("invasor");
+        await Cadastrar(vitima);
+        var sessaoInvasor = await Entrar(vitima);
+        (await Enviar(HttpMethod.Put, $"/api/usuarios/{sessaoInvasor.Usuario.Id}", sessaoInvasor.Token,
+            new AtualizarPerfilRequestDto { Nome = "Fulano", Email = invasor })).EnsureSuccessStatusCode();
+        return (vitima, invasor, _factory.Emails.UltimoTokenPara(invasor), sessaoInvasor);
+    }
+
+    private Task<HttpResponseMessage> Confirmar(string token)
+        => _client.PostAsJsonAsync("/api/auth/confirmar-email", new ConfirmarEmailRequestDto { Token = token });
+
+    [Fact]
+    public async Task ResetDeSenha_CancelaEmailPendenteDoInvasor()
+    {
+        var (vitima, _, linkInvasor, _) = await InvasorPendurouEmail();
+        await _client.PostAsJsonAsync("/api/auth/esqueci-senha", new EsqueciSenhaRequestDto { Email = vitima });
+        var html = _factory.Emails.Enviados.Last(e => e.Para == vitima && e.Html.Contains("redefinir-senha")).Html;
+        var token = Uri.UnescapeDataString(System.Text.RegularExpressions.Regex.Match(html, "token=([^\"&]+)").Groups[1].Value);
+        (await _client.PostAsJsonAsync("/api/auth/redefinir-senha", new RedefinirSenhaRequestDto { Token = token, NovaSenha = "Nova#2026xx" }))
+            .EnsureSuccessStatusCode();
+
+        (await Confirmar(linkInvasor)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await Entrar(vitima, "Nova#2026xx")).Usuario.Email.Should().Be(vitima);
+    }
+
+    [Fact]
+    public async Task SairDeTodos_CancelaEmailPendenteDoInvasor()
+    {
+        var (vitima, _, linkInvasor, _) = await InvasorPendurouEmail();
+        var donaDaConta = await Entrar(vitima);
+
+        (await Enviar(HttpMethod.Post, "/api/usuarios/me/sair-de-todos", donaDaConta.Token)).EnsureSuccessStatusCode();
+
+        (await Confirmar(linkInvasor)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await Entrar(vitima)).Usuario.EmailPendente.Should().BeNull();
+    }
+
     [Fact]
     public async Task TokenSemCarimbo_Recebe401()
     {

@@ -177,6 +177,34 @@ public class ValidadorSessaoTests
         (await v.SessaoValidaAsync(u.Id, u.CarimboSeguranca)).Should().BeFalse();
     }
 
+    /// <summary>Lê a conta de verdade e, antes de devolver, roda <paramref name="duranteLeitura"/> (o commit concorrente).</summary>
+    private sealed class ValidadorComCorrida(IMemoryCache cache, IServiceScopeFactory escopos, Action duranteLeitura)
+        : ValidadorSessao(cache, escopos)
+    {
+        protected override async Task<EstadoConta?> LerContaAsync(Guid usuarioId)
+        {
+            var estado = await base.LerContaAsync(usuarioId);
+            duranteLeitura();
+            return estado;
+        }
+    }
+
+    [Fact]
+    public async Task LeituraVelhaTerminadaDepoisDaRevogacao_NaoVoltaParaOCache()
+    {
+        // Achado da revisão de segurança: a leitura pega o carimbo velho, a revogação commita e limpa o
+        // cache, e só então a leitura grava o valor velho, que valeria por 60 s.
+        using var amb = new Ambiente();
+        var u = amb.Salvar(NovoUsuario());
+        var antigo = u.CarimboSeguranca;
+        var escopos = amb.Servicos.GetRequiredService<IServiceScopeFactory>();
+        var lento = new ValidadorComCorrida(amb.Cache, escopos, () => amb.Alterar(u.Id, x => x.RenovarCarimbo()));
+
+        await lento.SessaoValidaAsync(u.Id, antigo); // esta requisição já estava em voo; o resultado dela não importa
+
+        (await amb.Validador().SessaoValidaAsync(u.Id, antigo)).Should().BeFalse();
+    }
+
     [Fact]
     public void Interceptor_InvalidaDepoisDoCommit_MesmoComRecolocacaoConcorrente()
     {

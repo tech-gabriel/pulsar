@@ -17,7 +17,7 @@ public class ValidadorSessao : IValidadorSessao
     public static readonly TimeSpan Validade = TimeSpan.FromSeconds(60);
     public static string Chave(Guid usuarioId) => $"sessao:{usuarioId}";
 
-    private sealed record EstadoConta(string Carimbo, bool Ativo);
+    public sealed record EstadoConta(string Carimbo, bool Ativo);
 
     private readonly IMemoryCache _cache;
     private readonly IServiceScopeFactory _escopos;
@@ -35,17 +35,49 @@ public class ValidadorSessao : IValidadorSessao
 
         if (!_cache.TryGetValue(Chave(usuarioId), out EstadoConta? estado))
         {
-            using var escopo = _escopos.CreateScope();
-            var db = escopo.ServiceProvider.GetRequiredService<PulsarDbContext>();
-            estado = await db.Usuarios.AsNoTracking()
-                .Where(u => u.Id == usuarioId)
-                .Select(u => new EstadoConta(u.CarimboSeguranca, u.Ativo))
-                .FirstOrDefaultAsync();
+            var geracao = Geracao(_cache, usuarioId);
+            estado = await LerContaAsync(usuarioId);
             if (estado is null)
                 return false;
-            _cache.Set(Chave(usuarioId), estado, Validade);
+            // Se a conta foi invalidada enquanto líamos, o que lemos pode ser o carimbo velho: vale só
+            // para esta requisição (que já estava em voo), nunca para o cache.
+            lock (Trava)
+            {
+                if (Geracao(_cache, usuarioId) == geracao)
+                    _cache.Set(Chave(usuarioId), estado, Validade);
+            }
         }
 
         return estado!.Ativo && estado.Carimbo == carimbo;
+    }
+
+    private static readonly object Trava = new();
+    private static string ChaveGeracao(Guid usuarioId) => $"sessao-geracao:{usuarioId}";
+    private static long Geracao(IMemoryCache cache, Guid usuarioId)
+        => cache.TryGetValue(ChaveGeracao(usuarioId), out long g) ? g : 0;
+
+    /// <summary>
+    /// Tira a conta do cache e avança a geração dela, para que uma leitura começada antes não grave o
+    /// estado velho depois. Chamado pelo <see cref="InvalidaSessaoInterceptor"/> após o commit.
+    /// </summary>
+    public static void Invalidar(IMemoryCache cache, Guid usuarioId)
+    {
+        lock (Trava)
+        {
+            // A geração só precisa sobreviver às leituras em voo (segundos); 2x a validade sobra.
+            cache.Set(ChaveGeracao(usuarioId), Geracao(cache, usuarioId) + 1, Validade * 2);
+            cache.Remove(Chave(usuarioId));
+        }
+    }
+
+    /// <summary>Lê carimbo e status da conta no banco. Virtual para os testes simularem a corrida.</summary>
+    protected virtual async Task<EstadoConta?> LerContaAsync(Guid usuarioId)
+    {
+        using var escopo = _escopos.CreateScope();
+        var db = escopo.ServiceProvider.GetRequiredService<PulsarDbContext>();
+        return await db.Usuarios.AsNoTracking()
+            .Where(u => u.Id == usuarioId)
+            .Select(u => new EstadoConta(u.CarimboSeguranca, u.Ativo))
+            .FirstOrDefaultAsync();
     }
 }

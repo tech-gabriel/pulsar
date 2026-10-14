@@ -73,7 +73,7 @@ public sealed class InvalidaSessaoInterceptor : SaveChangesInterceptor
     {
         if (ctx is null || !_pendentes.TryGetValue(ctx, out var ids)) return;
         foreach (var id in ids)
-            _cache.Remove(ValidadorSessao.Chave(id));
+            ValidadorSessao.Invalidar(_cache, id);
         _pendentes.Remove(ctx);
     }
 }

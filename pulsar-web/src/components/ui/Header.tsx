@@ -12,6 +12,7 @@ import { resumoAlertas } from '../../utils/risco';
 import { useTheme } from '../../hooks/useTheme';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import BadgeRisco from './BadgeRisco';
+import AvisoConfirmarEmail from '../auth/AvisoConfirmarEmail';
 import iconePulsar from '../../assets/logos/pulsar-icone.svg';
 
 // Abas de navegação principal (ETAPA B.1.2). O rótulo curto (tab bar do mobile)
@@ -235,6 +236,9 @@ export default function Header() {
           </button>
         </div>
       </header>
+
+      {/* Só monta para conta não verificada (SEC1): quem já confirmou não paga o efeito nem o toast. */}
+      {usuario?.emailVerificado === false && <AvisoConfirmarEmail />}
 
       {/* ── TAB BAR INFERIOR (mobile) ───────────────────────────────────────── */}
       <nav className="tabbar-mobile md:hidden fixed bottom-0 left-0 right-0 z-[1000] flex items-stretch h-12">

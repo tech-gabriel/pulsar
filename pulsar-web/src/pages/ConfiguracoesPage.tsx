@@ -103,6 +103,8 @@ export default function ConfiguracoesPage() {
       if (!senhaAtual) { showToast('Informe a senha atual para trocá-la.', 'error'); return; }
     }
     setSalvando(true);
+    // E-mail novo fica pendente até o clique no link (SEC1): o toast precisa dizer isso.
+    const trocouEmail = email.trim().toLowerCase() !== (usuario?.email ?? '');
     try {
       await atualizarPerfil({
         nome,
@@ -110,7 +112,12 @@ export default function ConfiguracoesPage() {
         perfil,
         ...(trocarSenha ? { senhaAtual, novaSenha } : {}),
       });
-      showToast('Perfil atualizado com sucesso!', 'success');
+      showToast(
+        trocouEmail
+          ? `Enviamos um link para ${email.trim()}. O e-mail da conta só muda depois que você confirmar.`
+          : 'Perfil atualizado com sucesso!',
+        'success',
+      );
       setEditando(false);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { mensagem?: string } } })?.response?.data?.mensagem;
@@ -167,6 +174,11 @@ export default function ConfiguracoesPage() {
                   </p>
                 </div>
               </div>
+              {usuario?.emailPendente && (
+                <p className="mt-3" style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                  Enviamos um link para {usuario.emailPendente}. Até você confirmar, o e-mail da conta continua sendo {usuario.email}.
+                </p>
+              )}
               <div className="mt-4 flex items-center gap-2">
                 <span
                   className="inline-flex items-center gap-1.5 rounded-full px-3 py-1"

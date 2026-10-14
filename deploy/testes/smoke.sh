@@ -20,6 +20,11 @@ espera_conter() { # descrição, texto, padrão
 
 trap '"${COMPOSE[@]}" down -v >/dev/null 2>&1 || true' EXIT
 
+echo "Configuração do compose"
+config="$("${COMPOSE[@]}" config)"
+if [[ "$(grep -c '^        max-size: 10m' <<<"$config" || true)" == "3" ]]; then ok "logs rotacionados nos três serviços"; else erro "rotação de log fora de algum serviço"; fi
+espera_conter "memória compartilhada do Postgres" "$config" 'shm_size: "268435456"'
+
 echo "Build das imagens locais"
 docker build -q -t ghcr.io/tech-gabriel/pulsar-api:local -f Dockerfile . >/dev/null
 docker build -q -t ghcr.io/tech-gabriel/pulsar-web:local -f deploy/Dockerfile.web . >/dev/null

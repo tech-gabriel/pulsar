@@ -61,6 +61,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     salvarSessao(data);
   }, [usuario, salvarSessao]);
 
+  const recarregarUsuario = useCallback(async () => {
+    const { data } = await api.get<UsuarioDto>('/usuarios/me');
+    localStorage.setItem('pulsar_usuario', JSON.stringify(data));
+    setUsuario(data);
+  }, []);
+
+  const reenviarConfirmacao = useCallback(async () => {
+    await api.post('/usuarios/me/reenviar-confirmacao');
+  }, []);
+
   const logout = useCallback(() => {
     api.post('/auth/logout').catch(() => {});
     localStorage.removeItem('pulsar_token');
@@ -78,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginGoogle,
         cadastrar,
         atualizarPerfil,
+        recarregarUsuario,
+        reenviarConfirmacao,
         logout,
         estaAutenticado: !!token,
       }}

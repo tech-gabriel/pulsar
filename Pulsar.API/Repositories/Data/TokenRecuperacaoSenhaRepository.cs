@@ -18,6 +18,9 @@ public class TokenRecuperacaoSenhaRepository : ITokenRecuperacaoSenhaRepository
             .Include(t => t.Usuario)
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
 
+    public async Task<int> ContarCriadosDesdeAsync(Guid usuarioId, DateTime desde)
+        => await _context.TokensRecuperacaoSenha.CountAsync(t => t.UsuarioId == usuarioId && t.CriadoEm >= desde);
+
     public async Task InvalidarPendentesDoUsuarioAsync(Guid usuarioId)
     {
         var agora = DateTime.UtcNow;

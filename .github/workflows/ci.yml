@@ -26,6 +26,14 @@ jobs:
       - name: Restore
         run: dotnet restore Pulsar.slnx
 
+      # Falha o CI quando um pacote (direto ou transitivo) tem vulnerabilidade conhecida.
+      - name: Audit
+        env:
+          DOTNET_CLI_UI_LANGUAGE: en
+        run: |
+          dotnet list Pulsar.slnx package --vulnerable --include-transitive | tee audit.txt
+          ! grep -q "has the following vulnerable packages" audit.txt
+
       - name: Build
         run: dotnet build Pulsar.slnx --configuration Release --no-restore
 
@@ -50,6 +58,10 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      # Só dependências que vão para o navegador; alerta de ferramenta de build não trava o PR.
+      - name: Audit
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Lint
         run: npm run lint

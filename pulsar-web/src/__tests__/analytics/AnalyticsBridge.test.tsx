@@ -27,7 +27,7 @@ function ctx(usuarioAtual: UsuarioDto | null) {
     token: usuarioAtual ? 't' : null,
     estaAutenticado: !!usuarioAtual,
     login: vi.fn(), loginGoogle: vi.fn(), cadastrar: vi.fn(),
-    atualizarPerfil: vi.fn(), logout: vi.fn(),
+    atualizarPerfil: vi.fn(), recarregarUsuario: vi.fn(), reenviarConfirmacao: vi.fn(), logout: vi.fn(),
   };
 }
 

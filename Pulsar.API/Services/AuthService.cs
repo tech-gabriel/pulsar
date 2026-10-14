@@ -15,11 +15,19 @@ public class AuthService : IAuthService
 {
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IConfiguration _configuration;
+    private readonly IEmailVerificacaoService _emailVerificacao;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IUsuarioRepository usuarioRepository, IConfiguration configuration)
+    public AuthService(
+        IUsuarioRepository usuarioRepository,
+        IConfiguration configuration,
+        IEmailVerificacaoService emailVerificacao,
+        ILogger<AuthService> logger)
     {
         _usuarioRepository = usuarioRepository;
         _configuration = configuration;
+        _emailVerificacao = emailVerificacao;
+        _logger = logger;
     }
 
     public async Task<LoginResponseDto> CadastrarAsync(CadastroRequestDto request)
@@ -35,14 +43,15 @@ public class AuthService : IAuthService
             Nome = request.Nome,
             Email = email,
             Perfil = request.Perfil,
-            // Bootstrap: e-mails listados em Admin:Emails nascem como ADMIN. Só na criação:
-            // promover conta existente deixava virar admin trocando o e-mail no perfil.
-            Role = EhEmailAdmin(email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
+            // ADMIN da lista só na confirmação do e-mail (SEC1): cadastrar o e-mail de um admin não prova nada.
+            Role = RoleAcesso.USUARIO,
             SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.Senha)
         };
 
         await _usuarioRepository.AdicionarAsync(usuario);
         await _usuarioRepository.SalvarAsync();
+
+        await EnviarConfirmacaoSemDerrubarAsync(usuario, usuario.Email);
 
         return new LoginResponseDto
         {
@@ -57,10 +66,12 @@ public class AuthService : IAuthService
         var usuario = await _usuarioRepository.ObterPorIdAsync(usuarioId)
             ?? throw new KeyNotFoundException("Usuário não encontrado.");
 
-        // E-mail novo não pode pertencer a outro usuário.
-        if (!string.Equals(usuario.Email, request.Email, StringComparison.OrdinalIgnoreCase))
+        // E-mail novo só vale depois do clique no link (SEC1): até lá fica pendente e o atual continua.
+        var novoEmail = Usuario.NormalizarEmail(request.Email);
+        var trocouEmail = novoEmail != usuario.Email;
+        if (trocouEmail)
         {
-            var existente = await _usuarioRepository.ObterPorEmailAsync(request.Email);
+            var existente = await _usuarioRepository.ObterPorEmailAsync(novoEmail);
             if (existente is not null && existente.Id != usuario.Id)
                 throw new InvalidOperationException("E-mail já em uso por outra conta.");
         }
@@ -77,11 +88,14 @@ public class AuthService : IAuthService
         }
 
         usuario.Nome = request.Nome;
-        usuario.Email = Usuario.NormalizarEmail(request.Email);
+        usuario.EmailPendente = trocouEmail ? novoEmail : null;
         usuario.Perfil = request.Perfil;
 
         await _usuarioRepository.AtualizarAsync(usuario);
         await _usuarioRepository.SalvarAsync();
+
+        if (trocouEmail)
+            await EnviarConfirmacaoSemDerrubarAsync(usuario, novoEmail);
 
         return new LoginResponseDto
         {
@@ -128,19 +142,29 @@ public class AuthService : IAuthService
         if (!payload.EmailVerified || string.IsNullOrWhiteSpace(payload.Email))
             throw new UnauthorizedAccessException("E-mail do Google não verificado.");
 
-        var usuario = await _usuarioRepository.ObterPorEmailAsync(payload.Email);
+        return await EntrarComEmailGoogleAsync(payload.Email, payload.Name);
+    }
+
+    /// <summary>
+    /// Parte do login Google que vem depois de validar o token: o Google atestou a posse de <paramref name="email"/>.
+    /// Pública para teste (o token do Google não se fabrica em teste).
+    /// </summary>
+    public async Task<LoginResponseDto> EntrarComEmailGoogleAsync(string email, string? nome)
+    {
+        var usuario = await _usuarioRepository.ObterPorEmailAsync(email);
         // Guardado antes do bloco: adiante `usuario` deixa de ser nulo e a informação se perde.
         var novoUsuario = usuario is null;
 
         if (usuario is null)
         {
-            // Cadastro implícito via Google: conta sem senha utilizável.
+            // Cadastro implícito via Google: conta sem senha utilizável, já verificada.
             usuario = new Usuario
             {
-                Nome = string.IsNullOrWhiteSpace(payload.Name) ? payload.Email : payload.Name,
-                Email = Usuario.NormalizarEmail(payload.Email),
+                Nome = string.IsNullOrWhiteSpace(nome) ? email : nome,
+                Email = Usuario.NormalizarEmail(email),
                 Perfil = TipoPerfil.CIDADAO,
-                Role = EhEmailAdmin(payload.Email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
+                Role = AdminBootstrap.EhEmailAdmin(_configuration, email) ? RoleAcesso.ADMIN : RoleAcesso.USUARIO,
+                EmailVerificado = true,
                 // Sem login por senha: hash aleatório e inutilizável (não corresponde a nenhuma senha).
                 SenhaHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N"))
             };
@@ -151,6 +175,19 @@ public class AuthService : IAuthService
         {
             if (!usuario.Ativo)
                 throw new UnauthorizedAccessException("Conta desativada. Entre em contato com o suporte.");
+
+            if (!usuario.EmailVerificado)
+            {
+                // Quem cadastrou com senha nunca provou o e-mail; quem entra pelo Google provou.
+                // A conta fica com quem provou: a senha antiga deixa de valer (pré-sequestro, SEC1).
+                usuario.EmailVerificado = true;
+                usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N"));
+                usuario.EmailPendente = null;
+                if (AdminBootstrap.EhEmailAdmin(_configuration, usuario.Email))
+                    usuario.Role = RoleAcesso.ADMIN;
+                await _usuarioRepository.AtualizarAsync(usuario);
+                await _usuarioRepository.SalvarAsync();
+            }
         }
 
         return new LoginResponseDto
@@ -161,16 +198,24 @@ public class AuthService : IAuthService
         };
     }
 
-    /// <summary>
-    /// Indica se o e-mail consta na lista <c>Admin:Emails</c> da configuração
-    /// pela mesma forma canônica do banco (<see cref="Usuario.NormalizarEmail"/>): um segundo jeito
-    /// de comparar abriria brecha entre "parece igual aqui" e "é diferente lá". Bootstrap do primeiro admin.
-    /// </summary>
-    private bool EhEmailAdmin(string email)
+    public async Task<UsuarioDto> ObterUsuarioAsync(Guid usuarioId)
     {
-        var emails = _configuration.GetSection("Admin:Emails").Get<string[]>();
-        var alvo = Usuario.NormalizarEmail(email);
-        return emails is not null && emails.Any(e => Usuario.NormalizarEmail(e) == alvo);
+        var usuario = await _usuarioRepository.ObterPorIdAsync(usuarioId)
+            ?? throw new KeyNotFoundException("Usuário não encontrado.");
+        return MapearUsuarioDto(usuario);
+    }
+
+    /// <summary>Falha no envio (Resend fora do ar) não derruba cadastro nem perfil: a pessoa usa "Reenviar".</summary>
+    private async Task EnviarConfirmacaoSemDerrubarAsync(Usuario usuario, string emailDestino)
+    {
+        try
+        {
+            await _emailVerificacao.EnviarConfirmacaoAsync(usuario, emailDestino);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falha ao enviar a confirmação de e-mail do usuário {UsuarioId}.", usuario.Id);
+        }
     }
 
     private string GerarToken(Usuario usuario)
@@ -209,6 +254,8 @@ public class AuthService : IAuthService
         Nome = usuario.Nome,
         Email = usuario.Email,
         Perfil = usuario.Perfil,
-        Role = usuario.Role
+        Role = usuario.Role,
+        EmailVerificado = usuario.EmailVerificado,
+        EmailPendente = usuario.EmailPendente
     };
 }

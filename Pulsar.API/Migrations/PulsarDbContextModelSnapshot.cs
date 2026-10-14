@@ -1131,6 +1131,47 @@ namespace Pulsar.API.Migrations
                     b.ToTable("TokensRecuperacaoSenha");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.TokenVerificacaoEmail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("UsadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("TokensVerificacaoEmail");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1152,6 +1193,13 @@ namespace Pulsar.API.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("EmailPendente")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("EmailVerificado")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -1297,6 +1345,17 @@ namespace Pulsar.API.Migrations
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.TokenRecuperacaoSenha", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.TokenVerificacaoEmail", b =>
                 {
                     b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
                         .WithMany()

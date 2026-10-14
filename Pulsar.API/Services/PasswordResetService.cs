@@ -79,6 +79,8 @@ public class PasswordResetService : IPasswordResetService
         PoliticaSenha.Validar(request.NovaSenha);
 
         token.Usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
+        // O link chegou ao e-mail da conta: isso prova a posse (SEC1, regra 8).
+        token.Usuario.EmailVerificado = true;
         token.UsadoEm = DateTime.UtcNow;
 
         await _tokenRepository.SalvarAsync();
@@ -86,7 +88,7 @@ public class PasswordResetService : IPasswordResetService
     }
 
     /// <summary>Token aleatório seguro (256 bits) em Base64 URL-safe.</summary>
-    private static string GerarTokenBruto()
+    public static string GerarTokenBruto()
     {
         var bytes = RandomNumberGenerator.GetBytes(32);
         return Convert.ToBase64String(bytes)

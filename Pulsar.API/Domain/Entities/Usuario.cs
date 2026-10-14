@@ -16,6 +16,12 @@ public class Usuario
     /// <summary>Conta ativa. Quando false, o login é bloqueado.</summary>
     public bool Ativo { get; set; } = true;
 
+    /// <summary>A pessoa provou que recebe e-mail em <see cref="Email"/> (link de confirmação, Google ou reset).</summary>
+    public bool EmailVerificado { get; set; }
+
+    /// <summary>E-mail novo pedido no perfil, aguardando o clique no link. <see cref="Email"/> só muda na confirmação.</summary>
+    public string? EmailPendente { get; set; }
+
     public IList<UsuarioSubprefeitura> Favoritos { get; set; } = new List<UsuarioSubprefeitura>();
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }

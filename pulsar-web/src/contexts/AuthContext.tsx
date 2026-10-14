@@ -13,6 +13,8 @@ export interface AuthContextValue {
   loginGoogle: (idToken: string) => Promise<void>;
   cadastrar: (dto: CadastroRequestDto) => Promise<void>;
   atualizarPerfil: (dto: AtualizarPerfilRequestDto) => Promise<void>;
+  recarregarUsuario: () => Promise<void>;
+  reenviarConfirmacao: () => Promise<void>;
   logout: () => void;
   estaAutenticado: boolean;
 }

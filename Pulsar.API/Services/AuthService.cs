@@ -13,6 +13,9 @@ namespace Pulsar.API.Services;
 
 public class AuthService : IAuthService
 {
+    /// <summary>Claim do JWT com o carimbo de segurança da conta (SEC2).</summary>
+    public const string ClaimCarimbo = "carimbo";
+
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IConfiguration _configuration;
     private readonly IEmailVerificacaoService _emailVerificacao;
@@ -234,6 +237,7 @@ public class AuthService : IAuthService
             new Claim(JwtRegisteredClaimNames.Name, usuario.Nome),
             new Claim("perfil", usuario.Perfil.ToString()),
             new Claim(ClaimTypes.Role, usuario.Role.ToString()),
+            new Claim(ClaimCarimbo, usuario.CarimboSeguranca),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

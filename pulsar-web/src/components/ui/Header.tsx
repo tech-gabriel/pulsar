@@ -34,7 +34,8 @@ const ABA_CONFIG = '/app/configuracoes';
  */
 function IconeAba({ Icon, size, pendente }: { Icon: LucideIcon; size: number; pendente: boolean }) {
   return (
-    <span className="relative inline-flex">
+    // overflow visível: `.tabbar-item > span` corta o conteúdo, e o ponto fica para fora do ícone.
+    <span className="relative inline-flex" style={{ overflow: 'visible' }}>
       <Icon size={size} />
       {pendente && (
         <span

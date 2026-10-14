@@ -1186,6 +1186,11 @@ namespace Pulsar.API.Migrations
                     b.Property<DateTime>("AtualizadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CarimboSeguranca")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 

@@ -69,6 +69,9 @@ public class EmailVerificacaoService : IEmailVerificacaoService
             throw new ArgumentException(LinkInvalido);
 
         var usuario = token.Usuario;
+        // Admin:Emails é bootstrap: promove só na primeira verificação da conta. Sem isso, um admin
+        // rebaixado com e-mail na lista se repromovia trocando o e-mail e voltando ao da lista.
+        var primeiraVerificacao = !usuario.EmailVerificado;
         if (usuario.EmailPendente is not null && token.Email == usuario.EmailPendente)
         {
             // Conferido de novo na hora do clique: outra conta pode ter ficado com o endereço desde o envio.
@@ -86,7 +89,7 @@ public class EmailVerificacaoService : IEmailVerificacaoService
         }
 
         usuario.EmailVerificado = true;
-        if (AdminBootstrap.EhEmailAdmin(_configuration, usuario.Email))
+        if (primeiraVerificacao && AdminBootstrap.EhEmailAdmin(_configuration, usuario.Email))
             usuario.Role = RoleAcesso.ADMIN;
         token.UsadoEm = DateTime.UtcNow;
 

@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Scheduler;
+using Pulsar.API.Services.Interfaces;
 
 namespace Pulsar.Tests.Helpers;
 
@@ -19,8 +20,11 @@ namespace Pulsar.Tests.Helpers;
 /// </summary>
 public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
 {
-    /// <summary>E-mail configurado em Admin:Emails: nasce ADMIN quando a conta é criada com ele.</summary>
+    /// <summary>E-mail configurado em Admin:Emails: vira ADMIN quando a posse dele é confirmada.</summary>
     public const string EmailAdminBootstrap = "admin.bootstrap@pulsar.test";
+
+    /// <summary>Remetente falso: os testes leem daqui o link de confirmação.</summary>
+    public CapturaEmailSender Emails { get; } = new();
 
     /// <summary>Segundo e-mail de Admin:Emails que nenhum teste cadastra (alvo de ataques de troca de e-mail).</summary>
     public const string EmailAdminSemDono = "admin.semdono@pulsar.test";
@@ -91,6 +95,10 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
             foreach (var d in geocodingDescriptors)
                 services.Remove(d);
             services.AddScoped<IGeocodingClient, FakeGeocodingClient>();
+
+            foreach (var d in services.Where(d => d.ServiceType == typeof(IEmailSender)).ToList())
+                services.Remove(d);
+            services.AddSingleton<IEmailSender>(Emails);
 
             // Sobrescrever JWT validation para usar secret/issuer/audience de teste.
             // Program.cs captura builder.Configuration em tempo de registro; o

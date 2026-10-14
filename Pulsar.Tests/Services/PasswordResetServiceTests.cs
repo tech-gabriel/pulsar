@@ -135,6 +135,7 @@ public class PasswordResetServiceTests
 
         BCrypt.Net.BCrypt.Verify("NovaSenha12!", usuario.SenhaHash).Should().BeTrue();
         token.UsadoEm.Should().NotBeNull();
+        usuario.EmailVerificado.Should().BeTrue(); // o link chegou ao e-mail da conta (SEC1)
         _tokenRepoMock.Verify(r => r.SalvarAsync(), Times.Once);
     }
 

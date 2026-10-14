@@ -80,17 +80,19 @@ public class SegurancaAuthTests : IClassFixture<PulsarWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Perfil_TrocarParaEmailDeAdminSemDono_ELogar_NaoPromove()
+    public async Task Perfil_TrocarParaEmailDeAdminSemDono_NaoTrocaNemPromove()
     {
         // Usa um e-mail de admin que só esta factory conhece e que ninguém cadastrou.
         var atacante = await Ler(await Cadastrar($"atk2_{Guid.NewGuid():N}@test.com"));
         var alvo = PulsarWebApplicationFactory.EmailAdminSemDono;
 
-        (await AtualizarPerfil(atacante, alvo)).EnsureSuccessStatusCode();
-        var login = await Ler(await _client.PostAsJsonAsync("/api/auth/login",
-            new LoginRequestDto { Email = alvo, Senha = Senha }));
+        // Desde o SEC1 o e-mail novo fica pendente até o clique: sem a caixa do alvo, nada muda.
+        var depois = await Ler(await AtualizarPerfil(atacante, alvo));
+        var login = await _client.PostAsJsonAsync("/api/auth/login", new LoginRequestDto { Email = alvo, Senha = Senha });
 
-        login.Usuario.Role.Should().Be(RoleAcesso.USUARIO);
+        depois.Usuario.Email.Should().Be(atacante.Usuario.Email);
+        depois.Usuario.Role.Should().Be(RoleAcesso.USUARIO);
+        login.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Theory]

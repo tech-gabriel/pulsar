@@ -19,6 +19,7 @@ public class AdminNotificacoesControllerTests : IClassFixture<PulsarWebApplicati
 {
     private const string Rota = "/api/admin/notificacoes/avaliar";
 
+    private readonly PulsarWebApplicationFactory _factory;
     private readonly HttpClient _client;
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -27,7 +28,10 @@ public class AdminNotificacoesControllerTests : IClassFixture<PulsarWebApplicati
     };
 
     public AdminNotificacoesControllerTests(PulsarWebApplicationFactory factory)
-        => _client = factory.CreateClient();
+    {
+        _factory = factory;
+        _client = factory.CreateClient();
+    }
 
     [Fact]
     public async Task Avaliar_SemToken_Retorna401()
@@ -118,20 +122,7 @@ public class AdminNotificacoesControllerTests : IClassFixture<PulsarWebApplicati
         return (await resposta.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!;
     }
 
-    private async Task<string> TokenAdminAsync()
-    {
-        const string email = PulsarWebApplicationFactory.EmailAdminBootstrap;
-        const string senha = "Admin@123";
-
-        var cadastro = await _client.PostAsJsonAsync("/api/auth/cadastro",
-            new CadastroRequestDto { Nome = "Admin", Email = email, Senha = senha });
-
-        if (cadastro.IsSuccessStatusCode)
-            return (await cadastro.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!.Token;
-
-        // Já existe (a ordem dos testes não é garantida) → login faz o auto-heal da role.
-        return (await LoginAsync(email, senha)).Token;
-    }
+    private async Task<string> TokenAdminAsync() => (await SessaoAdmin.ObterAsync(_factory, _client)).Token;
 
     private async Task<HttpResponseMessage> EnviarComTokenAsync(
         string url, string token, HttpMethod? metodo = null, object? corpo = null)

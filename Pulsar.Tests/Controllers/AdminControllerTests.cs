@@ -16,6 +16,7 @@ namespace Pulsar.Tests.Controllers;
 /// </summary>
 public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
 {
+    private readonly PulsarWebApplicationFactory _factory;
     private readonly HttpClient _client;
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -24,7 +25,10 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
     };
 
     public AdminControllerTests(PulsarWebApplicationFactory factory)
-        => _client = factory.CreateClient();
+    {
+        _factory = factory;
+        _client = factory.CreateClient();
+    }
 
     [Fact]
     public async Task GetAgregados_SemToken_Retorna401()
@@ -39,8 +43,8 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
     [Fact]
     public async Task EmailNaListaAdmin_RecebeRoleAdmin()
     {
-        // Independente da ordem dos testes: cadastro promove na 1ª vez; se o admin
-        // já existir, o login faz o auto-heal. Em ambos os casos a role é ADMIN.
+        // Independente da ordem dos testes: cadastro + confirmação do e-mail promovem na
+        // 1ª vez; se o admin já existir, só entra. Em ambos os casos a role é ADMIN.
         var body = await CadastrarOuLoginAdminAsync();
         body.Usuario.Role.Should().Be(RoleAcesso.ADMIN);
     }
@@ -389,22 +393,8 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
         return body!.Token;
     }
 
-    /// <summary>Garante o usuário admin (cadastro idempotente) e retorna sessão completa.</summary>
-    private async Task<LoginResponseDto> CadastrarOuLoginAdminAsync()
-    {
-        const string email = PulsarWebApplicationFactory.EmailAdminBootstrap;
-        const string senha = "Admin@123";
-        var cadastro = await _client.PostAsJsonAsync("/api/auth/cadastro",
-            new CadastroRequestDto { Nome = "Admin", Email = email, Senha = senha });
-        if (cadastro.IsSuccessStatusCode)
-            return (await cadastro.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!;
-
-        // Já existe → faz login.
-        var login = await _client.PostAsJsonAsync("/api/auth/login",
-            new LoginRequestDto { Email = email, Senha = senha });
-        login.EnsureSuccessStatusCode();
-        return (await login.Content.ReadFromJsonAsync<LoginResponseDto>(JsonOpts))!;
-    }
+    /// <summary>Garante o usuário admin (cadastro idempotente + confirmação) e retorna sessão completa.</summary>
+    private Task<LoginResponseDto> CadastrarOuLoginAdminAsync() => SessaoAdmin.ObterAsync(_factory, _client);
 
     private async Task<string> TokenAdminAsync() => (await CadastrarOuLoginAdminAsync()).Token;
 

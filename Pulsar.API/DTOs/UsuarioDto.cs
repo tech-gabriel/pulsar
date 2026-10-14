@@ -9,4 +9,6 @@ public class UsuarioDto
     public string Email { get; set; } = string.Empty;
     public TipoPerfil Perfil { get; set; }
     public RoleAcesso Role { get; set; }
+    public bool EmailVerificado { get; set; }
+    public string? EmailPendente { get; set; }
 }

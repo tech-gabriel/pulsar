@@ -17,7 +17,7 @@ export default function LandingFooter() {
           <img src={iconePulsar} alt="" className="w-8 h-8" style={{ filter: 'drop-shadow(var(--glow-cyan))' }} />
           <div className="leading-tight">
             <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
-              PULSAR
+              Pulsar
             </p>
             <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
               Monitoramento climático de São Paulo

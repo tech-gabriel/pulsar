@@ -39,8 +39,8 @@ describe('LandingPage / RotaLanding', () => {
   it('visitante deslogado vê a landing com os CTAs', () => {
     renderApp('/');
 
-    const acessar = screen.getByRole('link', { name: /Acessar o Pulsar/i });
-    expect(acessar).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('heading', { level: 1, name: /Vai alagar no seu bairro/i })).toBeInTheDocument();
+    screen.getAllByRole('link', { name: /^Entrar$/ }).forEach((l) => expect(l).toHaveAttribute('href', '/login'));
 
     // "Criar conta" aparece no nav e no hero — todos apontam para /cadastro.
     const criarConta = screen.getAllByRole('link', { name: /Criar conta/i });
@@ -56,6 +56,6 @@ describe('LandingPage / RotaLanding', () => {
 
     // A rota /app é `lazy` (import dinâmico) — precisa esperar resolver.
     expect(await screen.findByText('MAPA_APP')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Acessar o Pulsar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /Vai alagar no seu bairro/i })).not.toBeInTheDocument();
   });
 });

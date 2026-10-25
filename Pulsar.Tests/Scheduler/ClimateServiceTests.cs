@@ -16,11 +16,13 @@ namespace Pulsar.Tests.Scheduler;
 public class ClimateServiceTests
 {
     private readonly Mock<IWeatherClient> _weatherClientMock = new();
+    private readonly Mock<IChuvaReferenciaClient> _chuvaReferenciaMock = new();
     private readonly Mock<ISubprefeituraRepository> _subprefeituraRepoMock = new();
     private readonly Mock<ILeituraRepository> _leituraRepoMock = new();
 
     private ClimateService CriarClimateService() => new(
         _weatherClientMock.Object,
+        _chuvaReferenciaMock.Object,
         _subprefeituraRepoMock.Object,
         _leituraRepoMock.Object,
         NullLogger<ClimateService>.Instance);
@@ -218,5 +220,74 @@ public class ClimateServiceTests
         _leituraRepoMock.Verify(r => r.AdicionarAsync(It.IsAny<LeituraClimatica>()), Times.Once);
         _leituraRepoMock.Verify(r => r.LimparHistoricoAntigoAsync(sub.Id, It.IsAny<int>()), Times.Once);
         _leituraRepoMock.Verify(r => r.SalvarAsync(), Times.Once);
+    }
+
+    // ──────────────────────────────────────────────
+    // ColetarTodasAsync — conferência da chuva com o Open-Meteo
+    // ──────────────────────────────────────────────
+
+    private (Subprefeitura sub, List<LeituraClimatica> gravadas) CenarioChuva(double chuvaMmH, IEnumerable<LeituraClimatica> anteriores)
+    {
+        var sub = NovaSubprefeitura();
+        var gravadas = new List<LeituraClimatica>();
+        _subprefeituraRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([sub]);
+        _subprefeituraRepoMock.Setup(r => r.ObterPorIdAsync(sub.Id)).ReturnsAsync(sub);
+        var dados = DadosValidos();
+        dados.ChuvaMmH = chuvaMmH;
+        _weatherClientMock.Setup(c => c.ObterDadosAsync(sub.Latitude, sub.Longitude, It.IsAny<CancellationToken>())).ReturnsAsync(dados);
+        _leituraRepoMock.Setup(r => r.ObterHistoricoAsync(sub.Id, It.IsAny<int>())).ReturnsAsync(anteriores);
+        _leituraRepoMock.Setup(r => r.AdicionarAsync(It.IsAny<LeituraClimatica>()))
+            .Callback<LeituraClimatica>(gravadas.Add).Returns(Task.CompletedTask);
+        return (sub, gravadas);
+    }
+
+    private static List<LeituraClimatica> HorasDeChuva(double mmH, double horas, bool jaCorrigidas = false)
+        => Enumerable.Range(1, (int)(horas * 4)).Select(q => new LeituraClimatica
+        {
+            Timestamp = DateTime.UtcNow.AddMinutes(-15 * q),
+            ChuvaMmH = jaCorrigidas ? 0.1 : mmH,
+            ChuvaBrutaMmH = jaCorrigidas ? mmH : null,
+        }).ToList();
+
+    private void OpenMeteoSeco() => _chuvaReferenciaMock
+        .Setup(c => c.ObterHorariaAsync(It.IsAny<IReadOnlyList<(double, double)>>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync([new Dictionary<DateTime, double>()]);
+
+    [Fact]
+    public async Task ColetarTodasAsync_ChuvaForteComOpenMeteoSeco_GravaAReferenciaEGuardaOValorCru()
+    {
+        var (_, gravadas) = CenarioChuva(15, HorasDeChuva(15, 5));
+        OpenMeteoSeco();
+
+        await CriarClimateService().ColetarTodasAsync();
+
+        gravadas.Should().ContainSingle();
+        gravadas[0].ChuvaMmH.Should().Be(0);
+        gravadas[0].ChuvaBrutaMmH.Should().Be(15);
+    }
+
+    [Fact]
+    public async Task ColetarTodasAsync_LeiturasAnterioresJaCorrigidas_SomaPeloValorCruESegueBarrando()
+    {
+        var (_, gravadas) = CenarioChuva(15, HorasDeChuva(15, 5, jaCorrigidas: true));
+        OpenMeteoSeco();
+
+        await CriarClimateService().ColetarTodasAsync();
+
+        gravadas[0].ChuvaBrutaMmH.Should().Be(15);
+    }
+
+    [Fact]
+    public async Task ColetarTodasAsync_OpenMeteoFora_GravaAChuvaDoOpenWeatherMap()
+    {
+        var (_, gravadas) = CenarioChuva(15, HorasDeChuva(15, 5));
+        _chuvaReferenciaMock
+            .Setup(c => c.ObterHorariaAsync(It.IsAny<IReadOnlyList<(double, double)>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("fora"));
+
+        await CriarClimateService().ColetarTodasAsync();
+
+        gravadas[0].ChuvaMmH.Should().Be(15);
+        gravadas[0].ChuvaBrutaMmH.Should().BeNull();
     }
 }

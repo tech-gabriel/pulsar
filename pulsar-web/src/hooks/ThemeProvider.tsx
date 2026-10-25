@@ -38,8 +38,8 @@ const useLayoutEffectIsomorfico = typeof window === 'undefined' ? useEffect : us
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // Começa claro de propósito, e não lendo o localStorage: o SSG pré-renderiza
   // sempre no claro (o padrão do site), então iniciar no escuro faria o primeiro
-  // render do cliente divergir do HTML do servidor. LandingHero e
-  // LandingComoFunciona trocam o `src` das imagens pelo tema, e o React abortava
+  // render do cliente divergir do HTML do servidor. A landing antiga
+  // trocava o `src` das imagens pelo tema, e o React abortava
   // a hidratação (erro #418), jogando fora a árvore pré-renderizada inteira.
   const [theme, setTheme] = useState<Theme>('light');
   const [sincronizado, setSincronizado] = useState(false);

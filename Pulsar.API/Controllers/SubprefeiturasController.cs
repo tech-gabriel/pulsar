@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services.Interfaces;
+using Pulsar.API.Services.Notificacoes;
 
 namespace Pulsar.API.Controllers;
 
@@ -20,11 +21,14 @@ public class SubprefeiturasController : ControllerBase
 
     private readonly ISubprefeituraRepository _subprefeituraRepository;
     private readonly IPrevisaoService _previsaoService;
+    private readonly IPontoAlagamentoCgeRepository _pontosCge;
 
-    public SubprefeiturasController(ISubprefeituraRepository subprefeituraRepository, IPrevisaoService previsaoService)
+    public SubprefeiturasController(
+        ISubprefeituraRepository subprefeituraRepository, IPrevisaoService previsaoService, IPontoAlagamentoCgeRepository pontosCge)
     {
         _subprefeituraRepository = subprefeituraRepository;
         _previsaoService = previsaoService;
+        _pontosCge = pontosCge;
     }
 
     /// <summary>Todas as subprefeituras ativas com risco atual, pior primeiro.</summary>
@@ -33,8 +37,16 @@ public class SubprefeiturasController : ControllerBase
     public async Task<IActionResult> ObterTodas()
     {
         var subs = await _subprefeituraRepository.ObterAtivasComResumoAsync();
+        // Mesma validade que o aviso de Perigo usa: o mapa não mostra ponto que o push não mandaria.
+        var pontos = (await _pontosCge.ObterAtivosAsync(DateTime.UtcNow - LimiaresNotificacao.ValidadePontoCge))
+            .ToLookup(p => p.SubprefeituraId);
         var dtos = subs
-            .Select(s => SubprefeituraDto.Preencher(new SubprefeituraResumoDto { Zona = s.Regiao?.Nome ?? string.Empty }, s))
+            .Select(s =>
+            {
+                var dto = SubprefeituraDto.Preencher(new SubprefeituraResumoDto { Zona = s.Regiao?.Nome ?? string.Empty }, s);
+                dto.AlagamentosCge = [.. pontos[s.Id].Select(PontoAlagamentoCgeDto.De)];
+                return dto;
+            })
             .OrderByDescending(d => d.ScoreAtual?.Valor ?? -1)
             .ThenBy(d => d.Nome, StringComparer.Ordinal);
         return Ok(dtos);

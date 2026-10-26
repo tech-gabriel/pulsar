@@ -21,6 +21,7 @@ public class ColetaRunner : IColetaRunner
     private readonly IScoreService _scoreService;
     private readonly IAgregadoDiarioService _agregadoService;
     private readonly IPrevisaoService _previsaoService;
+    private readonly IAlagamentoCgeService _cgeService;
     private readonly IMotorNotificacoes _motor;
     private readonly PulsarDbContext _db;
     private readonly ILogger<ColetaRunner> _logger;
@@ -30,6 +31,7 @@ public class ColetaRunner : IColetaRunner
         IScoreService scoreService,
         IAgregadoDiarioService agregadoService,
         IPrevisaoService previsaoService,
+        IAlagamentoCgeService cgeService,
         IMotorNotificacoes motor,
         PulsarDbContext db,
         ILogger<ColetaRunner> logger)
@@ -38,6 +40,7 @@ public class ColetaRunner : IColetaRunner
         _scoreService = scoreService;
         _agregadoService = agregadoService;
         _previsaoService = previsaoService;
+        _cgeService = cgeService;
         _motor = motor;
         _db = db;
         _logger = logger;
@@ -48,6 +51,17 @@ public class ColetaRunner : IColetaRunner
         _logger.LogInformation("Iniciando ciclo de coleta: {Hora}", DateTime.UtcNow);
 
         await _climateService.ColetarTodasAsync(ct);
+
+        // Antes do motor, que lê os pontos do banco. try/catch próprio: o CGE é rede externa,
+        // e sem ele o ciclo segue normal, só sem o aviso de Perigo.
+        try
+        {
+            await _cgeService.AtualizarAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao ler os alagamentos do CGE-SP.");
+        }
 
         var subprefeituras = await _db.Subprefeituras.Where(s => s.Ativa).ToListAsync(ct);
         var scoresCalculados = 0;

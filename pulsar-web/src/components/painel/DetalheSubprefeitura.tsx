@@ -17,6 +17,7 @@ import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
 import LinhasPerigo from './LinhasPerigo';
+import AlagamentosCge from './AlagamentosCge';
 
 // ── Ring de progresso circular (ETAPA 4.3) ─────────────────────────────────────
 const RING_DIAMETRO = 80;
@@ -141,6 +142,11 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
               </span>
               <div className="mt-2"><LinhasPerigo score={area.scoreAtual} leitura={l} /></div>
             </div>
+          </motion.div>
+
+          {/* Dado oficial de alagamento vem antes do clima estimado. */}
+          <motion.div variants={itemStagger}>
+            <AlagamentosCge pontos={area.alagamentosCge} />
           </motion.div>
 
           {l && (

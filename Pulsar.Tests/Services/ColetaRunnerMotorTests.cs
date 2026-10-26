@@ -31,6 +31,7 @@ public class ColetaRunnerMotorTests
             Mock.Of<IScoreService>(),
             Mock.Of<IAgregadoDiarioService>(),
             previsao ?? Mock.Of<IPrevisaoService>(),
+            Mock.Of<IAlagamentoCgeService>(),
             motor,
             ctx,
             NullLogger<ColetaRunner>.Instance);

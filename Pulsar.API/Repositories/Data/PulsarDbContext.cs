@@ -15,6 +15,7 @@ public class PulsarDbContext : DbContext
     public DbSet<ScorePerigo> ScoresPerigo => Set<ScorePerigo>();
     public DbSet<AgregadoDiario> AgregadosDiarios => Set<AgregadoDiario>();
     public DbSet<AgregadoHorario> AgregadosHorarios => Set<AgregadoHorario>();
+    public DbSet<PontoAlagamentoCge> PontosAlagamentoCge => Set<PontoAlagamentoCge>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioSubprefeitura> UsuarioSubprefeituras => Set<UsuarioSubprefeitura>();
     public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
@@ -177,6 +178,21 @@ public class PulsarDbContext : DbContext
             e.HasOne(a => a.Subprefeitura)
              .WithMany()
              .HasForeignKey(a => a.SubprefeituraId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PontoAlagamentoCge>(e =>
+        {
+            e.HasKey(p => p.Id);
+            // Chave do upsert: o CGE não publica id, e o mesmo túnel pode alagar duas vezes
+            // no dia (início diferente) ou nos dois sentidos da avenida.
+            e.HasIndex(p => new { p.SubprefeituraId, p.Dia, p.InicioUtc, p.Via, p.Sentido, p.Referencia }).IsUnique();
+            e.Property(p => p.Via).IsRequired().HasMaxLength(200);
+            e.Property(p => p.Sentido).IsRequired().HasMaxLength(200);
+            e.Property(p => p.Referencia).IsRequired().HasMaxLength(200);
+            e.HasOne(p => p.Subprefeitura)
+             .WithMany()
+             .HasForeignKey(p => p.SubprefeituraId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 

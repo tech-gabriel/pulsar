@@ -239,6 +239,7 @@ builder.Services.AddScoped<IBuscaService, BuscaService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ISistemaService, SistemaService>();
+builder.Services.AddScoped<IQualidadeDadosService, QualidadeDadosService>();
 builder.Services.AddScoped<IColetaRunner, ColetaRunner>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IEmailVerificacaoService, EmailVerificacaoService>();

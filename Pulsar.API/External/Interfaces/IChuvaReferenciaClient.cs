@@ -12,4 +12,11 @@ public interface IChuvaReferenciaClient
     /// </summary>
     Task<IReadOnlyList<IReadOnlyDictionary<DateTime, double>>> ObterHorariaAsync(
         IReadOnlyList<(double Lat, double Lon)> pontos, CancellationToken ct = default);
+
+    /// <summary>
+    /// Mesma forma, cobrindo os últimos <paramref name="dias"/> dias até o fim de hoje (UTC).
+    /// Usada pelo painel de qualidade para comparar dia a dia com o OWM.
+    /// </summary>
+    Task<IReadOnlyList<IReadOnlyDictionary<DateTime, double>>> ObterHorariaPassadaAsync(
+        IReadOnlyList<(double Lat, double Lon)> pontos, int dias, CancellationToken ct = default);
 }

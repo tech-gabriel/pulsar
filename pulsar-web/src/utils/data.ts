@@ -25,6 +25,14 @@ export function dataCompleta(iso: string): string {
   return Number.isNaN(data.getTime()) ? '' : formatadorDataLonga.format(data);
 }
 
+const formatadorHora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+/** Só a hora, no fuso do navegador, ex.: "04:51". */
+export function horaCurta(iso: string): string {
+  const data = new Date(iso);
+  return Number.isNaN(data.getTime()) ? '' : formatadorHora.format(data);
+}
+
 /**
  * Tempo relativo em pt-BR ("agora", "há 5 min", "há 3 h", "ontem", "há 4 dias").
  * Para itens com mais de 7 dias, cai para a data absoluta curta.

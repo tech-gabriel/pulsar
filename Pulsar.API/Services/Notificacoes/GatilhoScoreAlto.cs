@@ -7,7 +7,7 @@ namespace Pulsar.API.Services.Notificacoes;
 
 /// <summary>
 /// Migra o comportamento que vivia no AlertaService: score da subprefeitura na faixa
-/// ALTO dispara aviso, com cooldown de 1 hora. A copy foi reescrita porque
+/// ALTO dispara aviso, com cooldown de 3 horas (era 1 h até o AS3). A copy foi reescrita porque
 /// "Score máximo: 78,3" é o sistema falando consigo mesmo.
 /// </summary>
 public class GatilhoScoreAlto : IGatilhoNotificacao
@@ -19,6 +19,12 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
     {
         var pior = ctx.Pior;
         if (pior?.Score is null || pior.Score.Faixa != FaixaRisco.ALTO)
+            return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([]);
+
+        // Nível Chuva forte agora: o alagamento só avisa com 2 ciclos seguidos em Alerta. Um
+        // pico isolado (ou uma leitura que escapou da guarda) não dispara. Vento e calor não
+        // passam por aqui: o alarme falso medido foi só na chuva.
+        if (pior.Score.PerigoPrincipal == TipoPerigo.ALAGAMENTO && !AlertaNoCicloAnterior(ctx.ScoreAnterior, pior.Score))
             return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([]);
 
         var em = NomesSubprefeitura.ComPreposicao(ctx.Subprefeitura.Nome);
@@ -41,10 +47,19 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
             Prioridade: LimiaresNotificacao.PrioridadeScoreAlto,
             Cooldown: LimiaresNotificacao.CooldownScoreAlto,
             SubprefeituraId: ctx.Subprefeitura.Id,
-            Local: ctx.Subprefeitura.Nome);
+            Local: ctx.Subprefeitura.Nome,
+            // O Consolidador usa o perigo para o "só sobe": depois de um Perigo do CGE, o score
+            // alto de alagamento fica calado; o de vento ou calor não.
+            Perigo: pior.Score.PerigoPrincipal);
 
         return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([pendencia]);
     }
+
+    private static bool AlertaNoCicloAnterior(ScorePerigo? anterior, ScorePerigo atual)
+        => anterior is not null
+            && anterior.Faixa == FaixaRisco.ALTO
+            && anterior.PerigoPrincipal == TipoPerigo.ALAGAMENTO
+            && atual.Timestamp - anterior.Timestamp <= LimiaresNotificacao.IntervaloMaxCiclosSeguidos;
 
     /// <summary>Título e corpo pelo perigo que pôs a subprefeitura em ALTO.</summary>
     private static (string Titulo, string Corpo) Copy(ScorePerigo score, LeituraClimatica? leitura, string em)

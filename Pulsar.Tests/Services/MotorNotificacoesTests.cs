@@ -124,7 +124,7 @@ public class MotorNotificacoesTests
                  .ReturnsAsync(1);
         _previsaoMock.Setup(p => p.ObterFaixasSubprefeituraAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                      .ReturnsAsync(Array.Empty<FaixaPrevisaoDto>());
-        return new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object,
+        return new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object, Mock.Of<Pulsar.API.External.Interfaces.IChuvaReferenciaClient>(),
             _pushMock.Object, gatilhos, _logger);
     }
 
@@ -284,5 +284,46 @@ public class MotorNotificacoesTests
         await NovoMotor(ctx).AvaliarEDispararAsync();
 
         (await ctx.NotificacoesEnviadas.AnyAsync(n => n.Chave == "velha")).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task PontoDoCge_SoChegaAoGatilhoSeAtivoEVistoHaPouco()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        await PessoaComAparelhoAsync(ctx, true, Mooca, Penha);
+        var agora = DateTime.UtcNow;
+        var dia = DateOnly.FromDateTime(agora);
+        // Mooca: ativo e fresco. Penha: ativo, mas o CGE não confirma há 2 h (fora do ar).
+        ctx.PontosAlagamentoCge.AddRange(
+            new PontoAlagamentoCge { SubprefeituraId = Mooca, Dia = dia, Via = "AV CELSO GARCIA", Ativo = true, VistoEm = agora.AddMinutes(-5), InicioUtc = agora.AddHours(-1) },
+            new PontoAlagamentoCge { SubprefeituraId = Mooca, Dia = dia, Via = "AV CD DE FRONTIN", Ativo = false, VistoEm = agora.AddMinutes(-5), InicioUtc = agora.AddHours(-1) },
+            new PontoAlagamentoCge { SubprefeituraId = Penha, Dia = dia, Via = "R DR LUIZ AYRES", Ativo = true, VistoEm = agora.AddHours(-2), InicioUtc = agora.AddHours(-3) });
+        await ctx.SaveChangesAsync();
+
+        await NovoMotor(ctx, new GatilhoAlagamentoCge()).AvaliarEDispararAsync();
+
+        _pushMock.Verify(p => p.NotificarUsuarioAsync(It.IsAny<Guid>(), CriterioOptIn.RiscoAlto,
+            It.Is<PushPayload>(x => x.Titulo == "Alagamento na Mooca agora"
+                && x.Corpo == "O CGE registrou um ponto de alagamento. Evite a região se puder."),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task OpenMeteoFalhando_NaoDerrubaOsOutrosAvisos()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        await PessoaComAparelhoAsync(ctx, true, Mooca);
+        var referencia = new Mock<Pulsar.API.External.Interfaces.IChuvaReferenciaClient>();
+        referencia.Setup(r => r.ObterHorariaAsync(It.IsAny<IReadOnlyList<(double, double)>>(), It.IsAny<CancellationToken>()))
+                  .ThrowsAsync(new HttpRequestException("fora do ar"));
+        NovoMotor(ctx);
+        var motor = new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object, referencia.Object,
+            _pushMock.Object, [new GatilhoPorSub("score-alto")], _logger);
+
+        (await motor.AvaliarEDispararAsync()).Should().Be(1);
     }
 }

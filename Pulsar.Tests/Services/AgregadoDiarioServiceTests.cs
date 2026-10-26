@@ -2,9 +2,11 @@ using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
 using Pulsar.API.Repositories.Data;
+using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services;
 
 namespace Pulsar.Tests.Services;
@@ -25,18 +27,20 @@ public class AgregadoDiarioServiceTests
             new LeituraRepository(ctx),
             new ScoreRepository(ctx),
             new AgregadoDiarioRepository(ctx),
+            new AgregadoHorarioRepository(ctx),
             NullLogger<AgregadoDiarioService>.Instance);
 
     /// <summary>Grava uma leitura + score no instante UTC pedido.</summary>
     private static async Task GravarLeituraAsync(
         PulsarDbContext ctx, Guid subId, DateTime instanteUtc,
         double chuvaMmH, double valorScore, FaixaRisco faixa,
-        double vento = 10, double temp = 20, double uv = 3, double valorAlagamento = 0)
+        double vento = 10, double temp = 20, double uv = 3, double valorAlagamento = 0,
+        double? chuvaBrutaMmH = null)
     {
         var leitura = new LeituraClimatica
         {
             SubprefeituraId = subId, Timestamp = instanteUtc,
-            ChuvaMmH = chuvaMmH, VentoKmH = vento, VisibilidadeKm = 10,
+            ChuvaMmH = chuvaMmH, ChuvaBrutaMmH = chuvaBrutaMmH, VentoKmH = vento, VisibilidadeKm = 10,
             IndiceUv = uv, TemperaturaC = temp, SensacaoTermica = temp, Umidade = 60,
         };
         ctx.LeiturasClimaticas.Add(leitura);
@@ -254,5 +258,93 @@ public class AgregadoDiarioServiceTests
         await repo.SalvarAsync();
 
         (await ctx.LeiturasClimaticas.CountAsync(l => l.SubprefeituraId == subId)).Should().Be(1);
+    }
+
+    private static DateTime HoraAtualUtc()
+    {
+        var agora = DateTime.UtcNow;
+        return new DateTime(agora.Year, agora.Month, agora.Day, agora.Hour, 0, 0, DateTimeKind.Utc);
+    }
+
+    [Fact]
+    public async Task Horario_SomaAChuvaDaHoraEGuardaOValorCruSeparado()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var subId = await ctx.Subprefeituras.Select(s => s.Id).FirstAsync();
+        var hora = HoraAtualUtc();
+
+        // A segunda leitura foi barrada pela guarda: o OWM disse 80, o score usou 2.
+        await GravarLeituraAsync(ctx, subId, hora,               chuvaMmH: 4, valorScore: 20, FaixaRisco.BAIXO, valorAlagamento: 30);
+        await GravarLeituraAsync(ctx, subId, hora.AddMinutes(1), chuvaMmH: 2, valorScore: 20, FaixaRisco.BAIXO, valorAlagamento: 50, chuvaBrutaMmH: 80);
+
+        await NovoServico(ctx).AtualizarRecentesAsync(subId, default);
+
+        var linha = await ctx.AgregadosHorarios.SingleAsync(a => a.SubprefeituraId == subId);
+        linha.HoraUtc.Should().Be(hora);
+        linha.ChuvaMm.Should().BeApproximately(1.5, 0.001);       // (4 + 2) * 0.25
+        linha.ChuvaBrutaMm.Should().BeApproximately(21.0, 0.001); // (4 + 80) * 0.25
+        linha.ScoreAlagamentoMax.Should().Be(50);
+        linha.LeiturasCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Horario_RecalculoNaMesmaHoraAtualizaEmVezDeDuplicar()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var subId = await ctx.Subprefeituras.Select(s => s.Id).FirstAsync();
+        var hora = HoraAtualUtc();
+        var servico = NovoServico(ctx);
+
+        await GravarLeituraAsync(ctx, subId, hora, chuvaMmH: 4, valorScore: 20, FaixaRisco.BAIXO);
+        await servico.AtualizarRecentesAsync(subId, default);
+        await GravarLeituraAsync(ctx, subId, hora.AddMinutes(1), chuvaMmH: 8, valorScore: 20, FaixaRisco.BAIXO);
+        await servico.AtualizarRecentesAsync(subId, default);
+
+        var linha = await ctx.AgregadosHorarios.SingleAsync(a => a.SubprefeituraId == subId);
+        linha.ChuvaMm.Should().BeApproximately(3.0, 0.001);
+        linha.LeiturasCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Horario_HoraMaisAntigaQueAAnteriorNaoEReescrita()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var subId = await ctx.Subprefeituras.Select(s => s.Id).FirstAsync();
+        var hora = HoraAtualUtc();
+
+        await GravarLeituraAsync(ctx, subId, hora.AddHours(-1), chuvaMmH: 4, valorScore: 20, FaixaRisco.BAIXO);
+        await GravarLeituraAsync(ctx, subId, hora.AddHours(-2), chuvaMmH: 4, valorScore: 20, FaixaRisco.BAIXO);
+
+        await NovoServico(ctx).AtualizarRecentesAsync(subId, default);
+
+        var horas = await ctx.AgregadosHorarios.Select(a => a.HoraUtc).ToListAsync();
+        horas.Should().Equal(hora.AddHours(-1));
+    }
+
+    [Fact]
+    public async Task Horario_FalhaNaoImpedeOAgregadoDiario()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var subId = await ctx.Subprefeituras.Select(s => s.Id).FirstAsync();
+        await GravarLeituraAsync(ctx, subId, HoraAtualUtc(), chuvaMmH: 4, valorScore: 20, FaixaRisco.BAIXO);
+
+        var horarioQueFalha = new Mock<IAgregadoHorarioRepository>();
+        horarioQueFalha.Setup(r => r.UpsertAsync(It.IsAny<AgregadoHorario>()))
+                       .ThrowsAsync(new InvalidOperationException("boom"));
+        var servico = new AgregadoDiarioService(
+            new SubprefeituraRepository(ctx), new LeituraRepository(ctx), new ScoreRepository(ctx),
+            new AgregadoDiarioRepository(ctx), horarioQueFalha.Object,
+            NullLogger<AgregadoDiarioService>.Instance);
+
+        await servico.Invoking(s => s.AtualizarRecentesAsync(subId, default)).Should().NotThrowAsync();
+        (await ctx.AgregadosDiarios.CountAsync(a => a.SubprefeituraId == subId)).Should().BeGreaterThan(0);
     }
 }

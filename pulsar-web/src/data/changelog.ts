@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.20.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Chuva conferida todo dia',
+        descricao: 'Montamos um painel que compara a chuva registrada em cada subprefeitura com uma segunda fonte e com os alagamentos do CGE. Se uma leitura sair do normal, a equipe vê no dia seguinte, e não semanas depois como aconteceu em setembro.',
+      },
+    ],
+  },
+  {
     versao: '1.19.0',
     data: '2026-10-26',
     itens: [

@@ -69,3 +69,26 @@ public class AvaliadorQualidadeTests
         => AvaliadorQualidade.Avaliar(new DiaQualidade(Dia, 46.25, 3.1, 0, 0, 0, false, 0))
             .Single().Detalhe.Should().Be("Pulsar 46,3 mm, Open-Meteo 3,1 mm");
 }
+
+public class AvaliadorQualidadeGeoSampaTests
+{
+    private static readonly DateTime Agora = new(2026, 10, 26, 12, 0, 0, DateTimeKind.Utc);
+
+    [Fact]
+    public void Avisa_ComQuatroDiasSemSucesso()
+        => AvaliadorQualidade.AvaliarGeoSampa(Agora.AddDays(-4), Agora.AddDays(-30), "timeout", Agora)!
+            .Detalhe.Should().Be("4 dias sem sincronizar. Último erro: timeout");
+
+    [Fact]
+    public void NaoAvisa_ComDoisDias()
+        => AvaliadorQualidade.AvaliarGeoSampa(Agora.AddDays(-2), Agora.AddDays(-30), null, Agora).Should().BeNull();
+
+    [Fact]
+    public void NuncaDeuCerto_ContaDaPrimeiraTentativa()
+        => AvaliadorQualidade.AvaliarGeoSampa(null, Agora.AddDays(-5), "recusada", Agora)!
+            .Detalhe.Should().StartWith("Nenhum sucesso em 5 dias");
+
+    [Fact]
+    public void SemNenhumaExecucao_NaoHaOQueAvaliar()
+        => AvaliadorQualidade.AvaliarGeoSampa(null, null, null, Agora).Should().BeNull();
+}

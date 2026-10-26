@@ -29,6 +29,7 @@ public static class AvaliadorQualidade
     public const string ChuvaPassouBatida = "chuva-passou-batida";
     public const string AlertaSemConfirmacao = "alerta-sem-confirmacao";
     public const string ColetaFalhando = "coleta-falhando";
+    public const string GeoSampaParado = "geosampa-parado";
 
     /// <summary>Abaixo disso a diferença entre as fontes é ruído de chuvisco.</summary>
     public const double ChuvaRelevanteMm = 20;
@@ -43,6 +44,9 @@ public static class AvaliadorQualidade
     /// e uma hora normal tem 3, 4 ou 5 leituras (visto em produção em 26/10/2026).
     /// </summary>
     public const int MinLeiturasHora = 3;
+
+    /// <summary>O GeoSampa publica com atraso de semanas; 3 dias sem sync é falha, não calmaria.</summary>
+    public const int MaxDiasSemSyncGeoSampa = 3;
 
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
 
@@ -71,6 +75,21 @@ public static class AvaliadorQualidade
             avisos.Add(new(ColetaFalhando, $"{d.HorasIncompletas} horas com ciclo de coleta faltando"));
 
         return avisos;
+    }
+
+    /// <summary>
+    /// Aviso de sync parado. Conta do último sucesso, ou da primeira tentativa gravada se nunca
+    /// deu certo. Sem nenhuma execução gravada (deploy novo) não há o que avaliar.
+    /// </summary>
+    public static AvisoQualidade? AvaliarGeoSampa(
+        DateTime? ultimoSucesso, DateTime? primeiraTentativa, string? ultimoErro, DateTime agora)
+    {
+        var desde = ultimoSucesso ?? primeiraTentativa;
+        if (desde is null) return null;
+        var dias = (int)(agora - desde.Value).TotalDays;
+        if (dias <= MaxDiasSemSyncGeoSampa) return null;
+        var detalhe = ultimoSucesso is null ? $"Nenhum sucesso em {dias} dias" : $"{dias} dias sem sincronizar";
+        return new(GeoSampaParado, ultimoErro is null ? detalhe : $"{detalhe}. Último erro: {ultimoErro}");
     }
 
     private static string Mm(double? valor) => valor is { } v ? $"{v.ToString("0.0", PtBr)} mm" : "sem dado";

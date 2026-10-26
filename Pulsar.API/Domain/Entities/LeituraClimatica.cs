@@ -6,6 +6,8 @@ public class LeituraClimatica
     public Guid SubprefeituraId { get; set; }
     public Subprefeitura Subprefeitura { get; set; } = null!;
     public double ChuvaMmH { get; set; }
+    /// <summary>Valor cru do OpenWeatherMap quando a PlausibilidadeChuva o trocou; null quando passou.</summary>
+    public double? ChuvaBrutaMmH { get; set; }
     public double VentoKmH { get; set; }
     public double VisibilidadeKm { get; set; }
     public double IndiceUv { get; set; }

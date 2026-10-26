@@ -158,6 +158,14 @@ builder.Services.AddHttpClient("openweathermap", (sp, client) =>
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
+// Segunda fonte de chuva, só para conferir a do OpenWeatherMap (PlausibilidadeChuva).
+builder.Services.AddHttpClient("openmeteo", client =>
+{
+    client.BaseAddress = new Uri("https://api.open-meteo.com/v1/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
+});
+
 builder.Services.AddHttpClient("cgesp", client =>
 {
     client.BaseAddress = new Uri("https://www.cgesp.org/v3/");
@@ -213,12 +221,14 @@ builder.Services.AddScoped<ITokenVerificacaoEmailRepository, TokenVerificacaoEma
 builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>();
 builder.Services.AddScoped<IOcorrenciaAlagamentoRepository, OcorrenciaAlagamentoRepository>();
 builder.Services.AddScoped<IAgregadoDiarioRepository, AgregadoDiarioRepository>();
+builder.Services.AddScoped<IAgregadoHorarioRepository, AgregadoHorarioRepository>();
 builder.Services.AddScoped<IPrevisaoRepository, PrevisaoRepository>();
 builder.Services.AddScoped<INotificacaoEnviadaRepository, NotificacaoEnviadaRepository>();
 
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
 builder.Services.AddScoped<IForecastClient, OpenWeatherMapForecastClient>();
+builder.Services.AddScoped<IChuvaReferenciaClient, OpenMeteoClient>();
 builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
 builder.Services.AddScoped<IGeoSampaClient, GeoSampaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();

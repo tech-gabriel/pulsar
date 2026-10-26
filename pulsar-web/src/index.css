@@ -1905,3 +1905,79 @@ html.light .landing-cta-band {
     animation: none;
   }
 }
+
+/* ── Landing v2 (busca no topo + bento) ─────────────────────────────────────
+   Superfícies sólidas o bastante para separar do fundo: o "apagado" da v1 era
+   cartão azul a 4% sobre fundo azul claro. */
+.lp-titulo { font-family: var(--font-heading); letter-spacing: -0.035em; }
+.lp-mono { font-family: var(--font-mono); letter-spacing: -0.02em; }
+.lp-rotulo {
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--text-accent);
+}
+.lp-h2 {
+  font-family: var(--font-heading); letter-spacing: -0.03em; font-weight: 700; line-height: 1.08;
+  font-size: clamp(30px, 4.4vw, 46px); color: var(--text-primary);
+}
+.lp-superficie {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 50px -28px rgba(0, 0, 0, 0.6);
+}
+html.light .lp-superficie {
+  background: #fff;
+  border-color: rgba(15, 23, 42, 0.07);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 16px 40px -24px rgba(2, 74, 112, 0.28);
+}
+.lp-notificacao {
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.5);
+}
+html.light .lp-notificacao { background: #F4F8FB; border-color: rgba(15, 23, 42, 0.06); }
+.lp-icone {
+  display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center;
+  border-radius: 14px; color: var(--text-accent); background: rgba(0, 166, 244, 0.12);
+}
+
+/* Hero: duas auras de cor que derivam devagar (GSAP) atrás da busca. */
+.lp-hero { isolation: isolate; }
+.lp-aura {
+  position: absolute; z-index: -1; border-radius: 999px; filter: blur(70px); pointer-events: none;
+  width: min(620px, 90vw); aspect-ratio: 1;
+}
+.lp-aura-a { top: -220px; left: -160px; background: radial-gradient(circle, rgba(0, 188, 255, 0.35), transparent 65%); }
+.lp-aura-b { top: 40px; right: -200px; background: radial-gradient(circle, rgba(59, 130, 246, 0.32), transparent 65%); }
+html.light .lp-aura-a { background: radial-gradient(circle, rgba(0, 188, 255, 0.28), transparent 65%); }
+html.light .lp-aura-b { background: radial-gradient(circle, rgba(99, 102, 241, 0.16), transparent 65%); }
+
+.lp-busca {
+  background: var(--bg-glass);
+  border: 2px solid var(--border-glass);
+  box-shadow: 0 16px 44px -24px rgba(0, 0, 0, 0.7);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+html.light .lp-busca { background: #fff; border-color: rgba(15, 23, 42, 0.08); box-shadow: 0 16px 44px -22px rgba(2, 74, 112, 0.4); }
+.lp-busca:focus-within { border-color: var(--color-pulsar-500); box-shadow: 0 0 0 4px rgba(0, 166, 244, 0.18), 0 16px 44px -22px rgba(2, 74, 112, 0.4); }
+.lp-sugestoes { backdrop-filter: blur(20px); }
+html:not(.light) .lp-sugestoes { background: rgba(5, 47, 74, 0.96); }
+
+.lp-chip {
+  color: var(--text-secondary); border: 1px solid var(--border-glass); background: var(--bg-glass);
+  transition: background 200ms ease, color 200ms ease, transform 150ms ease;
+}
+.lp-chip:hover { border-color: var(--border-glass-hover); }
+.lp-chip:active { transform: scale(0.96); }
+.lp-chip-ligado { color: #fff; background: var(--color-pulsar-600); border-color: transparent; }
+.lp-chip-ligado:hover { border-color: transparent; }
+
+
+/* CTA final: a faixa escura que dá contraste no fim da página, nos dois temas. */
+.lp-cta-final {
+  background:
+    radial-gradient(120% 90% at 15% 0%, rgba(0, 188, 255, 0.35), transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, rgba(59, 130, 246, 0.35), transparent 60%),
+    #052F4A;
+  box-shadow: 0 30px 80px -40px rgba(2, 74, 112, 0.8);
+}

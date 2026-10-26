@@ -1,0 +1,708 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-WHGSWG7HYT"></script>
+<script nonce="">
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-WHGSWG7HYT');
+</script>
+<script nonce="">
+
+  function ga_simple_event(event, eventData) {
+	gtag('event', event, eventData);
+  }
+  function ga_event(eventCategory, eventAction,eventLabel,eventValue) {
+	  for (i = 1; i <= gaCounter; i++) {
+		  gtag('event', 't' + i + '.send',
+		 { 'category' : eventCategory, 
+		   'action' :  eventAction, 
+		   'label' : eventLabel, 
+		   'value' : eventValue } );
+		  
+	  }
+  }
+    
+//  ga('create', {
+//	  trackingId : 'G-WHGSWG7HYT', cookieDomain : 'auto', name : 't1' 
+//  } );
+//  gtag('event', 'page_view', { 'trackerName' : 't1' });
+  gaCounter = 1;
+</script>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/yui/3.4.1/cssreset/reset-min.css" type="text/css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/yui/3.4.1/cssfonts/fonts-min.css" type="text/css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/yui/3.4.1/cssgrids/cssgrids-min.css" type="text/css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/yui/3.4.1/cssbase/base-min.css" type="text/css" rel="stylesheet"/>
+<link rel="stylesheet" href="css/global.css" type="text/css"/>
+<link rel="icon" type="image/png" href="favicon/favicon-16x16.png"/>
+<link rel="stylesheet" href="https://use.typekit.net/rzd2bbz.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/yui/3.4.1/yui/yui-min.js"></script>
+<script defer src="https://use.fontawesome.com/releases/v5.14.0/js/all.js"></script>
+
+<script src="js/nav-bar.js"></script>
+
+
+
+
+	<style>
+	body {
+		background:url(images/lay/NB_noite_bg.png) repeat-x top;
+	}
+	.condTempo {
+		background:url(images/lay/NB_noite.png) no-repeat top;
+	}
+	</style>
+
+<title>Alagamentos - CGE</title>
+</head>
+<body>
+<div id="doc">
+	<div id="hd">
+		
+
+<div id="topo-cidade-sp" class="condTempo">
+	<div id="topo-prefeitura-sp">
+		<a href="http://www.capital.sp.gov.br/" target="_blank"><div id="logo-prefeitura-sp"></div></a>
+	</div>
+	<a href="/"><div id="logo_cge"></div></a>
+</div>
+
+
+<div class="yui-skin-nav-bar" id="wrap-nav-bar">
+	<div id="nav-bar" class="yui3-menu yui3-menu-horizontal yui3-menubuttonnav yui3-loading">
+		<div class="yui3-menu-content">
+			<ul class="first-of-type topicos">
+				<li class="yui3-menuitem topico"><a class="yui3-menuitem-content" href="index.jsp">Home</a></li>
+				<li class="yui3-menuitem topico"><a class="yui3-menuitem-content" href="noticias.jsp">Notícias</a></li>
+				<li class="topico">
+					<span class="yui3-menu-label">
+						<a href="#"></a>
+						<a href="#tempo-options" class="yui3-menu-toggle">Tempo</a>
+					</span>
+					<div class="yui3-menu" id="tempo-options">
+						<div class="yui3-menu-content">
+							<ul class="first-of-type">
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="estacoes-meteorologicas.jsp">Estações Meteorológicas</a></li>
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="/cgesp/satellite.jpg" target="_blank">Imagem de Satélite</a></li>
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="previsao_estendida.jsp">Previsão Estendida</a></li>
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="https://arquivos.saisp.br/nextcloud/index.php/s/qikdinFyAM33MJK?path=%2FBOLETIM_PLUVIOMETRICO" target="_blank">Planilhas de Precipitação</a></li>
+							</ul>
+						</div>
+					</div>
+				</li>
+
+				<li class="yui3-menuitem topico">
+					<span class="yui3-menu-label">
+						<a href="#"></a>
+						<a href="#alagamentos-options" class="yui3-menu-toggle">Alagamentos</a>
+					</span>
+					<div class="yui3-menu" id="alagamentos-options">
+						<div class="yui3-menu-content">
+							<ul>
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="alagamentos.jsp">Ver alagamentos</a></li>
+
+							</ul>
+						</div>
+					</div>
+				</li>
+
+
+				<li class="yui3-menuitem topico">
+					<span class="yui3-menu-label">
+						<a href="#"></a>
+						<a href="#o-cge-options" class="yui3-menu-toggle">Quem Somos</a>
+					</span>
+					<div class="yui3-menu" id="o-cge-options">
+						<div class="yui3-menu-content">
+							<ul class="first-of-type">
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="quem-somos.jsp">Quem Somos</a></li>
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="monitoramento.jsp">Monitoramento</a></li>
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="operacao-chuvas-de-verao.jsp">Operação Verão</a></li>
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="umidade-relativa-do-ar.jsp">Umidade do Ar</a></li>
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="baixas-temperaturas.jsp">Baixas Temperaturas</a></li>
+								<li class="yui3-menuitem"><a class="yui3-menuitem-content" href="fontes-de-informacao.jsp">Fontes de Informação</a></li>
+							</ul>
+						</div>
+					</div>
+				</li>
+				<li class="yui3-menuitem topico">
+					<a class="yui3-menuitem-content" href="dicas.jsp">Dicas</a>
+				</li>
+				<li class="yui3-menuitem topico">
+					<a class="yui3-menuitem-content" href="sala-de-imprensa.jsp">Sala de Imprensa</a>
+				</li>
+				<li class="yui3-menuitem topico">
+					<a class="yui3-menuitem-content" href="contato.jsp">Contato</a>
+				</li>
+				<li class="yui3-menuitem topico">
+					<a class="yui3-menuitem-content" href="https://www.facebook.com/CGESAOPAULO/" target="_blank">
+						<i class="fab fa-facebook-square" style="font-size:21px;color:white;"></i>
+					</a>
+				</li>
+				<li class="yui3-menuitem topico">
+					<a class="yui3-menuitem-content" href="https://twitter.com/cge_sp" target="_blank">
+						<i class="fab fa-twitter-square" style="font-size:21px;color:white;"></i>
+					</a>
+				</li>
+				<li class="yui3-menuitem topico">
+					<a class="yui3-menuitem-content" href="https://www.instagram.com/cge_pmsp" target="_blank">
+						<i class="fab fa-instagram-square" style="font-size:21px;color:white;"></i>
+					</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>
+</div>
+
+	<div class="yui3-g" id="bd">
+		<div class="titulo-bd">
+		Alagamentos
+		<hr/>
+		</div>
+		<div class="fundo_ponto_escuro">
+		    <div class="yui3-u col-alagamentos">
+		        <div class="content">
+		        	
+
+
+
+
+
+
+
+	
+		
+						
+		
+		
+	
+
+
+
+
+
+
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+		
+		
+			<h1 class="tit-bairros">Zona Norte</h1>
+			
+		
+		
+		
+		
+		<table class="tb-pontos-de-alagamentos">
+			<tr>
+				<td class="bairro arial-bairros-alag linha-pontilhada">
+					Santana 
+					<hr/>
+				</td>
+				<td class="total-pts arial-bairros-alag">1 pts.</td>
+			</tr>
+		
+		
+			<tr>
+				<td colspan="3">
+					<div class="ponto-de-alagamento">
+						<ul>
+							
+								
+								
+									<li class="inativo-intransitavel" title="Inativo Intransitável"></li>
+								
+								
+								
+							
+							
+							<li class="espaco"></li>
+							<li class="arial-descr-alag col-local">De 04:51 a 09:58<br/>MARGINAL TIETE ASCB CENTRAL</li>
+							<li class="ln-vert"></li>
+							<li class="arial-descr-alag">Sentido: A SENNA/CASTELO B<br/>Referência: PTE DAS BANDEIRAS SEN ROMEU TUMA</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		
+		</table>
+	
+
+	
+
+	
+
+	
+		
+		
+			<h1 class="tit-bairros">Zona Oeste</h1>
+			
+		
+		
+		
+		
+		<table class="tb-pontos-de-alagamentos">
+			<tr>
+				<td class="bairro arial-bairros-alag linha-pontilhada">
+					Lapa 
+					<hr/>
+				</td>
+				<td class="total-pts arial-bairros-alag">1 pts.</td>
+			</tr>
+		
+		
+			<tr>
+				<td colspan="3">
+					<div class="ponto-de-alagamento">
+						<ul>
+							
+								
+								
+									<li class="inativo-intransitavel" title="Inativo Intransitável"></li>
+								
+								
+								
+							
+							
+							<li class="espaco"></li>
+							<li class="arial-descr-alag col-local">De 04:02 a 08:51<br/>MARGINAL TIETE ASCB EXPRESSA</li>
+							<li class="ln-vert"></li>
+							<li class="arial-descr-alag">Sentido: A SENNA/CASTELO B<br/>Referência: PTE ATTILIO FONTANA</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		
+		</table>
+	
+
+	
+		
+		
+		
+		
+		
+		<table class="tb-pontos-de-alagamentos">
+			<tr>
+				<td class="bairro arial-bairros-alag linha-pontilhada">
+					Pinheiros 
+					<hr/>
+				</td>
+				<td class="total-pts arial-bairros-alag">3 pts.</td>
+			</tr>
+		
+		
+			<tr>
+				<td colspan="3">
+					<div class="ponto-de-alagamento">
+						<ul>
+							
+								
+								
+									<li class="inativo-intransitavel" title="Inativo Intransitável"></li>
+								
+								
+								
+							
+							
+							<li class="espaco"></li>
+							<li class="arial-descr-alag col-local">De 03:36 a 06:14<br/>TN DIRCE CAMARGO</li>
+							<li class="ln-vert"></li>
+							<li class="arial-descr-alag">Sentido: UNICO<br/>Referência: R OLIVIA FEDER</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		
+			<tr>
+				<td colspan="3">
+					<div class="ponto-de-alagamento">
+						<ul>
+							
+								
+								
+									<li class="inativo-intransitavel" title="Inativo Intransitável"></li>
+								
+								
+								
+							
+							
+							<li class="espaco"></li>
+							<li class="arial-descr-alag col-local">De 03:58 a 04:06<br/>TN DIRCE CAMARGO</li>
+							<li class="ln-vert"></li>
+							<li class="arial-descr-alag">Sentido: UNICO<br/>Referência: 12</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		
+			<tr>
+				<td colspan="3">
+					<div class="ponto-de-alagamento">
+						<ul>
+							
+								
+								
+									<li class="inativo-intransitavel" title="Inativo Intransitável"></li>
+								
+								
+								
+							
+							
+							<li class="espaco"></li>
+							<li class="arial-descr-alag col-local">De 04:57 a 05:24<br/>TN DIRCE CAMARGO</li>
+							<li class="ln-vert"></li>
+							<li class="arial-descr-alag">Sentido: UNICO<br/>Referência: R OLIVIA FEDER</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		
+		</table>
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+		
+		
+			<h1 class="tit-bairros">Zona Leste</h1>
+			
+		
+		
+		
+		
+		<table class="tb-pontos-de-alagamentos">
+			<tr>
+				<td class="bairro arial-bairros-alag linha-pontilhada">
+					Mooca 
+					<hr/>
+				</td>
+				<td class="total-pts arial-bairros-alag">3 pts.</td>
+			</tr>
+		
+		
+			<tr>
+				<td colspan="3">
+					<div class="ponto-de-alagamento">
+						<ul>
+							
+								
+									<li class="inativo-transitavel" title="Inativo Transitável"></li>
+								
+								
+								
+								
+							
+							
+							<li class="espaco"></li>
+							<li class="arial-descr-alag col-local">De 01:06 a 05:23<br/>AV CELSO GARCIA</li>
+							<li class="ln-vert"></li>
+							<li class="arial-descr-alag">Sentido: BAIRRO/CENTRO<br/>Referência: R JOSE DE ALENCAR (BRAS)</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		
+			<tr>
+				<td colspan="3">
+					<div class="ponto-de-alagamento">
+						<ul>
+							
+								
+									<li class="inativo-transitavel" title="Inativo Transitável"></li>
+								
+								
+								
+								
+							
+							
+							<li class="espaco"></li>
+							<li class="arial-descr-alag col-local">De 01:08 a 05:23<br/>AV CELSO GARCIA</li>
+							<li class="ln-vert"></li>
+							<li class="arial-descr-alag">Sentido: CENTRO/BAIRRO<br/>Referência: R SALDANHA MARINHO</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		
+			<tr>
+				<td colspan="3">
+					<div class="ponto-de-alagamento">
+						<ul>
+							
+								
+									<li class="inativo-transitavel" title="Inativo Transitável"></li>
+								
+								
+								
+								
+							
+							
+							<li class="espaco"></li>
+							<li class="arial-descr-alag col-local">De 03:45 a 05:24<br/>AV CD DE FRONTIN</li>
+							<li class="ln-vert"></li>
+							<li class="arial-descr-alag">Sentido: BAIRRO/CENTRO<br/>Referência: AV ARICANDUVA</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		
+		</table>
+	
+
+	
+
+	
+		
+		
+		
+		
+		
+		<table class="tb-pontos-de-alagamentos">
+			<tr>
+				<td class="bairro arial-bairros-alag linha-pontilhada">
+					Penha 
+					<hr/>
+				</td>
+				<td class="total-pts arial-bairros-alag">1 pts.</td>
+			</tr>
+		
+		
+			<tr>
+				<td colspan="3">
+					<div class="ponto-de-alagamento">
+						<ul>
+							
+								
+									<li class="inativo-transitavel" title="Inativo Transitável"></li>
+								
+								
+								
+								
+							
+							
+							<li class="espaco"></li>
+							<li class="arial-descr-alag col-local">De 03:34 a 05:24<br/>R DR LUIZ AYRES</li>
+							<li class="ln-vert"></li>
+							<li class="arial-descr-alag">Sentido: BAIRRO/CENTRO<br/>Referência: R GALILEU MENON</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		
+		</table>
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+</div>
+		    </div>
+			<div class="yui3-u ln-vert-escura"></div>
+			<div class="yui3-u">
+	        	<div class="yui3-u col-alagamentos-resumo">
+	        <div class="content">	        	
+	        	<br class="espaco"/>
+					 <div id="buscaAlagamentos">
+		        		<form name="Busca" action="alagamentos.jsp" method="get" id="Busca" class="campos">
+			        		<input type="text" name="dataBusca" value="25/10/2026" id="campoBusca" onblur="if(this.value == '') this.value = 'dd/mm/aaaa'" onfocus="if(this.value == 'dd/mm/aaaa') this.value='';"/>
+			        		<input type="submit" name="enviaBusca" id="enviaBusca" value="Buscar" />
+		        		</form>
+	        		</div>
+	        		<br class="espaco"/>
+				<div class="alag-resumo">
+
+					<div class="yui3-g">
+						<div class="yui3-u  col1">
+
+							<div class="col1-resumo">
+								<img src="images/lay/icone_transitavel.png" title="Pontos de Alagamento Transitáveis Ativos"/>
+							</div>
+							<div class="col2-resumo">
+								<h1>Transitáveis = 0 pts</h1>
+							</div>
+
+							<div class="espaco"></div>
+							<div class="col1-resumo">
+								<img src="images/lay/icone_intransitavel.png" title="Pontos de Alagamento Intransitáveis Ativos"/>
+							</div>
+							<div class="col2-resumo">
+								<h1>Intransitáveis = 0 pts</h1>
+							</div>
+						</div>
+						<div class="yui3-u col2">
+							<h2 class="frank-cinza colchete-grande">}</h2>
+						</div>
+						<div class="yui3-u col3">
+							<h2 class="frank-verm">Ativos<br/></h2>
+						</div>
+					</div>
+
+				</div>
+	        	<br class="espaco"/>
+	        		<div class="alag-resumo">
+
+						<div class="yui3-g">
+							<div class="yui3-u  col1">
+
+								<div class="col1-resumo">
+									<img src="images/lay/icone_transitavel_inativo.png" title="Pontos de Alagamento Transitáveis Inativos"/>
+								</div>
+								<div class="col2-resumo">
+									<h1>Transitáveis = 4 pts</h1>
+								</div>
+
+								<div class="espaco"></div>
+								<div class="col1-resumo">
+									<img src="images/lay/icone_intransitavel_inativo.png" title="Pontos de Alagamento Intransitáveis Inativos"/>
+								</div>
+								<div class="col2-resumo">
+									<h1>Intransitáveis = 5 pts</h1>
+								</div>
+							</div>
+							<div class="yui3-u col2">
+								<h2 class="frank-cinza colchete-grande">}</h2>
+							</div>
+							<div class="yui3-u col3">
+								<h2 class="frank-cinza">Inativos<br/></h2>
+							</div>
+						</div>
+
+					</div>
+				<br class="espaco"/>
+				<br class="espaco"/>
+<p>Entenda a <a href="alagamentos-classificacao.jsp">classificação</a> dos pontos de alagamento.</p>
+	        </div>
+	    </div>
+</div>
+	    </div>
+	</div>
+</div>
+<div id="ft">
+
+<div id="max-width-ft">
+	<div class="yui3-g">
+			<div class="yui3-u-1-4">
+
+				<ul>
+					<li class="tit">Alagamentos</li>
+
+					<li>
+						<a href="alagamentos.jsp">Histórico</a>
+					</li>
+
+				</ul>
+
+				<ul>
+					<li></li>
+					<li class="tit">
+						<a href="dicas.jsp">Dicas</a>
+					</li>
+					<li class="tit">
+						<a href="sala-de-imprensa.jsp">Sala de Imprensa</a>
+					</li>
+				</ul>
+			</div>
+			<div class="yui3-u-1-4">
+				<ul>
+					<li class="tit">Tempo</li>
+					<li>
+						<a href="estacoes-meteorologicas.jsp">Estações Meteorológicas</a>
+					</li>
+					<li>
+						<a href="satelite.jsp">Imagem de Satélite</a>
+					</li>
+					<li>
+						<a href="previsao_estendida.jsp">Previsão Estendida</a>
+					</li>
+				</ul>
+			</div>
+			<div class="yui3-u-1-4">
+				<ul>
+					<li class="tit">O CGE</li>
+					<li><a href="quem-somos.jsp">Quem Somos</a></li>
+					<li><a href="monitoramento.jsp">Monitoramento</a></li>
+					<li><a href="operacao-chuvas-de-verao.jsp">Operação Verão</a></li>
+					<li><a href="umidade-relativa-do-ar.jsp">Umidade do Ar</a></li>
+					<li><a href="baixas-temperaturas.jsp">Baixas Temperaturas</a></li>
+					<li><a href="fontes-de-informacao.jsp">Fontes de Informação</a></li>
+				</ul>
+			</div>
+			<div class="yui3-u-1-4">
+				<ul>
+					<li class="tit">
+						<a href="contato.jsp">Contato</a>
+					</li>
+					<li></li>
+					<li>
+						<a href="feed_rss.jsp" target="_blank"><i class="fas fa-rss-square" style="font-size:21px;color:white;"></i></a>
+						<a href="https://www.facebook.com/pages/CGE/189602861065357" target="_blank"><i class="fab fa-facebook-square" style="font-size:21px;color:white;"></i></a>
+						<a href="https://twitter.com/cge_sp" target="_blank"><i class="fab fa-twitter-square" style="font-size:21px;color:white;"></i></a>
+					</li>
+					<li></li>
+					<li class="fone">24hrs - (11) 3396-6739</li>
+					<li></li>
+					<li><a href="https://www.fcth.br" target="_blank"><img src="images/lay/logo_fcth.png"/></a></li>
+				</ul>
+			</div>
+	</div>
+</div>
+</div>
+</body>
+</html>

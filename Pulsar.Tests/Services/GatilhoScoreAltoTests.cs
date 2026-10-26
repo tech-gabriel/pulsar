@@ -43,6 +43,8 @@ public class GatilhoScoreAltoTests
             Fuso = Sp,
             Previsao = Array.Empty<FaixaPrevisaoDto>(),
             AgoraUtc = new DateTime(2026, 8, 17, 18, 0, 0, DateTimeKind.Utc),
+            // Ciclo anterior também em Alerta de alagamento: o caso que dispara desde o AS3.
+            ScoreAnterior = new ScorePerigo { Faixa = FaixaRisco.ALTO, PerigoPrincipal = TipoPerigo.ALAGAMENTO, Timestamp = DateTime.UtcNow.AddMinutes(-15) },
         };
 
     [Fact]
@@ -73,11 +75,11 @@ public class GatilhoScoreAltoTests
     }
 
     [Fact]
-    public async Task FaixaAlto_UsaCooldownDeslizanteDeUmaHora()
+    public async Task FaixaAlto_UsaCooldownDeslizanteDeTresHoras()
     {
         var pendencias = await new GatilhoScoreAlto().AvaliarAsync(Contexto(78, FaixaRisco.ALTO));
 
-        pendencias[0].Cooldown.Should().Be(TimeSpan.FromHours(1),
+        pendencias[0].Cooldown.Should().Be(TimeSpan.FromHours(3),
             "o dedup do score alto é janela deslizante, não balde de hora de calendário");
     }
 
@@ -248,5 +250,64 @@ public class GatilhoScoreAltoTests
         var p = await new GatilhoScoreAlto().AvaliarAsync(ctx);
 
         p[0].Chave.Should().Be($"score:{ctx.Subprefeitura.Id}:CALOR:202608171800");
+    }
+
+    // ── AS3: Chuva forte agora pede 2 ciclos seguidos em Alerta de alagamento ────────
+
+    private static ContextoGatilho ComAnterior(TipoPerigo perigoAtual, ScorePerigo? anterior)
+    {
+        var agora = DateTime.UtcNow;
+        return new()
+        {
+            Estado = new EstadoSubprefeitura(
+                new Subprefeitura { Nome = "Mooca", Ativa = true },
+                new ScorePerigo { Valor = 80, Faixa = FaixaRisco.ALTO, PerigoPrincipal = perigoAtual, Chuva3hMm = 30, Timestamp = agora },
+                LeituraPadrao()),
+            Fuso = Sp,
+            Previsao = Array.Empty<FaixaPrevisaoDto>(),
+            AgoraUtc = agora,
+            ScoreAnterior = anterior,
+        };
+    }
+
+    private static ScorePerigo Anterior(FaixaRisco faixa, TipoPerigo perigo = TipoPerigo.ALAGAMENTO, int minutosAtras = 15)
+        => new() { Valor = 70, Faixa = faixa, PerigoPrincipal = perigo, Timestamp = DateTime.UtcNow.AddMinutes(-minutosAtras) };
+
+    [Fact]
+    public async Task Alagamento_UmCicloSoEmAlerta_NaoAvisa()
+    {
+        (await new GatilhoScoreAlto().AvaliarAsync(ComAnterior(TipoPerigo.ALAGAMENTO, Anterior(FaixaRisco.MODERADO))))
+            .Should().BeEmpty();
+        (await new GatilhoScoreAlto().AvaliarAsync(ComAnterior(TipoPerigo.ALAGAMENTO, null)))
+            .Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Alagamento_DoisCiclosSeguidosEmAlerta_Avisa()
+    {
+        var p = await new GatilhoScoreAlto().AvaliarAsync(ComAnterior(TipoPerigo.ALAGAMENTO, Anterior(FaixaRisco.ALTO)));
+
+        p.Should().ContainSingle().Which.Perigo.Should().Be(TipoPerigo.ALAGAMENTO);
+    }
+
+    [Fact]
+    public async Task Alagamento_AnteriorDeHorasAtras_NaoContaComoCicloSeguido()
+    {
+        (await new GatilhoScoreAlto().AvaliarAsync(ComAnterior(TipoPerigo.ALAGAMENTO, Anterior(FaixaRisco.ALTO, minutosAtras: 120))))
+            .Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Alagamento_AnteriorEmAlertaDeVento_NaoConta()
+    {
+        (await new GatilhoScoreAlto().AvaliarAsync(ComAnterior(TipoPerigo.ALAGAMENTO, Anterior(FaixaRisco.ALTO, TipoPerigo.VENTO))))
+            .Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Vento_UmCicloSoJaAvisa()
+    {
+        (await new GatilhoScoreAlto().AvaliarAsync(ComAnterior(TipoPerigo.VENTO, null)))
+            .Should().ContainSingle();
     }
 }

@@ -311,6 +311,62 @@ namespace Pulsar.API.Migrations
                     b.ToTable("OcorrenciasAlagamento");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.PontoAlagamentoCge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Dia")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("FimUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("InicioUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Referencia")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Sentido")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Transitavel")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Via")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("VistoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubprefeituraId", "Dia", "InicioUtc", "Via", "Sentido", "Referencia")
+                        .IsUnique();
+
+                    b.ToTable("PontosAlagamentoCge");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.PrevisaoClimatica", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1358,6 +1414,17 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Subprefeitura");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.PontoAlagamentoCge", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subprefeitura");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.PrevisaoClimatica", b =>

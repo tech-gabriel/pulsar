@@ -422,6 +422,14 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   margin-top: 6px;
 }
 
+/* Alagamento oficial do CGE: usa a cor de ALTO pela classe pt-ALTO. */
+.pulsar-tooltip .pt-cge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c);
+  margin: -2px 0 10px;
+}
+
 /* Cores por faixa (sobrescritas com tons mais escuros no tema claro). */
 .pulsar-tooltip .pt-BAIXO { --c: #4ade80; }
 .pulsar-tooltip .pt-MODERADO { --c: #fbbf24; }

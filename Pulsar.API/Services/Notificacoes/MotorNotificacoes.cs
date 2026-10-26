@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pulsar.API.Domain.Entities;
+using Pulsar.API.External.Interfaces;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services.Interfaces;
@@ -26,6 +27,7 @@ public class MotorNotificacoes : IMotorNotificacoes
     private readonly PulsarDbContext _db;
     private readonly INotificacaoEnviadaRepository _livroCaixa;
     private readonly IPrevisaoService _previsaoService;
+    private readonly IChuvaReferenciaClient _chuvaReferencia;
     private readonly IPushNotificationService _push;
     private readonly IEnumerable<IGatilhoNotificacao> _gatilhos;
     private readonly ILogger<MotorNotificacoes> _logger;
@@ -34,6 +36,7 @@ public class MotorNotificacoes : IMotorNotificacoes
         PulsarDbContext db,
         INotificacaoEnviadaRepository livroCaixa,
         IPrevisaoService previsaoService,
+        IChuvaReferenciaClient chuvaReferencia,
         IPushNotificationService push,
         IEnumerable<IGatilhoNotificacao> gatilhos,
         ILogger<MotorNotificacoes> logger)
@@ -41,6 +44,7 @@ public class MotorNotificacoes : IMotorNotificacoes
         _db = db;
         _livroCaixa = livroCaixa;
         _previsaoService = previsaoService;
+        _chuvaReferencia = chuvaReferencia;
         _push = push;
         _gatilhos = gatilhos;
         _logger = logger;
@@ -162,6 +166,14 @@ public class MotorNotificacoes : IMotorNotificacoes
             .Where(s => subIds.Contains(s.Id) && s.Ativa)
             .ToListAsync(ct);
 
+        // Uma consulta e uma chamada para todas as subprefeituras, não uma por subprefeitura.
+        var vistoDesde = agora - LimiaresNotificacao.ValidadePontoCge;
+        var pontosCge = (await _db.PontosAlagamentoCge
+            .Where(p => subIds.Contains(p.SubprefeituraId) && p.Ativo && p.VistoEm >= vistoDesde)
+            .ToListAsync(ct))
+            .ToLookup(p => p.SubprefeituraId);
+        var referencia = await ObterChuvaReferenciaAsync(subs, ct);
+
         var pendencias = new List<NotificacaoPendente>();
         foreach (var sub in subs)
         {
@@ -170,7 +182,7 @@ public class MotorNotificacoes : IMotorNotificacoes
             ContextoGatilho ctx;
             try
             {
-                ctx = await MontarContextoAsync(sub, agora, ct);
+                ctx = await MontarContextoAsync(sub, agora, [.. pontosCge[sub.Id]], referencia?.GetValueOrDefault(sub.Id), ct);
             }
             catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
             {
@@ -205,12 +217,17 @@ public class MotorNotificacoes : IMotorNotificacoes
         return pendencias;
     }
 
-    private async Task<ContextoGatilho> MontarContextoAsync(Subprefeitura sub, DateTime agora, CancellationToken ct)
+    private async Task<ContextoGatilho> MontarContextoAsync(
+        Subprefeitura sub, DateTime agora, IReadOnlyList<PontoAlagamentoCge> pontosCge,
+        IReadOnlyDictionary<DateTime, double>? chuvaReferencia, CancellationToken ct)
     {
-        var score = await _db.ScoresPerigo
+        // Os dois últimos: o atual e o do ciclo anterior, para o "2 ciclos seguidos".
+        var scores = await _db.ScoresPerigo
             .Where(s => s.SubprefeituraId == sub.Id)
             .OrderByDescending(s => s.Timestamp)
-            .FirstOrDefaultAsync(ct);
+            .Take(2)
+            .ToListAsync(ct);
+        var score = scores.ElementAtOrDefault(0);
         var leitura = await _db.LeiturasClimaticas
             .Where(l => l.SubprefeituraId == sub.Id)
             .OrderByDescending(l => l.Timestamp)
@@ -223,7 +240,31 @@ public class MotorNotificacoes : IMotorNotificacoes
             Fuso = TimeZoneInfo.FindSystemTimeZoneById(sub.Regiao.FusoHorario),
             Previsao = await _previsaoService.ObterFaixasSubprefeituraAsync(sub.Id, LimiaresNotificacao.MaxFaixasContexto, ct),
             AgoraUtc = agora,
+            ScoreAnterior = scores.ElementAtOrDefault(1),
+            PontosCgeAtivos = pontosCge,
+            ChuvaReferencia = chuvaReferencia,
         };
+    }
+
+    /// <summary>
+    /// Previsão horária do Open-Meteo por subprefeitura, para o Vai chover confirmar a do OWM.
+    /// Null se o Open-Meteo falhar: o gatilho entende como "sem confirmação" e não avisa.
+    /// </summary>
+    private async Task<Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>?> ObterChuvaReferenciaAsync(
+        IReadOnlyList<Subprefeitura> subs, CancellationToken ct)
+    {
+        if (subs.Count == 0) return null;
+        try
+        {
+            var series = await _chuvaReferencia.ObterHorariaAsync([.. subs.Select(s => (s.Latitude, s.Longitude))], ct);
+            if (series is null || series.Count != subs.Count) return null;
+            return subs.Select((s, i) => (s.Id, series[i])).ToDictionary(x => x.Id, x => x.Item2);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Open-Meteo indisponível: o aviso de chuva prevista fica sem confirmação neste ciclo.");
+            return null;
+        }
     }
 
     /// <summary>Etapa 2 + envio + registro. Devolve quantos aparelhos receberam.</summary>

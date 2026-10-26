@@ -7,7 +7,8 @@ public interface IChuvaReferenciaClient
 {
     /// <summary>
     /// Chuva horária em mm por ponto, na ordem de <paramref name="pontos"/>, chaveada pela
-    /// hora UTC. Cobre as últimas ~10 h e as próximas ~3 h.
+    /// hora UTC. Cobre as últimas ~10 h e as próximas ~15 h: a guarda olha o passado, e o
+    /// aviso de chuva prevista confirma a faixa do OWM até 12 h à frente com ±3 h de folga.
     /// </summary>
     Task<IReadOnlyList<IReadOnlyDictionary<DateTime, double>>> ObterHorariaAsync(
         IReadOnlyList<(double Lat, double Lon)> pontos, CancellationToken ct = default);

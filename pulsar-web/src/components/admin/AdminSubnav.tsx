@@ -1,17 +1,18 @@
 import { NavLink } from 'react-router-dom';
-import { Users, Lightbulb, Activity } from 'lucide-react';
+import { Users, Lightbulb, Activity, Gauge } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const ITENS: { to: string; label: string; Icon: LucideIcon }[] = [
   { to: '/app/admin/usuarios', label: 'Usuários', Icon: Users },
   { to: '/app/admin/sugestoes', label: 'Sugestões', Icon: Lightbulb },
   { to: '/app/admin/sistema', label: 'Sistema', Icon: Activity },
+  { to: '/app/admin/qualidade', label: 'Qualidade', Icon: Gauge },
 ];
 
 /** Navegação entre as seções da área administrativa. */
 export default function AdminSubnav() {
   return (
-    <nav className="mb-5 flex items-center gap-2">
+    <nav className="mb-5 flex flex-wrap items-center gap-2">
       {ITENS.map(({ to, label, Icon }) => (
         <NavLink
           key={to}

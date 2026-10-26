@@ -15,6 +15,7 @@ const TITULOS_EXATOS: Record<string, string> = {
   '/app/admin/usuarios': 'Usuários · Admin',
   '/app/admin/sugestoes': 'Sugestões · Admin',
   '/app/admin/sistema': 'Sistema · Admin',
+  '/app/admin/qualidade': 'Qualidade · Admin',
   '/login': 'Entrar',
   '/cadastro': 'Criar conta',
   '/esqueci-senha': 'Recuperar senha',

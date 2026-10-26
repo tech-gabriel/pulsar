@@ -18,8 +18,16 @@ public class OpenMeteoClient : IChuvaReferenciaClient
 
     public OpenMeteoClient(IHttpClientFactory httpClientFactory) => _httpClientFactory = httpClientFactory;
 
-    public async Task<IReadOnlyList<IReadOnlyDictionary<DateTime, double>>> ObterHorariaAsync(
+    public Task<IReadOnlyList<IReadOnlyDictionary<DateTime, double>>> ObterHorariaAsync(
         IReadOnlyList<(double Lat, double Lon)> pontos, CancellationToken ct = default)
+        => ObterAsync(pontos, "past_hours=10&forecast_hours=16", ct);
+
+    public Task<IReadOnlyList<IReadOnlyDictionary<DateTime, double>>> ObterHorariaPassadaAsync(
+        IReadOnlyList<(double Lat, double Lon)> pontos, int dias, CancellationToken ct = default)
+        => ObterAsync(pontos, $"past_days={dias}&forecast_days=1", ct);
+
+    private async Task<IReadOnlyList<IReadOnlyDictionary<DateTime, double>>> ObterAsync(
+        IReadOnlyList<(double Lat, double Lon)> pontos, string janela, CancellationToken ct)
     {
         if (pontos.Count == 0) return [];
 
@@ -28,7 +36,7 @@ public class OpenMeteoClient : IChuvaReferenciaClient
         var client = _httpClientFactory.CreateClient("openmeteo");
 
         var response = await client.GetAsync(
-            $"forecast?latitude={lat}&longitude={lon}&hourly=precipitation&past_hours=10&forecast_hours=16&timezone=GMT", ct);
+            $"forecast?latitude={lat}&longitude={lon}&hourly=precipitation&{janela}&timezone=GMT", ct);
         if (!response.IsSuccessStatusCode)
             throw new WeatherApiException($"Falha ao obter chuva do Open-Meteo: {response.StatusCode}", (int)response.StatusCode);
 

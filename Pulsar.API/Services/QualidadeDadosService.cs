@@ -116,12 +116,42 @@ public class QualidadeDadosService : IQualidadeDadosService
             });
         }
 
+        var geoSampa = await ObterGeoSampaAsync(ct);
+        var primeiraTentativa = await _db.ExecucoesSincronizacao
+            .Where(x => x.Fonte == ExecucaoSincronizacao.FonteGeoSampa)
+            .MinAsync(x => (DateTime?)x.IniciadoEm, ct);
+        var avisoGeoSampa = AvaliadorQualidade.AvaliarGeoSampa(geoSampa.UltimoSucesso, primeiraTentativa, geoSampa.UltimoErro, agora);
+
         return new QualidadeDadosDto
         {
             Dias = dias,
             OpenMeteoDisponivel = openMeteo is not null,
-            Avisos = [.. avisos.OrderByDescending(a => a.Dia).ThenBy(a => a.Subprefeitura)],
+            // O aviso da cidade inteira vai no topo: sem ele, o resto do painel pode estar velho.
+            Avisos =
+            [
+                .. avisoGeoSampa is null ? [] : new[] { new AvisoQualidadeDto
+                {
+                    Tipo = avisoGeoSampa.Tipo, Dia = DateOnly.FromDateTime(agora), Detalhe = avisoGeoSampa.Detalhe,
+                } },
+                .. avisos.OrderByDescending(a => a.Dia).ThenBy(a => a.Subprefeitura),
+            ],
             Subprefeituras = linhas,
+            GeoSampa = geoSampa,
+        };
+    }
+
+    private async Task<SincronizacaoFonteDto> ObterGeoSampaAsync(CancellationToken ct)
+    {
+        var execucoes = _db.ExecucoesSincronizacao.Where(x => x.Fonte == ExecucaoSincronizacao.FonteGeoSampa);
+        var ultima = await execucoes.OrderByDescending(x => x.IniciadoEm).FirstOrDefaultAsync(ct);
+        var ultimoSucesso = await execucoes.Where(x => x.Sucesso).OrderByDescending(x => x.IniciadoEm).FirstOrDefaultAsync(ct);
+        return new SincronizacaoFonteDto
+        {
+            UltimaTentativa = ultima?.IniciadoEm,
+            UltimaTentativaSucesso = ultima?.Sucesso,
+            UltimoErro = ultima is { Sucesso: false } ? ultima.Erro : null,
+            UltimoSucesso = ultimoSucesso?.IniciadoEm,
+            NovasNoUltimoSucesso = ultimoSucesso?.Novas,
         };
     }
 

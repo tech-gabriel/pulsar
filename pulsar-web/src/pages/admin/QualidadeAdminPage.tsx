@@ -6,7 +6,8 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 import AdminSubnav from '../../components/admin/AdminSubnav';
 import { useQualidadeAdmin } from '../../hooks/useQualidadeAdmin';
-import type { QualidadeDiaDto, TipoAvisoQualidade } from '../../types';
+import { tempoRelativo } from '../../utils/data';
+import type { QualidadeDiaDto, SincronizacaoFonteDto, TipoAvisoQualidade } from '../../types';
 
 const PERIODOS = [7, 30] as const;
 
@@ -15,6 +16,7 @@ const TITULO_AVISO: Record<TipoAvisoQualidade, string> = {
   'chuva-passou-batida': 'Chuva que passou batida',
   'alerta-sem-confirmacao': 'Alerta sem confirmação',
   'coleta-falhando': 'Coleta falhando',
+  'geosampa-parado': 'GeoSampa parado',
 };
 
 /** "2026-10-26" → "26/10". Sem Date: o dia já é local, e o parse em UTC voltaria um dia. */
@@ -91,13 +93,14 @@ export default function QualidadeAdminPage() {
                     >
                       <p className="flex items-center gap-1.5 font-semibold" style={{ fontSize: 13.5 }}>
                         <TriangleAlert size={15} aria-hidden="true" />
-                        {TITULO_AVISO[a.tipo]}: {a.subprefeitura}, {diaCurto(a.dia)}
+                        {TITULO_AVISO[a.tipo]}{a.subprefeitura && `: ${a.subprefeitura}, ${diaCurto(a.dia)}`}
                       </p>
                       <p style={{ fontSize: 12.5, marginTop: 2 }}>{a.detalhe}</p>
                     </li>
                   ))}
                 </ul>
               )}
+              <LinhaGeoSampa geo={dados.geoSampa} />
               {!dados.openMeteoDisponivel && (
                 <p className="mt-3" style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
                   O Open-Meteo não respondeu agora. Os avisos que comparam a chuva ficaram de fora.
@@ -176,6 +179,24 @@ export default function QualidadeAdminPage() {
         )}
       </main>
     </div>
+  );
+}
+
+/** Estado do sync das ocorrências históricas. Some a dúvida "não publicaram ou o job parou?". */
+function LinhaGeoSampa({ geo }: { geo: SincronizacaoFonteDto }) {
+  const partes = !geo.ultimaTentativa
+    ? ['Nenhuma sincronização registrada ainda.']
+    : [
+        geo.ultimoSucesso
+          ? `Último sucesso ${tempoRelativo(geo.ultimoSucesso)}, com ${geo.novasNoUltimoSucesso} ${geo.novasNoUltimoSucesso === 1 ? 'ocorrência nova' : 'ocorrências novas'}.`
+          : 'Nenhum sucesso registrado.',
+        geo.ultimaTentativaSucesso === false ? `A última tentativa, ${tempoRelativo(geo.ultimaTentativa)}, falhou.` : '',
+      ];
+  return (
+    <p className="mt-3" style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+      <span className="font-semibold" style={{ color: 'var(--text-secondary)' }}>GeoSampa: </span>
+      {partes.filter(Boolean).join(' ')}
+    </p>
   );
 }
 

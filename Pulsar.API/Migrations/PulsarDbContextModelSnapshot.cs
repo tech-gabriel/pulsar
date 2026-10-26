@@ -177,6 +177,49 @@ namespace Pulsar.API.Migrations
                     b.ToTable("AssinaturasPush");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.ExecucaoSincronizacao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Erro")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("FinalizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Fonte")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("IniciadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Lidas")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Novas")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Sucesso")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Fonte", "IniciadoEm");
+
+                    b.ToTable("ExecucoesSincronizacao");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.LeituraClimatica", b =>
                 {
                     b.Property<Guid>("Id")

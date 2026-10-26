@@ -81,12 +81,24 @@ public class QualidadeDadosControllerTests : IClassFixture<PulsarWebApplicationF
     {
         var host = HostComOpenMeteo(serieDe: null);
         await SemearChuvaDeHojeAsync(host, "Lapa", 60);
+        using (var escopo = host.Services.CreateScope())
+        {
+            var db = escopo.ServiceProvider.GetRequiredService<PulsarDbContext>();
+            db.ExecucoesSincronizacao.Add(new ExecucaoSincronizacao
+            {
+                Fonte = ExecucaoSincronizacao.FonteGeoSampa, IniciadoEm = DateTime.UtcNow.AddDays(-5), Erro = "recusada",
+            });
+            await db.SaveChangesAsync();
+        }
         var client = host.CreateClient();
         var token = (await SessaoAdmin.ObterAsync(_factory, client)).Token;
 
         var painel = await LerAsync(client, "/api/admin/qualidade", token);
 
         painel.OpenMeteoDisponivel.Should().BeFalse();
+        painel.Avisos[0].Tipo.Should().Be(AvaliadorQualidade.GeoSampaParado);
+        painel.GeoSampa.UltimaTentativaSucesso.Should().BeFalse();
+        painel.GeoSampa.UltimoErro.Should().Be("recusada");
         painel.Avisos.Should().NotContain(a => a.Tipo == AvaliadorQualidade.ChuvaNaoAconteceu);
         painel.Subprefeituras.Should().OnlyContain(s => s.ChuvaOpenMeteoMm == null);
     }

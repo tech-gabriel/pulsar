@@ -36,7 +36,7 @@ export const CHANGELOG: Release[] = [
       {
         tipo: 'melhoria',
         titulo: 'Menos alarme falso',
-        descricao: 'O aviso de chuva forte agora espera a chuva se confirmar por meia hora, e o aviso de chuva prevista só sai quando duas previsões diferentes concordam. Depois de um aviso, você não recebe outro menor sobre a mesma região nas três horas seguintes.',
+        descricao: 'O alerta de chuva forte agora só sai quando duas medições seguidas confirmam a chuva, e o aviso de chuva prevista só sai quando duas previsões diferentes concordam. Depois de um aviso, você não recebe outro menor sobre a mesma região nas três horas seguintes.',
       },
     ],
   },

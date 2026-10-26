@@ -14,6 +14,7 @@ public class PulsarDbContext : DbContext
     public DbSet<LeituraClimatica> LeiturasClimaticas => Set<LeituraClimatica>();
     public DbSet<ScorePerigo> ScoresPerigo => Set<ScorePerigo>();
     public DbSet<AgregadoDiario> AgregadosDiarios => Set<AgregadoDiario>();
+    public DbSet<AgregadoHorario> AgregadosHorarios => Set<AgregadoHorario>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioSubprefeitura> UsuarioSubprefeituras => Set<UsuarioSubprefeitura>();
     public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
@@ -162,6 +163,17 @@ public class PulsarDbContext : DbContext
             // é recalculado a cada ciclo de coleta.
             e.HasIndex(a => new { a.SubprefeituraId, a.Dia }).IsUnique();
             e.Property(a => a.FusoHorario).IsRequired().HasMaxLength(64);
+            e.HasOne(a => a.Subprefeitura)
+             .WithMany()
+             .HasForeignKey(a => a.SubprefeituraId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AgregadoHorario>(e =>
+        {
+            e.HasKey(a => a.Id);
+            // Chave do upsert, mesmo papel da do diário.
+            e.HasIndex(a => new { a.SubprefeituraId, a.HoraUtc }).IsUnique();
             e.HasOne(a => a.Subprefeitura)
              .WithMany()
              .HasForeignKey(a => a.SubprefeituraId)

@@ -10,12 +10,25 @@ public class QualidadeDadosDto
 
     public IReadOnlyList<AvisoQualidadeDto> Avisos { get; set; } = [];
     public IReadOnlyList<QualidadeSubprefeituraDto> Subprefeituras { get; set; } = [];
+
+    /// <summary>Estado do sync do GeoSampa. Campos null = nenhuma execução gravada ainda.</summary>
+    public SincronizacaoFonteDto GeoSampa { get; set; } = new();
+}
+
+public class SincronizacaoFonteDto
+{
+    public DateTime? UltimaTentativa { get; set; }
+    public bool? UltimaTentativaSucesso { get; set; }
+    public string? UltimoErro { get; set; }
+    public DateTime? UltimoSucesso { get; set; }
+    public int? NovasNoUltimoSucesso { get; set; }
 }
 
 public class AvisoQualidadeDto
 {
-    /// <summary>chuva-nao-aconteceu, chuva-passou-batida, alerta-sem-confirmacao ou coleta-falhando.</summary>
+    /// <summary>chuva-nao-aconteceu, chuva-passou-batida, alerta-sem-confirmacao, coleta-falhando ou geosampa-parado.</summary>
     public string Tipo { get; set; } = string.Empty;
+    /// <summary>Vazio nos avisos da cidade inteira (geosampa-parado).</summary>
     public string Subprefeitura { get; set; } = string.Empty;
     public DateOnly Dia { get; set; }
     public string Detalhe { get; set; } = string.Empty;

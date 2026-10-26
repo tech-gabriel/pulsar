@@ -284,10 +284,11 @@ export interface FaixaPrevisaoDto {
 }
 
 // Painel de qualidade dos dados (admin). null = sem dado.
-export type TipoAvisoQualidade = 'chuva-nao-aconteceu' | 'chuva-passou-batida' | 'alerta-sem-confirmacao' | 'coleta-falhando';
+export type TipoAvisoQualidade = 'chuva-nao-aconteceu' | 'chuva-passou-batida' | 'alerta-sem-confirmacao' | 'coleta-falhando' | 'geosampa-parado';
 
 export interface AvisoQualidadeDto {
   tipo: TipoAvisoQualidade;
+  /** Vazio nos avisos da cidade inteira. */
   subprefeitura: string;
   /** Dia local, AAAA-MM-DD. */
   dia: string;
@@ -315,4 +316,14 @@ export interface QualidadeDadosDto {
   openMeteoDisponivel: boolean;
   avisos: AvisoQualidadeDto[];
   subprefeituras: QualidadeSubprefeituraDto[];
+  geoSampa: SincronizacaoFonteDto;
+}
+
+/** Campos null = nenhuma execução gravada ainda. */
+export interface SincronizacaoFonteDto {
+  ultimaTentativa: string | null;
+  ultimaTentativaSucesso: boolean | null;
+  ultimoErro: string | null;
+  ultimoSucesso: string | null;
+  novasNoUltimoSucesso: number | null;
 }

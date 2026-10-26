@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.19.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Alagamento confirmado pela cidade',
+        descricao: 'Quando o CGE, da Prefeitura, registra uma rua alagada, o Pulsar mostra o ponto no detalhe da sua subprefeitura e no mapa, com o horário e se dá para passar. Se ela estiver nos seus favoritos, você recebe o aviso na hora.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Menos alarme falso',
+        descricao: 'O alerta de chuva forte agora só sai quando duas medições seguidas confirmam a chuva, e o aviso de chuva prevista só sai quando duas previsões diferentes concordam. Depois de um aviso, você não recebe outro menor sobre a mesma região nas três horas seguintes.',
+      },
+    ],
+  },
+  {
     versao: '1.18.0',
     data: '2026-10-26',
     itens: [

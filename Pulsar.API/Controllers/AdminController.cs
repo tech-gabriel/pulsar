@@ -18,20 +18,34 @@ public class AdminController : ControllerBase
     private readonly IOcorrenciaIngestionService _ingestionService;
     private readonly IAgregadoDiarioRepository _agregadoRepo;
     private readonly IMotorNotificacoes _motor;
+    private readonly IQualidadeDadosService _qualidade;
 
     public AdminController(
         IAdminService adminService,
         ISistemaService sistemaService,
         IOcorrenciaIngestionService ingestionService,
         IAgregadoDiarioRepository agregadoRepo,
-        IMotorNotificacoes motor)
+        IMotorNotificacoes motor,
+        IQualidadeDadosService qualidade)
     {
         _adminService = adminService;
         _sistemaService = sistemaService;
         _ingestionService = ingestionService;
         _agregadoRepo = agregadoRepo;
         _motor = motor;
+        _qualidade = qualidade;
     }
+
+    /// <summary>
+    /// Qualidade dos dados nos últimos dias (1 a 30): chuva do Pulsar × Open-Meteo, horas
+    /// barradas, buracos de coleta, pontos do CGE e os avisos de divergência.
+    /// </summary>
+    [HttpGet("qualidade")]
+    [ProducesResponseType(typeof(QualidadeDadosDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ObterQualidade([FromQuery] int dias = 7, CancellationToken ct = default)
+        => Ok(await _qualidade.ObterAsync(Math.Clamp(dias, 1, 30), ct));
 
     /// <summary>Agregados diários recentes. Serve para conferir que a série está acumulando.</summary>
     [HttpGet("agregados")]

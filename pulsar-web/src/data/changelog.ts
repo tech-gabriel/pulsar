@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.21.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Histórico de alagamentos em dia',
+        descricao: 'O histórico de alagamentos vem do GeoSampa, da Prefeitura. Agora, quando ele para de atualizar, a equipe fica sabendo, e o Pulsar tenta buscar de novo a cada duas horas até voltar.',
+      },
+    ],
+  },
+  {
     versao: '1.20.0',
     data: '2026-10-26',
     itens: [

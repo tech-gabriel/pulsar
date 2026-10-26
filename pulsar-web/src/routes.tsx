@@ -106,6 +106,7 @@ export const routes: RouteObject[] = [
           { path: 'app/admin/usuarios', lazy: async () => ({ Component: (await import('./pages/admin/UsuariosAdminPage')).default }) },
           { path: 'app/admin/sugestoes', lazy: async () => ({ Component: (await import('./pages/admin/SugestoesAdminPage')).default }) },
           { path: 'app/admin/sistema', lazy: async () => ({ Component: (await import('./pages/admin/SistemaAdminPage')).default }) },
+          { path: 'app/admin/qualidade', lazy: async () => ({ Component: (await import('./pages/admin/QualidadeAdminPage')).default }) },
         ],
       },
 

@@ -282,3 +282,37 @@ export interface FaixaPrevisaoDto {
   /** Quando a previsão foi buscada, e não o instante previsto. Alimenta o aviso de dado velho. */
   coletadoEm: string;
 }
+
+// Painel de qualidade dos dados (admin). null = sem dado.
+export type TipoAvisoQualidade = 'chuva-nao-aconteceu' | 'chuva-passou-batida' | 'alerta-sem-confirmacao' | 'coleta-falhando';
+
+export interface AvisoQualidadeDto {
+  tipo: TipoAvisoQualidade;
+  subprefeitura: string;
+  /** Dia local, AAAA-MM-DD. */
+  dia: string;
+  detalhe: string;
+}
+
+export interface QualidadeDiaDto {
+  dia: string;
+  chuvaPulsarMm: number | null;
+  chuvaOpenMeteoMm: number | null;
+  horasBarradas: number | null;
+  horasIncompletas: number | null;
+  pontosCge: number;
+  teveAlerta: boolean;
+}
+
+export interface QualidadeSubprefeituraDto extends Omit<QualidadeDiaDto, 'dia' | 'teveAlerta'> {
+  id: string;
+  nome: string;
+  dias: QualidadeDiaDto[];
+}
+
+export interface QualidadeDadosDto {
+  dias: number;
+  openMeteoDisponivel: boolean;
+  avisos: AvisoQualidadeDto[];
+  subprefeituras: QualidadeSubprefeituraDto[];
+}

@@ -164,6 +164,17 @@ export interface SubprefeituraDto {
   faixaRisco: FaixaRisco;
   temperaturaAtual: number;
   ultimaLeitura: LeituraDto | null;
+  /** Pontos de alagamento ativos agora segundo o CGE-SP. Opcional: o snapshot do SSG não traz. */
+  alagamentosCge?: PontoAlagamentoCge[];
+}
+
+/** Ponto de alagamento ativo publicado pelo CGE-SP. */
+export interface PontoAlagamentoCge {
+  via: string;
+  referencia: string;
+  /** ISO UTC; exibir pelo fuso do navegador. */
+  inicioUtc: string;
+  transitavel: boolean;
 }
 
 /** Retornado por GET /api/subprefeituras. A zona é só legenda (SP3). */

@@ -28,7 +28,7 @@ public class OpenMeteoClient : IChuvaReferenciaClient
         var client = _httpClientFactory.CreateClient("openmeteo");
 
         var response = await client.GetAsync(
-            $"forecast?latitude={lat}&longitude={lon}&hourly=precipitation&past_hours=10&forecast_hours=4&timezone=GMT", ct);
+            $"forecast?latitude={lat}&longitude={lon}&hourly=precipitation&past_hours=10&forecast_hours=16&timezone=GMT", ct);
         if (!response.IsSuccessStatusCode)
             throw new WeatherApiException($"Falha ao obter chuva do Open-Meteo: {response.StatusCode}", (int)response.StatusCode);
 

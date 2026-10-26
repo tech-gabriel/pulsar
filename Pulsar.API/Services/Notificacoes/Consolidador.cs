@@ -36,13 +36,15 @@ public static class Consolidador
             .Where(p => d.Criterios.Contains(p.Criterio))
             .Where(p => !JaCoberta(d.Recentes, p, agoraUtc))
             .Where(p => !SilenciadaPorAlerta(d.Recentes, p, agoraUtc))
+            .Where(p => !SilenciadaPorNivelAcima(d.Recentes, p, agoraUtc))
             .OrderBy(p => p.Prioridade)
             .ThenBy(p => p.Criterio)
             .ToList();
         if (candidatas.Count == 0) return null;
 
         var lider = candidatas[0];
-        if (lider.Prioridade != LimiaresNotificacao.PrioridadeScoreAlto && EstourouTeto(d, agoraUtc))
+        // Perigo do CGE e score alto são isentos do teto (prioridade 0 e 1).
+        if (lider.Prioridade > LimiaresNotificacao.PrioridadeScoreAlto && EstourouTeto(d, agoraUtc))
             return null;
 
         // Mesmo gatilho E mesmo critério: o aparelho filtra por um critério só, então um
@@ -71,6 +73,26 @@ public static class Consolidador
             && r.SubprefeituraId == p.SubprefeituraId
             && r.EnviadoEm >= desde
             && (PerigoDaChaveDeAlerta(r.Chave) is not { } doAlerta || doAlerta == perigo));
+    }
+
+    /// <summary>
+    /// O aviso só sobe: Perigo (CGE) &gt; Chuva forte agora (score alto de alagamento) &gt; Vai chover.
+    /// Depois de um nível, os de baixo ficam calados na subprefeitura por SilencioNivelAcimaHoras.
+    /// Score alto de vento ou calor não cala a chuva prevista, e o Perigo não cala vento nem calor.
+    /// </summary>
+    private static bool SilenciadaPorNivelAcima(IReadOnlyList<EnvioAnterior> recentes, NotificacaoPendente p, DateTime agora)
+    {
+        var desde = agora.AddHours(-LimiaresNotificacao.SilencioNivelAcimaHoras);
+        var naJanela = recentes.Where(r => r.SubprefeituraId == p.SubprefeituraId && r.EnviadoEm >= desde).ToList();
+        bool houvePerigo = naJanela.Any(r => r.Gatilho == "alagamento-cge");
+
+        return p.Gatilho switch
+        {
+            "chuva-prevista" => houvePerigo || naJanela.Any(r => r.Gatilho == "score-alto"
+                && (PerigoDaChaveDeAlerta(r.Chave) is not { } perigo || perigo == TipoPerigo.ALAGAMENTO)),
+            "score-alto" => p.Perigo == TipoPerigo.ALAGAMENTO && houvePerigo,
+            _ => false,
+        };
     }
 
     /// <summary>"score:{id}:{PERIGO}:{instante}" devolve o perigo; formato antigo devolve null.</summary>
@@ -109,6 +131,7 @@ public static class Consolidador
         var (titulo, corpo) = gatilho switch
         {
             // Sem "de alagamento": o perigo de cada uma pode ser vento ou calor.
+            "alagamento-cge" => ($"Alagamento em {lista} agora", "O CGE registrou pontos de alagamento. Toque para ver onde."),
             "score-alto" => ($"Alerta em {lista}", "Toque para ver o que está acontecendo em cada uma."),
             "atencao" => ($"Atenção em {lista}", "Toque para ver os detalhes."),
             // O grupo tem um critério só (ver Consolidar), então a faixa vale para todas.

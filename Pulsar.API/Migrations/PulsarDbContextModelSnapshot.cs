@@ -92,6 +92,44 @@ namespace Pulsar.API.Migrations
                     b.ToTable("AgregadosDiarios");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AgregadoHorario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("ChuvaBrutaMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ChuvaMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("HoraUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LeiturasCount")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("ScoreAlagamentoMax")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubprefeituraId", "HoraUtc")
+                        .IsUnique();
+
+                    b.ToTable("AgregadosHorarios");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.AssinaturaPush", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1260,6 +1298,17 @@ namespace Pulsar.API.Migrations
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.AgregadoDiario", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subprefeitura");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AgregadoHorario", b =>
                 {
                     b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
                         .WithMany()

@@ -269,5 +269,90 @@ public class ConsolidadorTests
 
         envio!.Payload.Titulo.Should().Be(titulo);
     }
-}
 
+    // ── AS3: três níveis, o aviso só sobe ─────────────────────────────────────────
+
+    private static EnvioAnterior Enviado(Guid sub, string gatilho, string chave, double horasAtras)
+        => new(sub, gatilho, chave, Guid.NewGuid(), Agora.AddHours(-horasAtras));
+
+    [Fact]
+    public void TetoDiarioEstourado_PerigoDoCgePassaAssimMesmo()
+    {
+        var perigo = P(Mooca, "Mooca", "alagamento-cge", 0, perigo: TipoPerigo.ALAGAMENTO);
+
+        Consolidador.Consolidar(D(null, null, TresEnviosHoje()), [perigo], Agora).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void PerigoDoCge_GanhaDoScoreAlto()
+    {
+        var envio = Consolidador.Consolidar(D(),
+            [P(Mooca, "Mooca", "score-alto", 1, perigo: TipoPerigo.ALAGAMENTO), P(Mooca, "Mooca", "alagamento-cge", 0)], Agora);
+
+        envio!.Incluidas.Should().ContainSingle().Which.Gatilho.Should().Be("alagamento-cge");
+    }
+
+    [Fact]
+    public void ChuvaPrevista_CaladaDepoisDeChuvaForteNaMesmaSubprefeitura()
+    {
+        var recente = Enviado(Mooca, "score-alto", $"score:{Mooca}:ALAGAMENTO:202610031300", 2);
+
+        Consolidador.Consolidar(D(null, null, recente), [P(Mooca, "Mooca", "chuva-prevista", 2)], Agora)
+            .Should().BeNull();
+    }
+
+    [Fact]
+    public void ChuvaPrevista_VoltaDepoisDasTresHoras()
+    {
+        var recente = Enviado(Mooca, "score-alto", $"score:{Mooca}:ALAGAMENTO:202610031100", 4);
+
+        Consolidador.Consolidar(D(null, null, recente), [P(Mooca, "Mooca", "chuva-prevista", 2)], Agora)
+            .Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ChuvaPrevista_NaoECaladaPorAlertaDeVento()
+    {
+        var recente = Enviado(Mooca, "score-alto", $"score:{Mooca}:VENTO:202610031300", 2);
+
+        Consolidador.Consolidar(D(null, null, recente), [P(Mooca, "Mooca", "chuva-prevista", 2)], Agora)
+            .Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ChuvaPrevista_NaoECaladaPorAvisoDeOutraSubprefeitura()
+    {
+        var recente = Enviado(Penha, "alagamento-cge", $"cge:{Penha}:202610031300", 1);
+
+        Consolidador.Consolidar(D(null, null, recente), [P(Mooca, "Mooca", "chuva-prevista", 2)], Agora)
+            .Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ChuvaForte_CaladaDepoisDoPerigo_MasVentoNao()
+    {
+        var recente = Enviado(Mooca, "alagamento-cge", $"cge:{Mooca}:202610031400", 1);
+        var d = D(null, null, recente);
+
+        Consolidador.Consolidar(d, [P(Mooca, "Mooca", "score-alto", 1, perigo: TipoPerigo.ALAGAMENTO)], Agora).Should().BeNull();
+        Consolidador.Consolidar(d, [P(Mooca, "Mooca", "score-alto", 1, perigo: TipoPerigo.VENTO)], Agora).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Perigo_SaiMesmoDepoisDeChuvaForte()
+    {
+        var recente = Enviado(Mooca, "score-alto", $"score:{Mooca}:ALAGAMENTO:202610031400", 1);
+
+        Consolidador.Consolidar(D(null, null, recente), [P(Mooca, "Mooca", "alagamento-cge", 0)], Agora)
+            .Should().NotBeNull();
+    }
+
+    [Fact]
+    public void PerigoEmVariasSubprefeituras_TituloDeAlagamento()
+    {
+        var envio = Consolidador.Consolidar(D(),
+            [P(Mooca, "Mooca", "alagamento-cge", 0), P(Penha, "Penha", "alagamento-cge", 0)], Agora);
+
+        envio!.Payload.Titulo.Should().Be("Alagamento em Mooca e Penha agora");
+    }
+}

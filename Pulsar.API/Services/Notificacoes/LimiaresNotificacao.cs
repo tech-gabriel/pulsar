@@ -65,7 +65,46 @@ public static class LimiaresNotificacao
     /// de push de uma região em tempestade longa. Não é mais "só" o antirrepetição que era
     /// quando o comportamento veio do AlertaService.
     /// </summary>
-    public static readonly TimeSpan CooldownScoreAlto = TimeSpan.FromHours(1);
+    public static readonly TimeSpan CooldownScoreAlto = TimeSpan.FromHours(3);
+
+    /// <summary>
+    /// Cooldown do Perigo (ponto ativo do CGE), por subprefeitura e não por ponto: nove ruas
+    /// alagadas na mesma manhã são um aviso só.
+    /// </summary>
+    public static readonly TimeSpan CooldownPerigoCge = TimeSpan.FromHours(3);
+
+    /// <summary>
+    /// Depois de um aviso de nível mais alto na subprefeitura, por quanto tempo os de nível
+    /// mais baixo ficam calados. A ordem é Perigo (CGE) &gt; Chuva forte agora (score alto de
+    /// alagamento) &gt; Vai chover (chuva prevista). O aviso só sobe.
+    /// </summary>
+    public const int SilencioNivelAcimaHoras = 3;
+
+    /// <summary>
+    /// Ponto do CGE visto há mais que isto deixa de valer como ativo. Duas leituras do ciclo de
+    /// 15 min de folga: se o CGE sai do ar, o Perigo para de gritar em vez de gritar para sempre.
+    /// </summary>
+    public static readonly TimeSpan ValidadePontoCge = TimeSpan.FromMinutes(30);
+
+    /// <summary>
+    /// Distância máxima entre o score atual e o anterior para os dois contarem como "ciclos
+    /// seguidos" no Chuva forte agora. O ciclo é de 15 min; com o coletor fora do ar por horas,
+    /// o anterior já não diz nada sobre agora.
+    /// </summary>
+    public static readonly TimeSpan IntervaloMaxCiclosSeguidos = TimeSpan.FromMinutes(25);
+
+    /// <summary>
+    /// Fração do limiar do OpenWeatherMap que o Open-Meteo precisa prever na mesma janela para o
+    /// Vai chover sair. Metade porque o Open-Meteo suaviza a chuva para cerca de metade do OWM.
+    /// PONTO DE PARTIDA: recalibrar com a série horária (AS6).
+    /// </summary>
+    public const double FatorConfirmacaoOpenMeteo = 0.5;
+
+    /// <summary>
+    /// Folga, para cada lado, da janela em que o Open-Meteo precisa confirmar a faixa do OWM. É a
+    /// mesma incerteza de ±3 h da direção da faixa (ver GatilhoChuvaPrevista).
+    /// </summary>
+    public const int FolgaConfirmacaoHoras = 3;
 
     /// <summary>Janela consultada para contar o teto diário. Precisa cobrir qualquer fuso com folga.</summary>
     public const int JanelaTetoDiarioHoras = 48;
@@ -103,6 +142,9 @@ public static class LimiaresNotificacao
     // isentá-la: declará-la não é só "ganha o desempate", é "não pode ser calada pelo teto".
     // Um gatilho novo só deve usá-la se calá-lo por volume for risco de segurança. Ver
     // MotorNotificacoes.IsentaDoTetoDiario.
+    // PrioridadePerigoCge é o terceiro nível acima de tudo: o CGE dizendo que alagou. Também
+    // isenta do teto diário, pelo mesmo motivo do score alto.
+    public const int PrioridadePerigoCge = 0;
     public const int PrioridadeScoreAlto = 1;
     public const int PrioridadeChuvaPrevista = 2;
     public const int PrioridadeBriefing = 3;

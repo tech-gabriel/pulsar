@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.18.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Página inicial nova',
+        descricao: 'Agora dá para buscar o seu bairro logo no topo e ver na hora como está a sua região. As 32 subprefeituras também ficaram a um clique.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Chuva mais confiável',
+        descricao: 'Em alguns dias de setembro e outubro, a Sé, a Lapa, Pinheiros, o Butantã, a Vila Mariana e Pirituba-Jaraguá receberam leituras de chuva que não aconteceu, e isso gerou alertas falsos. Corrigimos o histórico dessas regiões e agora conferimos cada leitura com uma segunda fonte antes de usar.',
+      },
+    ],
+  },
+  {
     versao: '1.17.0',
     data: '2026-10-14',
     resumo: 'Depois desta atualização, você vai precisar entrar de novo uma vez. Seus lugares e alertas continuam salvos.',

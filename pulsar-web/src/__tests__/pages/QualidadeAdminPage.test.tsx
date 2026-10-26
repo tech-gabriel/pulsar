@@ -36,6 +36,7 @@ beforeEach(() => {
     dias: 7,
     openMeteoDisponivel: true,
     avisos: [],
+    geoSampa: { ultimaTentativa: null, ultimaTentativaSucesso: null, ultimoErro: null, ultimoSucesso: null, novasNoUltimoSucesso: null },
     subprefeituras: [{
       id: 'se', nome: 'Sé', chuvaPulsarMm: 46.2, chuvaOpenMeteoMm: 3.1, horasBarradas: null, horasIncompletas: null, pontosCge: 0,
       dias: [dia('2026-10-26', 46.2), dia('2026-10-25', null)],
@@ -66,6 +67,17 @@ describe('QualidadeAdminPage', () => {
 
     expect(screen.getByText('25/10')).toBeInTheDocument();
     expect(screen.getAllByText('46,2')).toHaveLength(2);
+  });
+
+  it('aviso da cidade inteira sai sem subprefeitura nem dia', () => {
+    hookState.dados!.avisos = [{ tipo: 'geosampa-parado', subprefeitura: '', dia: '2026-10-26', detalhe: '5 dias sem sincronizar' }];
+    hookState.dados!.geoSampa = {
+      ultimaTentativa: new Date().toISOString(), ultimaTentativaSucesso: false, ultimoErro: 'recusada',
+      ultimoSucesso: null, novasNoUltimoSucesso: null,
+    };
+    renderPage();
+    expect(screen.getByText('GeoSampa parado')).toBeInTheDocument();
+    expect(screen.getByText(/Nenhum sucesso registrado. A última tentativa, .*, falhou./)).toBeInTheDocument();
   });
 
   it('avisa quando o Open-Meteo não respondeu', () => {

@@ -1325,7 +1325,6 @@ html:not(.light) .auth-anel { stroke: var(--color-pulsar-300); }
 /* Palavras do título sobem de dentro de uma máscara. */
 .auth-palavra { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
 .auth-palavra > span { display: inline-block; }
-.auth-palavra + .auth-palavra { margin-left: .26em; }
 .auth-vitrine-mapa path { fill: rgba(255, 255, 255, .10); stroke: rgba(255, 255, 255, .42); stroke-width: 3; }
 .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill: rgba(255, 255, 255, .85); }
 html:not(.light) .auth-vitrine-mapa path { fill: rgba(255, 255, 255, .06); stroke: rgba(184, 230, 254, .28); }
@@ -1354,8 +1353,8 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
     --w: min(140cqw, 1500px, 150cqh);
     --topo: calc(66cqh - var(--w) * .453);
     width: var(--w); left: calc(60cqw - var(--w) * .404); top: var(--topo); right: auto; bottom: auto;
-    -webkit-mask-image: linear-gradient(to bottom, transparent calc(40cqh - var(--topo)), #000 calc(54cqh - var(--topo)));
-    mask-image: linear-gradient(to bottom, transparent calc(40cqh - var(--topo)), #000 calc(54cqh - var(--topo)));
+    -webkit-mask-image: linear-gradient(to bottom, transparent calc(44cqh - var(--topo)), #000 calc(58cqh - var(--topo)));
+    mask-image: linear-gradient(to bottom, transparent calc(44cqh - var(--topo)), #000 calc(58cqh - var(--topo)));
   }
   .auth-vitrine-titulo { font-size: 44px; line-height: 1.04; max-width: 440px; }
   .auth-vitrine-sub { display: block; }

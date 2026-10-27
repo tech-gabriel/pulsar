@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft } from 'lucide-react';
 import { usePrefereMenosMovimento } from '../../../hooks/usePrefereMenosMovimento';
+import simboloPulsar from '../../../assets/logos/pulsar-simbolo.svg';
 import '../ativacao.css';
 
 interface Props {
@@ -31,6 +32,9 @@ export default function Moldura({ total, indice, direcao, chave, onVoltar, acaoT
 
   return (
     <div className="at-raiz">
+      {/* No computador, a marca no canto e o fluxo num cartão central; no celular o cartão some (display: contents). */}
+      <div className="at-marca" aria-hidden="true"><img src={simboloPulsar} alt="" width={30} height={30} /><span>pulsar</span></div>
+      <div className="at-cartao">
       <div className="at-topo">
         {onVoltar ? (
           <button type="button" className="at-voltar" onClick={onVoltar} aria-label="Voltar"><ChevronLeft size={22} /></button>
@@ -50,6 +54,7 @@ export default function Moldura({ total, indice, direcao, chave, onVoltar, acaoT
             {children}
           </motion.div>
         </AnimatePresence>
+      </div>
       </div>
     </div>
   );

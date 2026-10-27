@@ -1,0 +1,13 @@
+<svg class="marca-anim" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><style>
+.marca-anim .halo,.marca-anim .nucleo,.marca-anim .onda{transform-box:view-box;transform-origin:256px 256px}
+.marca-anim .nucleo{animation:marca-nasce .7s cubic-bezier(.34,1.56,.64,1) both,marca-acende 4s cubic-bezier(.16,1,.3,1) 2s infinite}
+.marca-anim .halo{animation:marca-floresce 1.2s cubic-bezier(.16,1,.3,1) .25s both}
+.marca-anim .arcos path{stroke-dasharray:1;animation:marca-desenha 1.1s cubic-bezier(.65,0,.35,1) .45s both}
+.marca-anim .onda{opacity:0;animation:marca-pulso 4s cubic-bezier(.16,1,.3,1) 2s infinite}
+@keyframes marca-nasce{0%{transform:scale(0)}100%{transform:scale(1)}}
+@keyframes marca-floresce{0%{transform:scale(0);opacity:0}100%{transform:scale(1)}}
+@keyframes marca-desenha{0%{stroke-dashoffset:1;opacity:0}12%{opacity:1}100%{stroke-dashoffset:0}}
+@keyframes marca-pulso{0%{transform:scale(1);opacity:.45}55%,100%{transform:scale(4.6);opacity:0}}
+@keyframes marca-acende{0%{transform:scale(1.1)}30%,100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.marca-anim *{animation:none!important}}
+</style><defs><clipPath id="marca-anim-clip"><rect width="512" height="512" rx="114"/></clipPath></defs><rect width="512" height="512" rx="114" fill="#00A6F4"/><g clip-path="url(#marca-anim-clip)"><circle class="onda" cx="256" cy="256" r="52" fill="#fff"/><g class="arcos" fill="none" stroke="#fff" stroke-width="46" stroke-linecap="round"><path pathLength="1" d="M242.9 106.6 A150 150 0 0 1 405.4 242.9"/><path pathLength="1" d="M269.1 405.4 A150 150 0 0 1 106.6 269.1"/></g><g class="halo"><circle cx="256" cy="256" r="104" fill="#fff" opacity=".14"/><circle cx="256" cy="256" r="80" fill="#fff" opacity=".26"/></g><circle class="nucleo" cx="256" cy="256" r="52" fill="#fff"/></g></svg>

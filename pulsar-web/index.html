@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="pt-BR" class="light">
   <head>
+    <!-- Cor da barra do sistema: o fundo do app (utils/barraDoSistema.ts). Vem antes do theme-init.js,
+         que a troca no tema escuro antes do primeiro paint. -->
+    <meta name="theme-color" content="#EFF6FB" />
     <script src="/theme-init.js"></script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -9,7 +12,6 @@
 
     <!-- Viewport mobile: trava o zoom (inputs 16px já evitam zoom no iOS) — ETAPA 6.8 -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <meta name="theme-color" content="#F8FAFC" />
     <!-- `mobile-web-app-capable` é o nome padrão; o apple- fica pelo iOS antigo. -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

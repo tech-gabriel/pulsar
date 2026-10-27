@@ -69,7 +69,7 @@ export default function ConvitePush() {
         data-variante="mobile-bar"
         // Acima do handle do drawer (sempre visível em bottom-12) e da safe-area;
         // right-[4.5rem] deixa o FAB "Ver regiões" livre na direita.
-        className="vidro-painel fixed bottom-[7.5rem] left-3 right-[4.5rem] z-[1200] animate-slide-up flex items-center gap-2.5 rounded-2xl px-3 py-2"
+        className="vidro-painel fixed bottom-[calc(7.5rem+var(--seguro-baixo))] left-3 right-[4.5rem] z-[1200] animate-slide-up flex items-center gap-2.5 rounded-2xl px-3 py-2"
         role="region"
         aria-label="Ativar notificações"
       >

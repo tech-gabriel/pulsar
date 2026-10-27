@@ -515,7 +515,7 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
      translate com o transform da animação de entrada e descarta um deles. */
   position: absolute; z-index: 1200;
   left: 0; right: 0; margin-inline: auto;
-  bottom: 7.5rem;
+  bottom: calc(7.5rem + var(--seguro-baixo));
   width: min(28rem, calc(100% - 1.5rem));
 }
 /* Pilha de avisos + legenda: no celular não existe (cada peça se posiciona sozinha). */
@@ -936,6 +936,22 @@ body.mapa-lock {
   overflow: hidden;
 }
 
+/* Áreas seguras do aparelho (iPhone com o app instalado: a barra do sistema é transparente,
+   apple-mobile-web-app-status-bar-style = black-translucent, e o viewport usa viewport-fit=cover).
+   Sem elas o conteúdo passava por baixo da hora e da bateria e a barra parecia borrada. No navegador
+   e no Android as áreas valem 0 e nada muda. */
+:root { --seguro-topo: env(safe-area-inset-top, 0px); --seguro-baixo: env(safe-area-inset-bottom, 0px); }
+body { padding-top: var(--seguro-topo); }
+body::before {
+  content: ""; position: fixed; z-index: 3000; top: 0; left: 0; right: 0; height: var(--seguro-topo);
+  background: var(--cor-barra, var(--bg-primary)); pointer-events: none;
+}
+/* Login no celular: o próprio painel azul passa por trás da barra (sem a faixa e sem emenda). */
+@media (max-width: 1023px) {
+  body:has(.auth-vitrine)::before { background: transparent; }
+  .auth-vitrine { margin-top: calc(-1 * var(--seguro-topo)); padding-top: calc(22px + var(--seguro-topo)); }
+}
+
 /* Remove o flash cinza de toque em toda a app (spec 6.7) */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -999,12 +1015,12 @@ html.light {
 .app-header, .vidro, .mapa-controle, .leaflet-control-zoom.leaflet-bar { background: var(--vidro-luz), var(--vidro-tinta) !important; }
 .vidro-painel { background: var(--vidro-luz), var(--vidro-tinta-painel) !important; }
 .app-header {
-  top: 8px; left: 8px; right: 8px; height: 52px;
+  top: calc(var(--seguro-topo) + 8px); left: 8px; right: 8px; height: 52px;
   padding: 0 6px 0 14px;
   border-radius: 18px;
 }
 @media (min-width: 768px) {
-  .app-header { top: 10px; left: 12px; right: 12px; height: 56px; padding: 0 8px 0 18px; border-radius: 20px; }
+  .app-header { top: calc(var(--seguro-topo) + 10px); left: 12px; right: 12px; height: 56px; padding: 0 8px 0 18px; border-radius: 20px; }
 }
 html.sem-transparencia :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
 @media (prefers-reduced-transparency: reduce) {
@@ -1067,7 +1083,8 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
   background: var(--vidro-tinta-painel);
   backdrop-filter: blur(24px) saturate(180%);
   border-top: 1px solid var(--vidro-borda);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--seguro-baixo);
+  height: calc(3rem + var(--seguro-baixo)) !important;
 }
 .tabbar-item {
   flex: 1;
@@ -1325,7 +1342,6 @@ html:not(.light) .auth-anel { stroke: var(--color-pulsar-300); }
 /* Palavras do título sobem de dentro de uma máscara. */
 .auth-palavra { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
 .auth-palavra > span { display: inline-block; }
-.auth-palavra + .auth-palavra { margin-left: .26em; }
 .auth-vitrine-mapa path { fill: rgba(255, 255, 255, .10); stroke: rgba(255, 255, 255, .42); stroke-width: 3; }
 .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill: rgba(255, 255, 255, .85); }
 html:not(.light) .auth-vitrine-mapa path { fill: rgba(255, 255, 255, .06); stroke: rgba(184, 230, 254, .28); }
@@ -1354,8 +1370,8 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
     --w: min(140cqw, 1500px, 150cqh);
     --topo: calc(66cqh - var(--w) * .453);
     width: var(--w); left: calc(60cqw - var(--w) * .404); top: var(--topo); right: auto; bottom: auto;
-    -webkit-mask-image: linear-gradient(to bottom, transparent calc(40cqh - var(--topo)), #000 calc(54cqh - var(--topo)));
-    mask-image: linear-gradient(to bottom, transparent calc(40cqh - var(--topo)), #000 calc(54cqh - var(--topo)));
+    -webkit-mask-image: linear-gradient(to bottom, transparent calc(44cqh - var(--topo)), #000 calc(58cqh - var(--topo)));
+    mask-image: linear-gradient(to bottom, transparent calc(44cqh - var(--topo)), #000 calc(58cqh - var(--topo)));
   }
   .auth-vitrine-titulo { font-size: 44px; line-height: 1.04; max-width: 440px; }
   .auth-vitrine-sub { display: block; }

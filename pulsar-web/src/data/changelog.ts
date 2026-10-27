@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.23.2',
+    data: '2026-10-27',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Barra do iPhone com o app instalado',
+        descricao: 'No iPhone, com o Pulsar na tela de início, a barra de cima (hora e bateria) aparecia borrada, com o mapa passando por baixo. Agora ela fica sólida na cor do app, e nada mais encosta nela nem na barra de baixo.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Título da tela de entrada',
+        descricao: 'A segunda linha da frase do painel azul começava com um recuo. Agora as duas linhas ficam alinhadas.',
+      },
+    ],
+  },
+  {
     versao: '1.23.1',
     data: '2026-10-27',
     itens: [

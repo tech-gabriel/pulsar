@@ -60,12 +60,7 @@
   --glass-blur: blur(16px) saturate(180%);
   --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 
-  /* Controles sobrepostos ao mapa (busca, camadas, legenda). Precisam de mais
-     corpo que o glass das páginas, porque ficam sobre o basemap. Existem nos
-     dois temas: antes o azul escuro estava fixo dentro dos componentes e os
-     controles continuavam escuros com o app no tema claro. */
-  --mapa-controle-bg: rgba(5, 47, 74, 0.82);
-  --mapa-controle-borda: rgba(0, 188, 255, 0.14);
+  /* Texto dos controles sobrepostos ao mapa (o fundo é o vidro, ver .mapa-controle). */
   --mapa-controle-texto: #F0F9FF;
   --mapa-controle-texto-suave: rgba(184, 230, 254, 0.75);
 
@@ -75,8 +70,6 @@
 
 /* ── Tema Light (ETAPA B.2) — sobrescreve as variáveis em html.light ───────────*/
 html.light {
-  --mapa-controle-bg: rgba(255, 255, 255, 0.9);
-  --mapa-controle-borda: rgba(0, 105, 168, 0.18);
   --mapa-controle-texto: #0F172A;
   --mapa-controle-texto-suave: #475569;
   --cor-alerta: #B91C1C;
@@ -510,6 +503,24 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 }
 
 /* O mapa do app passa por baixo da cápsula do cabeçalho: os controles do Leaflet descem junto. */
+/* Cards no pé do mapa (convite de alertas, aviso da busca, alagamento perto). Celular: centrados
+   acima da folha. Computador: no canto esquerdo, longe da legenda (canto direito). Quando o mapa
+   é estreito (iPad em pé com o painel aberto), a decisão é pela largura do MAPA, não da tela:
+   o card ocupa a largura toda logo acima da legenda, em vez de virar uma tira fina. */
+.mapa-app { container-type: inline-size; }
+.cartao-pe-mapa {
+  position: absolute; z-index: 1200;
+  left: 50%; translate: -50% 0;
+  bottom: 7.5rem;
+  width: min(28rem, calc(100% - 1.5rem));
+}
+@media (min-width: 768px) {
+  .cartao-pe-mapa { left: 12px; right: 12px; translate: none; width: auto; bottom: 5.5rem; }
+  @container (min-width: 44rem) {
+    .cartao-pe-mapa { right: auto; bottom: 16px; width: min(26rem, calc(100% - 15rem)); }
+  }
+}
+
 .mapa-app .leaflet-top {
   top: var(--topo-app);
 }
@@ -520,17 +531,18 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
    a usar os mesmos tokens de `.mapa-controle`, então acompanha o tema claro e
    o escuro junto com os vizinhos. */
 .leaflet-control-zoom.leaflet-bar {
-  border: 1px solid var(--mapa-controle-borda) !important;
-  border-radius: 12px !important;
-  box-shadow: var(--glass-shadow);
+  border: 1px solid var(--vidro-borda) !important;
+  border-radius: 14px !important;
+  background: var(--vidro-tinta-painel);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--vidro-brilho), var(--vidro-sombra) !important;
   overflow: hidden;
 }
 .leaflet-control-zoom a,
 .leaflet-touch .leaflet-control-zoom a {
-  background: var(--mapa-controle-bg) !important;
-  backdrop-filter: blur(16px);
+  background: transparent !important;
   color: var(--mapa-controle-texto) !important;
-  border-bottom: 1px solid var(--mapa-controle-borda) !important;
+  border-bottom: 1px solid var(--vidro-borda) !important;
 }
 .leaflet-control-zoom a:last-child {
   border-bottom: none !important;
@@ -607,12 +619,14 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   outline-offset: 2px;
 }
 
-/* Card base dos controles sobre o mapa, nos dois temas. */
+/* Card base dos controles sobre o mapa: o vidro do cabeçalho, com a tinta mais densa porque
+   carrega texto pequeno sobre o mapa colorido. */
 .mapa-controle {
-  background: var(--mapa-controle-bg);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--mapa-controle-borda);
-  border-radius: 12px;
+  background: var(--vidro-tinta-painel);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--vidro-borda);
+  box-shadow: inset 0 1px 0 var(--vidro-brilho), var(--vidro-sombra);
+  border-radius: 14px;
   color: var(--mapa-controle-texto);
 }
 
@@ -903,6 +917,17 @@ html.light {
   --vidro-sombra: 0 12px 32px -14px rgba(5, 47, 74, .28), 0 1px 3px rgba(5, 47, 74, .08);
 }
 @media (min-width: 768px) { :root { --topo-app: 70px; } }
+/* O mesmo vidro em tudo o que flutua sobre o conteúdo. .vidro-painel é a versão mais densa,
+   para painéis com muito texto (painel lateral, folha do celular, controles do mapa). */
+:root { --vidro-tinta-painel: color-mix(in srgb, var(--bg-primary) 84%, transparent); }
+html.light { --vidro-tinta-painel: color-mix(in srgb, #fff 86%, transparent); }
+.app-header, .vidro, .vidro-painel {
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--vidro-borda);
+  box-shadow: inset 0 1px 0 var(--vidro-brilho), var(--vidro-sombra);
+}
+.vidro { background: var(--vidro-tinta); }
+.vidro-painel { background: var(--vidro-tinta-painel); }
 .app-header {
   top: 8px; left: 8px; right: 8px; height: 52px;
   padding: 0 6px 0 14px;
@@ -916,12 +941,12 @@ html.light {
 @media (min-width: 768px) {
   .app-header { top: 10px; left: 12px; right: 12px; height: 56px; padding: 0 8px 0 18px; border-radius: 20px; }
 }
-html.sem-transparencia .app-header { background: var(--bg-primary); backdrop-filter: none; }
+html.sem-transparencia :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile) { background: var(--bg-primary); backdrop-filter: none; }
 @media (prefers-reduced-transparency: reduce) {
-  .app-header { background: var(--bg-primary); backdrop-filter: none; }
+  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile) { background: var(--bg-primary); backdrop-filter: none; }
 }
 @supports not (backdrop-filter: blur(1px)) {
-  .app-header { background: var(--bg-primary); }
+  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile) { background: var(--bg-primary); }
 }
 
 /* Abas do topo (md+): um grupo só, com a aba ativa marcada por dentro. */
@@ -938,6 +963,11 @@ html.sem-transparencia .app-header { background: var(--bg-primary); backdrop-fil
   color: var(--text-secondary);
   transition: background-color 200ms ease, color 200ms ease;
   cursor: pointer;
+}
+/* iPad em pé e notebooks estreitos: só o ícone (os rótulos atropelavam a marca); o nome segue para leitor de tela. */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .nav-tab { padding: 0 11px; }
+  .nav-tab-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 .nav-tab:hover { color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
 .nav-tab.ativa {
@@ -969,8 +999,9 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 
 /* Tab bar inferior (mobile) */
 .tabbar-mobile {
-  background: var(--bg-primary);
-  border-top: 1px solid var(--border-glass);
+  background: var(--vidro-tinta-painel);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid var(--vidro-borda);
   padding-bottom: env(safe-area-inset-bottom);
 }
 .tabbar-item {

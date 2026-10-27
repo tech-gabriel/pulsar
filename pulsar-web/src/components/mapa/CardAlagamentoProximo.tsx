@@ -17,8 +17,7 @@ export default function CardAlagamentoProximo({ dados, onFechar }: Props) {
 
   return (
     <div
-      className="absolute left-1/2 -translate-x-1/2 z-[1200] bottom-[7.5rem] md:bottom-6 w-[min(22rem,calc(100%-1.5rem))] rounded-2xl shadow-xl backdrop-blur-md p-4"
-      style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-glass)' }}
+      className="vidro-painel cartao-pe-mapa rounded-2xl p-4"
       role="status"
     >
       <button

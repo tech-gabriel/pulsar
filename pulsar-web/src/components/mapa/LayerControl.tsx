@@ -20,7 +20,6 @@ interface Props {
 // Geometria do card. As cores vivem em `.mapa-controle` (index.css), que segue
 // o tema: antes o azul escuro estava fixo aqui e o seletor continuava escuro
 // com o app no tema claro.
-const CARD_DESKTOP: React.CSSProperties = { padding: 8, gap: 4 };
 const CARD_MOBILE: React.CSSProperties = { padding: '6px 8px', gap: 2 };
 
 function estiloBotao(ativo: boolean): React.CSSProperties {
@@ -29,7 +28,7 @@ function estiloBotao(ativo: boolean): React.CSSProperties {
       background: 'rgba(0, 132, 209, 0.85)',
       color: '#FFFFFF',
       borderRadius: 8,
-      boxShadow: '0 0 12px rgba(0, 188, 255, 0.3)',
+      boxShadow: '0 4px 12px -4px rgba(0, 132, 209, 0.55)',
     };
   }
   return {
@@ -111,13 +110,12 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
     );
   }
 
-  // ─── Desktop/tablet: coluna vertical de camadas (inalterado) ───
+  // ─── Tablet/computador: pílula horizontal (posição em .camadas-pilula, index.css) ───
   return (
     <div
       role="radiogroup"
       aria-label="Camada do mapa"
-      className="mapa-controle absolute left-3 top-1/2 -translate-y-1/2 z-[1000] flex flex-col"
-      style={CARD_DESKTOP}
+      className="mapa-controle camadas-pilula"
     >
       {ITENS.map(({ id, label, Icon }) => {
         const ativo = id === camadaAtiva;

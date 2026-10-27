@@ -1239,7 +1239,9 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
   .auth-split { flex-direction: row; }
   .auth-vitrine { flex: 1 1 50%; padding: 44px 56px; }
   .auth-vitrine-marca { font-size: 26px; }
-  .auth-vitrine-mapa { width: 620px; right: -240px; bottom: -480px; }
+  /* Preso logo abaixo do texto (centrado no painel), e não ao rodapé: em telas baixas o mapa
+     subia por trás do parágrafo. */
+  .auth-vitrine-mapa { width: 620px; left: 44%; right: auto; bottom: auto; top: calc(50% + 180px); }
   .auth-vitrine-texto { margin: auto 0; }
   .auth-vitrine-titulo { font-size: 44px; line-height: 1.04; max-width: 440px; }
   .auth-vitrine-sub { display: block; }

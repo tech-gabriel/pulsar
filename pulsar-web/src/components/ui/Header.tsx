@@ -12,7 +12,7 @@ import { resumoAlertas } from '../../utils/risco';
 import { useTheme } from '../../hooks/useTheme';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import BadgeRisco from './BadgeRisco';
-import iconePulsar from '../../assets/logos/pulsar-icone.svg';
+import simboloPulsar from '../../assets/logos/pulsar-simbolo.svg';
 
 // Abas de navegação principal (ETAPA B.1.2). O rótulo curto (tab bar do mobile)
 // usa as mesmas palavras do desktop: "Dash"/"News" truncavam sem necessidade e
@@ -65,19 +65,24 @@ export default function Header() {
 
   const [painelAberto, setPainelAberto] = useState(false);
   const sinoRef = useRef<HTMLDivElement>(null);
+  const [contaAberta, setContaAberta] = useState(false);
+  const contaRef = useRef<HTMLDivElement>(null);
+  const iniciais = (usuario?.nome ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase() || '?';
 
   const temAlertas = sino.contagem > 0;
   const temItens = sino.suas.length + sino.naCidade.length > 0;
   const semDado = subprefeituras.length === 0;
 
-  // Fecha o painel ao clicar fora ou pressionar Esc.
+  // Fecha o painel do sino e o menu da conta ao clicar fora ou pressionar Esc.
   useEffect(() => {
-    if (!painelAberto) return;
+    if (!painelAberto && !contaAberta) return;
     function aoClicarFora(e: MouseEvent) {
-      if (sinoRef.current && !sinoRef.current.contains(e.target as Node)) setPainelAberto(false);
+      const alvo = e.target as Node;
+      if (sinoRef.current && !sinoRef.current.contains(alvo)) setPainelAberto(false);
+      if (contaRef.current && !contaRef.current.contains(alvo)) setContaAberta(false);
     }
     function aoTeclar(e: KeyboardEvent) {
-      if (e.key === 'Escape') setPainelAberto(false);
+      if (e.key === 'Escape') { setPainelAberto(false); setContaAberta(false); }
     }
     document.addEventListener('mousedown', aoClicarFora);
     document.addEventListener('keydown', aoTeclar);
@@ -85,7 +90,7 @@ export default function Header() {
       document.removeEventListener('mousedown', aoClicarFora);
       document.removeEventListener('keydown', aoTeclar);
     };
-  }, [painelAberto]);
+  }, [painelAberto, contaAberta]);
 
   // Acesso administrativo (ADMIN/SUPORTE) vive no top bar, não na tab bar inferior.
   const ehAdmin = usuario?.role === 'ADMIN' || usuario?.role === 'SUPORTE';
@@ -98,32 +103,17 @@ export default function Header() {
   return (
     <>
       {/* ── TOP BAR ─────────────────────────────────────────────────────────── */}
-      <header className="app-header fixed top-0 left-0 right-0 z-[1000] flex items-center justify-between h-12 md:h-16 px-4 md:px-6">
-        {/* Esquerda: marca (ícone + slogan) */}
+      <header className="app-header fixed z-[1000] flex items-center justify-between">
+        {/* Esquerda: marca (símbolo + nome). O slogan fica na landing e no login, onde vende. */}
         <div className="flex items-center gap-2.5">
-          <img
-            src={iconePulsar}
-            alt="Pulsar"
-            className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0"
-            style={{ filter: 'drop-shadow(var(--glow-cyan))' }}
-          />
-          <div className="flex flex-col justify-center leading-none">
-            <span
-              style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', textShadow: 'var(--glow-cyan)' }}
-            >
-              PULSAR
-            </span>
-            <span
-              className="hidden md:block mt-0.5"
-              style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 11, color: 'var(--text-secondary)' }}
-            >
-              O mapa vivo da sua segurança
-            </span>
-          </div>
+          <img src={simboloPulsar} alt="" className="w-8 h-8 md:w-9 md:h-9 flex-shrink-0" />
+          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 23, letterSpacing: '-0.035em', lineHeight: 1, color: 'var(--text-primary)' }}>
+            pulsar
+          </span>
         </div>
 
         {/* Centro: abas (md+) — absolutamente centradas */}
-        <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+        <nav className="nav-segmentos hidden md:flex absolute left-1/2 -translate-x-1/2">
           {TABS.map(({ to, label, Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => ['nav-tab', isActive ? 'ativa' : ''].join(' ')}>
               <IconeAba Icon={Icon} size={18} pendente={to === ABA_CONFIG && emailPendente} />
@@ -237,26 +227,44 @@ export default function Header() {
             </AnimatePresence>
           </div>
 
-          {/* Nome (md+) */}
-          {usuario?.nome && (
-            <span className="hidden md:inline ml-2" style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-secondary)' }}>
-              {usuario.nome}
-            </span>
-          )}
-
-          {/* Separador isolando o botão de sair */}
-          <span className="mx-1.5" style={{ width: 1, height: 24, background: 'var(--border-glass)' }} />
-
-          {/* Logout */}
-          <button
-            type="button"
-            onClick={logout}
-            className="acao-header"
-            title="Sair"
-            aria-label="Sair da conta"
-          >
-            <LogOut size={18} />
-          </button>
+          {/* Conta: avatar com as iniciais; o sair mora no menu, longe de cliques acidentais. */}
+          <div className="relative" ref={contaRef}>
+            <button
+              type="button"
+              onClick={() => setContaAberta((v) => !v)}
+              className="avatar-conta"
+              title={usuario?.nome ?? 'Conta'}
+              aria-label="Abrir menu da conta"
+              aria-haspopup="menu"
+              aria-expanded={contaAberta}
+            >
+              {iniciais}
+            </button>
+            <AnimatePresence>
+              {contaAberta && (
+                <motion.div
+                  className="notif-panel menu-conta"
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: DURACAO.media, ease: EASE_SUAVE }}
+                  role="menu"
+                  aria-label="Conta"
+                >
+                  <div className="px-2.5 pt-2 pb-2.5 mb-1" style={{ borderBottom: '1px solid var(--border-glass)' }}>
+                    <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{usuario?.nome}</p>
+                    {usuario?.email && <p className="truncate" style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{usuario.email}</p>}
+                  </div>
+                  <button type="button" role="menuitem" className="menu-conta-item" onClick={() => { setContaAberta(false); navigate(ABA_CONFIG); }}>
+                    <Settings size={17} style={{ color: 'var(--text-secondary)' }} />Configurações
+                  </button>
+                  <button type="button" role="menuitem" className="menu-conta-item" onClick={logout}>
+                    <LogOut size={17} style={{ color: 'var(--text-secondary)' }} />Sair da conta
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </header>
 

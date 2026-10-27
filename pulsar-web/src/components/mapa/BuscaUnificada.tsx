@@ -94,8 +94,8 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
       ref={containerRef}
       className={
         isMobile
-          ? 'absolute top-3 left-3 right-3 z-[1100]'
-          : 'absolute top-3 left-3 z-[1100] w-[340px]'
+          ? 'absolute top-[calc(var(--topo-app)+0.5rem)] left-3 right-3 z-[1100]'
+          : 'absolute top-[calc(var(--topo-app)+0.5rem)] left-3 z-[1100] w-[340px]'
       }
     >
       {/* Sem padding vertical: a altura vem do próprio input (44px), que é

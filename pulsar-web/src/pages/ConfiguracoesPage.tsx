@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, Mail, LogOut, Pencil, Check, X, Eye, EyeOff,
-  Lock, Star, ChevronRight, Bell, BellRing, HelpCircle, Smartphone, Loader2,
+  Lock, Star, ChevronRight, Bell, BellRing, HelpCircle, Smartphone, Loader2, Layers,
 } from 'lucide-react';
 import FolhaInferior from '../components/ui/FolhaInferior';
 import Header from '../components/ui/Header';
@@ -11,6 +11,7 @@ import SobreCard from '../components/ui/SobreCard';
 import CartaoConfirmarEmail from '../components/auth/CartaoConfirmarEmail';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
+import { useTransparencia } from '../hooks/useTransparencia';
 import { useToast } from '../contexts/ToastContext';
 import { useNotificacoesPrefs, type NotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../hooks/usePushSubscription';
@@ -68,6 +69,7 @@ export default function ConfiguracoesPage() {
   const { favoritos, toggleFavorito } = useFavoritos();
   const navigate = useNavigate();
   const dark = theme === 'dark';
+  const vidro = useTransparencia();
 
   function reverBoasVindas() {
     limparAtivacaoVista();
@@ -323,6 +325,24 @@ export default function ConfiguracoesPage() {
               <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>Tema escuro</span>
             </span>
             <span className={['theme-switch', dark ? 'on' : ''].join(' ')}>
+              <span className="theme-switch-knob" />
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={vidro.alternar}
+            className="w-full flex items-center justify-between gap-3 min-h-11 mt-1 text-left"
+            role="switch"
+            aria-checked={vidro.ligada}
+          >
+            <span className="flex items-center gap-3 min-w-0">
+              <Layers size={20} style={{ color: 'var(--text-accent)', flexShrink: 0 }} />
+              <span className="min-w-0">
+                <span className="block" style={{ fontSize: 14, color: 'var(--text-primary)' }}>Efeito de vidro</span>
+                <span className="block" style={{ fontSize: 12, color: 'var(--text-muted)' }}>Desligado, o topo fica sólido. Ajuda na leitura e em celulares mais lentos.</span>
+              </span>
+            </span>
+            <span className={['theme-switch', vidro.ligada ? 'on' : ''].join(' ')}>
               <span className="theme-switch-knob" />
             </span>
           </button>

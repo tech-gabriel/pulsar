@@ -28,7 +28,7 @@ export default function TelaAlerta({ nomes, ocupado, onAtivar, retomada = false 
           initial={menos ? { opacity: 0 } : { opacity: 0, y: -28, scale: .96, filter: 'blur(6px)' }}
           animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
           transition={menos ? { duration: .2 } : { type: 'spring', bounce: 0, duration: .6, delay: .3 }}>
-          <img src={iconePulsar} alt="" width={30} height={30} style={{ borderRadius: 8, background: '#fff' }} />
+          <img src={iconePulsar} alt="" width={30} height={30} />
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#3d4b59' }}><span>PULSAR</span><span>agora</span></div>
             <b style={{ display: 'block', fontSize: 13 }}>Alerta de alagamento {emNomeDe(exemplo)}</b>

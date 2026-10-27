@@ -98,28 +98,6 @@ html.light {
   --glass-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/*
- * Escopo "sempre dark": telas legadas construídas só para o dark (login,
- * cadastro e o detalhe de histórico) re-declaram as variáveis dark localmente,
- * permanecendo legíveis mesmo com o tema light ativo.
- */
-.theme-dark-scope {
-  --bg-primary: #052F4A;
-  --bg-secondary: rgba(0, 89, 138, 0.15);
-  --bg-elevated: rgba(0, 105, 168, 0.10);
-  --bg-glass: rgba(5, 47, 74, 0.6);
-  --bg-glass-hover: rgba(0, 89, 138, 0.18);
-  --bg-input: rgba(0, 89, 138, 0.2);
-  --border-glass: rgba(0, 188, 255, 0.12);
-  --border-glass-hover: rgba(0, 188, 255, 0.25);
-  --border-subtle: rgba(0, 188, 255, 0.06);
-  --text-primary: #F0F9FF;
-  --text-secondary: #B8E6FE;
-  --text-muted: rgba(184, 230, 254, 0.5);
-  --text-accent: #00BCFF;
-  --glass-blur: blur(16px) saturate(180%);
-  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-}
 
 * {
   box-sizing: border-box;
@@ -531,6 +509,11 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   }
 }
 
+/* O mapa do app passa por baixo da cápsula do cabeçalho: os controles do Leaflet descem junto. */
+.mapa-app .leaflet-top {
+  top: var(--topo-app);
+}
+
 /* O zoom vem branco de fábrica do Leaflet, o que destoava de todo o resto
    sobreposto ao mapa (busca, camadas, legenda) — mais ainda depois que ele
    saiu de trás da barra de busca e passou a ficar bem visível. Aqui ele passa
@@ -901,34 +884,88 @@ button, a, [role="button"], [role="radio"] {
    ETAPA B — Header de navegação + ajustes do tema Light
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* Header / barra de navegação glass (variáveis de tema) */
-.app-header {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid var(--border-glass);
+/* Cabeçalho: cápsula de vidro flutuando sobre o conteúdo, no material da Apple (iOS 26 / macOS).
+   O vidro tem três camadas: a tinta do fundo translúcida, o desfoque com saturação do que passa
+   por baixo e o brilho da aresta de cima (inset). Fica opaco quando a pessoa pede menos
+   transparência no sistema ou em Configurações (html.sem-transparencia), ou sem backdrop-filter.
+   --topo-app é o espaço que o conteúdo deixa para a cápsula (mapa, busca, painel). */
+:root {
+  --topo-app: 60px;
+  --vidro-tinta: color-mix(in srgb, var(--bg-primary) 62%, transparent);
+  --vidro-borda: rgba(255, 255, 255, .10);
+  --vidro-brilho: rgba(255, 255, 255, .10);
+  --vidro-sombra: 0 12px 32px -12px rgba(0, 0, 0, .6), 0 1px 3px rgba(0, 0, 0, .3);
 }
+html.light {
+  --vidro-tinta: color-mix(in srgb, #fff 66%, transparent);
+  --vidro-borda: rgba(5, 47, 74, .08);
+  --vidro-brilho: rgba(255, 255, 255, .95);
+  --vidro-sombra: 0 12px 32px -14px rgba(5, 47, 74, .28), 0 1px 3px rgba(5, 47, 74, .08);
+}
+@media (min-width: 768px) { :root { --topo-app: 70px; } }
+.app-header {
+  top: 8px; left: 8px; right: 8px; height: 52px;
+  padding: 0 6px 0 14px;
+  border-radius: 18px;
+  background: var(--vidro-tinta);
+
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--vidro-borda);
+  box-shadow: inset 0 1px 0 var(--vidro-brilho), var(--vidro-sombra);
+}
+@media (min-width: 768px) {
+  .app-header { top: 10px; left: 12px; right: 12px; height: 56px; padding: 0 8px 0 18px; border-radius: 20px; }
+}
+html.sem-transparencia .app-header { background: var(--bg-primary); backdrop-filter: none; }
+@media (prefers-reduced-transparency: reduce) {
+  .app-header { background: var(--bg-primary); backdrop-filter: none; }
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .app-header { background: var(--bg-primary); }
+}
+
+/* Abas do topo (md+): um grupo só, com a aba ativa marcada por dentro. */
+.nav-segmentos { align-items: center; gap: 2px; } /* display vem do hidden md:flex do JSX */
 .nav-tab {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 400;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
   color: var(--text-secondary);
-  border-bottom: 2px solid transparent;
-  transition: all 200ms;
+  transition: background-color 200ms ease, color 200ms ease;
   cursor: pointer;
 }
-.nav-tab:hover {
-  color: var(--text-primary);
-  background: var(--bg-elevated);
-}
+.nav-tab:hover { color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
 .nav-tab.ativa {
-  color: var(--text-accent);
+  color: var(--color-pulsar-600);
   font-weight: 600;
-  border-bottom-color: var(--text-accent);
+  background: color-mix(in srgb, var(--color-pulsar-500) 13%, transparent);
 }
+html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: color-mix(in srgb, var(--color-pulsar-400) 16%, transparent); }
+
+/* Avatar com as iniciais: abre o menu da conta (nome, e-mail e sair). */
+.avatar-conta {
+  width: 36px; height: 36px; margin-left: 4px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-pulsar-600); color: #fff;
+  font: 700 13px var(--font-heading); letter-spacing: .02em;
+  transition: transform 120ms ease-out, box-shadow 200ms ease;
+}
+.avatar-conta:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-pulsar-500) 25%, transparent); }
+.avatar-conta:active { transform: scale(.94); }
+.menu-conta { width: 240px; padding: 6px; }
+/* Menus que abrem da cápsula: um vidro dentro de outro não desfoca (o pai vira a raiz do
+   backdrop), só deixa ver através. Como nos menus da Apple, quase opacos. */
+.app-header .notif-panel { background: color-mix(in srgb, var(--bg-primary) 97%, transparent); }
+.menu-conta-item {
+  width: 100%; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border-radius: 10px;
+  font-size: 14px; color: var(--text-primary); text-align: left;
+}
+.menu-conta-item:hover { background: var(--bg-glass-hover); }
 
 /* Tab bar inferior (mobile) */
 .tabbar-mobile {
@@ -1132,101 +1169,82 @@ html.light *::-webkit-scrollbar-thumb:hover {
    AUTH — Login/Cadastro split-screen (redesign)
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* Layout dividido: hero (marca) à esquerda + formulário à direita */
+/* Celular: faixa azul da marca no topo e o formulário subindo por cima dela, como uma folha.
+   Computador (lg+): painel azul à esquerda e formulário à direita. */
 .auth-split {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
 }
-
-/* Painel do formulário (sempre visível) */
 .auth-form-pane {
-  flex: 1 1 50%;
+  flex: 1 1 auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 32px 20px;
-}
-
-/* Painel hero — só em telas grandes (lg+) */
-.auth-hero {
   position: relative;
-  display: none;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 48px;
+  z-index: 1;
+  margin-top: -26px;
+  padding: 28px 20px 32px;
+  border-radius: 26px 26px 0 0;
+  background: var(--bg-primary);
+}
+
+/* Painel azul: o branco por cima pede o azul mais fundo onde fica o texto (contraste
+   de leitura). No tema escuro o painel desce para o marinho, para não ofuscar ao lado
+   do formulário escuro. */
+.auth-vitrine {
+  position: relative;
   overflow: hidden;
-  border-right: 1px solid var(--border-glass);
-  background:
-    radial-gradient(120% 120% at 15% 5%, rgba(0, 132, 209, 0.20) 0%, transparent 45%),
-    radial-gradient(110% 110% at 95% 95%, rgba(0, 188, 255, 0.12) 0%, transparent 50%),
-    linear-gradient(160deg, #052F4A 0%, #03263B 60%, #021C2C 100%);
-}
-@media (min-width: 1024px) {
-  .auth-hero { display: flex; flex: 1 1 48%; }
-}
-
-/* Grid sutil sobre o hero, com máscara radial para esmaecer nas bordas */
-.auth-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0, 188, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 188, 255, 0.045) 1px, transparent 1px);
-  background-size: 44px 44px;
-  -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 40%, #000 25%, transparent 78%);
-  mask-image: radial-gradient(ellipse 75% 75% at 50% 40%, #000 25%, transparent 78%);
-  pointer-events: none;
-}
-
-/* Anéis de radar pulsantes — flourish decorativo do hero */
-.auth-radar {
-  position: absolute;
-  top: 14%;
-  right: 12%;
-  width: 130px;
-  height: 130px;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-}
-.auth-radar-ring {
-  position: absolute;
-  width: 130px;
-  height: 130px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 188, 255, 0.35);
-  animation: radar-pulse 3.2s ease-out infinite;
-}
-.auth-radar-core {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--text-accent);
-  box-shadow: 0 0 14px 3px rgba(0, 188, 255, 0.6);
-}
-@keyframes radar-pulse {
-  0%   { transform: scale(0.35); opacity: 0.65; }
-  100% { transform: scale(1.7);  opacity: 0; }
-}
-
-/* Value props (lista de benefícios no hero) */
-.auth-feature {
+  flex: 0 0 auto;
+  min-height: 228px;
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  padding: 22px 22px 48px;
+  color: #fff;
+  background:
+    radial-gradient(90% 70% at 88% 6%, color-mix(in srgb, var(--color-pulsar-400) 60%, transparent) 0%, transparent 62%),
+    linear-gradient(160deg, var(--color-pulsar-600) 0%, var(--color-pulsar-700) 55%, var(--color-pulsar-800) 100%);
 }
-.auth-feature-ic {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  background: rgba(0, 188, 255, 0.10);
-  border: 1px solid rgba(0, 188, 255, 0.18);
-  color: var(--text-accent);
-  flex-shrink: 0;
+html:not(.light) .auth-vitrine {
+  background:
+    radial-gradient(90% 70% at 88% 6%, color-mix(in srgb, var(--color-pulsar-600) 40%, transparent) 0%, transparent 62%),
+    linear-gradient(160deg, var(--color-pulsar-900) 0%, var(--color-pulsar-950) 100%);
+}
+.auth-vitrine-marca {
+  position: relative; z-index: 2;
+  display: flex; align-items: center; gap: 10px;
+  font: 800 24px/1 var(--font-heading); letter-spacing: -0.035em;
+}
+.auth-vitrine-mapa {
+  position: absolute;
+  width: 280px; right: -110px; bottom: -250px;
+  pointer-events: none;
+}
+.auth-vitrine-mapa path { fill: rgba(255, 255, 255, .10); stroke: rgba(255, 255, 255, .42); stroke-width: 3; }
+.auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill: rgba(255, 255, 255, .85); }
+html:not(.light) .auth-vitrine-mapa path { fill: rgba(255, 255, 255, .06); stroke: rgba(184, 230, 254, .28); }
+html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill: var(--color-pulsar-300); }
+.auth-vitrine-texto { position: relative; z-index: 2; margin-top: 22px; max-width: 440px; }
+.auth-vitrine-titulo { font: 800 25px/1.06 var(--font-heading); letter-spacing: -0.03em; max-width: 260px; }
+.auth-vitrine-sub, .auth-vitrine-selo { display: none; }
+.auth-vitrine-sub { font-size: 16px; line-height: 1.45; margin-top: 14px; color: rgba(255, 255, 255, .92); }
+.auth-vitrine-selo {
+  align-items: center; gap: 9px; margin-top: 22px; padding: 9px 14px; border-radius: 999px;
+  font: 600 13px var(--font-body); background: rgba(255, 255, 255, .16);
+}
+.auth-vitrine-selo i { width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, .25); }
+
+@media (min-width: 1024px) {
+  .auth-split { flex-direction: row; }
+  .auth-vitrine { flex: 1 1 50%; padding: 44px 56px; }
+  .auth-vitrine-marca { font-size: 26px; }
+  .auth-vitrine-mapa { width: 620px; right: -240px; bottom: -480px; }
+  .auth-vitrine-texto { margin: auto 0; }
+  .auth-vitrine-titulo { font-size: 44px; line-height: 1.04; max-width: 440px; }
+  .auth-vitrine-sub { display: block; }
+  .auth-vitrine-selo { display: inline-flex; }
+  .auth-form-pane { flex: 1 1 50%; align-items: center; margin-top: 0; padding: 32px 20px; border-radius: 0; }
 }
 
 /* Divisor "ou ... com" entre o formulário e os botões sociais */
@@ -1425,7 +1443,7 @@ html.light *::-webkit-scrollbar-thumb:hover {
   transform: translateY(-3px);
 }
 
-/* Ícone em "chip" ciano (mesma linguagem do .auth-feature-ic). */
+/* Ícone em "chip" ciano. */
 .landing-card-ic {
   display: grid;
   place-items: center;

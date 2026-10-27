@@ -67,7 +67,7 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
   // largura total) para não colidir com elas.
   if (isMobile) {
     return (
-      <div ref={mobileRef} className="absolute top-[7.5rem] left-3 z-[1000] flex flex-col items-start gap-2">
+      <div ref={mobileRef} className="absolute top-[calc(var(--topo-app)+7.5rem)] left-3 z-[1000] flex flex-col items-start gap-2">
         <button
           type="button"
           onClick={() => setAberto((v) => !v)}

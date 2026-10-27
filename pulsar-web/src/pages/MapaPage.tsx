@@ -206,7 +206,7 @@ export default function MapaPage() {
           Abaixo do header (48px mobile / 64px desktop); no mobile termina
           acima da tab bar inferior (48px).
       ══════════════════════════════════════════ */}
-      <div className={`absolute left-0 right-0 bottom-12 md:bottom-0 top-12 md:top-16 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
+      <div className={`mapa-app absolute left-0 right-0 bottom-12 md:bottom-0 top-0 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
         <MapaBase
           geojson={geojson}
           subprefeituras={subprefeituras}
@@ -267,7 +267,7 @@ export default function MapaPage() {
 
       {/* Banner de erro sobre o mapa */}
       {erro && !subSelecionada && (
-        <div className="absolute top-14 md:top-20 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
+        <div className="absolute top-[calc(var(--topo-app)+0.5rem)] left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
           <div className="pointer-events-auto">
             <ErrorBanner mensagem={erro} onRetry={recarregar} />
           </div>
@@ -282,13 +282,13 @@ export default function MapaPage() {
       <aside
         style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-glass)' }}
         className={[
-          "hidden md:flex flex-col absolute top-16 bottom-0 z-[200]",
+          "hidden md:flex flex-col absolute top-[calc(var(--topo-app)+6px)] bottom-3 z-[200] rounded-[20px] border",
           "shadow-xl overflow-hidden",
           "transition-[width] duration-300 ease-out",
           // Tablet: lado esquerdo
-          "md:left-0 md:border-r",
+          "md:left-3",
           // Desktop: lado direito (sobrescreve md:)
-          "lg:left-auto lg:right-0 lg:border-r-0 lg:border-l",
+          "lg:left-auto lg:right-3",
           // Largura: colapsada (w-14 = 56px) ou expandida
           sidebarColapsada ? "w-14" : "md:w-80 lg:w-[350px]",
         ].join(" ")}

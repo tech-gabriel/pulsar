@@ -97,7 +97,7 @@ export default function LandingBento() {
 function Notificacao({ titulo, texto, quando, apagada = false }: { titulo: string; texto: string; quando: string; apagada?: boolean }) {
   return (
     <div data-notificacao className="lp-notificacao rounded-[20px] p-3 flex gap-3 items-start" style={{ opacity: apagada ? 0.65 : undefined }}>
-      <img src={iconePulsar} alt="" className="w-9 h-9 rounded-[9px] p-1 shrink-0" style={{ background: 'var(--bg-secondary)' }} />
+      <img src={iconePulsar} alt="" className="w-9 h-9 shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="flex justify-between text-[11px]" style={{ color: 'var(--text-muted)' }}><span className="font-semibold tracking-wide">PULSAR</span><span>{quando}</span></div>
         <p className="text-[14px] font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>{titulo}</p>

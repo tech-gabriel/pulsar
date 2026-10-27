@@ -535,7 +535,7 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   .pilha-mapa > .legenda-mapa { order: 1; }
 }
 
-/* Camadas em pílula (tablet e computador), centrada na parte do mapa que o painel não cobre. */
+/* Camadas em pílula (tablet e computador). No topo, centrada na parte do mapa que o painel não cobre. */
 .camadas-pilula {
   position: absolute; z-index: 1000; display: flex; gap: 2px; padding: 5px; border-radius: 999px !important;
   top: calc(var(--topo-app) + 8px); left: 50%; translate: -50% 0;
@@ -544,8 +544,9 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 @media (min-width: 1024px) {
   .camadas-pilula { left: calc((100% - var(--largura-painel) - 26px) / 2); }
 }
+/* No pé, a partir de 1280: centrada na tela (cabe entre a coluna da esquerda e o painel). */
 @media (min-width: 1280px) {
-  .camadas-pilula { top: auto; bottom: 20px; }
+  .camadas-pilula { top: auto; bottom: 20px; left: 50%; }
 }
 /* Alagamentos logo abaixo do zoom (2 x 40 px + margens). */
 .alag-toggle { position: absolute; z-index: 1000; left: 12px; top: calc(var(--topo-app) + 104px); border-radius: 999px !important; }

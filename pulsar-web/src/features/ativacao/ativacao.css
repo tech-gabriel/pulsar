@@ -28,11 +28,7 @@
 .at-anel:nth-of-type(2) { animation-delay: 1.06s; } .at-anel:nth-of-type(3) { animation-delay: 2.13s; }
 .at-pino { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: var(--color-pulsar-600); box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-pulsar-600) 18%, transparent); z-index: 2; }
 @keyframes at-pulso { from { transform: scale(.4); opacity: .9; } to { transform: scale(4.4); opacity: 0; } }
-.at-icone-app { position: relative; width: 96px; height: 96px; margin: 26px auto 20px; animation: at-flutua 4s ease-in-out infinite; }
-.at-icone-app > div { width: 96px; height: 96px; border-radius: 24px; background: linear-gradient(145deg, #fff, #EEF7FD); display: grid; place-items: center; box-shadow: 0 18px 38px -14px rgba(0, 105, 168, .55); overflow: hidden; position: relative; }
-.at-icone-app > div::after { content: ''; position: absolute; top: -40%; left: -60%; width: 40%; height: 180%; transform: rotate(25deg); background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .75), transparent); animation: at-varre 2.6s ease-in-out .6s 1 both; }
-@keyframes at-flutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-@keyframes at-varre { from { left: -60%; } to { left: 130%; } }
+.at-icone-app { width: 104px; margin: 26px auto 20px; filter: drop-shadow(0 18px 24px rgba(0, 105, 168, .28)); }
 .at-seta { margin-top: 14px; display: flex; justify-content: center; color: var(--color-pulsar-600); animation: at-aponta 1.6s ease-in-out infinite; }
 @keyframes at-aponta { 0%, 100% { transform: translateY(0); opacity: .6; } 50% { transform: translateY(6px); opacity: 1; } }
 .at-lista-gar { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -45,7 +41,17 @@
 @keyframes at-traca { to { stroke-dashoffset: 0; } }
 .at-mapa-mini { width: 78px; }
 @media (prefers-reduced-motion: reduce) {
-  .at-anel, .at-icone-app, .at-icone-app > div::after, .at-seta, .at-selo path { animation: none !important; }
+  .at-anel, .at-seta, .at-selo path { animation: none !important; }
   .at-selo path { stroke-dashoffset: 0; }
 }
 @media (prefers-reduced-transparency: reduce) { .at-notif { background: #fff; backdrop-filter: none; } }
+
+/* Computador: o fluxo do celular num cartão central, com a marca no canto (como a configuração do macOS). */
+.at-cartao { display: contents; }
+.at-marca { display: none; }
+@media (min-width: 900px) {
+  .at-raiz { align-items: center; justify-content: center; background: radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--color-pulsar-400) 16%, var(--bg-primary)) 0%, var(--bg-primary) 70%); }
+  .at-cartao { width: 480px; height: min(760px, calc(100vh - 120px)); display: flex; flex-direction: column; background: var(--bg-primary); border-radius: 28px; overflow: hidden;
+    border: 1px solid var(--border-glass); box-shadow: 0 1px 0 color-mix(in srgb, var(--text-primary) 6%, transparent), 0 30px 80px -30px rgba(5, 47, 74, .35); }
+  .at-marca { position: absolute; top: 28px; left: 36px; display: flex; align-items: center; gap: 9px; font: 800 21px/1 var(--font-heading); letter-spacing: -0.035em; }
+}

@@ -42,7 +42,7 @@ export default function ToastContainer() {
   const { toasts } = useToast();
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center pointer-events-none">
+    <div className="fixed bottom-[calc(1.5rem+var(--seguro-baixo))] left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center pointer-events-none">
       <AnimatePresence initial={false}>
         {toasts.map((t) => (
           <motion.div

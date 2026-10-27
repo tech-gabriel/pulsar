@@ -25,6 +25,27 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.22.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Marca nova',
+        descricao: 'O Pulsar ganhou uma logo nova, inspirada no pulsar, a estrela que gira e manda sinais de luz em intervalos certos. Ela já aparece no ícone do celular, na aba do navegador e nos avisos.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'O mapa até a borda',
+        descricao: 'O topo do app agora flutua sobre o mapa, com efeito de vidro, e o mapa ganhou a tela toda. Prefere o topo sólido? Desligue o Efeito de vidro em Configurações › Aparência. Suas iniciais no canto abrem o menu da conta, com o botão de sair.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Entrada redesenhada',
+        descricao: 'As telas de entrar e de criar conta mudaram de cara, e no computador a apresentação do primeiro acesso ficou num cartão no centro da tela, mais fácil de seguir.',
+      },
+    ],
+  },
+  {
     versao: '1.21.0',
     data: '2026-10-26',
     itens: [

@@ -25,6 +25,27 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.23.0',
+    data: '2026-10-27',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Mapa redesenhado no computador e no tablet',
+        descricao: 'O painel virou um cartão flutuante à direita, com a busca dentro: você pesquisa e a resposta aparece logo embaixo. As camadas ficam numa barra no pé do mapa, e o zoom, os alagamentos e a legenda passaram para a esquerda. No tablet em pé o cartão fica no pé da tela e recolhe até só a busca.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Vidro e movimento mais suaves',
+        descricao: 'Os controles sobre o mapa ganharam o mesmo vidro do topo, a logo pulsa no canto e a troca de páginas ficou mais suave. Se preferir tudo sólido, desligue o Efeito de vidro em Configurações › Aparência.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Tela de entrada em notebooks',
+        descricao: 'Em telas mais baixas, o mapa do painel azul da entrada passava por trás do texto. Agora fica sempre embaixo dele.',
+      },
+    ],
+  },
+  {
     versao: '1.22.0',
     data: '2026-10-26',
     itens: [

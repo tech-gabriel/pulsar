@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.23.1',
+    data: '2026-10-27',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Tela de entrada nova',
+        descricao: 'O mapa de São Paulo agora preenche o painel azul em qualquer tamanho de tela, a logo pulsa e a frase e o formulário entram com movimento. Em monitores grandes, o formulário ficou maior.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Barra do celular na cor do app',
+        descricao: 'No celular, a barra de cima, onde ficam a hora e a bateria, agora acompanha a cor do Pulsar, no tema claro e no escuro.',
+      },
+    ],
+  },
+  {
     versao: '1.23.0',
     data: '2026-10-27',
     itens: [

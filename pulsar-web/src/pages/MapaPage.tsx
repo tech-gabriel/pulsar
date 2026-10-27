@@ -203,7 +203,7 @@ export default function MapaPage() {
   );
 
   return (
-    <div className="relative h-screen overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+    <div className="relative h-[calc(100dvh-var(--seguro-topo))] overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header />
@@ -213,7 +213,7 @@ export default function MapaPage() {
           Abaixo do header (48px mobile / 64px desktop); no mobile termina
           acima da tab bar inferior (48px).
       ══════════════════════════════════════════ */}
-      <div data-transicao className={`mapa-app absolute left-0 right-0 bottom-12 md:bottom-0 top-0 z-0 `}>
+      <div data-transicao className={`mapa-app absolute left-0 right-0 bottom-[calc(3rem+var(--seguro-baixo))] md:bottom-0 top-0 z-0 `}>
         <MapaBase
           geojson={geojson}
           subprefeituras={subprefeituras}
@@ -337,7 +337,7 @@ export default function MapaPage() {
           Altura: 72vh. Fechado: 3.5rem visíveis.
       ══════════════════════════════════════════ */}
       <div
-        className="painel-mapa vidro-painel md:hidden fixed bottom-12 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
+        className="painel-mapa vidro-painel md:hidden fixed bottom-[calc(3rem+var(--seguro-baixo))] left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
         style={{
           transform: painelMobileAberto
             ? 'translateY(0)'
@@ -396,7 +396,7 @@ export default function MapaPage() {
       {/* FAB: botão flutuante para abrir o drawer (visível quando fechado) */}
       {!painelMobileAberto && !subSelecionada && (
         <button
-          className="md:hidden fixed z-[600] right-4 bottom-[7rem] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
+          className="md:hidden fixed z-[600] right-4 bottom-[calc(7rem+var(--seguro-baixo))] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
           onClick={() => setPainelMobileAberto(true)}
           aria-label="Ver subprefeituras"
         >
@@ -409,7 +409,7 @@ export default function MapaPage() {
           Aparece ao selecionar uma subprefeitura no mobile
       ══════════════════════════════════════════ */}
       {subSelecionada && isMobile && (
-        <div className="fixed inset-0 z-[1100] flex flex-col animate-slide-up" style={{ background: 'var(--bg-primary)' }}>
+        <div className="fixed inset-x-0 bottom-0 top-[var(--seguro-topo)] z-[1100] flex flex-col animate-slide-up" style={{ background: 'var(--bg-primary)' }}>
           <DetalheSubprefeitura
             key={subSelecionada.id}
             area={subSelecionada}

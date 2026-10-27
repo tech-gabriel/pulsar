@@ -123,8 +123,8 @@ export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = f
   if (!isMobile) {
     return (
       <div
-        className="mapa-controle absolute z-[1000] pointer-events-auto"
-        style={{ right: 16, bottom: 16, padding: '10px 14px', minWidth: 160 }}
+        className="mapa-controle legenda-mapa pointer-events-auto"
+        style={{ padding: '10px 14px', minWidth: 160 }}
         aria-label={`Legenda: ${config.titulo}`}
       >
         <ConteudoLegenda config={config} overlayAlagamento={overlayAlagamento} />

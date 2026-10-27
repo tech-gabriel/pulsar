@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import MapaCoropletico from '../../features/cidade/MapaCoropletico';
-import simboloBranco from '../../assets/logos/pulsar-simbolo-branco.svg';
+import MarcaAnimada from '../ui/MarcaAnimada';
 import { useTheme } from '../../hooks/useTheme';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { definirCorDaTela } from '../../utils/barraDoSistema';
@@ -69,7 +69,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div ref={raiz} className="auth-bg auth-split">
       <aside className="auth-vitrine">
         <div className="auth-vitrine-marca">
-          <img src={simboloBranco} alt="" width={34} height={34} />
+          <MarcaAnimada variante="simbolo-branco" tamanho={36} />
           <span>pulsar</span>
         </div>
         <div className="auth-vitrine-texto">

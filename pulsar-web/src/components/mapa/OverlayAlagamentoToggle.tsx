@@ -14,7 +14,7 @@ interface Props {
  * sozinho não anuncia o que a camada mostra.
  */
 export default function OverlayAlagamentoToggle({ ativo, onToggle, isMobile }: Props) {
-  const pos = isMobile ? 'top-[7.5rem] right-3' : 'left-3 top-1/2 mt-[8.5rem]';
+  const pos = isMobile ? 'top-[calc(var(--topo-app)+7.5rem)] right-3' : 'left-3 top-1/2 mt-[8.5rem]';
 
   return (
     <button

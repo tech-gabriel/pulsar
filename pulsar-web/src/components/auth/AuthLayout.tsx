@@ -74,8 +74,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="auth-vitrine-texto">
           <p className="auth-vitrine-titulo" aria-label={TITULO}>
+            {/* Espaço de verdade entre as palavras (e não margem): na quebra de linha ele some,
+                e a segunda linha não começa recuada. */}
             {TITULO.split(' ').map((p, i) => (
-              <span key={i} className="auth-palavra" aria-hidden="true"><span>{p}</span></span>
+              <span key={i}>{i > 0 && ' '}<span className="auth-palavra" aria-hidden="true"><span>{p}</span></span></span>
             ))}
           </p>
           <p className="auth-vitrine-sub">Risco de chuva e alagamento nas 32 subprefeituras de São Paulo, em tempo real.</p>

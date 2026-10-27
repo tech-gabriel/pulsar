@@ -1344,11 +1344,19 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
   .auth-split { flex-direction: row; }
   .auth-vitrine { flex: 1 1 50%; padding: 44px 56px; }
   .auth-vitrine-marca { font-size: 26px; }
-  /* O texto fica no terço de cima e o mapa ocupa o espaço que sobra embaixo dele, com a largura
-     proporcional ao painel: nunca passa por trás do texto e não fica pequeno em tela grande. */
-  .auth-vitrine-texto { margin-top: clamp(40px, 13vh, 170px); }
-  .auth-vitrine-area-mapa { position: relative; flex: 1 1 auto; min-height: 120px; }
-  .auth-vitrine-mapa { width: clamp(460px, 86%, 1040px); left: 22%; right: auto; bottom: auto; top: clamp(20px, 5vh, 64px); }
+  /* O texto fica no alto; o mapa é grande (1,4 vez a largura do painel, unidades do container) e a
+     Sé fica sempre no mesmo ponto (60% x 66% do painel). A parte de cima do mapa se dissolve antes
+     de chegar ao texto (máscara), então ele nunca passa por trás da frase. A Sé está a 40,4% da
+     largura e a 45,3% da largura (29,4% da altura) do desenho. */
+  .auth-vitrine { container-type: size; }
+  .auth-vitrine-texto { margin-top: clamp(28px, 7vh, 96px); }
+  .auth-vitrine-mapa {
+    --w: min(140cqw, 1500px, 150cqh);
+    --topo: calc(66cqh - var(--w) * .453);
+    width: var(--w); left: calc(60cqw - var(--w) * .404); top: var(--topo); right: auto; bottom: auto;
+    -webkit-mask-image: linear-gradient(to bottom, transparent calc(40cqh - var(--topo)), #000 calc(54cqh - var(--topo)));
+    mask-image: linear-gradient(to bottom, transparent calc(40cqh - var(--topo)), #000 calc(54cqh - var(--topo)));
+  }
   .auth-vitrine-titulo { font-size: 44px; line-height: 1.04; max-width: 440px; }
   .auth-vitrine-sub { display: block; }
   .auth-vitrine-selo { display: inline-flex; }

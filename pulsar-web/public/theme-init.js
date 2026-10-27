@@ -6,6 +6,10 @@ try {
   if (localStorage.getItem('pulsar-theme-v2') === 'dark') {
     document.documentElement.classList.remove('light');
   }
+  // Efeito de vidro desligado em Configurações (useTransparencia).
+  if (localStorage.getItem('pulsar-transparencia') === 'desligada') {
+    document.documentElement.classList.add('sem-transparencia');
+  }
 } catch (e) {
   /* localStorage indisponível: mantém o tema padrão (claro) */
 }

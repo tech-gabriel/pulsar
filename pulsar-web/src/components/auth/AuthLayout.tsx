@@ -1,88 +1,30 @@
 import type { ReactNode } from 'react';
-import { Activity, MapPin, BellRing, type LucideIcon } from 'lucide-react';
-import { useTheme } from '../../hooks/useTheme';
-import logoLockup from '../../assets/logos/pulsar-lockup-escuro.svg';
-import logoLockupClaro from '../../assets/logos/pulsar-lockup-claro.svg';
-
-const FEATURES: { Icon: LucideIcon; title: string; desc: string }[] = [
-  { Icon: Activity, title: 'Monitoramento em tempo real', desc: 'Dados climáticos atualizados a cada 15 minutos' },
-  { Icon: MapPin, title: '32 subprefeituras', desc: 'Toda São Paulo no mapa, do centro às bordas' },
-  { Icon: BellRing, title: 'Alertas de risco', desc: 'Score de perigo e sugestões de segurança' },
-];
+import MapaCoropletico from '../../features/cidade/MapaCoropletico';
+import simboloBranco from '../../assets/logos/pulsar-simbolo-branco.svg';
 
 /**
- * Layout split-screen das telas de autenticação: painel hero com a marca à
- * esquerda (lg+) e a área do formulário à direita. No mobile o hero some e o
- * formulário recebe um logo compacto no topo.
+ * Layout das telas de autenticação: um painel azul da marca, com o mapa de São Paulo
+ * desenhado em branco e a promessa do produto, ao lado do formulário. No celular o
+ * painel vira uma faixa no topo e o formulário sobe por cima dela, como uma folha.
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
-  const { theme } = useTheme();
-  // O hero é um painel de marca sempre escuro (escopo dark local). O lado do
-  // formulário segue o tema global, então seu logo compacto troca de variante.
-  const logoForm = theme === 'light' ? logoLockupClaro : logoLockup;
-
   return (
     <div className="auth-bg auth-split">
-      {/* ── HERO (marca) — lg+ — sempre escuro (branded) ───────────────────── */}
-      <aside className="auth-hero theme-dark-scope">
-        {/* Radar decorativo */}
-        <div className="auth-radar" aria-hidden="true">
-          <span className="auth-radar-ring" />
-          <span className="auth-radar-ring" style={{ animationDelay: '1.05s' }} />
-          <span className="auth-radar-ring" style={{ animationDelay: '2.1s' }} />
-          <span className="auth-radar-core" />
+      <aside className="auth-vitrine">
+        <div className="auth-vitrine-marca">
+          <img src={simboloBranco} alt="" width={34} height={34} />
+          <span>pulsar</span>
         </div>
-
-        {/* Topo: logo */}
-        <img src={logoLockup} alt="Pulsar" className="relative z-10 w-[300px] h-auto" />
-
-        {/* Meio: headline + benefícios */}
-        <div className="relative z-10">
-          <h2
-            className="leading-tight"
-            style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 30, color: 'var(--text-primary)' }}
-          >
-            O mapa vivo da
-            <br />
-            sua segurança
-          </h2>
-          <p className="mt-3 max-w-sm" style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            Veja o risco climático de São Paulo em tempo real e não seja pego de surpresa pela chuva.
-          </p>
-
-          <div className="flex flex-col gap-5 mt-9">
-            {FEATURES.map(({ Icon, title, desc }) => (
-              <div key={title} className="auth-feature">
-                <div className="auth-feature-ic">
-                  <Icon size={20} />
-                </div>
-                <div className="leading-tight">
-                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</p>
-                  <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+        <MapaCoropletico className="auth-vitrine-mapa" cores={{ se: 'var(--color-pulsar-300)' }} />
+        <div className="auth-vitrine-texto">
+          <p className="auth-vitrine-titulo">Saiba antes que a água chegue.</p>
+          <p className="auth-vitrine-sub">Risco de chuva e alagamento nas 32 subprefeituras de São Paulo, em tempo real.</p>
+          <span className="auth-vitrine-selo"><i aria-hidden="true" />Atualizado a cada 15 minutos</span>
         </div>
-
-        {/* Rodapé */}
-        <p className="relative z-10" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          © 2026 Pulsar · Monitoramento climático de São Paulo
-        </p>
       </aside>
 
-      {/* ── FORMULÁRIO ─────────────────────────────────────────────────────── */}
       <main className="auth-form-pane">
-        <div className="w-full max-w-[400px]">
-          {/* Logo compacto (apenas mobile, onde o hero está oculto) */}
-          <img
-            src={logoForm}
-            alt="Pulsar"
-            className="lg:hidden mx-auto w-[290px] h-auto mb-8"
-            style={{ filter: 'drop-shadow(0 0 30px rgba(0, 188, 255, 0.4))' }}
-          />
-          {children}
-        </div>
+        <div className="w-full max-w-[400px]">{children}</div>
       </main>
     </div>
   );

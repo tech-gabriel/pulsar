@@ -7,6 +7,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { ThemeContext, type Theme } from './useTheme';
+import { definirTemaDaBarra } from '../utils/barraDoSistema';
 
 // Persiste o tema em localStorage, aplica a classe `light` no <html> e atualiza
 // a meta theme-color. Default: claro.
@@ -60,8 +61,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!sincronizado) return;
     aplicarClasse(theme);
     localStorage.setItem(STORAGE_KEY, theme);
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#052F4A' : '#F8FAFC');
+    definirTemaDaBarra(theme);
   }, [theme, sincronizado]);
 
   const toggleTheme = useCallback((event?: MouseEvent) => {

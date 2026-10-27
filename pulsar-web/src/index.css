@@ -1312,11 +1312,20 @@ html:not(.light) .auth-vitrine {
   display: flex; align-items: center; gap: 10px;
   font: 800 24px/1 var(--font-heading); letter-spacing: -0.035em;
 }
+/* Celular: a área do mapa não tem caixa própria e o mapa fica no canto da faixa azul. */
+.auth-vitrine-area-mapa { position: static; }
 .auth-vitrine-mapa {
   position: absolute;
   width: 280px; right: -110px; bottom: -250px;
   pointer-events: none;
 }
+/* Ondas de luz que saem da Sé (AuthLayout, GSAP). Sem movimento ficam invisíveis. */
+.auth-anel { fill: none; stroke: rgba(255, 255, 255, .85); stroke-width: 2.5; vector-effect: non-scaling-stroke; opacity: 0; }
+html:not(.light) .auth-anel { stroke: var(--color-pulsar-300); }
+/* Palavras do título sobem de dentro de uma máscara. */
+.auth-palavra { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
+.auth-palavra > span { display: inline-block; }
+.auth-palavra + .auth-palavra { margin-left: .26em; }
 .auth-vitrine-mapa path { fill: rgba(255, 255, 255, .10); stroke: rgba(255, 255, 255, .42); stroke-width: 3; }
 .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill: rgba(255, 255, 255, .85); }
 html:not(.light) .auth-vitrine-mapa path { fill: rgba(255, 255, 255, .06); stroke: rgba(184, 230, 254, .28); }
@@ -1335,14 +1344,23 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
   .auth-split { flex-direction: row; }
   .auth-vitrine { flex: 1 1 50%; padding: 44px 56px; }
   .auth-vitrine-marca { font-size: 26px; }
-  /* Preso logo abaixo do texto (centrado no painel), e não ao rodapé: em telas baixas o mapa
-     subia por trás do parágrafo. */
-  .auth-vitrine-mapa { width: 620px; left: 44%; right: auto; bottom: auto; top: calc(50% + 180px); }
-  .auth-vitrine-texto { margin: auto 0; }
+  /* O texto fica no terço de cima e o mapa ocupa o espaço que sobra embaixo dele, com a largura
+     proporcional ao painel: nunca passa por trás do texto e não fica pequeno em tela grande. */
+  .auth-vitrine-texto { margin-top: clamp(40px, 13vh, 170px); }
+  .auth-vitrine-area-mapa { position: relative; flex: 1 1 auto; min-height: 120px; }
+  .auth-vitrine-mapa { width: clamp(460px, 86%, 1040px); left: 22%; right: auto; bottom: auto; top: clamp(20px, 5vh, 64px); }
   .auth-vitrine-titulo { font-size: 44px; line-height: 1.04; max-width: 440px; }
   .auth-vitrine-sub { display: block; }
   .auth-vitrine-selo { display: inline-flex; }
   .auth-form-pane { flex: 1 1 50%; align-items: center; margin-top: 0; padding: 32px 20px; border-radius: 0; }
+}
+/* Monitores grandes: formulário e textos do painel crescem juntos, em vez de ficarem pequenos
+   e perdidos (zoom escala o bloco inteiro, com o layout acompanhando). */
+@media (min-width: 1600px) and (min-height: 800px) {
+  .auth-form-pane > div, .auth-vitrine-texto, .auth-vitrine-marca { zoom: 1.15; }
+}
+@media (min-width: 2200px) and (min-height: 1100px) {
+  .auth-form-pane > div, .auth-vitrine-texto, .auth-vitrine-marca { zoom: 1.4; }
 }
 
 /* Divisor "ou ... com" entre o formulário e os botões sociais */

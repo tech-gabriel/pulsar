@@ -14,6 +14,8 @@ interface Props {
   isMobile: boolean;
   onUsarLocalizacao?: () => void;
   localizando?: boolean;
+  /** Dentro do painel flutuante (tablet e computador): sem posição própria nem vidro. */
+  embutida?: boolean;
 }
 
 const MIN_CHARS = 3;
@@ -39,7 +41,7 @@ function contextoDe(r: EnderecoBusca): string {
  * Busca unificada sobreposta ao mapa (SP3): subprefeituras pelo nome primeiro, depois
  * endereços (geocoding via backend), num campo só.
  */
-export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false }: Props) {
+export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, embutida = false }: Props) {
   const { termo, setTermo, resultados, carregando, erro, limpar } = useBuscaEndereco();
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -93,8 +95,8 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
     <div
       ref={containerRef}
       className={
-        isMobile
-          ? 'absolute top-[calc(var(--topo-app)+0.5rem)] left-3 right-3 z-[1100]'
+        embutida ? 'busca-embutida relative z-[5] flex-shrink-0 px-3 pt-3'
+          : isMobile ? 'absolute top-[calc(var(--topo-app)+0.5rem)] left-3 right-3 z-[1100]'
           : 'absolute top-[calc(var(--topo-app)+0.5rem)] left-3 z-[1100] w-[340px]'
       }
     >
@@ -150,7 +152,8 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
         )}
       </div>
 
-      {onUsarLocalizacao && mostrarDica && (
+      {/* Com os resultados abertos a dica sai, para a lista colar na busca. */}
+      {onUsarLocalizacao && mostrarDica && !mostrarDropdown && (
         <div className="mapa-controle mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
           <LocateFixed size={13} className="mapa-txt-suave flex-shrink-0" />
           <span className="flex-1">Toque no alvo para ver a sua subprefeitura</span>

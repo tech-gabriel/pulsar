@@ -12,7 +12,7 @@ import { resumoAlertas } from '../../utils/risco';
 import { useTheme } from '../../hooks/useTheme';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import BadgeRisco from './BadgeRisco';
-import simboloPulsar from '../../assets/logos/pulsar-simbolo.svg';
+import MarcaAnimada from './MarcaAnimada';
 
 // Abas de navegação principal (ETAPA B.1.2). O rótulo curto (tab bar do mobile)
 // usa as mesmas palavras do desktop: "Dash"/"News" truncavam sem necessidade e
@@ -106,7 +106,7 @@ export default function Header() {
       <header className="app-header fixed z-[1000] flex items-center justify-between">
         {/* Esquerda: marca (símbolo + nome). O slogan fica na landing e no login, onde vende. */}
         <div className="flex items-center gap-2.5">
-          <img src={simboloPulsar} alt="" className="w-8 h-8 md:w-9 md:h-9 flex-shrink-0" />
+          <MarcaAnimada variante="simbolo" tamanho={34} />
           <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 23, letterSpacing: '-0.035em', lineHeight: 1, color: 'var(--text-primary)' }}>
             pulsar
           </span>
@@ -117,7 +117,7 @@ export default function Header() {
           {TABS.map(({ to, label, Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => ['nav-tab', isActive ? 'ativa' : ''].join(' ')}>
               <IconeAba Icon={Icon} size={18} pendente={to === ABA_CONFIG && emailPendente} />
-              <span>{label}</span>
+              <span className="nav-tab-rotulo">{label}</span>
               {to === ABA_CONFIG && emailPendente && <span className="sr-only">, e-mail não confirmado</span>}
             </NavLink>
           ))}

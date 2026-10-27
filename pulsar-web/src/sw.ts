@@ -43,7 +43,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(dados.titulo, {
       body: dados.corpo,
       icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      // Android pinta o badge numa cor só: precisa ser a forma branca sem fundo.
+      badge: '/badge-96.png',
       tag: dados.tag,
       // Reabre/atualiza a notificação ao invés de empilhar duplicatas (mesma tag).
       renotify: Boolean(dados.tag),

@@ -10,6 +10,7 @@ import { AnalyticsBridge } from './analytics';
 import TitleManager from './components/TitleManager';
 import CanonicalManager from './components/CanonicalManager';
 import ToastContainer from './components/ui/ToastContainer';
+import TransicaoDeRota from './motion/TransicaoDeRota';
 
 /**
  * Layout raiz do data router: concentra os providers e as "bridges" que
@@ -32,6 +33,7 @@ export default function RootLayout() {
               <AnalyticsBridge />
               <TitleManager />
               <CanonicalManager />
+              <TransicaoDeRota />
               <Outlet />
               <ToastContainer />
             </FavoritosProvider>

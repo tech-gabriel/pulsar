@@ -8,6 +8,7 @@ import type { Camada } from '../../utils/camadas';
 import { centroideRegiao } from '../../utils/geo';
 import { normalizarNome } from '../../utils/texto';
 import { useTheme } from '../../hooks/useTheme';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import RegioesLayer from './RegioesLayer';
 import ScoreLabel from './ScoreLabel';
 import OcorrenciasLayer from './OcorrenciasLayer';
@@ -17,6 +18,28 @@ import type { OcorrenciaAlagamentoDto } from '../../types';
 const SP_CENTER: [number, number] = [-23.5505, -46.6333];
 const SP_ZOOM = 10;
 const BUSCA_ZOOM = 16;
+
+/**
+ * Quanto do mapa o painel flutuante cobre (tablet: no pé; computador: à direita), lido do DOM.
+ * Usa a altura final do cartão (data-altura-final), porque ele pode estar no meio da animação.
+ */
+function coberturaPainel(map: L.Map): { direita: number; baixo: number } {
+  const painel = document.querySelector<HTMLElement>('[data-painel-mapa]');
+  if (!painel || painel.offsetParent === null) return { direita: 0, baixo: 0 };
+  const m = map.getContainer().getBoundingClientRect();
+  const p = painel.getBoundingClientRect();
+  if (p.width < m.width * 0.6) return { direita: Math.max(0, m.right - p.left), baixo: 0 };
+  const altura = Number(painel.dataset.alturaFinal) || p.height;
+  return { direita: 0, baixo: Math.max(0, m.bottom - (p.bottom - altura)) };
+}
+
+/** flyTo que põe o ponto no centro da parte VISÍVEL do mapa, e não atrás do painel. */
+function voar(map: L.Map, alvo: L.LatLngExpression, zoom: number, duration: number) {
+  const { direita, baixo } = coberturaPainel(map);
+  const desvio = L.point(-direita / 2, -baixo / 2);
+  const centro = map.unproject(map.project(alvo, zoom).subtract(desvio), zoom);
+  map.flyTo(centro, zoom, { duration });
+}
 
 export interface PontoBusca {
   lat: number;
@@ -116,7 +139,7 @@ function MapController({
 
   useEffect(() => {
     if (!zonaEmFoco) {
-      map.flyTo(SP_CENTER, SP_ZOOM, { duration: 0.6 });
+      voar(map, SP_CENTER, SP_ZOOM, 0.6);
       return;
     }
     if (subSelRef.current) return; // clique no mapa já centralizou na subprefeitura
@@ -124,14 +147,14 @@ function MapController({
       (s) => normalizarNome(s.zona) === normalizarNome(zonaEmFoco),
     );
     const centro = centroideRegiao(daRegiao);
-    if (centro) map.flyTo([centro.lat, centro.lon], 11, { duration: 0.6 });
+    if (centro) voar(map, [centro.lat, centro.lon], 11, 0.6);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zonaEmFoco]);
 
   // SP3: a subprefeitura escolhida na lista, na busca ou no sino vira o foco do mapa
   // (antes o foco era a zona dela). O clique no mapa já voou; repetir o destino é inofensivo.
   useEffect(() => {
-    if (subSelecionada) map.flyTo([subSelecionada.latitude, subSelecionada.longitude], 13, { duration: 0.6 });
+    if (subSelecionada) voar(map, [subSelecionada.latitude, subSelecionada.longitude], 13, 0.6);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subSelecionada?.id]);
 
@@ -141,9 +164,10 @@ function MapController({
     const centro = L.latLng(pontoBusca.lat, pontoBusca.lon);
     // Com precisão, enquadra o círculo inteiro: no zoom da busca um erro grande cobriria a tela.
     if (pontoBusca.precisao !== undefined) {
-      map.flyToBounds(centro.toBounds(pontoBusca.precisao * 2), { maxZoom: BUSCA_ZOOM, duration: 0.8 });
+      const { direita, baixo } = coberturaPainel(map);
+      map.flyToBounds(centro.toBounds(pontoBusca.precisao * 2), { maxZoom: BUSCA_ZOOM, duration: 0.8, paddingBottomRight: [direita, baixo] });
     } else {
-      map.flyTo(centro, BUSCA_ZOOM, { duration: 0.8 });
+      voar(map, centro, BUSCA_ZOOM, 0.8);
     }
   }, [pontoBusca, map]);
 
@@ -165,19 +189,18 @@ export default function MapaBase({
 }: Props) {
   const { theme } = useTheme();
   const tile = tileConfig(theme);
+  const isMobile = useIsMobile(768);
   return (
     <MapContainer
       center={SP_CENTER}
       zoom={SP_ZOOM}
       className="w-full h-full"
       scrollWheelZoom
-      // O canto padrão do controle de zoom (topo à esquerda) é o mesmo onde a
-      // barra de busca é sobreposta ao mapa, e ela cobria o botão "+" por
-      // inteiro. À direita há espaço nos dois layouts; o recuo que desvia da
-      // busca (desktop) e do botão de camadas (mobile) está em index.css.
+      // Celular: zoom à direita (a busca ocupa o topo à esquerda; o recuo está em index.css).
+      // Tablet e computador: à esquerda, na coluna dos controles do mapa (a busca mora no painel).
       zoomControl={false}
     >
-      <ZoomControl position="topright" />
+      <ZoomControl key={isMobile ? 'd' : 'e'} position={isMobile ? 'topright' : 'topleft'} />
       <TileLayer
         key={tile.url}
         attribution={tile.attribution}

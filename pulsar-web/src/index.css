@@ -503,23 +503,95 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 }
 
 /* O mapa do app passa por baixo da cápsula do cabeçalho: os controles do Leaflet descem junto. */
-/* Cards no pé do mapa (convite de alertas, aviso da busca, alagamento perto). Celular: centrados
-   acima da folha. Computador: no canto esquerdo, longe da legenda (canto direito). Quando o mapa
-   é estreito (iPad em pé com o painel aberto), a decisão é pela largura do MAPA, não da tela:
-   o card ocupa a largura toda logo acima da legenda, em vez de virar uma tira fina. */
-.mapa-app { container-type: inline-size; }
+/* ── Mapa: layout do tablet e do computador (direção A, espelhada) ──────────────────────────
+   Celular (< 768): busca no topo, folha que sobe de baixo, cards centrados acima dela.
+   Tablet (768-1023): o painel vira cartão flutuante no pé do mapa (busca dentro); camadas em
+   pílula no topo; zoom e Alagamentos à esquerda; legenda e avisos empilhados à direita.
+   Computador (>= 1024): o painel é um cartão flutuante à direita, do tamanho do conteúdo, com a
+   busca dentro; camadas em pílula (no pé a partir de 1280); zoom, Alagamentos, legenda e avisos
+   à esquerda. */
 .cartao-pe-mapa {
+  /* Centrado por left/right + margem automática, e não por translate: o lightningcss funde
+     translate com o transform da animação de entrada e descarta um deles. */
   position: absolute; z-index: 1200;
-  left: 50%; translate: -50% 0;
+  left: 0; right: 0; margin-inline: auto;
   bottom: 7.5rem;
   width: min(28rem, calc(100% - 1.5rem));
 }
+/* Pilha de avisos + legenda: no celular não existe (cada peça se posiciona sozinha). */
+.pilha-mapa { display: contents; }
 @media (min-width: 768px) {
-  .cartao-pe-mapa { left: 12px; right: 12px; translate: none; width: auto; bottom: 5.5rem; }
-  @container (min-width: 44rem) {
-    .cartao-pe-mapa { right: auto; bottom: 16px; width: min(26rem, calc(100% - 15rem)); }
+  .pilha-mapa {
+    position: absolute; z-index: 1200; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+    right: 12px; top: calc(var(--topo-app) + 8px); width: min(24rem, calc(100% - 24px)); pointer-events: none;
+  }
+  .pilha-mapa > * { position: static !important; margin: 0 !important; transform: none !important; inset: auto !important; width: 100% !important; pointer-events: auto; }
+  .pilha-mapa > .legenda-mapa { width: auto !important; order: -1; }
+  .mapa-app .leaflet-left .leaflet-control { margin: 12px 0 0 12px; }
+  .leaflet-control-zoom a, .leaflet-touch .leaflet-control-zoom a { width: 40px !important; height: 40px !important; line-height: 40px !important; }
+}
+@media (min-width: 1024px) {
+  .pilha-mapa { right: auto; left: 12px; top: auto; bottom: 16px; align-items: flex-start; }
+  .pilha-mapa > .legenda-mapa { order: 1; }
+}
+
+/* Camadas em pílula (tablet e computador), centrada na parte do mapa que o painel não cobre. */
+.camadas-pilula {
+  position: absolute; z-index: 1000; display: flex; gap: 2px; padding: 5px; border-radius: 999px !important;
+  top: calc(var(--topo-app) + 8px); left: 50%; translate: -50% 0;
+}
+.camadas-pilula .layer-btn { border-radius: 999px !important; padding: 0 16px !important; min-height: 40px; }
+@media (min-width: 1024px) {
+  .camadas-pilula { left: calc((100% - var(--largura-painel) - 26px) / 2); }
+}
+@media (min-width: 1280px) {
+  .camadas-pilula { top: auto; bottom: 20px; }
+}
+/* Alagamentos logo abaixo do zoom (2 x 40 px + margens). */
+.alag-toggle { position: absolute; z-index: 1000; left: 12px; top: calc(var(--topo-app) + 104px); border-radius: 999px !important; }
+
+/* O painel: cartão flutuante. A altura acompanha o conteúdo (até o limite) e anima ao mudar. */
+.painel-flutuante {
+  position: absolute; z-index: 200; overflow: hidden; border-radius: 28px;
+  left: 12px; right: 12px; bottom: 12px; max-height: 46%;
+}
+.painel-flutuante.com-detalhe { max-height: 72%; }
+@media (min-width: 1024px) {
+  .painel-flutuante, .painel-flutuante.com-detalhe {
+    left: auto; right: 14px; bottom: auto; top: calc(var(--topo-app) + 8px);
+    width: var(--largura-painel); max-height: calc(100% - var(--topo-app) - 22px);
   }
 }
+/* A superfície chega "materializando": desfoque e escala juntos, não só opacidade. */
+@keyframes vidro-surge { from { opacity: 0; transform: scale(.965); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+.vidro-surge { animation: vidro-surge .55s cubic-bezier(.32, .72, 0, 1) both; }
+/* O conteúdo novo do painel (lista ou detalhe) entra deslizando pouco, enquanto o cartão muda de altura. */
+@keyframes painel-conteudo { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.painel-conteudo { animation: painel-conteudo .4s cubic-bezier(.32, .72, 0, 1) both; }
+@media (prefers-reduced-motion: reduce) { .vidro-surge, .painel-conteudo { animation: none; } }
+
+/* Busca dentro do painel: campo preenchido, sem vidro próprio (já está no vidro do cartão). */
+.busca-embutida .mapa-controle {
+  background: color-mix(in srgb, var(--text-primary) 6%, transparent) !important;
+  box-shadow: none !important; backdrop-filter: none !important; border-radius: 14px;
+}
+.busca-embutida ul.mapa-controle { background: transparent !important; }
+
+/* Conteúdo do painel sobre o vidro: sem fundo próprio; status da cidade em vidro tingido pela
+   cor do risco (em vez do bloco marinho sólido); lista agrupada como no iOS. */
+.painel-mapa .painel-glass { background: transparent !important; backdrop-filter: none !important; }
+.painel-mapa .cid-agora { --c: #22C55E; }
+.painel-mapa .cid-agora:has(.cid-radar.moderado) { --c: #F59E0B; }
+.painel-mapa .cid-agora:has(.cid-radar.alto) { --c: #EF4444; }
+.painel-mapa .cid-agora:has(.cid-radar.sem) { --c: #94A3B8; }
+.painel-mapa .cid-agora {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c) 22%, transparent), color-mix(in srgb, var(--c) 6%, transparent));
+  color: var(--text-primary); border: 0; border-radius: 20px; padding: 16px;
+  box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--c) 35%, transparent);
+}
+.painel-mapa .cid-agora .cid-sub, .painel-mapa .cid-agora .cid-dist-leg { color: var(--text-secondary); }
+.painel-mapa .linha-area { background: color-mix(in srgb, var(--text-primary) 4%, transparent); border: 0; border-radius: 14px; margin-bottom: 4px; }
+.painel-mapa .linha-area:hover { background: color-mix(in srgb, var(--text-primary) 8%, transparent); }
 
 .mapa-app .leaflet-top {
   top: var(--topo-app);
@@ -531,11 +603,7 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
    a usar os mesmos tokens de `.mapa-controle`, então acompanha o tema claro e
    o escuro junto com os vizinhos. */
 .leaflet-control-zoom.leaflet-bar {
-  border: 1px solid var(--vidro-borda) !important;
-  border-radius: 14px !important;
-  background: var(--vidro-tinta-painel);
-  backdrop-filter: blur(24px) saturate(180%);
-  box-shadow: inset 0 1px 0 var(--vidro-brilho), var(--vidro-sombra) !important;
+  border-radius: 999px !important;
   overflow: hidden;
 }
 .leaflet-control-zoom a,
@@ -622,11 +690,7 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 /* Card base dos controles sobre o mapa: o vidro do cabeçalho, com a tinta mais densa porque
    carrega texto pequeno sobre o mapa colorido. */
 .mapa-controle {
-  background: var(--vidro-tinta-painel);
-  backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--vidro-borda);
-  box-shadow: inset 0 1px 0 var(--vidro-brilho), var(--vidro-sombra);
-  border-radius: 14px;
+  border-radius: 16px;
   color: var(--mapa-controle-texto);
 }
 
@@ -905,48 +969,48 @@ button, a, [role="button"], [role="radio"] {
    --topo-app é o espaço que o conteúdo deixa para a cápsula (mapa, busca, painel). */
 :root {
   --topo-app: 60px;
-  --vidro-tinta: color-mix(in srgb, var(--bg-primary) 62%, transparent);
-  --vidro-borda: rgba(255, 255, 255, .10);
-  --vidro-brilho: rgba(255, 255, 255, .10);
-  --vidro-sombra: 0 12px 32px -12px rgba(0, 0, 0, .6), 0 1px 3px rgba(0, 0, 0, .3);
+  /* Vidro (Liquid Glass aproximado). A forma vem da luz, não de um contorno: tinta translúcida,
+     um brilho que desce da aresta de cima (--vidro-luz), um aro fino de luz (inset) e a saturação
+     do que passa por baixo. --vidro-tinta é o vidro leve (controles); --vidro-tinta-painel, o denso
+     (painéis com texto). --vidro-borda é só o separador interno (zoom, listas). */
+  --vidro-tinta: rgba(14, 28, 44, .42);
+  --vidro-tinta-painel: rgba(10, 24, 38, .70);
+  --vidro-luz: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, 0) 42%);
+  --vidro-brilho: rgba(255, 255, 255, .20);
+  --vidro-borda: rgba(255, 255, 255, .08);
+  --vidro-sombra: 0 12px 32px -12px rgba(0, 0, 0, .55), 0 1px 2px rgba(0, 0, 0, .28);
+  --largura-painel: 380px;
 }
 html.light {
-  --vidro-tinta: color-mix(in srgb, #fff 66%, transparent);
-  --vidro-borda: rgba(5, 47, 74, .08);
-  --vidro-brilho: rgba(255, 255, 255, .95);
-  --vidro-sombra: 0 12px 32px -14px rgba(5, 47, 74, .28), 0 1px 3px rgba(5, 47, 74, .08);
+  --vidro-tinta: rgba(255, 255, 255, .46);
+  --vidro-tinta-painel: rgba(255, 255, 255, .78);
+  --vidro-luz: linear-gradient(180deg, rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 46%);
+  --vidro-brilho: rgba(255, 255, 255, .9);
+  --vidro-borda: rgba(12, 38, 60, .07);
+  --vidro-sombra: 0 12px 32px -14px rgba(12, 38, 60, .30), 0 1px 2px rgba(12, 38, 60, .10);
 }
 @media (min-width: 768px) { :root { --topo-app: 70px; } }
-/* O mesmo vidro em tudo o que flutua sobre o conteúdo. .vidro-painel é a versão mais densa,
-   para painéis com muito texto (painel lateral, folha do celular, controles do mapa). */
-:root { --vidro-tinta-painel: color-mix(in srgb, var(--bg-primary) 84%, transparent); }
-html.light { --vidro-tinta-painel: color-mix(in srgb, #fff 86%, transparent); }
-.app-header, .vidro, .vidro-painel {
-  backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--vidro-borda);
-  box-shadow: inset 0 1px 0 var(--vidro-brilho), var(--vidro-sombra);
+.app-header, .vidro, .vidro-painel, .mapa-controle, .leaflet-control-zoom.leaflet-bar {
+  border: 0 !important;
+  backdrop-filter: blur(30px) saturate(210%) brightness(1.04);
+  box-shadow: inset 0 1px 0 var(--vidro-brilho), inset 0 0 0 .5px color-mix(in srgb, var(--vidro-brilho) 55%, transparent), var(--vidro-sombra) !important;
 }
-.vidro { background: var(--vidro-tinta); }
-.vidro-painel { background: var(--vidro-tinta-painel); }
+.app-header, .vidro, .mapa-controle, .leaflet-control-zoom.leaflet-bar { background: var(--vidro-luz), var(--vidro-tinta) !important; }
+.vidro-painel { background: var(--vidro-luz), var(--vidro-tinta-painel) !important; }
 .app-header {
   top: 8px; left: 8px; right: 8px; height: 52px;
   padding: 0 6px 0 14px;
   border-radius: 18px;
-  background: var(--vidro-tinta);
-
-  backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--vidro-borda);
-  box-shadow: inset 0 1px 0 var(--vidro-brilho), var(--vidro-sombra);
 }
 @media (min-width: 768px) {
   .app-header { top: 10px; left: 12px; right: 12px; height: 56px; padding: 0 8px 0 18px; border-radius: 20px; }
 }
-html.sem-transparencia :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile) { background: var(--bg-primary); backdrop-filter: none; }
+html.sem-transparencia :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
 @media (prefers-reduced-transparency: reduce) {
-  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile) { background: var(--bg-primary); backdrop-filter: none; }
+  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
 }
 @supports not (backdrop-filter: blur(1px)) {
-  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile) { background: var(--bg-primary); }
+  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; }
 }
 
 /* Abas do topo (md+): um grupo só, com a aba ativa marcada por dentro. */

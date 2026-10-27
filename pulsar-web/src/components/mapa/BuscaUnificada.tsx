@@ -150,7 +150,8 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
         )}
       </div>
 
-      {onUsarLocalizacao && mostrarDica && (
+      {/* Com os resultados abertos a dica sai, para a lista colar na busca. */}
+      {onUsarLocalizacao && mostrarDica && !mostrarDropdown && (
         <div className="mapa-controle mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
           <LocateFixed size={13} className="mapa-txt-suave flex-shrink-0" />
           <span className="flex-1">Toque no alvo para ver a sua subprefeitura</span>

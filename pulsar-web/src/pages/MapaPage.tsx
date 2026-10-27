@@ -192,12 +192,6 @@ export default function MapaPage() {
   return (
     <div className="relative h-screen overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
 
-      {/* Convite para ativar notificações push (o onboarding agora é a rota /app/boas-vindas). */}
-      {/* Sem favorita o push não tem o que mandar: primeiro escolher, depois ativar. */}
-      {semFavoritas
-        ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
-        : <ConvitePush />}
-
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header />
 
@@ -206,7 +200,7 @@ export default function MapaPage() {
           Abaixo do header (48px mobile / 64px desktop); no mobile termina
           acima da tab bar inferior (48px).
       ══════════════════════════════════════════ */}
-      <div className={`mapa-app absolute left-0 right-0 bottom-12 md:bottom-0 top-0 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
+      <div data-transicao className={`mapa-app absolute left-0 right-0 bottom-12 md:bottom-0 top-0 z-0 transition-[left,right] duration-300 ease-out ${mapaOffsetClass}`}>
         <MapaBase
           geojson={geojson}
           subprefeituras={subprefeituras}
@@ -233,7 +227,7 @@ export default function MapaPage() {
 
         {/* Aviso quando o endereço cai fora da área coberta */}
         {avisoBusca && (
-          <div className="mapa-controle mapa-txt absolute left-1/2 -translate-x-1/2 z-[1200] bottom-[7.5rem] md:bottom-6 max-w-[calc(100%-1.5rem)] px-4 py-2.5 text-xs shadow-xl">
+          <div className="mapa-controle mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">
             {avisoBusca}
           </div>
         )}
@@ -259,6 +253,13 @@ export default function MapaPage() {
           isMobile={isMobile}
         />
 
+        {/* Convite para ativar notificações push (o onboarding agora é a rota /app/boas-vindas).
+            Sem favorita o push não tem o que mandar: primeiro escolher, depois ativar. Fica dentro
+            do mapa para se posicionar em relação a ele, e não à tela inteira. */}
+        {semFavoritas
+          ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
+          : <ConvitePush />}
+
         {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
         {proximas && (
           <CardAlagamentoProximo dados={proximas} onFechar={() => setProximas(null)} />
@@ -280,10 +281,10 @@ export default function MapaPage() {
           Desktop: sidebar direita, 350px fixa
       ══════════════════════════════════════════ */}
       <aside
-        style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-glass)' }}
+        data-transicao
         className={[
-          "hidden md:flex flex-col absolute top-[calc(var(--topo-app)+6px)] bottom-3 z-[200] rounded-[20px] border",
-          "shadow-xl overflow-hidden",
+          "vidro-painel hidden md:flex flex-col absolute top-[calc(var(--topo-app)+6px)] bottom-3 z-[200] rounded-[20px]",
+          "overflow-hidden",
           "transition-[width] duration-300 ease-out",
           // Tablet: lado esquerdo
           "md:left-3",
@@ -348,10 +349,8 @@ export default function MapaPage() {
           Altura: 72vh. Fechado: 3.5rem visíveis.
       ══════════════════════════════════════════ */}
       <div
-        className="md:hidden fixed bottom-12 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
+        className="vidro-painel md:hidden fixed bottom-12 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
         style={{
-          background: 'var(--bg-primary)',
-          boxShadow: '0 -8px 40px rgba(5, 47, 74, 0.20)',
           transform: painelMobileAberto
             ? 'translateY(0)'
             : 'translateY(calc(100% - 3.5rem))',

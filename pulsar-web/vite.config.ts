@@ -22,7 +22,7 @@ const proxyApi = {
 }
 
 // Guarda uma cópia do index.html AINDA VAZIO como `spa.html`, para o fallback de
-// roteamento do render.yaml servir as rotas que não são pré-renderizadas
+// roteamento do Caddy (deploy/Caddyfile) servir as rotas que não são pré-renderizadas
 // (/login, /cadastro, /app/*). Sem isso o fallback entrega o index.html final,
 // que o SSG sobrescreveu com a landing inteira: o React acha DOM de servidor que
 // não bate com a rota, não consegue reaproveitar, e o resultado em produção era a
@@ -67,14 +67,14 @@ function shellSpa(): Plugin {
   }
 }
 
-// Reproduz no `vite preview` o fallback `/* -> /spa.html` do render.yaml. Sem isto o
+// Reproduz no `vite preview` o `try_files` do deploy/Caddyfile (spa.html por último). Sem isto o
 // preview entrega o dist/index.html (que o SSG substituiu pela landing) em /app e
 // /login, o React acha DOM de servidor de outra rota e a hidratação estoura com o
 // erro #418 no console. O efeito colateral era pior do que o erro em si: a única
 // tela de verificação visual deste projeto mostrava um shell que produção não serve,
 // e um erro vermelho permanente escondia os erros de verdade.
 //
-// A regra é a mesma do render.yaml, na mesma ordem: arquivo real primeiro (assets e
+// A regra é a mesma do Caddyfile, na mesma ordem: arquivo real primeiro (assets e
 // as rotas pré-renderizadas, que existem como `<rota>/index.html`), spa.html para o
 // resto. Só `apply: 'serve'`: nada disto vai para o build.
 function fallbackSpaNoPreview(): Plugin {
@@ -161,7 +161,7 @@ export default defineConfig({
   // acontece (o dev server esconde erro de SSG e de tipo). Sem o mesmo proxy do
   // dev server, toda chamada a /api dava 404 na porta 4173 e o app parecia
   // quebrado por um motivo que não é dele. Em produção nada disto roda: quem
-  // serve o build é o Render, com o rewrite do render.yaml.
+  // serve o build é o Caddy, com o try_files do deploy/Caddyfile.
   preview: {
     proxy: proxyApi,
   },

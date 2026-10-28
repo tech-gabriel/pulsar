@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Sobe a pilha de produção na máquina local (imagens com TAG=local) e confere o que o
-# Render fazia pelo site: cabeçalhos, páginas de SEO, fallback de SPA, proxy da API,
+# Caddy faz pelo site: cabeçalhos, páginas de SEO, fallback de SPA, proxy da API,
 # cache e redirecionamento do www. Uso, da raiz do repo: bash deploy/testes/smoke.sh
 set -euo pipefail
 cd "$(dirname "$0")/../.."

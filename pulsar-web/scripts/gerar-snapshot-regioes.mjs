@@ -4,13 +4,13 @@
 //
 // Roda em todo build (npm run build) com --manter-se-falhar: se a API estiver fora ou
 // responder algo inesperado, o build segue com o último JSON commitado. O deploy semanal
-// agendado (.github/workflows/atualizar-ocorrencias.yml) mantém os números frescos.
+// agendado (.github/workflows/deploy.yml, segunda) mantém os números frescos.
 // À mão: npm run snapshot:regioes (PULSAR_API_URL=http://localhost:5245 para a API local).
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-const API = process.env.PULSAR_API_URL ?? 'https://pulsar-api-1v0n.onrender.com';
+const API = process.env.PULSAR_API_URL ?? 'https://app-pulsar.com.br';
 // Mesmos slugs de src/data/regioes-seo.ts (o .ts não é importável em todo Node do build);
 // o seo-consistencia.test.ts confere que o JSON commitado bate com regiaoPaths().
 const ZONAS = ['zona-centro', 'zona-leste', 'zona-norte', 'zona-oeste', 'zona-sul'];
@@ -50,7 +50,7 @@ async function main() {
     // Subprefeituras: a mesma fonte de slugs que o gerar-sitemap.mjs usa.
     const ocorrencias = JSON.parse(readFileSync(join(dados, 'ocorrencias-snapshot.json'), 'utf8'));
     const esperado = { subprefeituras: Object.keys(ocorrencias.subprefeituras), zonas: ZONAS };
-    // 60 s: a API no Render pode estar acordando.
+    // 60 s: folga para a API responder durante um deploy.
     const res = await fetch(`${API}/api/estatisticas/regioes`, { signal: AbortSignal.timeout(60_000) });
     if (!res.ok) throw new Error(`API: HTTP ${res.status}`);
     const out = validar(esperado, await res.json());

@@ -35,6 +35,14 @@ describe('tooltipSubprefeituraHtml', () => {
     expect(html).toContain('8.2 km');
   });
 
+  it('mostra os alagamentos ativos do CGE em vermelho, e nada sem eles', () => {
+    const ponto = { via: 'Av Celso Garcia', referencia: '', inicioUtc: '2026-10-25T04:06:00Z', transitavel: false };
+    expect(tooltipSubprefeituraHtml({ ...sub, alagamentosCge: [ponto, ponto] }, 'X'))
+      .toContain('<div class="pt-cge pt-ALTO">⚠ 2 pontos de alagamento agora, segundo o CGE</div>');
+    expect(tooltipSubprefeituraHtml({ ...sub, alagamentosCge: [ponto] }, 'X')).toContain('Alagamento agora, segundo o CGE');
+    expect(tooltipSubprefeituraHtml(sub, 'X')).not.toContain('pt-cge');
+  });
+
   it('usa o nome de fallback e mensagem vazia quando não há subprefeitura', () => {
     const html = tooltipSubprefeituraHtml(undefined, 'Vila Mariana');
     expect(html).toContain('Vila Mariana');

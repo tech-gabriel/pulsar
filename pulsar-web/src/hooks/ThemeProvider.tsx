@@ -7,6 +7,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { ThemeContext, type Theme } from './useTheme';
+import { definirTemaDaBarra } from '../utils/barraDoSistema';
 
 // Persiste o tema em localStorage, aplica a classe `light` no <html> e atualiza
 // a meta theme-color. Default: claro.
@@ -38,8 +39,8 @@ const useLayoutEffectIsomorfico = typeof window === 'undefined' ? useEffect : us
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // Começa claro de propósito, e não lendo o localStorage: o SSG pré-renderiza
   // sempre no claro (o padrão do site), então iniciar no escuro faria o primeiro
-  // render do cliente divergir do HTML do servidor. LandingHero e
-  // LandingComoFunciona trocam o `src` das imagens pelo tema, e o React abortava
+  // render do cliente divergir do HTML do servidor. A landing antiga
+  // trocava o `src` das imagens pelo tema, e o React abortava
   // a hidratação (erro #418), jogando fora a árvore pré-renderizada inteira.
   const [theme, setTheme] = useState<Theme>('light');
   const [sincronizado, setSincronizado] = useState(false);
@@ -60,8 +61,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!sincronizado) return;
     aplicarClasse(theme);
     localStorage.setItem(STORAGE_KEY, theme);
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#052F4A' : '#F8FAFC');
+    definirTemaDaBarra(theme);
   }, [theme, sincronizado]);
 
   const toggleTheme = useCallback((event?: MouseEvent) => {

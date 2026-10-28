@@ -14,6 +14,9 @@ public class PulsarDbContext : DbContext
     public DbSet<LeituraClimatica> LeiturasClimaticas => Set<LeituraClimatica>();
     public DbSet<ScorePerigo> ScoresPerigo => Set<ScorePerigo>();
     public DbSet<AgregadoDiario> AgregadosDiarios => Set<AgregadoDiario>();
+    public DbSet<AgregadoHorario> AgregadosHorarios => Set<AgregadoHorario>();
+    public DbSet<PontoAlagamentoCge> PontosAlagamentoCge => Set<PontoAlagamentoCge>();
+    public DbSet<ExecucaoSincronizacao> ExecucoesSincronizacao => Set<ExecucaoSincronizacao>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioSubprefeitura> UsuarioSubprefeituras => Set<UsuarioSubprefeitura>();
     public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
@@ -166,6 +169,40 @@ public class PulsarDbContext : DbContext
              .WithMany()
              .HasForeignKey(a => a.SubprefeituraId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AgregadoHorario>(e =>
+        {
+            e.HasKey(a => a.Id);
+            // Chave do upsert, mesmo papel da do diário.
+            e.HasIndex(a => new { a.SubprefeituraId, a.HoraUtc }).IsUnique();
+            e.HasOne(a => a.Subprefeitura)
+             .WithMany()
+             .HasForeignKey(a => a.SubprefeituraId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PontoAlagamentoCge>(e =>
+        {
+            e.HasKey(p => p.Id);
+            // Chave do upsert: o CGE não publica id, e o mesmo túnel pode alagar duas vezes
+            // no dia (início diferente) ou nos dois sentidos da avenida.
+            e.HasIndex(p => new { p.SubprefeituraId, p.Dia, p.InicioUtc, p.Via, p.Sentido, p.Referencia }).IsUnique();
+            e.Property(p => p.Via).IsRequired().HasMaxLength(200);
+            e.Property(p => p.Sentido).IsRequired().HasMaxLength(200);
+            e.Property(p => p.Referencia).IsRequired().HasMaxLength(200);
+            e.HasOne(p => p.Subprefeitura)
+             .WithMany()
+             .HasForeignKey(p => p.SubprefeituraId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExecucaoSincronizacao>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.Fonte, x.IniciadoEm });
+            e.Property(x => x.Fonte).IsRequired().HasMaxLength(40);
+            e.Property(x => x.Erro).HasMaxLength(1000);
         });
 
         modelBuilder.Entity<PrevisaoClimatica>(e =>

@@ -25,6 +25,134 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.23.2',
+    data: '2026-10-27',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Barra do iPhone com o app instalado',
+        descricao: 'No iPhone, com o Pulsar na tela de início, a barra de cima (hora e bateria) aparecia borrada, com o mapa passando por baixo. Agora ela fica sólida na cor do app, e nada mais encosta nela nem na barra de baixo.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Título da tela de entrada',
+        descricao: 'A segunda linha da frase do painel azul começava com um recuo. Agora as duas linhas ficam alinhadas.',
+      },
+    ],
+  },
+  {
+    versao: '1.23.1',
+    data: '2026-10-27',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Tela de entrada nova',
+        descricao: 'O mapa de São Paulo agora preenche o painel azul em qualquer tamanho de tela, a logo pulsa e a frase e o formulário entram com movimento. Em monitores grandes, o formulário ficou maior.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Barra do celular na cor do app',
+        descricao: 'No celular, a barra de cima, onde ficam a hora e a bateria, agora acompanha a cor do Pulsar, no tema claro e no escuro.',
+      },
+    ],
+  },
+  {
+    versao: '1.23.0',
+    data: '2026-10-27',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Mapa redesenhado no computador e no tablet',
+        descricao: 'O painel virou um cartão flutuante à direita, com a busca dentro: você pesquisa e a resposta aparece logo embaixo. As camadas ficam numa barra no pé do mapa, e o zoom, os alagamentos e a legenda passaram para a esquerda. No tablet em pé o cartão fica no pé da tela e recolhe até só a busca.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Vidro e movimento mais suaves',
+        descricao: 'Os controles sobre o mapa ganharam o mesmo vidro do topo, a logo pulsa no canto e a troca de páginas ficou mais suave. Se preferir tudo sólido, desligue o Efeito de vidro em Configurações › Aparência.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Tela de entrada em notebooks',
+        descricao: 'Em telas mais baixas, o mapa do painel azul da entrada passava por trás do texto. Agora fica sempre embaixo dele.',
+      },
+    ],
+  },
+  {
+    versao: '1.22.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Marca nova',
+        descricao: 'O Pulsar ganhou uma logo nova, inspirada no pulsar, a estrela que gira e manda sinais de luz em intervalos certos. Ela já aparece no ícone do celular, na aba do navegador e nos avisos.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'O mapa até a borda',
+        descricao: 'O topo do app agora flutua sobre o mapa, com efeito de vidro, e o mapa ganhou a tela toda. Prefere o topo sólido? Desligue o Efeito de vidro em Configurações › Aparência. Suas iniciais no canto abrem o menu da conta, com o botão de sair.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Entrada redesenhada',
+        descricao: 'As telas de entrar e de criar conta mudaram de cara, e no computador a apresentação do primeiro acesso ficou num cartão no centro da tela, mais fácil de seguir.',
+      },
+    ],
+  },
+  {
+    versao: '1.21.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Histórico de alagamentos em dia',
+        descricao: 'O histórico de alagamentos vem do GeoSampa, da Prefeitura. Agora, quando ele para de atualizar, a equipe fica sabendo, e o Pulsar tenta buscar de novo a cada duas horas até voltar.',
+      },
+    ],
+  },
+  {
+    versao: '1.20.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Chuva conferida todo dia',
+        descricao: 'Montamos um painel que compara a chuva registrada em cada subprefeitura com uma segunda fonte e com os alagamentos do CGE. Se uma leitura sair do normal, a equipe vê no dia seguinte, e não semanas depois como aconteceu em setembro.',
+      },
+    ],
+  },
+  {
+    versao: '1.19.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Alagamento confirmado pela cidade',
+        descricao: 'Quando o CGE, da Prefeitura, registra uma rua alagada, o Pulsar mostra o ponto no detalhe da sua subprefeitura e no mapa, com o horário e se dá para passar. Se ela estiver nos seus favoritos, você recebe o aviso na hora.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Menos alarme falso',
+        descricao: 'O alerta de chuva forte agora só sai quando duas medições seguidas confirmam a chuva, e o aviso de chuva prevista só sai quando duas previsões diferentes concordam. Depois de um aviso, você não recebe outro menor sobre a mesma região nas três horas seguintes.',
+      },
+    ],
+  },
+  {
+    versao: '1.18.0',
+    data: '2026-10-26',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Página inicial nova',
+        descricao: 'Agora dá para buscar o seu bairro logo no topo e ver na hora como está a sua região. As 32 subprefeituras também ficaram a um clique.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Chuva mais confiável',
+        descricao: 'Em alguns dias de setembro e outubro, a Sé, a Lapa, Pinheiros, o Butantã, a Vila Mariana e Pirituba-Jaraguá receberam leituras de chuva que não aconteceu, e isso gerou alertas falsos. Corrigimos o histórico dessas regiões e agora conferimos cada leitura com uma segunda fonte antes de usar.',
+      },
+    ],
+  },
+  {
     versao: '1.17.0',
     data: '2026-10-14',
     resumo: 'Depois desta atualização, você vai precisar entrar de novo uma vez. Seus lugares e alertas continuam salvos.',

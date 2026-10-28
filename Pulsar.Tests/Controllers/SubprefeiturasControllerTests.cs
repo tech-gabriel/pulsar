@@ -226,4 +226,34 @@ public class SubprefeiturasControllerTests : IClassFixture<PulsarWebApplicationF
         };
         return await _client.SendAsync(req);
     }
+
+    [Fact]
+    public async Task Lista_TrazOsAlagamentosAtivosDoCge_SoOsVistosHaPouco()
+    {
+        var token = await TokenUsuarioComumAsync();
+        Guid lapa, butanta;
+        using (var escopo = _factory.Services.CreateScope())
+        {
+            var db = escopo.ServiceProvider.GetRequiredService<PulsarDbContext>();
+            lapa = (await db.Subprefeituras.SingleAsync(s => s.Nome == "Lapa")).Id;
+            butanta = (await db.Subprefeituras.SingleAsync(s => s.Nome == "Butantã")).Id;
+            var agora = DateTime.UtcNow;
+            db.PontosAlagamentoCge.AddRange(
+                new PontoAlagamentoCge { SubprefeituraId = lapa, Dia = DateOnly.FromDateTime(agora), Via = "MARGINAL TIETE ASCB EXPRESSA", Referencia = "PTE ATTILIO FONTANA", Ativo = true, VistoEm = agora, InicioUtc = agora.AddHours(-1) },
+                // Ativo, mas o CGE não confirma há 2 h: não aparece.
+                new PontoAlagamentoCge { SubprefeituraId = butanta, Dia = DateOnly.FromDateTime(agora), Via = "AV ELISEU DE ALMEIDA", Ativo = true, VistoEm = agora.AddHours(-2), InicioUtc = agora.AddHours(-3) });
+            await db.SaveChangesAsync();
+        }
+
+        var resposta = await GetComTokenAsync("/api/subprefeituras", token);
+
+        // JSON cru: o front lê exatamente "alagamentosCge", "via" e "referencia".
+        using var doc = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        JsonElement Da(Guid id) => doc.RootElement.EnumerateArray().Single(e => e.GetProperty("id").GetGuid() == id);
+        var pontosLapa = Da(lapa).GetProperty("alagamentosCge");
+        pontosLapa.GetArrayLength().Should().Be(1);
+        pontosLapa[0].GetProperty("via").GetString().Should().Be("Marginal Tiete Ascb Expressa");
+        pontosLapa[0].GetProperty("referencia").GetString().Should().Be("Pte Attilio Fontana");
+        Da(butanta).GetProperty("alagamentosCge").GetArrayLength().Should().Be(0);
+    }
 }

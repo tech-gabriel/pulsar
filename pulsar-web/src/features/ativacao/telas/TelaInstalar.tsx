@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowDown, Check, Download, HardDrive, Share, Smartphone, SquarePlus, Zap } from 'lucide-react';
-import iconePulsar from '../../../assets/logos/pulsar-icone.svg';
+import MarcaAnimada from '../../../components/ui/MarcaAnimada';
 
 interface Props {
   variante: 'ios' | 'prompt';
@@ -23,7 +23,7 @@ export default function TelaInstalar({ variante, onInstalar, onInstalado, onSemA
     }
   }
 
-  const icone = <div className="at-icone-app" aria-hidden="true"><div><img src={iconePulsar} alt="" width={62} height={62} /></div></div>;
+  const icone = <div className="at-icone-app" aria-hidden="true"><MarcaAnimada tamanho={104} /></div>;
 
   if (variante === 'ios') {
     return (

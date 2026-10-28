@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { GeoJsonObject, FeatureCollection } from 'geojson';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Map as MapIcon, Layers } from 'lucide-react';
+import { ChevronUp, ChevronDown, Layers } from 'lucide-react';
 import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
 import BuscaUnificada from '../components/mapa/BuscaUnificada';
 import LayerControl from '../components/mapa/LayerControl';
@@ -31,6 +31,7 @@ import CardAlagamentoProximo from '../components/mapa/CardAlagamentoProximo';
 import { useOcorrenciasAlagamento } from '../hooks/useOcorrenciasAlagamento';
 import { buscarOcorrenciasProximas, RAIO_PROXIMAS_M } from '../api/ocorrencias';
 import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from '../types';
+import { useAlturaFluida } from '../motion/useAlturaFluida';
 
 export default function MapaPage() {
   const { usuario } = useAuth();
@@ -72,7 +73,10 @@ export default function MapaPage() {
     if (sub) setSubSelecionada(sub);
   }
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
-  const [sidebarColapsada, setSidebarColapsada] = useState(false);
+  // Tablet: o cartão do pé recolhe até só a busca, para devolver o mapa.
+  const [painelRecolhido, setPainelRecolhido] = useState(false);
+  const painelRef = useRef<HTMLElement>(null);
+  useAlturaFluida(painelRef);
   const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');
   const [pontoBusca, setPontoBusca] = useState<PontoBusca | null>(null);
   const [avisoBusca, setAvisoBusca] = useState<string | null>(null);
@@ -127,6 +131,7 @@ export default function MapaPage() {
     }
     setAvisoBusca(null);
     setSubSelecionada(sel.sub);
+    setPainelRecolhido(false);
     setZonaEmFoco(null);
     if (isMobile) setPainelMobileAberto(false);
     return true;
@@ -180,23 +185,25 @@ export default function MapaPage() {
   function handleSelecionarSub(sub: SubprefeituraMapaDto) {
     limparDeepLink();
     setSubSelecionada(sub);
+    setPainelRecolhido(false);
     setZonaEmFoco(null);
     if (isMobile) setPainelMobileAberto(false);
   }
 
-  // Classes do mapa: offset lateral conforme sidebar (tablet esquerda / desktop direita)
-  const mapaOffsetClass = sidebarColapsada
-    ? 'md:left-14 lg:left-0 lg:right-14'
-    : 'md:left-80 lg:left-0 lg:right-[350px]';
+  const buscaMapa = (embutida: boolean) => (
+    <BuscaUnificada
+      areas={subprefeituras}
+      onSelecionarArea={handleSelecionarSub}
+      onSelecionar={handleSelecionarEndereco}
+      isMobile={isMobile}
+      onUsarLocalizacao={handleUsarLocalizacao}
+      localizando={localizando}
+      embutida={embutida}
+    />
+  );
 
   return (
-    <div className="relative h-screen overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
-
-      {/* Convite para ativar notificações push (o onboarding agora é a rota /app/boas-vindas). */}
-      {/* Sem favorita o push não tem o que mandar: primeiro escolher, depois ativar. */}
-      {semFavoritas
-        ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
-        : <ConvitePush />}
+    <div className="relative h-[calc(100dvh-var(--seguro-topo))] overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header />
@@ -206,7 +213,7 @@ export default function MapaPage() {
           Abaixo do header (48px mobile / 64px desktop); no mobile termina
           acima da tab bar inferior (48px).
       ══════════════════════════════════════════ */}
-      <div className={`absolute left-0 right-0 bottom-12 md:bottom-0 top-12 md:top-16 z-0 transition-all duration-300 ease-out ${mapaOffsetClass}`}>
+      <div data-transicao className={`mapa-app absolute left-0 right-0 bottom-[calc(3rem+var(--seguro-baixo))] md:bottom-0 top-0 z-0 `}>
         <MapaBase
           geojson={geojson}
           subprefeituras={subprefeituras}
@@ -221,22 +228,8 @@ export default function MapaPage() {
           ocorrencias={ocorrencias}
         />
 
-        {/* Busca unificada (subprefeitura + endereço) sobreposta ao mapa */}
-        <BuscaUnificada
-          areas={subprefeituras}
-          onSelecionarArea={handleSelecionarSub}
-          onSelecionar={handleSelecionarEndereco}
-          isMobile={isMobile}
-          onUsarLocalizacao={handleUsarLocalizacao}
-          localizando={localizando}
-        />
-
-        {/* Aviso quando o endereço cai fora da área coberta */}
-        {avisoBusca && (
-          <div className="mapa-controle mapa-txt absolute left-1/2 -translate-x-1/2 z-[1200] bottom-[7.5rem] md:bottom-6 max-w-[calc(100%-1.5rem)] px-4 py-2.5 text-xs shadow-xl">
-            {avisoBusca}
-          </div>
-        )}
+        {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}
+        {isMobile && buscaMapa(false)}
 
         {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
         <LayerControl
@@ -244,12 +237,6 @@ export default function MapaPage() {
           onChange={setCamadaAtiva}
           isMobile={isMobile}
         />
-
-        {/* Legenda dinâmica (ETAPA 6.1/6.2): muda conforme a camada ativa. Com o
-            overlay ligado ganha a chave dos alagamentos, em vez de sumir: os
-            polígonos continuam coloridos pela camada, então as duas leituras
-            precisam de legenda ao mesmo tempo. */}
-        <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} />
 
 
         {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
@@ -259,15 +246,35 @@ export default function MapaPage() {
           isMobile={isMobile}
         />
 
-        {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
-        {proximas && (
-          <CardAlagamentoProximo dados={proximas} onFechar={() => setProximas(null)} />
-        )}
+        {/* Pilha da legenda e dos avisos (tablet: à direita, no alto; computador: à esquerda, no pé).
+            No celular a pilha some (display: contents) e cada peça se posiciona sozinha. */}
+        <div className="pilha-mapa">
+          {/* Legenda dinâmica: muda com a camada. Com o overlay ligado ganha a chave dos alagamentos. */}
+          <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} />
+
+          {/* Aviso quando o endereço cai fora da área coberta */}
+          {avisoBusca && (
+            <div className="mapa-controle mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">
+              {avisoBusca}
+            </div>
+          )}
+
+          {/* Convite para ativar notificações push. Sem favorita o push não tem o que mandar:
+              primeiro escolher, depois ativar. */}
+          {semFavoritas
+            ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
+            : <ConvitePush />}
+
+          {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
+          {proximas && (
+            <CardAlagamentoProximo dados={proximas} onFechar={() => setProximas(null)} />
+          )}
+        </div>
       </div>
 
       {/* Banner de erro sobre o mapa */}
       {erro && !subSelecionada && (
-        <div className="absolute top-14 md:top-20 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
+        <div className="absolute top-[calc(var(--topo-app)+0.5rem)] left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
           <div className="pointer-events-auto">
             <ErrorBanner mensagem={erro} onRetry={recarregar} />
           </div>
@@ -275,52 +282,34 @@ export default function MapaPage() {
       )}
 
       {/* ══════════════════════════════════════════
-          SIDEBAR — Tablet (md) + Desktop (lg)
-          Tablet: sidebar esquerda, colapsável
-          Desktop: sidebar direita, 350px fixa
+          PAINEL FLUTUANTE — tablet e computador
+          Cartão de vidro do tamanho do conteúdo, com a busca dentro (pesquisou, a resposta
+          aparece embaixo). Tablet: no pé do mapa, recolhível. Computador: à direita.
+          A altura anima ao trocar lista, detalhe e resultados (useAlturaFluida).
       ══════════════════════════════════════════ */}
       <aside
-        style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-glass)' }}
+        ref={painelRef}
+        data-painel-mapa
         className={[
-          "hidden md:flex flex-col absolute top-16 bottom-0 z-[200]",
-          "shadow-xl overflow-hidden",
-          "transition-[width] duration-300 ease-out",
-          // Tablet: lado esquerdo
-          "md:left-0 md:border-r",
-          // Desktop: lado direito (sobrescreve md:)
-          "lg:left-auto lg:right-0 lg:border-r-0 lg:border-l",
-          // Largura: colapsada (w-14 = 56px) ou expandida
-          sidebarColapsada ? "w-14" : "md:w-80 lg:w-[350px]",
-        ].join(" ")}
+          'painel-flutuante painel-mapa vidro-painel vidro-surge hidden md:flex flex-col',
+          subSelecionada && !painelRecolhido ? 'com-detalhe' : '',
+        ].join(' ')}
       >
-        {/* Toggle de colapso — somente tablet (md, oculto em lg) */}
+        {/* Alça do tablet: recolhe o cartão até só a busca. */}
         <button
-          className={[
-            "lg:hidden absolute top-1/2 -translate-y-1/2 z-10",
-            sidebarColapsada ? "right-0" : "-right-3",
-            "w-6 h-10 bg-pulsar-900 border border-pulsar-800 shadow",
-            "flex items-center justify-center rounded-r-lg",
-            "hover:bg-pulsar-800 active:bg-pulsar-700 transition-colors",
-          ].join(" ")}
-          onClick={() => setSidebarColapsada((v) => !v)}
-          title={sidebarColapsada ? "Expandir painel" : "Recolher painel"}
+          type="button"
+          className="lg:hidden flex-shrink-0 h-5 w-full flex items-end justify-center"
+          onClick={() => setPainelRecolhido((v) => !v)}
+          aria-expanded={!painelRecolhido}
+          aria-label={painelRecolhido ? 'Mostrar o painel' : 'Recolher o painel'}
         >
-          {sidebarColapsada
-            ? <ChevronRight size={12} className="text-pulsar-300" />
-            : <ChevronLeft size={12} className="text-pulsar-300" />
-          }
+          <span className="w-9 h-[5px] rounded-full" style={{ background: 'color-mix(in srgb, var(--text-primary) 22%, transparent)' }} />
         </button>
 
-        {sidebarColapsada ? (
-          /* Ícone reduzido quando colapsada */
-          <div className="flex flex-col items-center pt-6 gap-4">
-            <div className="w-8 h-8 rounded-lg bg-pulsar-600 flex items-center justify-center">
-              <MapIcon size={15} className="text-white" />
-            </div>
-          </div>
-        ) : (
-          /* Conteúdo completo */
-          subSelecionada ? (
+        {!isMobile && buscaMapa(true)}
+
+        <div key={subSelecionada?.id ?? 'lista'} className={['painel-conteudo flex-1 min-h-0 flex flex-col', painelRecolhido ? 'lg:flex hidden' : ''].join(' ')}>
+          {subSelecionada ? (
             <DetalheSubprefeitura
               key={subSelecionada.id}
               area={subSelecionada}
@@ -338,8 +327,8 @@ export default function MapaPage() {
               onRecarregar={recarregar}
               onSelecionar={handleSelecionarSub}
             />
-          )
-        )}
+          )}
+        </div>
       </aside>
 
       {/* ══════════════════════════════════════════
@@ -348,10 +337,8 @@ export default function MapaPage() {
           Altura: 72vh. Fechado: 3.5rem visíveis.
       ══════════════════════════════════════════ */}
       <div
-        className="md:hidden fixed bottom-12 left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
+        className="painel-mapa vidro-painel md:hidden fixed bottom-[calc(3rem+var(--seguro-baixo))] left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
         style={{
-          background: 'var(--bg-primary)',
-          boxShadow: '0 -8px 40px rgba(5, 47, 74, 0.20)',
           transform: painelMobileAberto
             ? 'translateY(0)'
             : 'translateY(calc(100% - 3.5rem))',
@@ -409,7 +396,7 @@ export default function MapaPage() {
       {/* FAB: botão flutuante para abrir o drawer (visível quando fechado) */}
       {!painelMobileAberto && !subSelecionada && (
         <button
-          className="md:hidden fixed z-[600] right-4 bottom-[7rem] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
+          className="md:hidden fixed z-[600] right-4 bottom-[calc(7rem+var(--seguro-baixo))] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
           onClick={() => setPainelMobileAberto(true)}
           aria-label="Ver subprefeituras"
         >
@@ -422,7 +409,7 @@ export default function MapaPage() {
           Aparece ao selecionar uma subprefeitura no mobile
       ══════════════════════════════════════════ */}
       {subSelecionada && isMobile && (
-        <div className="fixed inset-0 z-[1100] flex flex-col animate-slide-up" style={{ background: 'var(--bg-primary)' }}>
+        <div className="fixed inset-x-0 bottom-0 top-[var(--seguro-topo)] z-[1100] flex flex-col animate-slide-up" style={{ background: 'var(--bg-primary)' }}>
           <DetalheSubprefeitura
             key={subSelecionada.id}
             area={subSelecionada}

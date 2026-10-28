@@ -50,6 +50,11 @@ export function tooltipSubprefeituraHtml(
   const cls = classeFaixa(sub.faixaRisco);
   const score = sub.scoreAtual ? String(Math.round(sub.scoreAtual.valor)) : '—';
   const motivo = motivoPerigo(sub.scoreAtual?.perigoPrincipal, sub.faixaRisco);
+  const pontosCge = sub.alagamentosCge?.length ?? 0;
+  // Dado oficial, não estimativa: aparece em vermelho mesmo com o score baixo.
+  const linhaCge = pontosCge === 0 ? '' : `<div class="pt-cge pt-ALTO">⚠ ${
+    pontosCge === 1 ? 'Alagamento agora' : `${pontosCge} pontos de alagamento agora`
+  }, segundo o CGE</div>`;
 
   return `<div class="pt">
     ${cabecalho}
@@ -58,6 +63,7 @@ export function tooltipSubprefeituraHtml(
       ${motivo ? `<span class="pt-motivo">${motivo.icone} por ${motivo.rotulo}</span>` : ''}
       <span class="pt-score ${cls}">${score}</span>
     </div>
+    ${linhaCge}
     <div class="pt-grid">
       ${metrica('🌡', fmt(l?.temperaturaC, 1, '°C'))}
       ${metrica('🌧', fmt(l?.chuvaMmH, 1, ' mm/h'))}

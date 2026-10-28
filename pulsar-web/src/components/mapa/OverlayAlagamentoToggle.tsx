@@ -14,7 +14,8 @@ interface Props {
  * sozinho não anuncia o que a camada mostra.
  */
 export default function OverlayAlagamentoToggle({ ativo, onToggle, isMobile }: Props) {
-  const pos = isMobile ? 'top-[7.5rem] right-3' : 'left-3 top-1/2 mt-[8.5rem]';
+  // No tablet e no computador fica na coluna da esquerda, logo abaixo do zoom (.alag-toggle).
+  const pos = isMobile ? 'absolute top-[calc(var(--topo-app)+7.5rem)] right-3' : 'alag-toggle';
 
   return (
     <button
@@ -24,7 +25,7 @@ export default function OverlayAlagamentoToggle({ ativo, onToggle, isMobile }: P
       aria-label="Alagamentos"
       title={ativo ? 'Ocultar alagamentos' : 'Mostrar alagamentos dos últimos 12 meses'}
       className={[
-        'mapa-controle layer-btn absolute z-[1000] flex items-center justify-center rounded-xl',
+        'mapa-controle layer-btn z-[1000] flex items-center justify-center rounded-xl',
         isMobile ? 'w-11 h-11' : 'gap-2 px-3 min-h-11',
         pos,
       ].join(' ')}

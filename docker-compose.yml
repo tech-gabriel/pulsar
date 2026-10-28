@@ -1,8 +1,6 @@
 # docker-compose para rodar o Pulsar.API localmente em container.
 #
-# Inclui um Postgres local para desenvolvimento — assim dá para subir tudo sem
-# depender do Supabase. Para apontar ao Supabase, sobrescreva
-# ConnectionStrings__DefaultConnection (e o serviço `db` torna-se opcional).
+# Inclui um Postgres local para desenvolvimento. Produção usa o docker-compose.prod.yml.
 #
 # Uso:
 #   OPENWEATHERMAP_APIKEY=suachave docker compose up --build
@@ -33,8 +31,7 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      # Postgres local (serviço `db`). Para Supabase, troque por:
-      # Host=db.SEU-PROJETO.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=...
+      # Postgres local (serviço `db`).
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=pulsar;Username=postgres;Password=postgres"
       Jwt__SecretKey: "${JWT_SECRETKEY:-troque-esta-chave-em-producao-com-mais-de-32-caracteres}"
       OpenWeatherMap__ApiKey: "${OPENWEATHERMAP_APIKEY:-}"

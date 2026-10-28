@@ -273,21 +273,21 @@ builder.Services.Configure<PushOptions>(builder.Configuration.GetSection(PushOpt
 builder.Services.AddScoped<IPushNotificationService, WebPushNotificationService>();
 
 // --- Forwarded Headers ---
-// Em produção o app roda atrás do proxy da plataforma (Render/Railway/etc.), que
+// Em produção o app roda atrás do Caddy (deploy/Caddyfile), que
 // termina o TLS e encaminha o IP e o esquema originais via X-Forwarded-For/Proto.
 // Sem isso, o rate limiter particiona por IP do proxy (throttle global) e o app
 // "acha" que a requisição é HTTP. KnownNetworks/KnownProxies ficam vazios porque
-// o IP do proxy é dinâmico em PaaS.
+// o IP do Caddy na rede do Docker não é fixo.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    // Confia em UM ÚNICO salto (o proxy da plataforma). O Render anexa o IP real
+    // Confia em UM ÚNICO salto (o Caddy). O Caddy anexa o IP real
     // do cliente como a última entrada do X-Forwarded-For; com ForwardLimit=1 o
     // ASP.NET usa essa entrada e ignora qualquer valor que o cliente tenha
     // injetado à esquerda — fecha a evasão de rate limit por header forjado.
     options.ForwardLimit = 1;
-    // KnownProxies/KnownIPNetworks ficam vazios porque o IP do proxy é dinâmico
-    // em PaaS; o ForwardLimit=1 é o que limita a confiança.
+    // KnownProxies/KnownIPNetworks ficam vazios porque o IP do Caddy não é fixo;
+    // o ForwardLimit=1 é o que limita a confiança.
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
@@ -323,8 +323,8 @@ if (app.Environment.IsDevelopment())
 }
 
 // --- Cabeçalhos de segurança ---
-// Defense-in-depth nas respostas da API (JSON). O frontend (static site) tem CSP
-// e headers próprios no render.yaml; aqui blindamos o backend caso seja acessado
+// Defense-in-depth nas respostas da API (JSON). O site tem CSP
+// e headers próprios no deploy/Caddyfile; aqui blindamos o backend caso seja acessado
 // direto pela URL pública. CSP restrita: a API nunca serve documento navegável.
 var isDev = app.Environment.IsDevelopment();
 app.Use(async (context, next) =>

@@ -5,7 +5,7 @@
 //
 // Roda em todo build (npm run build) com --manter-se-falhar: se o GeoSampa cair,
 // o build segue com o último JSON commitado em vez de quebrar o deploy. O deploy
-// semanal agendado (.github/workflows/atualizar-ocorrencias.yml) é o que mantém
+// semanal agendado (.github/workflows/deploy.yml, segunda) é o que mantém
 // os números frescos. À mão: npm run snapshot:ocorrencias.
 import { existsSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

@@ -40,7 +40,7 @@ services:
         condition: service_healthy
 
   db:
-    image: postgres:16
+    image: postgres:17
     restart: unless-stopped
     logging: *logs
     environment:

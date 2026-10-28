@@ -24,6 +24,16 @@ if (!('IntersectionObserver' in globalThis)) {
     IntersectionObserverStub as unknown as typeof IntersectionObserver;
 }
 
+
+// jsdom não implementa matchMedia; o GSAP consulta ao registrar o ScrollTrigger.
+// `matches: false` em tudo: nos testes nenhuma animação do gsap.matchMedia roda.
+if (typeof window !== 'undefined' && !window.matchMedia) {
+  window.matchMedia = (query: string) => ({
+    matches: false, media: query, onchange: null,
+    addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+    dispatchEvent: () => false,
+  }) as MediaQueryList;
+}
 // O lottie-web precisa de canvas para se inicializar e o jsdom não fornece um,
 // então o player real explodiria em qualquer tela com animação ilustrativa. Em
 // produção isso cairia na FronteiraDeErro do LottieAnimacao; nos testes o stub

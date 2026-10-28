@@ -5,6 +5,13 @@
 try {
   if (localStorage.getItem('pulsar-theme-v2') === 'dark') {
     document.documentElement.classList.remove('light');
+    // Barra do sistema na cor do fundo escuro (mesmo valor de utils/barraDoSistema.ts).
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', '#052F4A');
+  }
+  // Efeito de vidro desligado em Configurações (useTransparencia).
+  if (localStorage.getItem('pulsar-transparencia') === 'desligada') {
+    document.documentElement.classList.add('sem-transparencia');
   }
 } catch (e) {
   /* localStorage indisponível: mantém o tema padrão (claro) */

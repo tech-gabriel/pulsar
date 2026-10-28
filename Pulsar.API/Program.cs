@@ -158,6 +158,14 @@ builder.Services.AddHttpClient("openweathermap", (sp, client) =>
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
+// Segunda fonte de chuva, só para conferir a do OpenWeatherMap (PlausibilidadeChuva).
+builder.Services.AddHttpClient("openmeteo", client =>
+{
+    client.BaseAddress = new Uri("https://api.open-meteo.com/v1/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
+});
+
 builder.Services.AddHttpClient("cgesp", client =>
 {
     client.BaseAddress = new Uri("https://www.cgesp.org/v3/");
@@ -213,13 +221,17 @@ builder.Services.AddScoped<ITokenVerificacaoEmailRepository, TokenVerificacaoEma
 builder.Services.AddScoped<IAssinaturaPushRepository, AssinaturaPushRepository>();
 builder.Services.AddScoped<IOcorrenciaAlagamentoRepository, OcorrenciaAlagamentoRepository>();
 builder.Services.AddScoped<IAgregadoDiarioRepository, AgregadoDiarioRepository>();
+builder.Services.AddScoped<IAgregadoHorarioRepository, AgregadoHorarioRepository>();
+builder.Services.AddScoped<IPontoAlagamentoCgeRepository, PontoAlagamentoCgeRepository>();
 builder.Services.AddScoped<IPrevisaoRepository, PrevisaoRepository>();
 builder.Services.AddScoped<INotificacaoEnviadaRepository, NotificacaoEnviadaRepository>();
 
 // --- Services ---
 builder.Services.AddScoped<IWeatherClient, OpenWeatherMapClient>();
 builder.Services.AddScoped<IForecastClient, OpenWeatherMapForecastClient>();
+builder.Services.AddScoped<IChuvaReferenciaClient, OpenMeteoClient>();
 builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
+builder.Services.AddScoped<ICgeAlagamentoClient, CgeAlagamentoClient>();
 builder.Services.AddScoped<IGeoSampaClient, GeoSampaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IGeocodingClient, MapTilerGeocodingClient>();
@@ -227,6 +239,7 @@ builder.Services.AddScoped<IBuscaService, BuscaService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ISistemaService, SistemaService>();
+builder.Services.AddScoped<IQualidadeDadosService, QualidadeDadosService>();
 builder.Services.AddScoped<IColetaRunner, ColetaRunner>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IEmailVerificacaoService, EmailVerificacaoService>();
@@ -235,6 +248,7 @@ builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionService>();
 builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
+builder.Services.AddScoped<IAlagamentoCgeService, AlagamentoCgeService>();
 builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
 
 // --- Motor de notificações ---
@@ -245,6 +259,7 @@ builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
 // Registrar CONTRA IGatilhoNotificacao é o que faz o gatilho existir para o motor, que
 // recebe IEnumerable<IGatilhoNotificacao>: registrado pelo tipo concreto, ele compila,
 // resolve e nunca é avaliado. Ver NotificacoesDependencyInjectionTests.
+builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAlagamentoCge>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoScoreAlto>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaPrevista>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoBriefingDiario>();

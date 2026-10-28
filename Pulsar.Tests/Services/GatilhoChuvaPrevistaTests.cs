@@ -35,6 +35,8 @@ public class GatilhoChuvaPrevistaTests
             Fuso = Sp,
             Previsao = faixas,
             AgoraUtc = Agora,
+            // Open-Meteo confirmando qualquer janela: o caso em que a faixa do OWM decide sozinha.
+            ChuvaReferencia = Enumerable.Range(-6, 24).ToDictionary(h => Agora.AddHours(h), _ => 2.0),
         };
 
     [Fact]
@@ -262,5 +264,44 @@ public class GatilhoChuvaPrevistaTests
 
         p[0].Criterio.Should().Be(CriterioOptIn.RiscoAlto);
         p[0].Payload.Titulo.Should().Be("Alerta: chuva muito forte prevista na Mooca");
+    }
+
+    // ── AS3: Vai chover pede as duas previsões concordando ───────────────────────────
+
+    private static ContextoGatilho ComReferencia(IReadOnlyDictionary<DateTime, double>? referencia, params FaixaPrevisaoDto[] faixas)
+        => new()
+        {
+            Estado = new EstadoSubprefeitura(new Subprefeitura { Nome = "Mooca", Ativa = true }, null, null),
+            Fuso = Sp,
+            Previsao = faixas,
+            AgoraUtc = Agora,
+            ChuvaReferencia = referencia,
+        };
+
+    [Fact]
+    public async Task OpenMeteoForaDoAr_NaoAvisa()
+    {
+        (await new GatilhoChuvaPrevista().AvaliarAsync(ComReferencia(null, Faixa(3, 25, 0.9))))
+            .Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task OpenMeteoSemChuvaNaJanela_NaoAvisa()
+    {
+        // Só 4 mm em toda a janela de ±3 h: abaixo da metade dos 10 mm do OWM.
+        var referencia = new Dictionary<DateTime, double> { [Agora.AddHours(3)] = 4.0, [Agora.AddHours(9)] = 20.0 };
+
+        (await new GatilhoChuvaPrevista().AvaliarAsync(ComReferencia(referencia, Faixa(3, 25, 0.9))))
+            .Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task OpenMeteoConfirmaNaJanela_Avisa()
+    {
+        // 5 mm somados dentro de ±3 h da faixa: exatamente o mínimo.
+        var referencia = new Dictionary<DateTime, double> { [Agora.AddHours(1)] = 2.0, [Agora.AddHours(5)] = 3.0 };
+
+        (await new GatilhoChuvaPrevista().AvaliarAsync(ComReferencia(referencia, Faixa(3, 25, 0.9))))
+            .Should().ContainSingle();
     }
 }

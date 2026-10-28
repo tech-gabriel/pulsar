@@ -21,6 +21,7 @@ public class AgregadoDiarioService : IAgregadoDiarioService
     private readonly ILeituraRepository _leituraRepo;
     private readonly IScoreRepository _scoreRepo;
     private readonly IAgregadoDiarioRepository _agregadoRepo;
+    private readonly IAgregadoHorarioRepository _horarioRepo;
     private readonly ILogger<AgregadoDiarioService> _logger;
 
     public AgregadoDiarioService(
@@ -28,12 +29,14 @@ public class AgregadoDiarioService : IAgregadoDiarioService
         ILeituraRepository leituraRepo,
         IScoreRepository scoreRepo,
         IAgregadoDiarioRepository agregadoRepo,
+        IAgregadoHorarioRepository horarioRepo,
         ILogger<AgregadoDiarioService> logger)
     {
         _subprefeituraRepo = subprefeituraRepo;
         _leituraRepo = leituraRepo;
         _scoreRepo = scoreRepo;
         _agregadoRepo = agregadoRepo;
+        _horarioRepo = horarioRepo;
         _logger = logger;
     }
 
@@ -86,5 +89,45 @@ public class AgregadoDiarioService : IAgregadoDiarioService
         }
 
         _logger.LogDebug("Agregado diário atualizado para {Nome} ({Fuso}).", sub.Nome, fusoId);
+
+        // Aproveita as leituras já carregadas. try/catch próprio: o diário já foi gravado
+        // e uma falha aqui não pode subir e parecer falha dele.
+        try
+        {
+            await AtualizarHorasRecentesAsync(subprefeituraId, leituras, scores);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao atualizar agregado horário de {Nome}.", sub.Nome);
+        }
     }
+
+    private async Task AtualizarHorasRecentesAsync(
+        Guid subprefeituraId, List<LeituraClimatica> leituras, List<ScorePerigo> scores)
+    {
+        var horaAtual = InicioDaHora(DateTime.UtcNow);
+
+        // Só a hora atual e a anterior, pelo mesmo motivo do diário: com o ciclo de 15 min,
+        // a anterior fecha no primeiro ciclo da hora nova, e as mais antigas não mudam mais.
+        foreach (var hora in new[] { horaAtual.AddHours(-1), horaAtual })
+        {
+            var daHora = leituras.Where(l => InicioDaHora(l.Timestamp) == hora).ToList();
+            if (daHora.Count == 0) continue;
+
+            var scoresDaHora = scores.Where(s => InicioDaHora(s.Timestamp) == hora).ToList();
+
+            await _horarioRepo.UpsertAsync(new AgregadoHorario
+            {
+                SubprefeituraId = subprefeituraId,
+                HoraUtc = hora,
+                ChuvaMm = daHora.Sum(l => l.ChuvaMmH) * 0.25,
+                ChuvaBrutaMm = daHora.Sum(l => l.ChuvaBrutaMmH ?? l.ChuvaMmH) * 0.25,
+                ScoreAlagamentoMax = scoresDaHora.Count > 0 ? scoresDaHora.Max(s => s.ValorAlagamento) : 0,
+                LeiturasCount = daHora.Count,
+            });
+        }
+    }
+
+    private static DateTime InicioDaHora(DateTime utc)
+        => new(utc.Year, utc.Month, utc.Day, utc.Hour, 0, 0, DateTimeKind.Utc);
 }

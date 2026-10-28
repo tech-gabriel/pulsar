@@ -92,6 +92,44 @@ namespace Pulsar.API.Migrations
                     b.ToTable("AgregadosDiarios");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AgregadoHorario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("ChuvaBrutaMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ChuvaMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("HoraUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LeiturasCount")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("ScoreAlagamentoMax")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubprefeituraId", "HoraUtc")
+                        .IsUnique();
+
+                    b.ToTable("AgregadosHorarios");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.AssinaturaPush", b =>
                 {
                     b.Property<Guid>("Id")
@@ -139,11 +177,57 @@ namespace Pulsar.API.Migrations
                     b.ToTable("AssinaturasPush");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.ExecucaoSincronizacao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Erro")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("FinalizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Fonte")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("IniciadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Lidas")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Novas")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Sucesso")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Fonte", "IniciadoEm");
+
+                    b.ToTable("ExecucoesSincronizacao");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.LeituraClimatica", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<double?>("ChuvaBrutaMmH")
+                        .HasColumnType("double precision");
 
                     b.Property<double>("ChuvaMmH")
                         .HasColumnType("double precision");
@@ -268,6 +352,62 @@ namespace Pulsar.API.Migrations
                         .IsUnique();
 
                     b.ToTable("OcorrenciasAlagamento");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.PontoAlagamentoCge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Dia")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("FimUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("InicioUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Referencia")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Sentido")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Transitavel")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Via")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("VistoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubprefeituraId", "Dia", "InicioUtc", "Via", "Sentido", "Referencia")
+                        .IsUnique();
+
+                    b.ToTable("PontosAlagamentoCge");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.PrevisaoClimatica", b =>
@@ -1267,6 +1407,17 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Subprefeitura");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AgregadoHorario", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subprefeitura");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.AssinaturaPush", b =>
                 {
                     b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
@@ -1306,6 +1457,17 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Subprefeitura");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.PontoAlagamentoCge", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subprefeitura");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.PrevisaoClimatica", b =>

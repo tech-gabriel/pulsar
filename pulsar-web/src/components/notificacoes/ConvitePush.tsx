@@ -69,12 +69,7 @@ export default function ConvitePush() {
         data-variante="mobile-bar"
         // Acima do handle do drawer (sempre visível em bottom-12) e da safe-area;
         // right-[4.5rem] deixa o FAB "Ver regiões" livre na direita.
-        className="fixed bottom-[7.5rem] left-3 right-[4.5rem] z-[1200] animate-slide-up flex items-center gap-2.5 rounded-xl px-3 py-2"
-        style={{
-          background: 'var(--bg-primary)',
-          border: '1px solid var(--border-glass, rgba(0,188,255,0.15))',
-          boxShadow: '0 8px 28px rgba(2, 24, 38, 0.35)',
-        }}
+        className="vidro-painel fixed bottom-[calc(7.5rem+var(--seguro-baixo))] left-3 right-[4.5rem] z-[1200] animate-slide-up flex items-center gap-2.5 rounded-2xl px-3 py-2"
         role="region"
         aria-label="Ativar notificações"
       >
@@ -105,16 +100,9 @@ export default function ConvitePush() {
 
   // Desktop/tablet: card completo (inalterado).
   return (
-    <div className="absolute left-1/2 -translate-x-1/2 z-[1200] bottom-[7.5rem] md:bottom-6 w-[calc(100%-1.5rem)] max-w-md animate-slide-up">
+    <div className="cartao-pe-mapa animate-slide-up">
       <div
-        className="flex items-start gap-3 rounded-2xl px-4 py-3.5"
-        style={{
-          background: 'var(--bg-glass, rgba(5, 47, 74, 0.92))',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid var(--border-glass, rgba(0, 188, 255, 0.15))',
-          boxShadow: '0 12px 40px rgba(2, 24, 38, 0.35)',
-        }}
+        className="vidro-painel flex items-start gap-3 rounded-2xl px-4 py-3.5"
         role="region"
         aria-label="Ativar notificações"
       >

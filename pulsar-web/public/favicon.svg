@@ -1,11 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  
-  <circle cx="256.0" cy="256.0" r="174.08" stroke="#00a6f4" stroke-width="10.24" fill="none" opacity="0.2"/>
-  <circle cx="256.0" cy="256.0" r="133.12" stroke="#00a6f4" stroke-width="10.24" fill="none" opacity="0.35"/>
-  <circle cx="256.0" cy="256.0" r="92.16" stroke="#0084d1" stroke-width="12.8" fill="none" opacity="0.55"/>
-  <circle cx="256.0" cy="256.0" r="40.96" fill="#0069a8"/>
-  <circle cx="256.0" cy="256.0" r="25.6" fill="#00bcff"/>
-  <circle cx="256.0" cy="256.0" r="12.8" fill="#f0f9ff"/>
-  <path d="M256.0 122.88 A133.12 133.12 0 0 1 389.12 256.0" stroke="#00a6f4" stroke-width="15.36" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M256.0 389.12 A133.12 133.12 0 0 1 122.88 256.0" stroke="#0084d1" stroke-width="12.8" stroke-linecap="round" fill="none" opacity="0.4"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 60 392 392"><g class="arcos" fill="none" stroke="#00A6F4" stroke-width="46" stroke-linecap="round"><path pathLength="1" d="M242.9 106.6 A150 150 0 0 1 405.4 242.9"/><path pathLength="1" d="M269.1 405.4 A150 150 0 0 1 106.6 269.1"/></g><g class="halo"><circle cx="256" cy="256" r="104" fill="#00A6F4" opacity=".14"/><circle cx="256" cy="256" r="80" fill="#00A6F4" opacity=".26"/></g><circle class="nucleo" cx="256" cy="256" r="52" fill="#00A6F4"/></svg>

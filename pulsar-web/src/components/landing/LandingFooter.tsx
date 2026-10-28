@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AtSign } from 'lucide-react';
-import iconePulsar from '../../assets/logos/pulsar-icone.svg';
+import simboloPulsar from '../../assets/logos/pulsar-simbolo.svg';
 import SeloVersao from '../SeloVersao';
 import { track } from '../../analytics';
 import { INSTAGRAM_URL } from '../../data/social';
@@ -14,10 +14,10 @@ export default function LandingFooter() {
     >
       <div className="max-w-[1120px] mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2.5">
-          <img src={iconePulsar} alt="" className="w-8 h-8" style={{ filter: 'drop-shadow(var(--glow-cyan))' }} />
+          <img src={simboloPulsar} alt="" className="w-8 h-8" />
           <div className="leading-tight">
-            <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
-              PULSAR
+            <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 18, letterSpacing: '-0.035em', color: 'var(--text-primary)' }}>
+              pulsar
             </p>
             <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
               Monitoramento climático de São Paulo

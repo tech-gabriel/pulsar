@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
-import Reveal from './Reveal';
 
 const PERGUNTAS: { q: string; a: string }[] = [
   {
@@ -77,20 +76,13 @@ export default function LandingFaq() {
 
   return (
     <section id="faq" className="landing-section">
-      <Reveal>
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold" style={{ color: 'var(--text-accent)' }}>
-          Perguntas frequentes
-        </p>
-        <h2
-          className="mt-3 max-w-2xl leading-tight"
-          style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(26px, 3.5vw, 38px)', color: 'var(--text-primary)' }}
-        >
-          Ainda com dúvidas? <span className="landing-gradient-text">A gente responde</span>
-        </h2>
-      </Reveal>
+      <div data-revelar>
+        <p className="lp-rotulo">Perguntas frequentes</p>
+        <h2 className="lp-h2 mt-3 max-w-2xl">Ainda com dúvidas?</h2>
+      </div>
 
-      <Reveal delay={0.08}>
-        <div className="mt-10 max-w-3xl mx-auto flex flex-col gap-3">
+      <div data-revelar>
+        <div className="mt-10 max-w-3xl flex flex-col gap-3">
           {PERGUNTAS.map(({ q, a }, i) => (
             <Item
               key={q}
@@ -102,7 +94,7 @@ export default function LandingFaq() {
             />
           ))}
         </div>
-      </Reveal>
+      </div>
     </section>
   );
 }

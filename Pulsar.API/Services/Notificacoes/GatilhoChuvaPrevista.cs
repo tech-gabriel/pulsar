@@ -43,6 +43,7 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
             .Where(f => f.InstantePrevisto <= limiteJanela)
             .Where(f => f.ChuvaMm >= LimiaresNotificacao.ChuvaFortePrevistaMm
                      && f.ProbabilidadeChuva >= LimiaresNotificacao.ProbabilidadeMinima)
+            .Where(f => ConfirmadaPeloOpenMeteo(ctx.ChuvaReferencia, f.InstantePrevisto))
             .OrderBy(f => f.InstantePrevisto)
             .FirstOrDefault();
 
@@ -89,5 +90,18 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
         // exata da faixa, exatamente um aviso por janela prevista, e não janela deslizante.
 
         return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([pendencia]);
+    }
+
+    /// <summary>
+    /// Nível Vai chover: as duas previsões precisam concordar. A janela tem a folga de ±3 h da
+    /// direção incerta da faixa (ver o doc da classe). Sem o Open-Meteo, não confirma: errar
+    /// para o silêncio é o que corta o alarme falso.
+    /// </summary>
+    private static bool ConfirmadaPeloOpenMeteo(IReadOnlyDictionary<DateTime, double>? referencia, DateTime instante)
+    {
+        if (referencia is null) return false;
+        var folga = TimeSpan.FromHours(LimiaresNotificacao.FolgaConfirmacaoHoras);
+        var soma = referencia.Where(h => h.Key >= instante - folga && h.Key <= instante + folga).Sum(h => h.Value);
+        return soma >= LimiaresNotificacao.ChuvaFortePrevistaMm * LimiaresNotificacao.FatorConfirmacaoOpenMeteo;
     }
 }

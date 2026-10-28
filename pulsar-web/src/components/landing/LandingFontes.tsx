@@ -1,35 +1,30 @@
 import { CloudSun, Building2, MapPinned, RefreshCw, type LucideIcon } from 'lucide-react';
-import Reveal from './Reveal';
 
 const FONTES: { Icon: LucideIcon; label: string }[] = [
   { Icon: CloudSun, label: 'OpenWeatherMap' },
   { Icon: Building2, label: 'CGE-SP' },
-  { Icon: MapPinned, label: '32 subprefeituras' },
+  { Icon: MapPinned, label: 'GeoSampa, da Prefeitura' },
   { Icon: RefreshCw, label: 'Atualização a cada 15 min' },
 ];
 
 export default function LandingFontes() {
   return (
-    <section className="landing-section !py-16 text-center">
-      <Reveal>
-        <p className="uppercase tracking-[0.18em] text-xs font-semibold" style={{ color: 'var(--text-accent)' }}>
-          Dados confiáveis
-        </p>
-        <h2
-          className="mt-3 mx-auto max-w-2xl leading-tight"
-          style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 'clamp(24px, 3vw, 32px)', color: 'var(--text-primary)' }}
-        >
-          Construído sobre fontes oficiais
-        </h2>
+    <section className="landing-section !py-14 text-center" aria-labelledby="fontes-titulo">
+      <div data-revelar>
+        <p className="lp-rotulo">Transparência</p>
+        <h2 id="fontes-titulo" className="lp-h2 mt-3 mx-auto max-w-2xl">De onde vêm os números</h2>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           {FONTES.map(({ Icon, label }) => (
             <span key={label} className="landing-pill">
-              <Icon size={16} style={{ color: 'var(--text-accent)' }} />
+              <Icon size={16} style={{ color: 'var(--text-accent)' }} aria-hidden="true" />
               {label}
             </span>
           ))}
         </div>
-      </Reveal>
+        <p className="mt-6 mx-auto max-w-[52ch] text-[14px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+          O Pulsar ajuda a decidir o dia a dia. Em emergência, ligue 199 (Defesa Civil) ou 193 (Bombeiros).
+        </p>
+      </div>
     </section>
   );
 }

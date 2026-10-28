@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
-import iconePulsar from '../../assets/logos/pulsar-icone.svg';
+import simboloPulsar from '../../assets/logos/pulsar-simbolo.svg';
 
 /**
  * Barra de topo da landing pública. Diferente do `Header` do app (que é
@@ -12,45 +12,26 @@ export default function LandingNav() {
 
   return (
     <nav className="landing-nav">
-      <Link to="/" className="flex items-center gap-2.5 min-h-11" aria-label="Pulsar, página inicial">
-        <img
-          src={iconePulsar}
-          alt=""
-          className="w-9 h-9"
-          style={{ filter: 'drop-shadow(var(--glow-cyan))' }}
-        />
-        <span
-          style={{
-            fontFamily: 'var(--font-heading)',
-            fontWeight: 700,
-            fontSize: 20,
-            color: 'var(--text-primary)',
-            textShadow: 'var(--glow-cyan)',
-          }}
-        >
-          PULSAR
-        </span>
+      <Link to="/" className="flex items-center gap-2 min-h-11 shrink-0" aria-label="Pulsar, página inicial">
+        <img src={simboloPulsar} alt="" className="w-8 h-8" />
+        <span className="lp-titulo text-[21px] font-extrabold tracking-[-0.035em]" style={{ color: 'var(--text-primary)' }}>pulsar</span>
       </Link>
 
-      <div className="flex items-center gap-2.5 sm:gap-3">
+      <div className="flex items-center gap-1 sm:gap-2">
         <button
           type="button"
           onClick={toggleTheme}
-          className="min-w-11 min-h-11 inline-flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--bg-glass-hover)]"
+          className="min-w-11 min-h-11 inline-flex items-center justify-center rounded-full transition-colors hover:bg-[var(--bg-glass-hover)]"
           style={{ color: 'var(--text-secondary)' }}
           title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
           aria-label="Alternar tema"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
-        <Link
-          to="/login"
-          className="text-sm font-semibold px-3 min-h-11 inline-flex items-center rounded-lg transition-colors"
-          style={{ color: 'var(--text-secondary)' }}
-        >
+        <Link to="/login" className="text-sm font-semibold px-2.5 sm:px-3 min-h-11 inline-flex items-center rounded-full" style={{ color: 'var(--text-secondary)' }}>
           Entrar
         </Link>
-        <Link to="/cadastro" className="landing-cta whitespace-nowrap !px-4 !py-0 min-h-11 inline-flex items-center !text-sm">
+        <Link to="/cadastro" className="whitespace-nowrap px-4 min-h-10 inline-flex items-center rounded-full text-sm font-semibold text-white bg-pulsar-600 hover:bg-pulsar-500 transition-colors">
           Criar conta
         </Link>
       </div>

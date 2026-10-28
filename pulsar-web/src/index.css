@@ -60,12 +60,7 @@
   --glass-blur: blur(16px) saturate(180%);
   --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 
-  /* Controles sobrepostos ao mapa (busca, camadas, legenda). Precisam de mais
-     corpo que o glass das páginas, porque ficam sobre o basemap. Existem nos
-     dois temas: antes o azul escuro estava fixo dentro dos componentes e os
-     controles continuavam escuros com o app no tema claro. */
-  --mapa-controle-bg: rgba(5, 47, 74, 0.82);
-  --mapa-controle-borda: rgba(0, 188, 255, 0.14);
+  /* Texto dos controles sobrepostos ao mapa (o fundo é o vidro, ver .mapa-controle). */
   --mapa-controle-texto: #F0F9FF;
   --mapa-controle-texto-suave: rgba(184, 230, 254, 0.75);
 
@@ -75,8 +70,6 @@
 
 /* ── Tema Light (ETAPA B.2) — sobrescreve as variáveis em html.light ───────────*/
 html.light {
-  --mapa-controle-bg: rgba(255, 255, 255, 0.9);
-  --mapa-controle-borda: rgba(0, 105, 168, 0.18);
   --mapa-controle-texto: #0F172A;
   --mapa-controle-texto-suave: #475569;
   --cor-alerta: #B91C1C;
@@ -98,28 +91,6 @@ html.light {
   --glass-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/*
- * Escopo "sempre dark": telas legadas construídas só para o dark (login,
- * cadastro e o detalhe de histórico) re-declaram as variáveis dark localmente,
- * permanecendo legíveis mesmo com o tema light ativo.
- */
-.theme-dark-scope {
-  --bg-primary: #052F4A;
-  --bg-secondary: rgba(0, 89, 138, 0.15);
-  --bg-elevated: rgba(0, 105, 168, 0.10);
-  --bg-glass: rgba(5, 47, 74, 0.6);
-  --bg-glass-hover: rgba(0, 89, 138, 0.18);
-  --bg-input: rgba(0, 89, 138, 0.2);
-  --border-glass: rgba(0, 188, 255, 0.12);
-  --border-glass-hover: rgba(0, 188, 255, 0.25);
-  --border-subtle: rgba(0, 188, 255, 0.06);
-  --text-primary: #F0F9FF;
-  --text-secondary: #B8E6FE;
-  --text-muted: rgba(184, 230, 254, 0.5);
-  --text-accent: #00BCFF;
-  --glass-blur: blur(16px) saturate(180%);
-  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-}
 
 * {
   box-sizing: border-box;
@@ -422,6 +393,14 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   margin-top: 6px;
 }
 
+/* Alagamento oficial do CGE: usa a cor de ALTO pela classe pt-ALTO. */
+.pulsar-tooltip .pt-cge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c);
+  margin: -2px 0 10px;
+}
+
 /* Cores por faixa (sobrescritas com tons mais escuros no tema claro). */
 .pulsar-tooltip .pt-BAIXO { --c: #4ade80; }
 .pulsar-tooltip .pt-MODERADO { --c: #fbbf24; }
@@ -523,23 +502,116 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   }
 }
 
+/* O mapa do app passa por baixo da cápsula do cabeçalho: os controles do Leaflet descem junto. */
+/* ── Mapa: layout do tablet e do computador (direção A, espelhada) ──────────────────────────
+   Celular (< 768): busca no topo, folha que sobe de baixo, cards centrados acima dela.
+   Tablet (768-1023): o painel vira cartão flutuante no pé do mapa (busca dentro); camadas em
+   pílula no topo; zoom e Alagamentos à esquerda; legenda e avisos empilhados à direita.
+   Computador (>= 1024): o painel é um cartão flutuante à direita, do tamanho do conteúdo, com a
+   busca dentro; camadas em pílula (no pé a partir de 1280); zoom, Alagamentos, legenda e avisos
+   à esquerda. */
+.cartao-pe-mapa {
+  /* Centrado por left/right + margem automática, e não por translate: o lightningcss funde
+     translate com o transform da animação de entrada e descarta um deles. */
+  position: absolute; z-index: 1200;
+  left: 0; right: 0; margin-inline: auto;
+  bottom: calc(7.5rem + var(--seguro-baixo));
+  width: min(28rem, calc(100% - 1.5rem));
+}
+/* Pilha de avisos + legenda: no celular não existe (cada peça se posiciona sozinha). */
+.pilha-mapa { display: contents; }
+@media (min-width: 768px) {
+  .pilha-mapa {
+    position: absolute; z-index: 1200; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+    right: 12px; top: calc(var(--topo-app) + 8px); width: min(24rem, calc(100% - 24px)); pointer-events: none;
+  }
+  .pilha-mapa > * { position: static !important; margin: 0 !important; transform: none !important; inset: auto !important; width: 100% !important; pointer-events: auto; }
+  .pilha-mapa > .legenda-mapa { width: auto !important; order: -1; }
+  .mapa-app .leaflet-left .leaflet-control { margin: 12px 0 0 12px; }
+  .leaflet-control-zoom a, .leaflet-touch .leaflet-control-zoom a { width: 40px !important; height: 40px !important; line-height: 40px !important; }
+}
+@media (min-width: 1024px) {
+  .pilha-mapa { right: auto; left: 12px; top: auto; bottom: 16px; align-items: flex-start; }
+  .pilha-mapa > .legenda-mapa { order: 1; }
+}
+
+/* Camadas em pílula (tablet e computador). No topo, centrada na parte do mapa que o painel não cobre. */
+.camadas-pilula {
+  position: absolute; z-index: 1000; display: flex; gap: 2px; padding: 5px; border-radius: 999px !important;
+  top: calc(var(--topo-app) + 8px); left: 50%; translate: -50% 0;
+}
+.camadas-pilula .layer-btn { border-radius: 999px !important; padding: 0 16px !important; min-height: 40px; }
+@media (min-width: 1024px) {
+  .camadas-pilula { left: calc((100% - var(--largura-painel) - 26px) / 2); }
+}
+/* No pé, a partir de 1280: centrada na tela (cabe entre a coluna da esquerda e o painel). */
+@media (min-width: 1280px) {
+  .camadas-pilula { top: auto; bottom: 20px; left: 50%; }
+}
+/* Alagamentos logo abaixo do zoom (2 x 40 px + margens). */
+.alag-toggle { position: absolute; z-index: 1000; left: 12px; top: calc(var(--topo-app) + 104px); border-radius: 999px !important; }
+
+/* O painel: cartão flutuante. A altura acompanha o conteúdo (até o limite) e anima ao mudar. */
+.painel-flutuante {
+  position: absolute; z-index: 200; overflow: hidden; border-radius: 28px;
+  left: 12px; right: 12px; bottom: 12px; max-height: 46%;
+}
+.painel-flutuante.com-detalhe { max-height: 72%; }
+@media (min-width: 1024px) {
+  .painel-flutuante, .painel-flutuante.com-detalhe {
+    left: auto; right: 14px; bottom: auto; top: calc(var(--topo-app) + 8px);
+    width: var(--largura-painel); max-height: calc(100% - var(--topo-app) - 22px);
+  }
+}
+/* A superfície chega "materializando": desfoque e escala juntos, não só opacidade. */
+@keyframes vidro-surge { from { opacity: 0; transform: scale(.965); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+.vidro-surge { animation: vidro-surge .55s cubic-bezier(.32, .72, 0, 1) both; }
+/* O conteúdo novo do painel (lista ou detalhe) entra deslizando pouco, enquanto o cartão muda de altura. */
+@keyframes painel-conteudo { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.painel-conteudo { animation: painel-conteudo .4s cubic-bezier(.32, .72, 0, 1) both; }
+@media (prefers-reduced-motion: reduce) { .vidro-surge, .painel-conteudo { animation: none; } }
+
+/* Busca dentro do painel: campo preenchido, sem vidro próprio (já está no vidro do cartão). */
+.busca-embutida .mapa-controle {
+  background: color-mix(in srgb, var(--text-primary) 6%, transparent) !important;
+  box-shadow: none !important; backdrop-filter: none !important; border-radius: 14px;
+}
+.busca-embutida ul.mapa-controle { background: transparent !important; }
+
+/* Conteúdo do painel sobre o vidro: sem fundo próprio; status da cidade em vidro tingido pela
+   cor do risco (em vez do bloco marinho sólido); lista agrupada como no iOS. */
+.painel-mapa .painel-glass { background: transparent !important; backdrop-filter: none !important; }
+.painel-mapa .cid-agora { --c: #22C55E; }
+.painel-mapa .cid-agora:has(.cid-radar.moderado) { --c: #F59E0B; }
+.painel-mapa .cid-agora:has(.cid-radar.alto) { --c: #EF4444; }
+.painel-mapa .cid-agora:has(.cid-radar.sem) { --c: #94A3B8; }
+.painel-mapa .cid-agora {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c) 22%, transparent), color-mix(in srgb, var(--c) 6%, transparent));
+  color: var(--text-primary); border: 0; border-radius: 20px; padding: 16px;
+  box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--c) 35%, transparent);
+}
+.painel-mapa .cid-agora .cid-sub, .painel-mapa .cid-agora .cid-dist-leg { color: var(--text-secondary); }
+.painel-mapa .linha-area { background: color-mix(in srgb, var(--text-primary) 4%, transparent); border: 0; border-radius: 14px; margin-bottom: 4px; }
+.painel-mapa .linha-area:hover { background: color-mix(in srgb, var(--text-primary) 8%, transparent); }
+
+.mapa-app .leaflet-top {
+  top: var(--topo-app);
+}
+
 /* O zoom vem branco de fábrica do Leaflet, o que destoava de todo o resto
    sobreposto ao mapa (busca, camadas, legenda) — mais ainda depois que ele
    saiu de trás da barra de busca e passou a ficar bem visível. Aqui ele passa
    a usar os mesmos tokens de `.mapa-controle`, então acompanha o tema claro e
    o escuro junto com os vizinhos. */
 .leaflet-control-zoom.leaflet-bar {
-  border: 1px solid var(--mapa-controle-borda) !important;
-  border-radius: 12px !important;
-  box-shadow: var(--glass-shadow);
+  border-radius: 999px !important;
   overflow: hidden;
 }
 .leaflet-control-zoom a,
 .leaflet-touch .leaflet-control-zoom a {
-  background: var(--mapa-controle-bg) !important;
-  backdrop-filter: blur(16px);
+  background: transparent !important;
   color: var(--mapa-controle-texto) !important;
-  border-bottom: 1px solid var(--mapa-controle-borda) !important;
+  border-bottom: 1px solid var(--vidro-borda) !important;
 }
 .leaflet-control-zoom a:last-child {
   border-bottom: none !important;
@@ -616,12 +688,10 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   outline-offset: 2px;
 }
 
-/* Card base dos controles sobre o mapa, nos dois temas. */
+/* Card base dos controles sobre o mapa: o vidro do cabeçalho, com a tinta mais densa porque
+   carrega texto pequeno sobre o mapa colorido. */
 .mapa-controle {
-  background: var(--mapa-controle-bg);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--mapa-controle-borda);
-  border-radius: 12px;
+  border-radius: 16px;
   color: var(--mapa-controle-texto);
 }
 
@@ -866,6 +936,22 @@ body.mapa-lock {
   overflow: hidden;
 }
 
+/* Áreas seguras do aparelho (iPhone com o app instalado: a barra do sistema é transparente,
+   apple-mobile-web-app-status-bar-style = black-translucent, e o viewport usa viewport-fit=cover).
+   Sem elas o conteúdo passava por baixo da hora e da bateria e a barra parecia borrada. No navegador
+   e no Android as áreas valem 0 e nada muda. */
+:root { --seguro-topo: env(safe-area-inset-top, 0px); --seguro-baixo: env(safe-area-inset-bottom, 0px); }
+body { padding-top: var(--seguro-topo); }
+body::before {
+  content: ""; position: fixed; z-index: 3000; top: 0; left: 0; right: 0; height: var(--seguro-topo);
+  background: var(--cor-barra, var(--bg-primary)); pointer-events: none;
+}
+/* Login no celular: o próprio painel azul passa por trás da barra (sem a faixa e sem emenda). */
+@media (max-width: 1023px) {
+  body:has(.auth-vitrine)::before { background: transparent; }
+  .auth-vitrine { margin-top: calc(-1 * var(--seguro-topo)); padding-top: calc(22px + var(--seguro-topo)); }
+}
+
 /* Remove o flash cinza de toque em toda a app (spec 6.7) */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -893,40 +979,112 @@ button, a, [role="button"], [role="radio"] {
    ETAPA B — Header de navegação + ajustes do tema Light
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* Header / barra de navegação glass (variáveis de tema) */
-.app-header {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid var(--border-glass);
+/* Cabeçalho: cápsula de vidro flutuando sobre o conteúdo, no material da Apple (iOS 26 / macOS).
+   O vidro tem três camadas: a tinta do fundo translúcida, o desfoque com saturação do que passa
+   por baixo e o brilho da aresta de cima (inset). Fica opaco quando a pessoa pede menos
+   transparência no sistema ou em Configurações (html.sem-transparencia), ou sem backdrop-filter.
+   --topo-app é o espaço que o conteúdo deixa para a cápsula (mapa, busca, painel). */
+:root {
+  --topo-app: 60px;
+  /* Vidro (Liquid Glass aproximado). A forma vem da luz, não de um contorno: tinta translúcida,
+     um brilho que desce da aresta de cima (--vidro-luz), um aro fino de luz (inset) e a saturação
+     do que passa por baixo. --vidro-tinta é o vidro leve (controles); --vidro-tinta-painel, o denso
+     (painéis com texto). --vidro-borda é só o separador interno (zoom, listas). */
+  --vidro-tinta: rgba(14, 28, 44, .42);
+  --vidro-tinta-painel: rgba(10, 24, 38, .70);
+  --vidro-luz: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, 0) 42%);
+  --vidro-brilho: rgba(255, 255, 255, .20);
+  --vidro-borda: rgba(255, 255, 255, .08);
+  --vidro-sombra: 0 12px 32px -12px rgba(0, 0, 0, .55), 0 1px 2px rgba(0, 0, 0, .28);
+  --largura-painel: 380px;
 }
+html.light {
+  --vidro-tinta: rgba(255, 255, 255, .46);
+  --vidro-tinta-painel: rgba(255, 255, 255, .78);
+  --vidro-luz: linear-gradient(180deg, rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 46%);
+  --vidro-brilho: rgba(255, 255, 255, .9);
+  --vidro-borda: rgba(12, 38, 60, .07);
+  --vidro-sombra: 0 12px 32px -14px rgba(12, 38, 60, .30), 0 1px 2px rgba(12, 38, 60, .10);
+}
+@media (min-width: 768px) { :root { --topo-app: 70px; } }
+.app-header, .vidro, .vidro-painel, .mapa-controle, .leaflet-control-zoom.leaflet-bar {
+  border: 0 !important;
+  backdrop-filter: blur(30px) saturate(210%) brightness(1.04);
+  box-shadow: inset 0 1px 0 var(--vidro-brilho), inset 0 0 0 .5px color-mix(in srgb, var(--vidro-brilho) 55%, transparent), var(--vidro-sombra) !important;
+}
+.app-header, .vidro, .mapa-controle, .leaflet-control-zoom.leaflet-bar { background: var(--vidro-luz), var(--vidro-tinta) !important; }
+.vidro-painel { background: var(--vidro-luz), var(--vidro-tinta-painel) !important; }
+.app-header {
+  top: calc(var(--seguro-topo) + 8px); left: 8px; right: 8px; height: 52px;
+  padding: 0 6px 0 14px;
+  border-radius: 18px;
+}
+@media (min-width: 768px) {
+  .app-header { top: calc(var(--seguro-topo) + 10px); left: 12px; right: 12px; height: 56px; padding: 0 8px 0 18px; border-radius: 20px; }
+}
+html.sem-transparencia :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
+@media (prefers-reduced-transparency: reduce) {
+  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
+}
+@supports not (backdrop-filter: blur(1px)) {
+  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; }
+}
+
+/* Abas do topo (md+): um grupo só, com a aba ativa marcada por dentro. */
+.nav-segmentos { align-items: center; gap: 2px; } /* display vem do hidden md:flex do JSX */
 .nav-tab {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 400;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
   color: var(--text-secondary);
-  border-bottom: 2px solid transparent;
-  transition: all 200ms;
+  transition: background-color 200ms ease, color 200ms ease;
   cursor: pointer;
 }
-.nav-tab:hover {
-  color: var(--text-primary);
-  background: var(--bg-elevated);
+/* iPad em pé e notebooks estreitos: só o ícone (os rótulos atropelavam a marca); o nome segue para leitor de tela. */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .nav-tab { padding: 0 11px; }
+  .nav-tab-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
+.nav-tab:hover { color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
 .nav-tab.ativa {
-  color: var(--text-accent);
+  color: var(--color-pulsar-600);
   font-weight: 600;
-  border-bottom-color: var(--text-accent);
+  background: color-mix(in srgb, var(--color-pulsar-500) 13%, transparent);
 }
+html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: color-mix(in srgb, var(--color-pulsar-400) 16%, transparent); }
+
+/* Avatar com as iniciais: abre o menu da conta (nome, e-mail e sair). */
+.avatar-conta {
+  width: 36px; height: 36px; margin-left: 4px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-pulsar-600); color: #fff;
+  font: 700 13px var(--font-heading); letter-spacing: .02em;
+  transition: transform 120ms ease-out, box-shadow 200ms ease;
+}
+.avatar-conta:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-pulsar-500) 25%, transparent); }
+.avatar-conta:active { transform: scale(.94); }
+.menu-conta { width: 240px; padding: 6px; }
+/* Menus que abrem da cápsula: um vidro dentro de outro não desfoca (o pai vira a raiz do
+   backdrop), só deixa ver através. Como nos menus da Apple, quase opacos. */
+.app-header .notif-panel { background: color-mix(in srgb, var(--bg-primary) 97%, transparent); }
+.menu-conta-item {
+  width: 100%; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border-radius: 10px;
+  font-size: 14px; color: var(--text-primary); text-align: left;
+}
+.menu-conta-item:hover { background: var(--bg-glass-hover); }
 
 /* Tab bar inferior (mobile) */
 .tabbar-mobile {
-  background: var(--bg-primary);
-  border-top: 1px solid var(--border-glass);
-  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--vidro-tinta-painel);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid var(--vidro-borda);
+  padding-bottom: var(--seguro-baixo);
+  height: calc(3rem + var(--seguro-baixo)) !important;
 }
 .tabbar-item {
   flex: 1;
@@ -1124,101 +1282,109 @@ html.light *::-webkit-scrollbar-thumb:hover {
    AUTH — Login/Cadastro split-screen (redesign)
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* Layout dividido: hero (marca) à esquerda + formulário à direita */
+/* Celular: faixa azul da marca no topo e o formulário subindo por cima dela, como uma folha.
+   Computador (lg+): painel azul à esquerda e formulário à direita. */
 .auth-split {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
 }
-
-/* Painel do formulário (sempre visível) */
 .auth-form-pane {
-  flex: 1 1 50%;
+  flex: 1 1 auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 32px 20px;
-}
-
-/* Painel hero — só em telas grandes (lg+) */
-.auth-hero {
   position: relative;
-  display: none;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 48px;
+  z-index: 1;
+  margin-top: -26px;
+  padding: 28px 20px 32px;
+  border-radius: 26px 26px 0 0;
+  background: var(--bg-primary);
+}
+
+/* Painel azul: o branco por cima pede o azul mais fundo onde fica o texto (contraste
+   de leitura). No tema escuro o painel desce para o marinho, para não ofuscar ao lado
+   do formulário escuro. */
+.auth-vitrine {
+  position: relative;
   overflow: hidden;
-  border-right: 1px solid var(--border-glass);
-  background:
-    radial-gradient(120% 120% at 15% 5%, rgba(0, 132, 209, 0.20) 0%, transparent 45%),
-    radial-gradient(110% 110% at 95% 95%, rgba(0, 188, 255, 0.12) 0%, transparent 50%),
-    linear-gradient(160deg, #052F4A 0%, #03263B 60%, #021C2C 100%);
-}
-@media (min-width: 1024px) {
-  .auth-hero { display: flex; flex: 1 1 48%; }
-}
-
-/* Grid sutil sobre o hero, com máscara radial para esmaecer nas bordas */
-.auth-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0, 188, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 188, 255, 0.045) 1px, transparent 1px);
-  background-size: 44px 44px;
-  -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 40%, #000 25%, transparent 78%);
-  mask-image: radial-gradient(ellipse 75% 75% at 50% 40%, #000 25%, transparent 78%);
-  pointer-events: none;
-}
-
-/* Anéis de radar pulsantes — flourish decorativo do hero */
-.auth-radar {
-  position: absolute;
-  top: 14%;
-  right: 12%;
-  width: 130px;
-  height: 130px;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-}
-.auth-radar-ring {
-  position: absolute;
-  width: 130px;
-  height: 130px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 188, 255, 0.35);
-  animation: radar-pulse 3.2s ease-out infinite;
-}
-.auth-radar-core {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--text-accent);
-  box-shadow: 0 0 14px 3px rgba(0, 188, 255, 0.6);
-}
-@keyframes radar-pulse {
-  0%   { transform: scale(0.35); opacity: 0.65; }
-  100% { transform: scale(1.7);  opacity: 0; }
-}
-
-/* Value props (lista de benefícios no hero) */
-.auth-feature {
+  flex: 0 0 auto;
+  min-height: 228px;
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  padding: 22px 22px 48px;
+  color: #fff;
+  background:
+    radial-gradient(90% 70% at 88% 6%, color-mix(in srgb, var(--color-pulsar-400) 60%, transparent) 0%, transparent 62%),
+    linear-gradient(160deg, var(--color-pulsar-600) 0%, var(--color-pulsar-700) 55%, var(--color-pulsar-800) 100%);
 }
-.auth-feature-ic {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  background: rgba(0, 188, 255, 0.10);
-  border: 1px solid rgba(0, 188, 255, 0.18);
-  color: var(--text-accent);
-  flex-shrink: 0;
+html:not(.light) .auth-vitrine {
+  background:
+    radial-gradient(90% 70% at 88% 6%, color-mix(in srgb, var(--color-pulsar-600) 40%, transparent) 0%, transparent 62%),
+    linear-gradient(160deg, var(--color-pulsar-900) 0%, var(--color-pulsar-950) 100%);
+}
+.auth-vitrine-marca {
+  position: relative; z-index: 2;
+  display: flex; align-items: center; gap: 10px;
+  font: 800 24px/1 var(--font-heading); letter-spacing: -0.035em;
+}
+/* Celular: a área do mapa não tem caixa própria e o mapa fica no canto da faixa azul. */
+.auth-vitrine-area-mapa { position: static; }
+.auth-vitrine-mapa {
+  position: absolute;
+  width: 280px; right: -110px; bottom: -250px;
+  pointer-events: none;
+}
+/* Ondas de luz que saem da Sé (AuthLayout, GSAP). Sem movimento ficam invisíveis. */
+.auth-anel { fill: none; stroke: rgba(255, 255, 255, .85); stroke-width: 2.5; vector-effect: non-scaling-stroke; opacity: 0; }
+html:not(.light) .auth-anel { stroke: var(--color-pulsar-300); }
+/* Palavras do título sobem de dentro de uma máscara. */
+.auth-palavra { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
+.auth-palavra > span { display: inline-block; }
+.auth-vitrine-mapa path { fill: rgba(255, 255, 255, .10); stroke: rgba(255, 255, 255, .42); stroke-width: 3; }
+.auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill: rgba(255, 255, 255, .85); }
+html:not(.light) .auth-vitrine-mapa path { fill: rgba(255, 255, 255, .06); stroke: rgba(184, 230, 254, .28); }
+html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill: var(--color-pulsar-300); }
+.auth-vitrine-texto { position: relative; z-index: 2; margin-top: 22px; max-width: 440px; }
+.auth-vitrine-titulo { font: 800 25px/1.06 var(--font-heading); letter-spacing: -0.03em; max-width: 260px; }
+.auth-vitrine-sub, .auth-vitrine-selo { display: none; }
+.auth-vitrine-sub { font-size: 16px; line-height: 1.45; margin-top: 14px; color: rgba(255, 255, 255, .92); }
+.auth-vitrine-selo {
+  align-items: center; gap: 9px; margin-top: 22px; padding: 9px 14px; border-radius: 999px;
+  font: 600 13px var(--font-body); background: rgba(255, 255, 255, .16);
+}
+.auth-vitrine-selo i { width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, .25); }
+
+@media (min-width: 1024px) {
+  .auth-split { flex-direction: row; }
+  .auth-vitrine { flex: 1 1 50%; padding: 44px 56px; }
+  .auth-vitrine-marca { font-size: 26px; }
+  /* O texto fica no alto; o mapa é grande (1,4 vez a largura do painel, unidades do container) e a
+     Sé fica sempre no mesmo ponto (60% x 66% do painel). A parte de cima do mapa se dissolve antes
+     de chegar ao texto (máscara), então ele nunca passa por trás da frase. A Sé está a 40,4% da
+     largura e a 45,3% da largura (29,4% da altura) do desenho. */
+  .auth-vitrine { container-type: size; }
+  .auth-vitrine-texto { margin-top: clamp(28px, 7vh, 96px); }
+  .auth-vitrine-mapa {
+    --w: min(140cqw, 1500px, 150cqh);
+    --topo: calc(66cqh - var(--w) * .453);
+    width: var(--w); left: calc(60cqw - var(--w) * .404); top: var(--topo); right: auto; bottom: auto;
+    -webkit-mask-image: linear-gradient(to bottom, transparent calc(44cqh - var(--topo)), #000 calc(58cqh - var(--topo)));
+    mask-image: linear-gradient(to bottom, transparent calc(44cqh - var(--topo)), #000 calc(58cqh - var(--topo)));
+  }
+  .auth-vitrine-titulo { font-size: 44px; line-height: 1.04; max-width: 440px; }
+  .auth-vitrine-sub { display: block; }
+  .auth-vitrine-selo { display: inline-flex; }
+  .auth-form-pane { flex: 1 1 50%; align-items: center; margin-top: 0; padding: 32px 20px; border-radius: 0; }
+}
+/* Monitores grandes: formulário e textos do painel crescem juntos, em vez de ficarem pequenos
+   e perdidos (zoom escala o bloco inteiro, com o layout acompanhando). */
+@media (min-width: 1600px) and (min-height: 800px) {
+  .auth-form-pane > div, .auth-vitrine-texto, .auth-vitrine-marca { zoom: 1.15; }
+}
+@media (min-width: 2200px) and (min-height: 1100px) {
+  .auth-form-pane > div, .auth-vitrine-texto, .auth-vitrine-marca { zoom: 1.4; }
 }
 
 /* Divisor "ou ... com" entre o formulário e os botões sociais */
@@ -1417,7 +1583,7 @@ html.light *::-webkit-scrollbar-thumb:hover {
   transform: translateY(-3px);
 }
 
-/* Ícone em "chip" ciano (mesma linguagem do .auth-feature-ic). */
+/* Ícone em "chip" ciano. */
 .landing-card-ic {
   display: grid;
   place-items: center;
@@ -1904,4 +2070,80 @@ html.light .landing-cta-band {
   [data-mapa-cena='alerta'] [role='status'] {
     animation: none;
   }
+}
+
+/* ── Landing v2 (busca no topo + bento) ─────────────────────────────────────
+   Superfícies sólidas o bastante para separar do fundo: o "apagado" da v1 era
+   cartão azul a 4% sobre fundo azul claro. */
+.lp-titulo { font-family: var(--font-heading); letter-spacing: -0.035em; }
+.lp-mono { font-family: var(--font-mono); letter-spacing: -0.02em; }
+.lp-rotulo {
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--text-accent);
+}
+.lp-h2 {
+  font-family: var(--font-heading); letter-spacing: -0.03em; font-weight: 700; line-height: 1.08;
+  font-size: clamp(30px, 4.4vw, 46px); color: var(--text-primary);
+}
+.lp-superficie {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 50px -28px rgba(0, 0, 0, 0.6);
+}
+html.light .lp-superficie {
+  background: #fff;
+  border-color: rgba(15, 23, 42, 0.07);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 16px 40px -24px rgba(2, 74, 112, 0.28);
+}
+.lp-notificacao {
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.5);
+}
+html.light .lp-notificacao { background: #F4F8FB; border-color: rgba(15, 23, 42, 0.06); }
+.lp-icone {
+  display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center;
+  border-radius: 14px; color: var(--text-accent); background: rgba(0, 166, 244, 0.12);
+}
+
+/* Hero: duas auras de cor que derivam devagar (GSAP) atrás da busca. */
+.lp-hero { isolation: isolate; }
+.lp-aura {
+  position: absolute; z-index: -1; border-radius: 999px; filter: blur(70px); pointer-events: none;
+  width: min(620px, 90vw); aspect-ratio: 1;
+}
+.lp-aura-a { top: -220px; left: -160px; background: radial-gradient(circle, rgba(0, 188, 255, 0.35), transparent 65%); }
+.lp-aura-b { top: 40px; right: -200px; background: radial-gradient(circle, rgba(59, 130, 246, 0.32), transparent 65%); }
+html.light .lp-aura-a { background: radial-gradient(circle, rgba(0, 188, 255, 0.28), transparent 65%); }
+html.light .lp-aura-b { background: radial-gradient(circle, rgba(99, 102, 241, 0.16), transparent 65%); }
+
+.lp-busca {
+  background: var(--bg-glass);
+  border: 2px solid var(--border-glass);
+  box-shadow: 0 16px 44px -24px rgba(0, 0, 0, 0.7);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+html.light .lp-busca { background: #fff; border-color: rgba(15, 23, 42, 0.08); box-shadow: 0 16px 44px -22px rgba(2, 74, 112, 0.4); }
+.lp-busca:focus-within { border-color: var(--color-pulsar-500); box-shadow: 0 0 0 4px rgba(0, 166, 244, 0.18), 0 16px 44px -22px rgba(2, 74, 112, 0.4); }
+.lp-sugestoes { backdrop-filter: blur(20px); }
+html:not(.light) .lp-sugestoes { background: rgba(5, 47, 74, 0.96); }
+
+.lp-chip {
+  color: var(--text-secondary); border: 1px solid var(--border-glass); background: var(--bg-glass);
+  transition: background 200ms ease, color 200ms ease, transform 150ms ease;
+}
+.lp-chip:hover { border-color: var(--border-glass-hover); }
+.lp-chip:active { transform: scale(0.96); }
+.lp-chip-ligado { color: #fff; background: var(--color-pulsar-600); border-color: transparent; }
+.lp-chip-ligado:hover { border-color: transparent; }
+
+
+/* CTA final: a faixa escura que dá contraste no fim da página, nos dois temas. */
+.lp-cta-final {
+  background:
+    radial-gradient(120% 90% at 15% 0%, rgba(0, 188, 255, 0.35), transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, rgba(59, 130, 246, 0.35), transparent 60%),
+    #052F4A;
+  box-shadow: 0 30px 80px -40px rgba(2, 74, 112, 0.8);
 }

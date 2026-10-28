@@ -164,6 +164,17 @@ export interface SubprefeituraDto {
   faixaRisco: FaixaRisco;
   temperaturaAtual: number;
   ultimaLeitura: LeituraDto | null;
+  /** Pontos de alagamento ativos agora segundo o CGE-SP. Opcional: o snapshot do SSG não traz. */
+  alagamentosCge?: PontoAlagamentoCge[];
+}
+
+/** Ponto de alagamento ativo publicado pelo CGE-SP. */
+export interface PontoAlagamentoCge {
+  via: string;
+  referencia: string;
+  /** ISO UTC; exibir pelo fuso do navegador. */
+  inicioUtc: string;
+  transitavel: boolean;
 }
 
 /** Retornado por GET /api/subprefeituras. A zona é só legenda (SP3). */
@@ -270,4 +281,49 @@ export interface FaixaPrevisaoDto {
   condicaoDescricao: string;
   /** Quando a previsão foi buscada, e não o instante previsto. Alimenta o aviso de dado velho. */
   coletadoEm: string;
+}
+
+// Painel de qualidade dos dados (admin). null = sem dado.
+export type TipoAvisoQualidade = 'chuva-nao-aconteceu' | 'chuva-passou-batida' | 'alerta-sem-confirmacao' | 'coleta-falhando' | 'geosampa-parado';
+
+export interface AvisoQualidadeDto {
+  tipo: TipoAvisoQualidade;
+  /** Vazio nos avisos da cidade inteira. */
+  subprefeitura: string;
+  /** Dia local, AAAA-MM-DD. */
+  dia: string;
+  detalhe: string;
+}
+
+export interface QualidadeDiaDto {
+  dia: string;
+  chuvaPulsarMm: number | null;
+  chuvaOpenMeteoMm: number | null;
+  horasBarradas: number | null;
+  horasIncompletas: number | null;
+  pontosCge: number;
+  teveAlerta: boolean;
+}
+
+export interface QualidadeSubprefeituraDto extends Omit<QualidadeDiaDto, 'dia' | 'teveAlerta'> {
+  id: string;
+  nome: string;
+  dias: QualidadeDiaDto[];
+}
+
+export interface QualidadeDadosDto {
+  dias: number;
+  openMeteoDisponivel: boolean;
+  avisos: AvisoQualidadeDto[];
+  subprefeituras: QualidadeSubprefeituraDto[];
+  geoSampa: SincronizacaoFonteDto;
+}
+
+/** Campos null = nenhuma execução gravada ainda. */
+export interface SincronizacaoFonteDto {
+  ultimaTentativa: string | null;
+  ultimaTentativaSucesso: boolean | null;
+  ultimoErro: string | null;
+  ultimoSucesso: string | null;
+  novasNoUltimoSucesso: number | null;
 }

@@ -29,16 +29,9 @@ export default function BannerEscolherSubprefeituras({ onEscolher }: { onEscolhe
   }
 
   return (
-    <div className="absolute left-1/2 -translate-x-1/2 z-[1200] bottom-[7.5rem] md:bottom-6 w-[calc(100%-1.5rem)] max-w-md animate-slide-up">
+    <div className="cartao-pe-mapa animate-slide-up">
       <div
-        className="flex items-center gap-3 rounded-2xl px-4 py-3"
-        style={{
-          background: 'var(--bg-glass, rgba(5, 47, 74, 0.92))',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid var(--border-glass, rgba(0, 188, 255, 0.15))',
-          boxShadow: '0 12px 40px rgba(2, 24, 38, 0.35)',
-        }}
+        className="vidro-painel flex items-center gap-3 rounded-2xl px-4 py-3"
         role="region"
         aria-label="Escolher subprefeituras"
       >

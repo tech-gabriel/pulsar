@@ -1,0 +1,22 @@
+namespace Pulsar.API.External.Interfaces;
+
+/// <summary>
+/// Segunda fonte de chuva, só para conferir a do OpenWeatherMap (ver PlausibilidadeChuva).
+/// </summary>
+public interface IChuvaReferenciaClient
+{
+    /// <summary>
+    /// Chuva horária em mm por ponto, na ordem de <paramref name="pontos"/>, chaveada pela
+    /// hora UTC. Cobre as últimas ~10 h e as próximas ~15 h: a guarda olha o passado, e o
+    /// aviso de chuva prevista confirma a faixa do OWM até 12 h à frente com ±3 h de folga.
+    /// </summary>
+    Task<IReadOnlyList<IReadOnlyDictionary<DateTime, double>>> ObterHorariaAsync(
+        IReadOnlyList<(double Lat, double Lon)> pontos, CancellationToken ct = default);
+
+    /// <summary>
+    /// Mesma forma, cobrindo os últimos <paramref name="dias"/> dias até o fim de hoje (UTC).
+    /// Usada pelo painel de qualidade para comparar dia a dia com o OWM.
+    /// </summary>
+    Task<IReadOnlyList<IReadOnlyDictionary<DateTime, double>>> ObterHorariaPassadaAsync(
+        IReadOnlyList<(double Lat, double Lon)> pontos, int dias, CancellationToken ct = default);
+}

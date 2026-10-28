@@ -1,0 +1,65 @@
+# Produção na VPS (Hostinger, São Paulo). Lê o .env ao lado deste arquivo
+# (modelo em deploy/env.exemplo). O deploy.sh grava a TAG no .env e roda o compose.
+# Manual: docker compose -f docker-compose.prod.yml ps | logs api | exec db psql -U ...
+name: pulsar
+
+# Sem rotação, o log do Docker cresce até encher o disco (e o Postgres para junto).
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  caddy:
+    image: ghcr.io/tech-gabriel/pulsar-web:${TAG:?defina TAG no .env}
+    restart: unless-stopped
+    logging: *logs
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?defina SITE_DOMAIN no .env}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+  api:
+    image: ghcr.io/tech-gabriel/pulsar-api:${TAG:?defina TAG no .env}
+    restart: unless-stopped
+    logging: *logs
+    env_file: ${ENV_FILE:-.env}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    logging: *logs
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env}
+    # Dimensionado para a KVM 1 (4 GB). O padrão de 128 MB desperdiçaria a RAM livre.
+    # O /dev/shm padrão do Docker (64 MB) derruba consultas paralelas com o banco maior.
+    shm_size: 256mb
+    command: ["postgres", "-c", "shared_buffers=1GB", "-c", "effective_cache_size=2GB", "-c", "work_mem=16MB"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+# Imagem do site: build do front (Vite + SSG) servido pelo Caddy, que também faz o
+# HTTPS e o proxy de /api para a API. Contexto: raiz do repo.
+
+# ---- Build ----
+FROM node:22-alpine AS build
+WORKDIR /src
+COPY pulsar-web/package.json pulsar-web/package-lock.json ./
+RUN npm ci
+COPY pulsar-web/ ./
+
+# Públicas no bundle, por isso build args e não segredos.
+ARG VITE_MAPTILER_KEY=""
+ARG VITE_GOOGLE_CLIENT_ID=""
+ARG VITE_POSTHOG_KEY=""
+# Os snapshots de SEO leem a API pública durante o build.
+ARG PULSAR_API_URL="https://app-pulsar.com.br"
+ENV VITE_MAPTILER_KEY=$VITE_MAPTILER_KEY \
+    VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
+    VITE_POSTHOG_KEY=$VITE_POSTHOG_KEY \
+    PULSAR_API_URL=$PULSAR_API_URL
+RUN npm run build
+
+# ---- Runtime ----
+FROM caddy:2.10-alpine
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /src/dist /srv

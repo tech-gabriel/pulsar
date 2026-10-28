@@ -1,0 +1,42 @@
+# Caddy do Pulsar: HTTPS automático, site estático e proxy da API.
+# O domínio vem de SITE_DOMAIN (vps.app-pulsar.com.br na preparação, app-pulsar.com.br depois).
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# API e health passam direto, com os cabeçalhos que a própria API define.
+	# O Caddy põe o IP do cliente no X-Forwarded-For, que a API lê com ForwardLimit=1.
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+	handle /health {
+		reverse_proxy api:8080
+	}
+
+	# Site. Os cabeçalhos ficam dentro deste handle para não sobrescrever os da API.
+	handle {
+		root * /srv
+		header {
+			X-Content-Type-Options "nosniff"
+			X-Frame-Options "DENY"
+			Referrer-Policy "strict-origin-when-cross-origin"
+			Permissions-Policy "geolocation=(self), camera=(), microphone=(), usb=(), payment=(), magnetometer=(), gyroscope=(), accelerometer=()"
+			Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://accounts.google.com https://*.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://api.maptiler.com https://*.basemaps.cartocdn.com https://www.google.com https://*.gstatic.com https://*.googleusercontent.com; connect-src 'self' https://accounts.google.com https://*.posthog.com; frame-src https://accounts.google.com; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests"
+		}
+
+		# Arquivos com hash no nome nunca mudam; o resto revalida a cada acesso.
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		@naoAssets not path /assets/*
+		header @naoAssets Cache-Control "no-cache"
+
+		# Arquivo real, depois a página prerenderizada (/sobre → /sobre/index.html),
+		# depois o shell da SPA. Nunca o index.html: o SSG o sobrescreve com a landing.
+		try_files {path} {path}/index.html /spa.html
+		file_server
+	}
+}
+
+www.{$SITE_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}

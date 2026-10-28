@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.24.0',
+    data: '2026-10-28',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Pulsar até 10 vezes mais rápido',
+        descricao: 'O Pulsar mudou para um servidor próprio em São Paulo, no mesmo lugar do banco de dados. Antes, cada consulta ia até os Estados Unidos e voltava. A entrada no app, que levava perto de 1 segundo, agora responde em menos de 0,1 segundo, e o mapa e o histórico abrem mais rápido.',
+      },
+    ],
+  },
+  {
     versao: '1.23.2',
     data: '2026-10-27',
     itens: [

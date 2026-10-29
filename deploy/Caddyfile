@@ -1,5 +1,5 @@
 # Caddy do Pulsar: HTTPS automático, site estático e proxy da API.
-# O domínio vem de SITE_DOMAIN (vps.app-pulsar.com.br na preparação, app-pulsar.com.br depois).
+# O domínio vem de SITE_DOMAIN no .env da VPS.
 
 {$SITE_DOMAIN} {
 	encode zstd gzip

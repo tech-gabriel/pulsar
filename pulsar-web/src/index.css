@@ -1029,6 +1029,13 @@ html.sem-transparencia :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .
 @supports not (backdrop-filter: blur(1px)) {
   :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; }
 }
+/* Controle ligado (ex.: Alagamentos): o vidro acima usa !important e apagava o estilo inline
+   de ativo. Três classes para vencer também o `html.sem-transparencia :is(...)`. */
+.mapa-controle.layer-btn.ativo {
+  background: color-mix(in srgb, var(--color-pulsar-600) 90%, transparent) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-pulsar-500) 40%, transparent) !important;
+}
 
 /* Abas do topo (md+): um grupo só, com a aba ativa marcada por dentro. */
 .nav-segmentos { align-items: center; gap: 2px; } /* display vem do hidden md:flex do JSX */

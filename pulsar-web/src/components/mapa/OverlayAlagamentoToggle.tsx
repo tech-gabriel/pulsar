@@ -26,14 +26,11 @@ export default function OverlayAlagamentoToggle({ ativo, onToggle, isMobile }: P
       title={ativo ? 'Ocultar alagamentos' : 'Mostrar alagamentos dos últimos 12 meses'}
       className={[
         'mapa-controle layer-btn z-[1000] flex items-center justify-center rounded-xl',
+        ativo ? 'ativo' : '',
         isMobile ? 'w-11 h-11' : 'gap-2 px-3 min-h-11',
         pos,
       ].join(' ')}
-      style={{
-        background: ativo ? 'rgba(0, 132, 209, 0.9)' : undefined,
-        color: ativo ? '#FFFFFF' : 'var(--mapa-controle-texto-suave)',
-        boxShadow: ativo ? '0 0 12px rgba(0, 188, 255, 0.35)' : undefined,
-      }}
+      style={ativo ? undefined : { color: 'var(--mapa-controle-texto-suave)' }}
     >
       <Droplets size={20} strokeWidth={2} />
       {!isMobile && <span className="text-sm font-medium">Alagamentos</span>}

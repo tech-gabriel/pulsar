@@ -62,10 +62,12 @@ describe('estiloCamada — score', () => {
 
 describe('estiloCamada — temperatura', () => {
   it.each([
-    [8, '#3b82f6'],   // <=10 azul
-    [15, '#22c55e'],  // <=20 verde
-    [25, '#f59e0b'],  // <=30 laranja
-    [35, '#ef4444'],  // >30 vermelho
+    [12, '#1d4ed8'],   // <=15 azul profundo
+    [20.4, '#3b82f6'], // "20°" em produção saía âmbar; <=22 azul
+    [22.4, '#3b82f6'], // arredonda para 22: mesma faixa do rótulo
+    [25, '#22c55e'],   // <=27 verde
+    [30, '#f59e0b'],   // <=32 âmbar
+    [35, '#ef4444'],   // >32 vermelho
   ])('temperatura %d°C usa cor %s', (t, cor) => {
     const e = estiloCamada(sub({ ultimaLeitura: leitura({ temperaturaC: t }) }), 'temperatura');
     expect(e.texto).toBe(`${Math.round(t)}°`);

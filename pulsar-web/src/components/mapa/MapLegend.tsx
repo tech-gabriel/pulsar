@@ -30,8 +30,8 @@ const LEGENDAS: Record<Camada, LegendaConfig> = {
   },
   temperatura: {
     titulo: 'Temperatura °C',
-    gradiente: gradiente(PALETA.azul, PALETA.verde, PALETA.ambar, PALETA.vermelho),
-    labels: ['0°', '10°', '20°', '30°', '40°'],
+    gradiente: gradiente(PALETA.azulProfundo, PALETA.azul, PALETA.verde, PALETA.ambar, PALETA.vermelho),
+    labels: ['15°', '22°', '27°', '32°', '35°+'],
   },
   chuva: {
     titulo: 'Precipitação mm/h',

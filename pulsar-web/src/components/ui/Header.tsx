@@ -56,7 +56,7 @@ function IconeAba({ Icon, size, pendente }: { Icon: LucideIcon; size: number; pe
  */
 export default function Header() {
   const { usuario, logout } = useAuth();
-  const emailPendente = usuario?.emailVerificado === false;
+  const emailNaoVerificado = usuario?.emailVerificado === false;
   const { theme, toggleTheme } = useTheme();
   const { subprefeituras, carregando } = useSubprefeituras();
   const { favoritos } = useFavoritos();
@@ -116,9 +116,9 @@ export default function Header() {
         <nav className="nav-segmentos hidden md:flex absolute left-1/2 -translate-x-1/2">
           {TABS.map(({ to, label, Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => ['nav-tab', isActive ? 'ativa' : ''].join(' ')}>
-              <IconeAba Icon={Icon} size={18} pendente={to === ABA_CONFIG && emailPendente} />
+              <IconeAba Icon={Icon} size={18} pendente={to === ABA_CONFIG && emailNaoVerificado} />
               <span className="nav-tab-rotulo">{label}</span>
-              {to === ABA_CONFIG && emailPendente && <span className="sr-only">, e-mail não confirmado</span>}
+              {to === ABA_CONFIG && emailNaoVerificado && <span className="sr-only">, e-mail não confirmado</span>}
             </NavLink>
           ))}
         </nav>
@@ -277,9 +277,9 @@ export default function Header() {
             end={end}
             className={({ isActive }) => ['tabbar-item justify-center', isActive ? 'ativa' : ''].join(' ')}
           >
-            <IconeAba Icon={Icon} size={22} pendente={to === ABA_CONFIG && emailPendente} />
+            <IconeAba Icon={Icon} size={22} pendente={to === ABA_CONFIG && emailNaoVerificado} />
             <span>{curto}</span>
-            {to === ABA_CONFIG && emailPendente && <span className="sr-only">, e-mail não confirmado</span>}
+            {to === ABA_CONFIG && emailNaoVerificado && <span className="sr-only">, e-mail não confirmado</span>}
           </NavLink>
         ))}
       </nav>

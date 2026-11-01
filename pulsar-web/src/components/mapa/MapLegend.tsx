@@ -123,7 +123,7 @@ export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = f
   if (!isMobile) {
     return (
       <div
-        className="mapa-controle legenda-mapa pointer-events-auto"
+        className="superficie rounded-2xl legenda-mapa pointer-events-auto"
         style={{ padding: '10px 14px', minWidth: 160 }}
         aria-label={`Legenda: ${config.titulo}`}
       >
@@ -140,7 +140,7 @@ export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = f
         <button
           type="button"
           onClick={() => setExpandido(false)}
-          className="mapa-controle block text-left active:scale-[0.98] transition-transform"
+          className="superficie rounded-2xl block text-left active:scale-[0.98] transition-transform"
           style={{ padding: '10px 14px', minWidth: 160 }}
           aria-expanded
           aria-label={`Recolher legenda: ${tituloPill}`}

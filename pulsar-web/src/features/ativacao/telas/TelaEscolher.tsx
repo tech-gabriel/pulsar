@@ -110,7 +110,7 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
 
       <div style={{ position: 'sticky', bottom: 'calc(-1 * max(26px, env(safe-area-inset-bottom)))',
         // Cobre o padding inferior da tela: sem isso a lista aparece embaixo do botão ao rolar.
-        margin: '0 -22px calc(-1 * max(26px, env(safe-area-inset-bottom)))', padding: '12px 22px max(26px, env(safe-area-inset-bottom))', background: 'color-mix(in srgb, var(--bg-primary) 82%, transparent)', backdropFilter: 'blur(18px) saturate(180%)' }}>
+        margin: '0 -22px calc(-1 * max(26px, env(safe-area-inset-bottom)))', padding: '12px 22px max(26px, env(safe-area-inset-bottom))', background: 'color-mix(in srgb, var(--bg-primary) 82%, transparent)', backdropFilter: 'var(--vidro-desfoque)' }}>
         {selecionadas.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
             {selecionadas.map((id) => (

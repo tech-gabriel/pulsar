@@ -169,7 +169,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
       )}
 
       {mostrarDropdown && (
-        <ul className="mapa-controle mt-1.5 max-h-72 overflow-y-auto overflow-x-hidden">
+        <ul className="superficie rounded-2xl mt-1.5 max-h-72 overflow-y-auto overflow-x-hidden">
           {subs.length > 0 && (
             <>
               <li className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wider mapa-txt-suave">Subprefeituras</li>

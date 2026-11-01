@@ -85,7 +85,7 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
         </button>
 
         {aberto && (
-          <div role="radiogroup" aria-label="Camada do mapa" className="mapa-controle flex flex-col" style={CARD_MOBILE}>
+          <div role="radiogroup" aria-label="Camada do mapa" className="superficie rounded-2xl flex flex-col" style={CARD_MOBILE}>
             {ITENS.map(({ id, label, Icon }) => {
               const sel = id === camadaAtiva;
               return (

@@ -42,9 +42,7 @@ function CustomTooltip({ active, payload, label, isLight }: {
     <div
       className="text-xs"
       style={{
-        background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(5, 47, 74, 0.9)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'var(--superficie)',
         border: `1px solid ${isLight ? 'rgba(0, 105, 168, 0.2)' : 'rgba(0, 188, 255, 0.15)'}`,
         borderRadius: 8,
         padding: '10px 14px',

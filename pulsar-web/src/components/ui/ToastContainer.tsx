@@ -17,9 +17,7 @@ function ToastItem({ toast }: { toast: Toast }) {
     <div
       className="flex items-start gap-3 px-4 py-3 rounded-xl max-w-sm w-full"
       style={{
-        background: 'rgba(5, 47, 74, 0.9)',
-        backdropFilter: 'var(--glass-blur)',
-        WebkitBackdropFilter: 'var(--glass-blur)',
+        background: 'var(--superficie)',
         border: `1px solid ${border}`,
         boxShadow: 'var(--glass-shadow)',
       }}

@@ -1534,22 +1534,6 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
   .landing-section { padding: 60px 20px; }
 }
 
-/* Texto de destaque com gradiente da marca. */
-.landing-gradient-text {
-  background: linear-gradient(120deg, #00BCFF 0%, #74D4FF 55%, #00A6F4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-/* No claro, cianos claros perdem contraste no fundo quase branco — usa azuis
-   mais profundos para manter a leitura. */
-.light .landing-gradient-text {
-  background: linear-gradient(120deg, #0084D1 0%, #00A6F4 55%, #0069A8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
 /* Botão CTA primário (reaproveita o gradiente dos forms de auth). */
 .landing-cta {
   display: inline-flex;

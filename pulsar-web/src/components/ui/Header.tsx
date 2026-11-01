@@ -56,7 +56,7 @@ function IconeAba({ Icon, size, pendente }: { Icon: LucideIcon; size: number; pe
  */
 export default function Header() {
   const { usuario, logout } = useAuth();
-  const emailPendente = usuario?.emailVerificado === false;
+  const emailNaoVerificado = usuario?.emailVerificado === false;
   const { theme, toggleTheme } = useTheme();
   const { subprefeituras, carregando } = useSubprefeituras();
   const { favoritos } = useFavoritos();
@@ -116,9 +116,9 @@ export default function Header() {
         <nav className="nav-segmentos hidden md:flex absolute left-1/2 -translate-x-1/2">
           {TABS.map(({ to, label, Icon, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => ['nav-tab', isActive ? 'ativa' : ''].join(' ')}>
-              <IconeAba Icon={Icon} size={18} pendente={to === ABA_CONFIG && emailPendente} />
+              <IconeAba Icon={Icon} size={18} pendente={to === ABA_CONFIG && emailNaoVerificado} />
               <span className="nav-tab-rotulo">{label}</span>
-              {to === ABA_CONFIG && emailPendente && <span className="sr-only">, e-mail não confirmado</span>}
+              {to === ABA_CONFIG && emailNaoVerificado && <span className="sr-only">, e-mail não confirmado</span>}
             </NavLink>
           ))}
         </nav>
@@ -201,8 +201,8 @@ export default function Header() {
                         .filter((g) => g.itens.length > 0)
                         .map((g) => (
                           <section key={g.titulo}>
-                            <p className="px-3 pt-2 pb-1 flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: g.estrela ? '#CA8A04' : 'var(--text-muted)' }}>
-                              {g.estrela && <Star size={11} fill="#FACC15" stroke="#EAB308" aria-hidden="true" />}{g.titulo}
+                            <p className="px-3 pt-2 pb-1 flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: g.estrela ? 'var(--text-accent)' : 'var(--text-muted)' }}>
+                              {g.estrela && <Star size={11} fill="currentColor" aria-hidden="true" />}{g.titulo}
                             </p>
                             <ul>
                               {g.itens.map((a) => (
@@ -277,9 +277,9 @@ export default function Header() {
             end={end}
             className={({ isActive }) => ['tabbar-item justify-center', isActive ? 'ativa' : ''].join(' ')}
           >
-            <IconeAba Icon={Icon} size={22} pendente={to === ABA_CONFIG && emailPendente} />
+            <IconeAba Icon={Icon} size={22} pendente={to === ABA_CONFIG && emailNaoVerificado} />
             <span>{curto}</span>
-            {to === ABA_CONFIG && emailPendente && <span className="sr-only">, e-mail não confirmado</span>}
+            {to === ABA_CONFIG && emailNaoVerificado && <span className="sr-only">, e-mail não confirmado</span>}
           </NavLink>
         ))}
       </nav>

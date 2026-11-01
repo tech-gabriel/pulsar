@@ -5,15 +5,13 @@ interface Props {
   onRetry?: () => void;
 }
 
-/** Card de erro dark glass com botão de retry (ETAPA 5.6). */
+/** Card de erro com botão de retry (ETAPA 5.6). */
 export default function ErrorBanner({ mensagem, onRetry }: Props) {
   return (
     <div
       className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm"
       style={{
         background: 'var(--bg-glass)',
-        backdropFilter: 'var(--glass-blur)',
-        WebkitBackdropFilter: 'var(--glass-blur)',
         border: '1px solid rgba(239, 68, 68, 0.3)',
         boxShadow: 'var(--glass-shadow)',
       }}

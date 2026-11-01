@@ -421,7 +421,7 @@ export default function ConfiguracoesPage() {
             <div className="flex flex-col gap-2">
               {favoritos.map((f) => (
                 <div key={f.subprefeituraId} className="regiao-card flex items-center gap-3" style={{ marginBottom: 0 }}>
-                  <Star size={15} style={{ color: '#f59e0b' }} fill="#f59e0b" />
+                  <Star size={15} style={{ color: 'var(--text-accent)' }} fill="currentColor" />
                   <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, color: 'var(--text-primary)' }}>
                     {f.nome} <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>· {f.regiaoNome}</span>
                   </span>

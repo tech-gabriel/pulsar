@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Activity, ChevronLeft, ChevronRight, RefreshCw, Search, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, Search, Star } from 'lucide-react';
 import { SkeletonCard } from '../ui/Skeleton';
 import { containerStagger, itemStagger } from '../../motion/presets';
 import CidadeAgora from '../../features/cidade/CidadeAgora';
@@ -31,8 +31,8 @@ function minutosAtras(data: Date | null): string {
 function Secao({ children, estrela = false }: { children: React.ReactNode; estrela?: boolean }) {
   return (
     <p className="px-1 pt-3 pb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider"
-      style={{ color: estrela ? '#CA8A04' : 'var(--text-muted)' }}>
-      {estrela && <Star size={12} fill="#FACC15" stroke="#EAB308" aria-hidden="true" />}
+      style={{ color: estrela ? 'var(--text-accent)' : 'var(--text-muted)' }}>
+      {estrela && <Star size={12} fill="currentColor" aria-hidden="true" />}
       {children}
     </p>
   );
@@ -48,7 +48,11 @@ export default function PainelLateral({
   const [verTodas, setVerTodas] = useState(false);
   const [busca, setBusca] = useState('');
   const resumo = useMemo(() => resumoCidade(areas), [areas]);
-  const atencao = useMemo(() => emAtencao(areas), [areas]);
+  // Quem já está em "Suas subprefeituras" não se repete em "Em atenção agora".
+  const atencao = useMemo(
+    () => emAtencao(areas).filter((a) => !favoritas.some((f) => f.id === a.id)),
+    [areas, favoritas],
+  );
   const todas = useMemo(() => (busca.trim() ? buscarAreas(busca, areas) : ordenarPorRisco(areas)), [areas, busca]);
 
   const linhas = (lista: Area[]) => lista.map((a) => (
@@ -58,11 +62,9 @@ export default function PainelLateral({
   return (
     <div className="painel-glass flex flex-col h-full overflow-hidden">
       {!hideHeader && (
-        <div className="px-4 pt-4 pb-2 flex-shrink-0 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Activity size={20} className="text-pulsar-400 activity-pulse" />
-            <h1 className="text-lg font-bold" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>Monitoramento</h1>
-          </div>
+        // Sem título: o cartão "{Cidade} agora" já é o título do painel. Fica só a hora da
+        // última leitura, que num app de risco é o que diz se dá para confiar no que está na tela.
+        <div className="px-4 flex-shrink-0 flex items-center justify-end">
           <button type="button" onClick={onRecarregar} disabled={carregando} title="Atualizar dados"
             className="flex items-center gap-1.5 text-xs min-h-11 disabled:opacity-50" style={{ color: 'var(--text-secondary)' }}>
             <RefreshCw size={12} className={carregando ? 'animate-spin' : ''} />

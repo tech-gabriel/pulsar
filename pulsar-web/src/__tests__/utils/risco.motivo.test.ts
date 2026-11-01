@@ -9,8 +9,8 @@ describe('motivoPerigo', () => {
   });
 
   it('mostra ícone e rótulo para vento e calor quando há risco', () => {
-    expect(motivoPerigo('VENTO', 'MODERADO')).toEqual({ icone: '💨', rotulo: 'vento' });
-    expect(motivoPerigo('CALOR', 'ALTO')).toEqual({ icone: '🌡️', rotulo: 'calor' });
+    expect(motivoPerigo('VENTO', 'MODERADO')).toEqual({ rotulo: 'vento' });
+    expect(motivoPerigo('CALOR', 'ALTO')).toEqual({ rotulo: 'calor' });
   });
 
   it('em dia tranquilo (BAIXO) não explica nada: brisa não é motivo de risco', () => {

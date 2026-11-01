@@ -25,6 +25,42 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.25.0',
+    data: '2026-11-01',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Mapa mais limpo',
+        descricao: 'O efeito de vidro agora fica só nas barras e nos botões, mais leve. Painéis, cartões e listas ficaram sólidos e fáceis de ler. No computador, o painel ao lado deixa o mapa aparecer por trás e não repete mais a mesma subprefeitura em duas listas. O botão de alagamentos virou só a gota, junto do zoom.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Detalhe da subprefeitura de cara nova',
+        descricao: 'O risco aparece grande, com uma frase que diz o motivo ou o que vem pela frente. Logo abaixo, a chuva das próximas horas em barras, e depois um bloco para cada medida, sem número repetido. A dica de proteção usa a cor do risco: vermelho só quando é Alerta.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Convite de alertas mais claro',
+        descricao: 'O convite para ligar os alertas agora cita as suas subprefeituras. Quando há chuva forte prevista ou uma delas entra em risco, ele mostra o motivo na hora.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Resumo ao passar o mouse',
+        descricao: 'O resumo que aparece sobre o mapa ficou numa linha só, com temperatura, chuva e vento, sem números cortados.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Cores da temperatura de São Paulo',
+        descricao: '20 °C aparecia em laranja. A escala agora segue o clima da cidade: até 22 °C é azul, de 23 °C a 27 °C é verde, e laranja e vermelho ficam para o calor de verdade.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Pequenos acertos',
+        descricao: 'O botão de alagamentos mostra quando está ligado, o aviso de favorito ficou legível no tema claro, a estrela de favorito ficou azul, o histórico abre pelo nome da subprefeitura no endereço e a troca de senha mostra a mensagem certa quando algo dá errado.',
+      },
+    ],
+  },
+  {
     versao: '1.24.0',
     data: '2026-10-28',
     itens: [

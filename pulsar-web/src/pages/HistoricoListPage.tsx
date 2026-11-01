@@ -6,6 +6,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import EmptyState from '../components/ui/EmptyState';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
+import { idDaArea } from '../features/cidade/cidade';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { normalizarNome } from '../utils/texto';
 import { coresParaFaixa, labelFaixa } from '../utils/risco';
@@ -85,7 +86,7 @@ export default function HistoricoListPage() {
               <button
                 key={sub.id}
                 type="button"
-                onClick={() => navigate(`/app/historico/${sub.id}`, { state: { zona: sub.zona, subNome: sub.nome } })}
+                onClick={() => navigate(`/app/historico/${idDaArea(sub.nome)}`, { state: { zona: sub.zona, subNome: sub.nome } })}
                 className="glass-card glass-card-hover w-full text-left flex items-center gap-3 px-4 py-3 active:scale-[0.99] transition-transform"
               >
                 {/* Score pill */}
@@ -98,7 +99,7 @@ export default function HistoricoListPage() {
 
                 <div className="flex-1 min-w-0">
                   <p className="truncate" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
-                    {favIds.has(sub.id) && <Star size={13} fill="#FACC15" stroke="#EAB308" aria-label="Você acompanha" className="inline mr-1 -mt-0.5" />}
+                    {favIds.has(sub.id) && <Star size={13} fill="currentColor" style={{ color: 'var(--text-accent)' }} aria-label="Você acompanha" className="inline mr-1 -mt-0.5" />}
                     {sub.nome}
                   </p>
                   <p className="truncate flex items-center gap-2" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>

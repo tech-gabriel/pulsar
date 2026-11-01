@@ -35,7 +35,7 @@
   --bg-primary: #052F4A;
   --bg-secondary: rgba(0, 89, 138, 0.15);
   --bg-elevated: rgba(0, 105, 168, 0.10);
-  --bg-glass: rgba(5, 47, 74, 0.6);
+  --bg-glass: var(--superficie); /* conteúdo é sólido: o nome ficou por compatibilidade */
   --bg-glass-hover: rgba(0, 89, 138, 0.18);
   --bg-input: rgba(0, 89, 138, 0.2);
 
@@ -57,7 +57,6 @@
   --glow-red: 0 0 12px rgba(239, 68, 68, 0.4);
 
   /* Glassmorphism */
-  --glass-blur: blur(16px) saturate(180%);
   --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 
   /* Texto dos controles sobrepostos ao mapa (o fundo é o vidro, ver .mapa-controle). */
@@ -76,7 +75,7 @@ html.light {
   --bg-primary: #EFF6FB;
   --bg-secondary: rgba(0, 132, 209, 0.06);
   --bg-elevated: rgba(0, 132, 209, 0.04);
-  --bg-glass: rgba(255, 255, 255, 0.75);
+  --bg-glass: var(--superficie);
   --bg-glass-hover: rgba(0, 132, 209, 0.08);
   --bg-input: rgba(0, 89, 138, 0.06);
   --border-glass: rgba(0, 105, 168, 0.15);
@@ -87,7 +86,6 @@ html.light {
   --text-muted: rgba(71, 85, 105, 0.6);
   --text-accent: #0084D1;
   --glow-cyan: 0 0 12px rgba(0, 132, 209, 0.15);
-  --glass-blur: blur(12px) saturate(120%);
   --glass-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -145,7 +143,6 @@ body {
 /* ── Painel dark glass (ETAPA 4.1/4.3) ─────────────────────────────────────────*/
 .painel-glass {
   background: linear-gradient(180deg, rgba(5, 47, 74, 0.97) 0%, rgba(2, 37, 58, 0.95) 100%);
-  backdrop-filter: blur(20px);
 }
 .painel-card-glass {
   background: rgba(0, 89, 138, 0.1);
@@ -210,12 +207,12 @@ body {
   background: rgba(0, 89, 138, 0.22);
 }
 
-/* Card de sugestão de segurança (ETAPA 4.5) */
+/* Card de dica de proteção: tingido pela cor da faixa (--c vem do componente), para Atenção
+   não parecer Alerta. Vermelho só quando o risco é alto. */
 .sugestao-card {
-  background: rgba(239, 68, 68, 0.08);
-  border-left: 3px solid rgba(239, 68, 68, 0.5);
-  border-radius: 6px;
-  padding: 10px 12px;
+  background: color-mix(in srgb, var(--c, #94a3b8) 11%, transparent);
+  border-radius: 12px;
+  padding: 11px 14px;
   margin-bottom: 6px;
 }
 
@@ -350,13 +347,12 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   animation: marching-ants 0.7s linear infinite;
 }
 
-/* ── Tooltip glass do mapa ──────────────────────────────────────────────────────*/
+/* ── Tooltip do mapa (superfície sólida) ──────────────────────────────────────────────────────*/
 /* Combina .leaflet-tooltip + .pulsar-tooltip para vencer o default do Leaflet
    (.leaflet-tooltip { background:#fff; color:#222 }), que tem especificidade
    igual e é carregado depois no bundle — senão o tooltip glass fica branco. */
 .leaflet-tooltip.pulsar-tooltip {
-  background: rgba(7, 20, 34, 0.82);
-  backdrop-filter: blur(16px) saturate(140%);
+  background: var(--superficie);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -367,8 +363,8 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   font-family: var(--font-body);
   line-height: 1.45;
   padding: 12px 14px;
-  min-width: 204px;
-  max-width: 252px;
+  min-width: 220px;
+  max-width: 280px;
   white-space: normal;
 }
 .pulsar-tooltip::before {
@@ -407,63 +403,42 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 .pulsar-tooltip .pt-ALTO { --c: #f87171; }
 .pulsar-tooltip .pt-SEM { --c: #cbd5e1; }
 
-/* Linha de risco: badge à esquerda + score em pílula à direita. */
-.pulsar-tooltip .pt-score-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 10px 0;
+/* Cabeçalho: nome e zona à esquerda, score à direita. Depois a faixa (pílula) e uma linha com
+   os três dados que mexem no risco. Prévia curta: o resto está a um clique, no detalhe. */
+.pulsar-tooltip .pt-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.pulsar-tooltip .pt-score {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--c);
 }
+.pulsar-tooltip .pt-score-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
 .pulsar-tooltip .pt-faixa {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 3px 9px;
+  border-radius: 99px;
   font-size: 12px;
   font-weight: 600;
   color: var(--c);
-}
-.pulsar-tooltip .pt-faixa::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--c);
-  box-shadow: 0 0 8px var(--c);
-}
-.pulsar-tooltip .pt-score {
-  font-family: var(--font-mono);
-  font-weight: 800;
-  font-size: 20px;
-  line-height: 1;
-  color: var(--c);
-  padding: 5px 11px;
-  border-radius: 10px;
   background: color-mix(in srgb, var(--c) 16%, transparent);
 }
-
-/* Grid 2 colunas das variáveis climáticas. */
-.pulsar-tooltip .pt-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px 12px;
-}
-.pulsar-tooltip .pt-metric {
+.pulsar-tooltip .pt-faixa::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.pulsar-tooltip .pt-motivo { font-size: 12px; color: var(--text-secondary); }
+.pulsar-tooltip .pt-linha {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-}
-.pulsar-tooltip .pt-ico {
-  width: 16px;
-  text-align: center;
-  flex-shrink: 0;
-}
-.pulsar-tooltip .pt-val {
-  font-family: var(--font-mono);
+  gap: 12px;
+  font-size: 13px;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
   color: var(--text-primary);
 }
+.pulsar-tooltip .pt-linha span { display: inline-flex; align-items: center; gap: 4px; }
+.pulsar-tooltip .pt-linha svg { width: 14px; height: 14px; color: var(--text-secondary); flex-shrink: 0; }
 
 /* Zoom do Leaflet: o default do plugin desenha 26x26 (30x30 no modo touch),
    abaixo do alvo recomendado. O ícone continua igual, só a caixa cresce.
@@ -518,6 +493,9 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   bottom: calc(7.5rem + var(--seguro-baixo));
   width: min(28rem, calc(100% - 1.5rem));
 }
+/* Celular: a legenda e o convite de alertas ocupam o mesmo canto. Uma peça por vez: enquanto o
+   convite está na tela, a legenda some e volta quando ele é aceito ou fechado. */
+body:has(.convite-push) .legenda-pill { display: none; }
 /* Pilha de avisos + legenda: no celular não existe (cada peça se posiciona sozinha). */
 .pilha-mapa { display: contents; }
 @media (min-width: 768px) {
@@ -571,12 +549,14 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 .painel-conteudo { animation: painel-conteudo .4s cubic-bezier(.32, .72, 0, 1) both; }
 @media (prefers-reduced-motion: reduce) { .vidro-surge, .painel-conteudo { animation: none; } }
 
-/* Busca dentro do painel: campo preenchido, sem vidro próprio (já está no vidro do cartão). */
+/* Busca dentro do painel: campo preenchido, sem vidro próprio (nunca vidro sobre vidro). */
 .busca-embutida .mapa-controle {
   background: color-mix(in srgb, var(--text-primary) 6%, transparent) !important;
   box-shadow: none !important; backdrop-filter: none !important; border-radius: 14px;
 }
-.busca-embutida ul.mapa-controle { background: transparent !important; }
+/* Dentro do painel (já sólido): dica e resultados sem cartão próprio, só um preenchimento leve. */
+.busca-embutida .superficie { background: color-mix(in srgb, var(--text-primary) 4%, transparent) !important; box-shadow: none !important; }
+.busca-embutida ul.superficie { background: transparent !important; }
 
 /* Conteúdo do painel sobre o vidro: sem fundo próprio; status da cidade em vidro tingido pela
    cor do risco (em vez do bloco marinho sólido); lista agrupada como no iOS. */
@@ -705,6 +685,39 @@ html.light .score-ring-valor {
   color: var(--c-escura);
 }
 
+/* ── Detalhe da subprefeitura (redesenho 11/2026) ────────────────────────────────
+   Risco grande com frase, chuva das próximas horas em barras e um bloco por medida.
+   Dentro do painel tudo é preenchimento leve: sem borda, sem vidro próprio, cantos de 16px. */
+:root { --prev-chuva: #60a5fa; --prev-forte: #bfdbfe; }
+html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
+.det-bloco { background: color-mix(in srgb, var(--text-primary) 5%, transparent); border-radius: 16px; }
+.det-hero {
+  display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 16px;
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+.det-hero-num { font: 800 52px/1 var(--font-heading); letter-spacing: -.04em; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.det-hero-faixa { font: 700 17px/1.2 var(--font-heading); }
+.det-hero-frase { font-size: 13.5px; line-height: 1.4; color: var(--text-secondary); margin-top: 2px; }
+.det-secao { margin-top: 18px; }
+.det-secao-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 4px 8px; }
+.det-rotulo { font: 600 11px var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--text-secondary); }
+.det-nota { font-size: 11px; color: var(--text-secondary); }
+.prev-barras { list-style: none; margin: 0; display: grid; gap: 6px; align-items: end; padding: 14px 12px 10px; height: 136px; }
+.prev-barra { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; }
+.prev-barra i { display: block; width: 100%; max-width: 22px; border-radius: 6px 6px 3px 3px; background: var(--prev-chuva); opacity: .85; }
+.prev-barra.forte i { background: var(--prev-forte); opacity: 1; }
+.prev-valor { font: 600 10.5px var(--font-body); color: var(--text-primary); font-variant-numeric: tabular-nums; min-height: 14px; }
+.prev-hora { font: 500 10.5px var(--font-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.det-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.det-tile { padding: 12px 14px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.det-tile.inteiro { grid-column: 1 / -1; }
+.det-tile-t { display: flex; align-items: center; gap: 6px; font: 600 11px var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
+.det-tile-v { font: 700 24px/1.15 var(--font-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 4px; color: var(--text-primary); }
+.det-tile-v span { font: 500 13px var(--font-body); letter-spacing: 0; color: var(--text-secondary); margin-left: 4px; }
+.det-tile-s { font-size: 12px; color: var(--text-secondary); }
+.det-tile-r { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.det-tile-r i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex-shrink: 0; margin-top: 5px; } /* na 1ª linha quando o texto quebra */
+
 /* Texto dentro dos controles do mapa. */
 .mapa-txt {
   color: var(--mapa-controle-texto);
@@ -783,7 +796,6 @@ html.light .score-ring-valor {
 /* GlassCard (ETAPA 5.2) */
 .glass-card {
   background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-glass);
   border-radius: 12px;
   box-shadow: var(--glass-shadow);
@@ -986,34 +998,62 @@ button, a, [role="button"], [role="radio"] {
    --topo-app é o espaço que o conteúdo deixa para a cápsula (mapa, busca, painel). */
 :root {
   --topo-app: 60px;
-  /* Vidro (Liquid Glass aproximado). A forma vem da luz, não de um contorno: tinta translúcida,
-     um brilho que desce da aresta de cima (--vidro-luz), um aro fino de luz (inset) e a saturação
-     do que passa por baixo. --vidro-tinta é o vidro leve (controles); --vidro-tinta-painel, o denso
-     (painéis com texto). --vidro-borda é só o separador interno (zoom, listas). */
-  --vidro-tinta: rgba(14, 28, 44, .42);
-  --vidro-tinta-painel: rgba(10, 24, 38, .70);
-  --vidro-luz: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, 0) 42%);
-  --vidro-brilho: rgba(255, 255, 255, .20);
+  /* Vidro (Liquid Glass, equivalente ao "regular" do iOS 26). Só em barras e botões, nunca em
+     conteúdo, nunca vidro sobre vidro. A forma vem da luz: tinta translúcida, um brilho que desce
+     da aresta de cima (--vidro-luz) e um aro fino de luz (inset). --vidro-borda é o separador
+     interno (zoom, listas). */
+  --vidro-tinta: rgba(12, 30, 46, .55);
+  --vidro-desfoque: blur(10px) saturate(160%);
+  --vidro-luz: linear-gradient(180deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, 0) 50%);
+  --vidro-brilho: rgba(255, 255, 255, .18);
   --vidro-borda: rgba(255, 255, 255, .08);
-  --vidro-sombra: 0 12px 32px -12px rgba(0, 0, 0, .55), 0 1px 2px rgba(0, 0, 0, .28);
+  --vidro-sombra: 0 8px 24px -10px rgba(0, 0, 0, .45), 0 1px 2px rgba(0, 0, 0, .25);
+  /* Vidro denso: só o painel lateral do computador (uma barra lateral sobre o mapa, como no
+     iOS 26). Mais tinta e mais desfoque que as barras, porque carrega texto. */
+  --vidro-tinta-painel: color-mix(in srgb, var(--superficie) 68%, transparent);
+  --vidro-desfoque-painel: blur(28px) saturate(170%);
+  /* Superfície sólida: todo conteúdo que flutua (painel, cartões, legenda, listas, tooltip). */
+  --superficie: #0B2A40;
+  --superficie-borda: rgba(255, 255, 255, .08);
+  --superficie-sombra: 0 10px 30px -12px rgba(0, 0, 0, .5);
   --largura-painel: 380px;
 }
 html.light {
-  --vidro-tinta: rgba(255, 255, 255, .46);
-  --vidro-tinta-painel: rgba(255, 255, 255, .78);
-  --vidro-luz: linear-gradient(180deg, rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 46%);
+  --vidro-tinta: rgba(255, 255, 255, .62);
+  --vidro-luz: linear-gradient(180deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 50%);
   --vidro-brilho: rgba(255, 255, 255, .9);
   --vidro-borda: rgba(12, 38, 60, .07);
-  --vidro-sombra: 0 12px 32px -14px rgba(12, 38, 60, .30), 0 1px 2px rgba(12, 38, 60, .10);
+  --vidro-sombra: 0 8px 24px -10px rgba(12, 38, 60, .30), 0 1px 2px rgba(12, 38, 60, .10);
+  --superficie: #FFFFFF;
+  --superficie-borda: rgba(12, 38, 60, .08);
+  --superficie-sombra: 0 10px 30px -14px rgba(12, 38, 60, .28), 0 1px 2px rgba(12, 38, 60, .08);
 }
 @media (min-width: 768px) { :root { --topo-app: 70px; } }
-.app-header, .vidro, .vidro-painel, .mapa-controle, .leaflet-control-zoom.leaflet-bar {
+.app-header, .tabbar-mobile, .mapa-controle, .leaflet-control-zoom.leaflet-bar {
   border: 0 !important;
-  backdrop-filter: blur(30px) saturate(210%) brightness(1.04);
-  box-shadow: inset 0 1px 0 var(--vidro-brilho), inset 0 0 0 .5px color-mix(in srgb, var(--vidro-brilho) 55%, transparent), var(--vidro-sombra) !important;
+  background: var(--vidro-luz), var(--vidro-tinta) !important;
+  backdrop-filter: var(--vidro-desfoque);  box-shadow: inset 0 1px 0 var(--vidro-brilho), inset 0 0 0 .5px color-mix(in srgb, var(--vidro-brilho) 50%, transparent), var(--vidro-sombra) !important;
 }
-.app-header, .vidro, .mapa-controle, .leaflet-control-zoom.leaflet-bar { background: var(--vidro-luz), var(--vidro-tinta) !important; }
-.vidro-painel { background: var(--vidro-luz), var(--vidro-tinta-painel) !important; }
+/* Painel lateral do computador: vidro denso. Dentro dele nada tem vidro próprio (busca e linhas
+   são só preenchimento), e o texto apagado sobe um tom para manter o contraste sobre o mapa
+   (vibrancy da Apple: sobre material translúcido, nada de cinza fraco). */
+.vidro-painel {
+  background: var(--vidro-luz), var(--vidro-tinta-painel) !important;
+  backdrop-filter: var(--vidro-desfoque-painel);
+  box-shadow: inset 0 1px 0 var(--vidro-brilho), inset 0 0 0 .5px color-mix(in srgb, var(--vidro-brilho) 50%, transparent), var(--vidro-sombra) !important;
+  --text-muted: var(--text-secondary);
+}
+/* Cantos concêntricos: painel de 28px com recuo de 12px pede 16px por dentro. */
+.vidro-painel .busca-embutida .mapa-controle, .vidro-painel .linha-area, .vidro-painel .cid-agora { border-radius: 16px; }
+html.sem-transparencia .vidro-painel { background: var(--superficie) !important; backdrop-filter: none; }
+@media (prefers-reduced-transparency: reduce) { .vidro-painel { background: var(--superficie) !important; backdrop-filter: none; } }
+@supports not (backdrop-filter: blur(1px)) { .vidro-painel { background: var(--superficie) !important; } }
+@media (prefers-contrast: more) { .vidro-painel { background: var(--superficie) !important; backdrop-filter: none; box-shadow: inset 0 0 0 1px var(--text-secondary) !important; } }
+.superficie {
+  background: var(--superficie) !important;
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--superficie-borda), var(--superficie-sombra) !important;
+}
 .app-header {
   top: calc(var(--seguro-topo) + 8px); left: 8px; right: 8px; height: 52px;
   padding: 0 6px 0 14px;
@@ -1022,12 +1062,27 @@ html.light {
 @media (min-width: 768px) {
   .app-header { top: calc(var(--seguro-topo) + 10px); left: 12px; right: 12px; height: 56px; padding: 0 8px 0 18px; border-radius: 20px; }
 }
-html.sem-transparencia :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
+html.sem-transparencia :is(.app-header, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
 @media (prefers-reduced-transparency: reduce) {
-  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
+  :is(.app-header, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
 }
 @supports not (backdrop-filter: blur(1px)) {
-  :is(.app-header, .vidro, .vidro-painel, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; }
+  :is(.app-header, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; }
+}
+/* Mais contraste pedido no sistema: barras opacas com contorno definido. */
+@media (prefers-contrast: more) {
+  :is(.app-header, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) {
+    background: var(--superficie) !important; backdrop-filter: none;
+    box-shadow: inset 0 0 0 1px var(--text-secondary) !important;
+  }
+}
+/* Controle ligado (ex.: Alagamentos): azul sólido e sem vidro, com anel, para ler o estado de
+   longe. Três classes para vencer também o `html.sem-transparencia :is(...)`. */
+.mapa-controle.layer-btn.ativo {
+  background: var(--color-pulsar-600) !important;
+  color: #FFFFFF !important;
+  backdrop-filter: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-pulsar-500) 45%, transparent), 0 6px 16px -6px color-mix(in srgb, var(--color-pulsar-600) 60%, transparent) !important;
 }
 
 /* Abas do topo (md+): um grupo só, com a aba ativa marcada por dentro. */
@@ -1069,9 +1124,8 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 .avatar-conta:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-pulsar-500) 25%, transparent); }
 .avatar-conta:active { transform: scale(.94); }
 .menu-conta { width: 240px; padding: 6px; }
-/* Menus que abrem da cápsula: um vidro dentro de outro não desfoca (o pai vira a raiz do
-   backdrop), só deixa ver através. Como nos menus da Apple, quase opacos. */
-.app-header .notif-panel { background: color-mix(in srgb, var(--bg-primary) 97%, transparent); }
+/* Menus que abrem da cápsula são conteúdo: superfície sólida (nunca vidro sobre vidro). */
+.app-header .notif-panel { background: var(--superficie); }
 .menu-conta-item {
   width: 100%; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border-radius: 10px;
   font-size: 14px; color: var(--text-primary); text-align: left;
@@ -1080,9 +1134,6 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 
 /* Tab bar inferior (mobile) */
 .tabbar-mobile {
-  background: var(--vidro-tinta-painel);
-  backdrop-filter: blur(24px) saturate(180%);
-  border-top: 1px solid var(--vidro-borda);
   padding-bottom: var(--seguro-baixo);
   height: calc(3rem + var(--seguro-baixo)) !important;
 }
@@ -1149,7 +1200,6 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
   max-height: 70vh;
   overflow-y: auto;
   background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-glass);
   border-radius: 14px;
   box-shadow: var(--glass-shadow), 0 12px 40px rgba(0, 0, 0, 0.28);
@@ -1224,9 +1274,9 @@ html.light .pulsar-sub-nome {
   text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.6);
 }
 
-/* Tooltip do mapa no tema light: glass claro + faixas em tons mais escuros */
+/* Tooltip do mapa no tema light: superfície clara + faixas em tons mais escuros */
 html.light .leaflet-tooltip.pulsar-tooltip {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--superficie);
   border: 1px solid rgba(0, 105, 168, 0.16);
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   color: #0F172A;
@@ -1468,9 +1518,8 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
   justify-content: space-between;
   gap: 16px;
   padding: 10px 24px;
-  background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--border-glass);
+  background: var(--vidro-luz), var(--vidro-tinta);
+  backdrop-filter: var(--vidro-desfoque);  border-bottom: 1px solid var(--border-glass);
 }
 
 /* Ritmo vertical das seções (container central). */
@@ -1483,22 +1532,6 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
 }
 @media (max-width: 640px) {
   .landing-section { padding: 60px 20px; }
-}
-
-/* Texto de destaque com gradiente da marca. */
-.landing-gradient-text {
-  background: linear-gradient(120deg, #00BCFF 0%, #74D4FF 55%, #00A6F4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-/* No claro, cianos claros perdem contraste no fundo quase branco — usa azuis
-   mais profundos para manter a leitura. */
-.light .landing-gradient-text {
-  background: linear-gradient(120deg, #0084D1 0%, #00A6F4 55%, #0069A8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
 }
 
 /* Botão CTA primário (reaproveita o gradiente dos forms de auth). */
@@ -1571,7 +1604,6 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
 /* Card genérico de feature/passo/fonte. */
 .landing-card {
   background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-glass);
   border-radius: 14px;
   padding: 22px;
@@ -1636,7 +1668,6 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
   padding: 22px 20px;
   border-radius: 16px;
   background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-glass);
   transition: border-color 200ms ease, transform 200ms ease, background 200ms ease;
 }
@@ -1690,7 +1721,6 @@ html:not(.light) .auth-vitrine-mapa path[fill="var(--color-pulsar-300)"] { fill:
   border: 1px solid var(--border-glass);
   border-radius: 14px;
   background: var(--bg-glass);
-  backdrop-filter: var(--glass-blur);
   transition: border-color 200ms ease, background 200ms ease;
 }
 .landing-faq-item:hover {
@@ -2088,7 +2118,6 @@ html.light .landing-cta-band {
 .lp-superficie {
   background: var(--bg-glass);
   border: 1px solid var(--border-glass);
-  backdrop-filter: blur(16px) saturate(140%);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 50px -28px rgba(0, 0, 0, 0.6);
 }
 html.light .lp-superficie {
@@ -2126,7 +2155,7 @@ html.light .lp-aura-b { background: radial-gradient(circle, rgba(99, 102, 241, 0
 }
 html.light .lp-busca { background: #fff; border-color: rgba(15, 23, 42, 0.08); box-shadow: 0 16px 44px -22px rgba(2, 74, 112, 0.4); }
 .lp-busca:focus-within { border-color: var(--color-pulsar-500); box-shadow: 0 0 0 4px rgba(0, 166, 244, 0.18), 0 16px 44px -22px rgba(2, 74, 112, 0.4); }
-.lp-sugestoes { backdrop-filter: blur(20px); }
+
 html:not(.light) .lp-sugestoes { background: rgba(5, 47, 74, 0.96); }
 
 .lp-chip {

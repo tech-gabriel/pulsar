@@ -88,6 +88,11 @@ describe('BuscaEndereco — botão de localização', () => {
     expect(screen.queryByText('Toque no alvo para ver a sua subprefeitura')).not.toBeInTheDocument();
   });
 
+  it('dentro do painel não mostra a dica escrita: o alvo pulsando já basta', () => {
+    render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={() => {}} isMobile={false} onUsarLocalizacao={() => {}} embutida />);
+    expect(screen.queryByText('Toque no alvo para ver a sua subprefeitura')).not.toBeInTheDocument();
+  });
+
   it('não mostra a dica quando ela já foi vista', () => {
     localStorage.setItem('pulsar-dica-localizacao-vista', '1');
     render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={() => {}} isMobile={false} onUsarLocalizacao={() => {}} />);

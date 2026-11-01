@@ -24,15 +24,17 @@ const sub: SubprefeituraMapaDto = {
 };
 
 describe('tooltipSubprefeituraHtml', () => {
-  it('inclui nome, região, score arredondado e variáveis climáticas', () => {
+  it('prévia: nome, zona, score arredondado e só temperatura, chuva e vento, em pt-BR', () => {
     const html = tooltipSubprefeituraHtml(sub, 'Fallback');
     expect(html).toContain('Sé');
     expect(html).toContain('Zona Centro');
     expect(html).toContain('43'); // score 42.7 arredondado
-    expect(html).toContain('24.3°C');
-    expect(html).toContain('2.5 mm/h');
+    expect(html).toContain('24,3 °C');
+    expect(html).toContain('2,5 mm/h');
     expect(html).toContain('18 km/h'); // vento arredondado
-    expect(html).toContain('8.2 km');
+    // Umidade, UV e visibilidade ficam no detalhe: o tooltip é prévia.
+    expect(html).not.toContain('8,2 km');
+    expect(html).not.toContain('60%');
   });
 
   it('mostra os alagamentos ativos do CGE em vermelho, e nada sem eles', () => {
@@ -56,9 +58,10 @@ describe('tooltipSubprefeituraHtml', () => {
     expect(html).toContain('Zona &#34;x&#34;');
   });
 
-  it('mostra traço para variáveis quando não há leitura', () => {
+  it('avisa quando não há leitura, sem score inventado', () => {
     const html = tooltipSubprefeituraHtml({ ...sub, ultimaLeitura: null, scoreAtual: null }, 'X');
-    expect(html).toContain('—');
+    expect(html).toContain('Sem leitura recente');
+    expect(html).not.toMatch(/class="pt-score /);
   });
   it('mostra o motivo quando o risco principal é vento ou calor', () => {
     const html = tooltipSubprefeituraHtml({ ...sub, scoreAtual: { ...sub.scoreAtual!, perigoPrincipal: 'VENTO' } }, 'X');

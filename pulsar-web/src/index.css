@@ -514,6 +514,9 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   bottom: calc(7.5rem + var(--seguro-baixo));
   width: min(28rem, calc(100% - 1.5rem));
 }
+/* Celular: a legenda e o convite de alertas ocupam o mesmo canto. Uma peça por vez: enquanto o
+   convite está na tela, a legenda some e volta quando ele é aceito ou fechado. */
+body:has(.convite-push) .legenda-pill { display: none; }
 /* Pilha de avisos + legenda: no celular não existe (cada peça se posiciona sozinha). */
 .pilha-mapa { display: contents; }
 @media (min-width: 768px) {

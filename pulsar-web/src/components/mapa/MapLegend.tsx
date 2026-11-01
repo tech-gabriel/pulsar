@@ -135,7 +135,7 @@ export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = f
   // ── Mobile: pill colapsável. Posicionado acima do drawer (que ocupa ~3.5rem) ──
   // para não sobrepor o handle; lado esquerdo para liberar o FAB (à direita).
   return (
-    <div className="absolute z-[1000] pointer-events-auto" style={{ left: 8, bottom: '4rem' }}>
+    <div className="legenda-pill absolute z-[1000] pointer-events-auto" style={{ left: 8, bottom: '4rem' }}>
       {expandido ? (
         <button
           type="button"

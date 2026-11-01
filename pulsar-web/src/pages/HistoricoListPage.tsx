@@ -99,7 +99,7 @@ export default function HistoricoListPage() {
 
                 <div className="flex-1 min-w-0">
                   <p className="truncate" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-primary)' }}>
-                    {favIds.has(sub.id) && <Star size={13} fill="#FACC15" stroke="#EAB308" aria-label="Você acompanha" className="inline mr-1 -mt-0.5" />}
+                    {favIds.has(sub.id) && <Star size={13} fill="currentColor" style={{ color: 'var(--text-accent)' }} aria-label="Você acompanha" className="inline mr-1 -mt-0.5" />}
                     {sub.nome}
                   </p>
                   <p className="truncate flex items-center gap-2" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>

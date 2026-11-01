@@ -31,8 +31,8 @@ function minutosAtras(data: Date | null): string {
 function Secao({ children, estrela = false }: { children: React.ReactNode; estrela?: boolean }) {
   return (
     <p className="px-1 pt-3 pb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider"
-      style={{ color: estrela ? '#CA8A04' : 'var(--text-muted)' }}>
-      {estrela && <Star size={12} fill="#FACC15" stroke="#EAB308" aria-hidden="true" />}
+      style={{ color: estrela ? 'var(--text-accent)' : 'var(--text-muted)' }}>
+      {estrela && <Star size={12} fill="currentColor" aria-hidden="true" />}
       {children}
     </p>
   );

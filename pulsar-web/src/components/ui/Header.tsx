@@ -201,8 +201,8 @@ export default function Header() {
                         .filter((g) => g.itens.length > 0)
                         .map((g) => (
                           <section key={g.titulo}>
-                            <p className="px-3 pt-2 pb-1 flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: g.estrela ? '#CA8A04' : 'var(--text-muted)' }}>
-                              {g.estrela && <Star size={11} fill="#FACC15" stroke="#EAB308" aria-hidden="true" />}{g.titulo}
+                            <p className="px-3 pt-2 pb-1 flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: g.estrela ? 'var(--text-accent)' : 'var(--text-muted)' }}>
+                              {g.estrela && <Star size={11} fill="currentColor" aria-hidden="true" />}{g.titulo}
                             </p>
                             <ul>
                               {g.itens.map((a) => (

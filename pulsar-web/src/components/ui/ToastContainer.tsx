@@ -3,15 +3,17 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useToast, type Toast, type ToastType } from '../../contexts/ToastContext';
 import { subirSuave } from '../../motion/presets';
 
-const config: Record<ToastType, { icon: typeof Info; border: string; icon_color: string }> = {
-  success: { icon: CheckCircle, border: 'rgba(34, 197, 94, 0.4)',  icon_color: 'text-emerald-400' },
-  error:   { icon: XCircle,     border: 'rgba(239, 68, 68, 0.4)',  icon_color: 'text-red-400'     },
-  info:    { icon: Info,        border: 'rgba(0, 188, 255, 0.35)', icon_color: 'text-pulsar-300'  },
+// O fundo é a superfície do tema (branca no claro): texto e ícone saem de tokens ou de tons
+// que passam 3:1 nos dois fundos. Antes o texto era quase branco fixo e sumia no tema claro.
+const config: Record<ToastType, { icon: typeof Info; border: string; cor: string }> = {
+  success: { icon: CheckCircle, border: 'rgba(34, 197, 94, 0.4)',  cor: '#16A34A' },
+  error:   { icon: XCircle,     border: 'rgba(239, 68, 68, 0.4)',  cor: '#DC2626' },
+  info:    { icon: Info,        border: 'rgba(0, 188, 255, 0.35)', cor: 'var(--text-accent)' },
 };
 
 function ToastItem({ toast }: { toast: Toast }) {
   const { dismiss } = useToast();
-  const { icon: Icon, border, icon_color } = config[toast.type];
+  const { icon: Icon, border, cor } = config[toast.type];
 
   return (
     <div
@@ -23,11 +25,11 @@ function ToastItem({ toast }: { toast: Toast }) {
       }}
       role="alert"
     >
-      <Icon size={18} className={`${icon_color} shrink-0 mt-0.5`} />
-      <p className="flex-1 text-sm font-medium text-pulsar-50">{toast.message}</p>
+      <Icon size={18} className="shrink-0 mt-0.5" style={{ color: cor }} />
+      <p className="flex-1 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{toast.message}</p>
       <button
         onClick={() => dismiss(toast.id)}
-        className="text-pulsar-300 opacity-70 hover:opacity-100 transition-opacity"
+        className="opacity-70 hover:opacity-100 transition-opacity" style={{ color: 'var(--text-secondary)' }}
         aria-label="Fechar"
       >
         <X size={14} />

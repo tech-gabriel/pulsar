@@ -23,6 +23,17 @@ describe('PainelLateral (B)', () => {
     expect(onSelecionar).toHaveBeenCalledWith(itaquera);
   });
 
+  it('favorita em atenção não se repete em "Em atenção agora"', () => {
+    render(<PainelLateral {...base} areas={[itaquera, mooca, penha]} favoritas={[mooca]} onSelecionar={vi.fn()} />);
+    expect(screen.getAllByRole('button', { name: /Mooca/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /Itaquera/ })).toHaveLength(1);
+  });
+
+  it('só favoritas em atenção: a seção em atenção some', () => {
+    render(<PainelLateral {...base} areas={[mooca, penha]} favoritas={[mooca]} onSelecionar={vi.fn()} />);
+    expect(screen.queryByText('Em atenção agora')).not.toBeInTheDocument();
+  });
+
   it('dia tranquilo: sem a seção em atenção', () => {
     render(<PainelLateral {...base} areas={[penha]} favoritas={[]} onSelecionar={vi.fn()} />);
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Tudo tranquilo em São Paulo');

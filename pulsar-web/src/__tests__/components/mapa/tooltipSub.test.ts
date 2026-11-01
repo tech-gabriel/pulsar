@@ -38,7 +38,7 @@ describe('tooltipSubprefeituraHtml', () => {
   it('mostra os alagamentos ativos do CGE em vermelho, e nada sem eles', () => {
     const ponto = { via: 'Av Celso Garcia', referencia: '', inicioUtc: '2026-10-25T04:06:00Z', transitavel: false };
     expect(tooltipSubprefeituraHtml({ ...sub, alagamentosCge: [ponto, ponto] }, 'X'))
-      .toContain('<div class="pt-cge pt-ALTO">⚠ 2 pontos de alagamento agora, segundo o CGE</div>');
+      .toContain('<div class="pt-cge pt-ALTO">2 pontos de alagamento agora, segundo o CGE</div>');
     expect(tooltipSubprefeituraHtml({ ...sub, alagamentosCge: [ponto] }, 'X')).toContain('Alagamento agora, segundo o CGE');
     expect(tooltipSubprefeituraHtml(sub, 'X')).not.toContain('pt-cge');
   });
@@ -62,7 +62,7 @@ describe('tooltipSubprefeituraHtml', () => {
   });
   it('mostra o motivo quando o risco principal é vento ou calor', () => {
     const html = tooltipSubprefeituraHtml({ ...sub, scoreAtual: { ...sub.scoreAtual!, perigoPrincipal: 'VENTO' } }, 'X');
-    expect(html).toContain('💨 por vento');
+    expect(html).toContain('por vento');
   });
 
   it('não mostra motivo quando o principal é alagamento', () => {

@@ -24,8 +24,8 @@ function fmt(valor: number | null | undefined, casas: number, sufixo = ''): stri
   return `${valor.toFixed(casas)}${sufixo}`;
 }
 
-function metrica(emoji: string, valor: string): string {
-  return `<div class="pt-metric"><span class="pt-ico">${emoji}</span><span class="pt-val">${valor}</span></div>`;
+function metrica(rotulo: string, valor: string): string {
+  return `<div class="pt-metric"><span class="pt-rot">${rotulo}</span><span class="pt-val">${valor}</span></div>`;
 }
 
 /** Texto vindo do banco vai para innerHTML: escapa antes, mesmo que hoje seja só seed. */
@@ -52,7 +52,7 @@ export function tooltipSubprefeituraHtml(
   const motivo = motivoPerigo(sub.scoreAtual?.perigoPrincipal, sub.faixaRisco);
   const pontosCge = sub.alagamentosCge?.length ?? 0;
   // Dado oficial, não estimativa: aparece em vermelho mesmo com o score baixo.
-  const linhaCge = pontosCge === 0 ? '' : `<div class="pt-cge pt-ALTO">⚠ ${
+  const linhaCge = pontosCge === 0 ? '' : `<div class="pt-cge pt-ALTO">${
     pontosCge === 1 ? 'Alagamento agora' : `${pontosCge} pontos de alagamento agora`
   }, segundo o CGE</div>`;
 
@@ -60,17 +60,17 @@ export function tooltipSubprefeituraHtml(
     ${cabecalho}
     <div class="pt-score-row">
       <span class="pt-faixa ${cls}">${labelFaixa(sub.faixaRisco)}</span>
-      ${motivo ? `<span class="pt-motivo">${motivo.icone} por ${motivo.rotulo}</span>` : ''}
+      ${motivo ? `<span class="pt-motivo">por ${motivo.rotulo}</span>` : ''}
       <span class="pt-score ${cls}">${score}</span>
     </div>
     ${linhaCge}
     <div class="pt-grid">
-      ${metrica('🌡', fmt(l?.temperaturaC, 1, '°C'))}
-      ${metrica('🌧', fmt(l?.chuvaMmH, 1, ' mm/h'))}
-      ${metrica('💨', l ? `${Math.round(l.ventoKmH)} km/h` : '—')}
-      ${metrica('👁', fmt(l?.visibilidadeKm, 1, ' km'))}
-      ${metrica('💧', l ? `${Math.round(l.umidade)}%` : '—')}
-      ${metrica('☀', l ? String(Math.round(l.indiceUv)) : '—')}
+      ${metrica('Temp.', fmt(l?.temperaturaC, 1, '°C'))}
+      ${metrica('Chuva', fmt(l?.chuvaMmH, 1, ' mm/h'))}
+      ${metrica('Vento', l ? `${Math.round(l.ventoKmH)} km/h` : '—')}
+      ${metrica('Visib.', fmt(l?.visibilidadeKm, 1, ' km'))}
+      ${metrica('Umidade', l ? `${Math.round(l.umidade)}%` : '—')}
+      ${metrica('UV', l ? String(Math.round(l.indiceUv)) : '—')}
     </div>
   </div>`;
 }

@@ -263,7 +263,7 @@ export default function MapaPage() {
               primeiro escolher, depois ativar. */}
           {semFavoritas
             ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
-            : <ConvitePush />}
+            : <ConvitePush favoritas={favoritas} />}
 
           {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
           {proximas && (

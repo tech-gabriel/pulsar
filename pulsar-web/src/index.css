@@ -207,12 +207,12 @@ body {
   background: rgba(0, 89, 138, 0.22);
 }
 
-/* Card de sugestão de segurança (ETAPA 4.5) */
+/* Card de dica de proteção: tingido pela cor da faixa (--c vem do componente), para Atenção
+   não parecer Alerta. Vermelho só quando o risco é alto. */
 .sugestao-card {
-  background: rgba(239, 68, 68, 0.08);
-  border-left: 3px solid rgba(239, 68, 68, 0.5);
-  border-radius: 6px;
-  padding: 10px 12px;
+  background: color-mix(in srgb, var(--c, #94a3b8) 11%, transparent);
+  border-radius: 12px;
+  padding: 11px 14px;
   margin-bottom: 6px;
 }
 
@@ -705,6 +705,39 @@ body:has(.convite-push) .legenda-pill { display: none; }
 html.light .score-ring-valor {
   color: var(--c-escura);
 }
+
+/* ── Detalhe da subprefeitura (redesenho 11/2026) ────────────────────────────────
+   Risco grande com frase, chuva das próximas horas em barras e um bloco por medida.
+   Dentro do painel tudo é preenchimento leve: sem borda, sem vidro próprio, cantos de 16px. */
+:root { --prev-chuva: #60a5fa; --prev-forte: #bfdbfe; }
+html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
+.det-bloco { background: color-mix(in srgb, var(--text-primary) 5%, transparent); border-radius: 16px; }
+.det-hero {
+  display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 16px;
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+.det-hero-num { font: 800 52px/1 var(--font-heading); letter-spacing: -.04em; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.det-hero-faixa { font: 700 17px/1.2 var(--font-heading); }
+.det-hero-frase { font-size: 13.5px; line-height: 1.4; color: var(--text-secondary); margin-top: 2px; }
+.det-secao { margin-top: 18px; }
+.det-secao-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 4px 8px; }
+.det-rotulo { font: 600 11px var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--text-secondary); }
+.det-nota { font-size: 11px; color: var(--text-secondary); }
+.prev-barras { list-style: none; margin: 0; display: grid; gap: 6px; align-items: end; padding: 14px 12px 10px; height: 136px; }
+.prev-barra { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; }
+.prev-barra i { display: block; width: 100%; max-width: 22px; border-radius: 6px 6px 3px 3px; background: var(--prev-chuva); opacity: .85; }
+.prev-barra.forte i { background: var(--prev-forte); opacity: 1; }
+.prev-valor { font: 600 10.5px var(--font-body); color: var(--text-primary); font-variant-numeric: tabular-nums; min-height: 14px; }
+.prev-hora { font: 500 10.5px var(--font-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.det-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.det-tile { padding: 12px 14px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.det-tile.inteiro { grid-column: 1 / -1; }
+.det-tile-t { display: flex; align-items: center; gap: 6px; font: 600 11px var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
+.det-tile-v { font: 700 24px/1.15 var(--font-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 4px; color: var(--text-primary); }
+.det-tile-v span { font: 500 13px var(--font-body); letter-spacing: 0; color: var(--text-secondary); margin-left: 4px; }
+.det-tile-s { font-size: 12px; color: var(--text-secondary); }
+.det-tile-r { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.det-tile-r i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex-shrink: 0; margin-top: 5px; } /* na 1ª linha quando o texto quebra */
 
 /* Texto dentro dos controles do mapa. */
 .mapa-txt {

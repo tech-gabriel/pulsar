@@ -40,7 +40,7 @@ describe('DetalheSubprefeitura', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
     expect(onFechar).toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: /Histórico/ }));
-    expect(navigate).toHaveBeenCalledWith('/app/historico/s1', { state: { subNome: 'Itaquera', zona: 'Leste' } });
+    expect(navigate).toHaveBeenCalledWith('/app/historico/itaquera', { state: { subNome: 'Itaquera', zona: 'Leste' } });
   });
 
   it('alerta desligado leva à ativação', () => {
@@ -49,6 +49,16 @@ describe('DetalheSubprefeitura', () => {
     fireEvent.click(screen.getByRole('button', { name: /Ativar alertas/ }));
     expect(navigate).toHaveBeenCalledWith('/app/boas-vindas');
     push.estado = 'ativo';
+  });
+
+  it('risco com o porquê; blocos pelo nome da medida, sem repetir dado', () => {
+    renderiza();
+    expect(screen.getByText('Por chuva: 22,0 mm nas últimas 3h')).toBeInTheDocument();
+    // A chuva não se chama "Alagamento": isso leria como rua alagada.
+    expect(screen.getByText('Chuva acumulada')).toBeInTheDocument();
+    expect(screen.queryByText(/^Alagamento$/)).not.toBeInTheDocument();
+    // Vento aparece uma vez só (antes saía no perigo e de novo nas condições).
+    expect(screen.getAllByText('10')).toHaveLength(1);
   });
 
   it('não fala em região', () => {

@@ -125,7 +125,7 @@ function ModalExcluir({ alvo, onCancelar, onConfirmar }: {
     >
       <motion.div
         className="w-full max-w-[420px]"
-        style={{ background: 'var(--bg-glass)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', border: '1px solid var(--border-glass)', borderRadius: 16, padding: 22, boxShadow: 'var(--glass-shadow), 0 20px 60px rgba(0,0,0,0.4)' }}
+        style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-glass)', borderRadius: 16, padding: 22, boxShadow: 'var(--glass-shadow), 0 20px 60px rgba(0,0,0,0.4)' }}
         initial={{ opacity: 0, y: 12, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 12, scale: 0.97 }}

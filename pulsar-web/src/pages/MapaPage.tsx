@@ -254,7 +254,7 @@ export default function MapaPage() {
 
           {/* Aviso quando o endereço cai fora da área coberta */}
           {avisoBusca && (
-            <div className="mapa-controle mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">
+            <div className="superficie rounded-2xl mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">
               {avisoBusca}
             </div>
           )}
@@ -337,7 +337,7 @@ export default function MapaPage() {
           Altura: 72vh. Fechado: 3.5rem visíveis.
       ══════════════════════════════════════════ */}
       <div
-        className="painel-mapa vidro-painel md:hidden fixed bottom-[calc(3rem+var(--seguro-baixo))] left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
+        className="painel-mapa superficie md:hidden fixed bottom-[calc(3rem+var(--seguro-baixo))] left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
         style={{
           transform: painelMobileAberto
             ? 'translateY(0)'

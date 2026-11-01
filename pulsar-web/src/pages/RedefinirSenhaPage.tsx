@@ -50,7 +50,7 @@ export default function RedefinirSenhaPage() {
       showToast('Senha redefinida com sucesso! Faça login.', 'success');
       navigate('/login');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response?: { data?: { mensagem?: string } } })?.response?.data?.mensagem;
       setErro(msg ?? 'Não foi possível redefinir a senha. Tente novamente.');
     } finally {
       setEnviando(false);

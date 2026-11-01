@@ -31,7 +31,7 @@ export default function BannerEscolherSubprefeituras({ onEscolher }: { onEscolhe
   return (
     <div className="cartao-pe-mapa animate-slide-up">
       <div
-        className="vidro-painel flex items-center gap-3 rounded-2xl px-4 py-3"
+        className="superficie flex items-center gap-3 rounded-2xl px-4 py-3"
         role="region"
         aria-label="Escolher subprefeituras"
       >

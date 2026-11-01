@@ -12,6 +12,8 @@ describe('OverlayAlagamentoToggle', () => {
   it('reflete o estado ligado em aria-pressed', () => {
     render(<OverlayAlagamentoToggle ativo onToggle={vi.fn()} isMobile={false} />);
     expect(screen.getByRole('button', { name: /alagamentos/i })).toHaveAttribute('aria-pressed', 'true');
+    // A classe é o que pinta o ativo: o vidro (!important) ignora estilo inline.
+    expect(screen.getByRole('button', { name: /alagamentos/i })).toHaveClass('ativo');
   });
 
   it('chama onToggle ao clicar', () => {

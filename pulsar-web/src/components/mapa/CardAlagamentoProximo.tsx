@@ -17,7 +17,7 @@ export default function CardAlagamentoProximo({ dados, onFechar }: Props) {
 
   return (
     <div
-      className="vidro-painel cartao-pe-mapa rounded-2xl p-4"
+      className="superficie cartao-pe-mapa rounded-2xl p-4"
       role="status"
     >
       <button

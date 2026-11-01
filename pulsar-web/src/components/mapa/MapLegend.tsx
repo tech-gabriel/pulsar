@@ -30,8 +30,8 @@ const LEGENDAS: Record<Camada, LegendaConfig> = {
   },
   temperatura: {
     titulo: 'Temperatura °C',
-    gradiente: gradiente(PALETA.azul, PALETA.verde, PALETA.ambar, PALETA.vermelho),
-    labels: ['0°', '10°', '20°', '30°', '40°'],
+    gradiente: gradiente(PALETA.azulProfundo, PALETA.azul, PALETA.verde, PALETA.ambar, PALETA.vermelho),
+    labels: ['15°', '22°', '27°', '32°', '35°+'],
   },
   chuva: {
     titulo: 'Precipitação mm/h',
@@ -123,7 +123,7 @@ export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = f
   if (!isMobile) {
     return (
       <div
-        className="mapa-controle legenda-mapa pointer-events-auto"
+        className="superficie rounded-2xl legenda-mapa pointer-events-auto"
         style={{ padding: '10px 14px', minWidth: 160 }}
         aria-label={`Legenda: ${config.titulo}`}
       >
@@ -135,12 +135,12 @@ export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = f
   // ── Mobile: pill colapsável. Posicionado acima do drawer (que ocupa ~3.5rem) ──
   // para não sobrepor o handle; lado esquerdo para liberar o FAB (à direita).
   return (
-    <div className="absolute z-[1000] pointer-events-auto" style={{ left: 8, bottom: '4rem' }}>
+    <div className="legenda-pill absolute z-[1000] pointer-events-auto" style={{ left: 8, bottom: '4rem' }}>
       {expandido ? (
         <button
           type="button"
           onClick={() => setExpandido(false)}
-          className="mapa-controle block text-left active:scale-[0.98] transition-transform"
+          className="superficie rounded-2xl block text-left active:scale-[0.98] transition-transform"
           style={{ padding: '10px 14px', minWidth: 160 }}
           aria-expanded
           aria-label={`Recolher legenda: ${tituloPill}`}

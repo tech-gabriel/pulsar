@@ -8,14 +8,14 @@ interface Props {
 
 /**
  * Spinner de carregamento dark (ETAPA 5.6).
- * `fullscreen` exibe um overlay glass com ícone Activity girando.
+ * `fullscreen` exibe um overlay escuro com ícone Activity girando.
  */
 export default function LoadingSpinner({ mensagem = 'Carregando...', className = '', fullscreen = false }: Props) {
   if (fullscreen) {
     return (
       <div
         className="fixed inset-0 z-[2000] flex flex-col items-center justify-center gap-4"
-        style={{ background: 'rgba(5, 47, 74, 0.8)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        style={{ background: 'rgba(5, 47, 74, 0.92)' }}
       >
         <Activity size={32} className="text-pulsar-400 animate-spin" />
         <p className="text-pulsar-200 text-sm">{mensagem}</p>

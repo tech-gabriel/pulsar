@@ -36,10 +36,15 @@ function faixa(tom: string, alfa: number, fillOpacity: number): FaixaCamada {
 
 const SEM_DADO: FaixaCamada = faixa(PALETA.neutro, 0.85, 0.12);
 
+// Escala de São Paulo (média anual perto de 20°): 20° é dia fresco, não quente.
+// Compara o valor arredondado, o mesmo que aparece no rótulo: antes 20,4° saía
+// "20°" em âmbar porque a faixa olhava o valor cru.
 function faixaTemperatura(t: number): FaixaCamada {
-  if (t <= 10) return faixa(PALETA.azul, 0.85, 0.25);
-  if (t <= 20) return faixa(PALETA.verde, 0.85, 0.2);
-  if (t <= 30) return faixa(PALETA.ambar, 0.85, 0.3);
+  const r = Math.round(t);
+  if (r <= 15) return faixa(PALETA.azulProfundo, 0.85, 0.3);
+  if (r <= 22) return faixa(PALETA.azul, 0.85, 0.25);
+  if (r <= 27) return faixa(PALETA.verde, 0.85, 0.2);
+  if (r <= 32) return faixa(PALETA.ambar, 0.85, 0.3);
   return faixa(PALETA.vermelho, 0.85, 0.35);
 }
 

@@ -6,6 +6,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import EmptyState from '../components/ui/EmptyState';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
+import { idDaArea } from '../features/cidade/cidade';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { normalizarNome } from '../utils/texto';
 import { coresParaFaixa, labelFaixa } from '../utils/risco';
@@ -85,7 +86,7 @@ export default function HistoricoListPage() {
               <button
                 key={sub.id}
                 type="button"
-                onClick={() => navigate(`/app/historico/${sub.id}`, { state: { zona: sub.zona, subNome: sub.nome } })}
+                onClick={() => navigate(`/app/historico/${idDaArea(sub.nome)}`, { state: { zona: sub.zona, subNome: sub.nome } })}
                 className="glass-card glass-card-hover w-full text-left flex items-center gap-3 px-4 py-3 active:scale-[0.99] transition-transform"
               >
                 {/* Score pill */}

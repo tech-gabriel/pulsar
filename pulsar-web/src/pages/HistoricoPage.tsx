@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   ResponsiveContainer,
@@ -13,6 +14,8 @@ import {
 } from 'recharts';
 import { ArrowLeft, CloudRain, Wind, Eye, Sun, BarChart3 } from 'lucide-react';
 import { useHistorico } from '../hooks/useHistorico';
+import { useSubprefeituras } from '../hooks/useSubprefeituras';
+import { idDaArea } from '../features/cidade/cidade';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useTheme } from '../hooks/useTheme';
 import Header from '../components/ui/Header';
@@ -64,7 +67,12 @@ function CustomTooltip({ active, payload, label, isLight }: {
 }
 
 export default function HistoricoPage() {
-  const { subprefeituraId } = useParams<{ subprefeituraId: string }>();
+  // A URL leva o nome da subprefeitura (/app/historico/butanta), não o id do banco. Links antigos
+  // com o id continuam valendo e são trocados pelo nome sem criar entrada no histórico.
+  const { area = '' } = useParams<{ area: string }>();
+  const { subprefeituras, carregando: carregandoSubs } = useSubprefeituras();
+  const sub = subprefeituras.find((s) => idDaArea(s.nome) === area || s.id === area);
+  const naoEncontrada = !carregandoSubs && subprefeituras.length > 0 && !sub;
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
@@ -74,7 +82,13 @@ export default function HistoricoPage() {
   const axisMuted = isLight ? 'rgba(71, 85, 105, 0.65)' : 'rgba(184, 230, 254, 0.5)';
   const gridStroke = isLight ? 'rgba(0, 105, 168, 0.12)' : 'rgba(0, 188, 255, 0.06)';
 
-  const { historico, carregando, erro, recarregar } = useHistorico(subprefeituraId ?? null);
+  const { historico, carregando, erro, recarregar } = useHistorico(sub?.id ?? null);
+
+  useEffect(() => {
+    if (sub && area !== idDaArea(sub.nome)) {
+      navigate(`/app/historico/${idDaArea(sub.nome)}`, { replace: true, state: location.state });
+    }
+  }, [sub, area, navigate, location.state]);
 
   const dados = historico?.leituras.map((l) => ({
     hora: formatarHora(l.timestamp),
@@ -141,6 +155,14 @@ export default function HistoricoPage() {
         {carregando && <LoadingSpinner mensagem="Carregando histórico..." className="h-60" />}
 
         {erro && <ErrorBanner mensagem={erro} onRetry={recarregar} />}
+
+        {naoEncontrada && (
+          <EmptyState
+            Icon={BarChart3}
+            titulo="Subprefeitura não encontrada"
+            mensagem="Confira o endereço ou escolha a subprefeitura na lista do Histórico."
+          />
+        )}
 
         {semDados && (
           <EmptyState

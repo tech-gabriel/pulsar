@@ -8,6 +8,7 @@ import { ZOOM } from './zoom';
 import ZoomControles from './ZoomControles';
 import RegioesLayer from './RegioesLayer';
 import ScoreLabel from './ScoreLabel';
+import OcorrenciasLayer from './OcorrenciasLayer';
 import type { FeatureCollection } from 'geojson';
 import { centroideRegiao } from '../../utils/geo';
 import { normalizarNome } from '../../utils/texto';
@@ -36,7 +37,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -173,6 +174,7 @@ export default function MapaGL(props: PropsMapa) {
           </div>
         </Marker>
       )}
+      {carregou && overlayAlagamento && ocorrencias.length > 0 && <OcorrenciasLayer ocorrencias={ocorrencias} />}
     </Map>
   );
 }

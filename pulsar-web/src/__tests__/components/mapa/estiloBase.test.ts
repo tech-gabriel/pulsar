@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { StyleSpecification } from 'maplibre-gl';
 import {
   TOM_CLARO,
+  TOM_ESCURO,
   recolorirEstilo,
   comChaveMapTiler,
   urlReservaMapTiler,
@@ -48,6 +49,25 @@ describe('recolorirEstilo', () => {
     expect(camada(e, 'building-3d').layout).toMatchObject({ visibility: 'none' });
     expect(camada(e, 'poi_r1').minzoom).toBe(13);
     expect(camada(e, 'poi_r20').minzoom).toBe(12);
+  });
+
+  it('no escuro todo rótulo (menos placas) fica claro com halo escuro', () => {
+    const comLugar = {
+      ...fixture,
+      layers: [...fixture.layers, { id: 'label_city', type: 'symbol', source: 's', paint: { 'text-color': '#333', 'text-halo-color': '#fff' } }],
+    } as unknown as StyleSpecification;
+    const e = recolorirEstilo(comLugar, TOM_ESCURO);
+    expect(camada(e, 'label_city').paint).toMatchObject({ 'text-color': TOM_ESCURO.textoRua, 'text-halo-color': TOM_ESCURO.haloRua });
+    expect(camada(e, 'poi_r1').paint).toMatchObject({ 'text-color': TOM_ESCURO.textoRua });
+    expect(camada(e, 'highway-shield').paint?.['text-color']).toBeUndefined();
+  });
+
+  it('no claro os rótulos de lugar mantêm as cores do estilo', () => {
+    const comLugar = {
+      ...fixture,
+      layers: [...fixture.layers, { id: 'label_city', type: 'symbol', source: 's', paint: { 'text-color': '#333' } }],
+    } as unknown as StyleSpecification;
+    expect(camada(recolorirEstilo(comLugar, TOM_CLARO), 'label_city').paint).toMatchObject({ 'text-color': '#333' });
   });
 
   it('não muta a entrada', () => {

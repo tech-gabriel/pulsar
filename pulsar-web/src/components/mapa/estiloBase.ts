@@ -15,6 +15,8 @@ export interface Tom {
   viaBorda: string;
   textoRua: string;
   haloRua: string;
+  /** No escuro, todo rótulo (lugares, comércios) usa o texto e o halo das ruas; no claro, o Liberty já serve. */
+  recoloreRotulos: boolean;
 }
 
 export const TOM_CLARO: Tom = {
@@ -28,6 +30,7 @@ export const TOM_CLARO: Tom = {
   viaBorda: '#ecc75a',
   textoRua: '#5f6368',
   haloRua: '#ffffff',
+  recoloreRotulos: false,
 };
 
 // Ponto de partida no tom do Google Maps escuro; conferido no olho com o user.
@@ -42,6 +45,7 @@ export const TOM_ESCURO: Tom = {
   viaBorda: '#5a4a18',
   textoRua: '#c4c9d1',
   haloRua: '#1f2329',
+  recoloreRotulos: true,
 };
 
 export const URL_OPENFREEMAP = 'https://tiles.openfreemap.org/styles/liberty';
@@ -69,7 +73,8 @@ function cor(camada: LayerSpecification, tom: Tom): Pintura | null {
       if (/road|street|primary|secondary|tertiary|minor|service|link|bridge|tunnel/.test(id)) return { 'line-color': tom.rua };
       return null;
     case 'symbol':
-      if (/road|street|highway/.test(id) && !/shield/.test(id)) return { 'text-color': tom.textoRua, 'text-halo-color': tom.haloRua };
+      if (/shield/.test(id)) return null;
+      if (tom.recoloreRotulos || /road|street|highway/.test(id)) return { 'text-color': tom.textoRua, 'text-halo-color': tom.haloRua };
       return null;
     default:
       return null;

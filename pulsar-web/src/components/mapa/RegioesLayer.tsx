@@ -70,9 +70,19 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
       popup.remove();
       mapa.getCanvas().style.cursor = '';
     };
+    const temAlagamentoNoPonto = (e: MapLayerMouseEvent) => {
+      const porCima = CAMADAS_POR_CIMA.filter((id) => mapa.getLayer(id));
+      return porCima.length > 0 && mapa.queryRenderedFeatures(e.point, { layers: porCima }).length > 0;
+    };
     const mover = (e: MapLayerMouseEvent) => {
       const f = e.features?.[0];
       if (!f) return;
+      // Sobre um alagamento, quem fala é o alagamento: sem tooltip da subprefeitura por cima.
+      if (temAlagamentoNoPonto(e)) {
+        limparHover();
+        mapa.getCanvas().style.cursor = 'pointer';
+        return;
+      }
       if (f.id !== hoverId) {
         limparHover();
         hoverId = f.id;
@@ -84,8 +94,7 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
       popup.setLngLat(e.lngLat).setHTML(tooltipSubprefeituraHtml(sub, String(f.properties?.nome ?? ''))).addTo(mapa);
     };
     const clicar = (e: MapLayerMouseEvent) => {
-      const porCima = CAMADAS_POR_CIMA.filter((id) => mapa.getLayer(id));
-      if (porCima.length && mapa.queryRenderedFeatures(e.point, { layers: porCima }).length) return;
+      if (temAlagamentoNoPonto(e)) return;
       const sub = subsRef.current.find((s) => s.id === e.features?.[0]?.properties?.subId);
       if (!sub) return;
       onSelRef.current(sub);

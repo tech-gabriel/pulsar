@@ -280,10 +280,19 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   z-index: 0;
 }
 
-.leaflet-popup-content-wrapper {
+/* Detalhe do alagamento: superfície sólida do tema, como os outros cartões do mapa. */
+.pulsar-popup-ocorrencia .maplibregl-popup-content {
   border-radius: 8px;
+  padding: 8px 12px;
   font-family: var(--font-body);
+  background: var(--superficie);
+  color: var(--text-primary);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
+.pulsar-popup-ocorrencia.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--superficie); }
+.pulsar-popup-ocorrencia.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--superficie); }
+.pulsar-popup-ocorrencia.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--superficie); }
+.pulsar-popup-ocorrencia.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--superficie); }
 
 /* ── Label de score circular sobre cada subprefeitura (ETAPA 2.4/2.7) ──────────
    O divIcon tem tamanho 0; o círculo é centralizado via transform. */

@@ -9,6 +9,7 @@ export interface Tom {
   agua: string;
   verde: string;
   predio: string;
+  predioBorda: string;
   rua: string;
   ruaBorda: string;
   via: string;
@@ -23,7 +24,8 @@ export const TOM_CLARO: Tom = {
   chao: '#f6f6f4',
   agua: '#9fd3f5',
   verde: '#c9e9c0',
-  predio: '#ecebe8',
+  predio: '#e2dfd9',
+  predioBorda: '#cfcac2',
   rua: '#ffffff',
   ruaBorda: '#dcdcdc',
   via: '#fde58a',
@@ -38,7 +40,8 @@ export const TOM_ESCURO: Tom = {
   chao: '#1f2329',
   agua: '#17263c',
   verde: '#1e3a2b',
-  predio: '#2a2f36',
+  predio: '#2c3138',
+  predioBorda: '#3b414a',
   rua: '#3a4049',
   ruaBorda: '#2a2f36',
   via: '#7a6420',
@@ -63,7 +66,7 @@ function cor(camada: LayerSpecification, tom: Tom): Pintura | null {
     case 'fill':
       if (/water/.test(id)) return { 'fill-color': tom.agua };
       if (/park|wood|grass|forest|green|cemetery|pitch|golf|landcover/.test(id)) return { 'fill-color': tom.verde };
-      if (/building/.test(id)) return { 'fill-color': tom.predio };
+      if (/building/.test(id)) return { 'fill-color': tom.predio, 'fill-outline-color': tom.predioBorda };
       if (/landuse|residential|industrial|commercial|retail/.test(id)) return { 'fill-color': tom.chao };
       return null;
     case 'line':
@@ -87,6 +90,8 @@ export function recolorirEstilo(estilo: StyleSpecification, tom: Tom): StyleSpec
     const camada = { ...original } as LayerSpecification & { paint?: Pintura; layout?: Pintura; minzoom?: number };
     const pintura = cor(original, tom);
     if (pintura) camada.paint = { ...(original as { paint?: Pintura }).paint, ...pintura };
+    // Prédios planos em todo zoom de rua (o Liberty só os desenha até o 14 e daí passa ao 3D, desligado).
+    if (original.type === 'fill' && /building/.test(original.id.toLowerCase())) delete camada.maxzoom;
     if (original.type === 'fill-extrusion') camada.layout = { ...(original as { layout?: Pintura }).layout, visibility: 'none' };
     if (original.type === 'symbol' && /poi/.test(original.id.toLowerCase())) {
       camada.minzoom = Math.max(0, (original.minzoom ?? 14) - ANTECIPA_POI);

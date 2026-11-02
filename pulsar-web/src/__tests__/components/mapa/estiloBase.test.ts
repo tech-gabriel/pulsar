@@ -17,6 +17,7 @@ const fixture = {
     { id: 'background', type: 'background', paint: {} },
     { id: 'water', type: 'fill', source: 's', paint: {} },
     { id: 'park', type: 'fill', source: 's', paint: {} },
+    { id: 'building', type: 'fill', source: 's', minzoom: 13, maxzoom: 14, paint: {} },
     { id: 'building-3d', type: 'fill-extrusion', source: 's', paint: {} },
     { id: 'road_motorway', type: 'line', source: 's', paint: {} },
     { id: 'road_motorway_casing', type: 'line', source: 's', paint: {} },
@@ -29,7 +30,7 @@ const fixture = {
 } as unknown as StyleSpecification;
 
 const camada = (e: StyleSpecification, id: string) => e.layers.find((x) => x.id === id)! as unknown as {
-  paint?: Record<string, unknown>; layout?: Record<string, unknown>; minzoom?: number;
+  paint?: Record<string, unknown>; layout?: Record<string, unknown>; minzoom?: number; maxzoom?: number;
 };
 
 describe('recolorirEstilo', () => {
@@ -43,6 +44,14 @@ describe('recolorirEstilo', () => {
     expect(camada(e, 'road_minor').paint).toMatchObject({ 'line-color': '#ffffff' });
     expect(camada(e, 'highway-name-minor').paint).toMatchObject({ 'text-color': '#5f6368', 'text-halo-color': '#ffffff' });
     expect(camada(e, 'highway-shield').paint?.['text-color']).toBeUndefined();
+  });
+
+  it('prédios planos em todos os zooms de rua, com cor e contorno do tom', () => {
+    for (const tom of [TOM_CLARO, TOM_ESCURO]) {
+      const predio = camada(recolorirEstilo(fixture, tom), 'building');
+      expect(predio.maxzoom).toBeUndefined();
+      expect(predio.paint).toMatchObject({ 'fill-color': tom.predio, 'fill-outline-color': tom.predioBorda });
+    }
   });
 
   it('desliga 3D e antecipa POIs em 2 zooms', () => {

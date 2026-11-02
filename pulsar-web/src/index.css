@@ -1085,6 +1085,9 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 /* Folha aberta: os cartões e a legenda que flutuam acima dela saem, para não cobri-la. */
 body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-pill) { display: none; }
 @media (max-width: 767px) { .mapa-app .maplibregl-ctrl-bottom-right { bottom: var(--topo-folha); } }
+/* Celular: o convite de alertas mora no mesmo pé do mapa; a atribuição (exigida pela licença do
+   OpenStreetMap) sobe para não ficar coberta enquanto ele está aberto. */
+@media (max-width: 767px) { body:has(.convite-push) .mapa-app .maplibregl-ctrl-bottom-right { bottom: calc(var(--topo-folha) + 68px); } }
 .tabbar-item {
   flex: 1;
   min-width: 0;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Map, { AttributionControl, Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre';
 import type { StyleSpecification } from 'maplibre-gl';
 import maplibregl from './maplibre';
@@ -111,8 +111,15 @@ export default function MapaGL(props: PropsMapa) {
     } else {
       voar([pontoBusca.lon, pontoBusca.lat], ZOOM.busca, 800);
     }
-     
   }, [pontoBusca, carregou]);
+
+  // Objeto estável: um GeoJSON novo a cada render faria o Source reprocessar o círculo no worker.
+  const precisao = pontoBusca?.precisao;
+  const circulo = useMemo(
+    () => (pontoBusca && precisao !== undefined ? circuloGeojson(pontoBusca.lat, pontoBusca.lon, precisao) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pontoBusca?.lat, pontoBusca?.lon, precisao],
+  );
 
   if (!estilo) return <div className="w-full h-full" style={{ background: 'var(--bg-primary)' }} />;
 
@@ -133,7 +140,12 @@ export default function MapaGL(props: PropsMapa) {
         setIdPrimeiroSimbolo(primeiroSimbolo(e.target));
         e.target.once('idle', () => performance.mark('mapa-pronto'));
       }}
-      onStyleData={(e) => setIdPrimeiroSimbolo(primeiroSimbolo(e.target))}
+      // styledata dispara a cada mudança de pintura (a animação da borda muda a cada 70 ms): só
+      // recalcula quando o rótulo de referência sumiu, ou seja, quando o estilo base foi trocado.
+      onStyleData={(e) => {
+        if (idPrimeiroSimbolo && e.target.getLayer(idPrimeiroSimbolo)) return;
+        setIdPrimeiroSimbolo(primeiroSimbolo(e.target));
+      }}
     >
       <ZoomControles lado={isMobile ? 'direita' : 'esquerda'} />
       <AttributionControl compact position="bottom-right" />
@@ -159,8 +171,8 @@ export default function MapaGL(props: PropsMapa) {
         </>
       )}
 
-      {pontoBusca?.precisao !== undefined && (
-        <Source id="pulsar-precisao" type="geojson" data={circuloGeojson(pontoBusca.lat, pontoBusca.lon, pontoBusca.precisao)}>
+      {circulo && (
+        <Source id="pulsar-precisao" type="geojson" data={circulo}>
           <Layer id="pulsar-precisao-fill" type="fill" paint={{ 'fill-color': COR_BUSCA, 'fill-opacity': 0.12 }} />
           <Layer id="pulsar-precisao-linha" type="line" paint={{ 'line-color': COR_BUSCA, 'line-width': 1 }} />
         </Source>

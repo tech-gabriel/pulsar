@@ -65,7 +65,9 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
     let hoverId: number | string | undefined;
 
     const limparHover = () => {
-      if (hoverId !== undefined) mapa.setFeatureState({ source: ID_FONTE_REGIOES, id: hoverId }, { hover: false });
+      if (hoverId !== undefined && mapa.style && mapa.getSource(ID_FONTE_REGIOES)) {
+        mapa.setFeatureState({ source: ID_FONTE_REGIOES, id: hoverId }, { hover: false });
+      }
       hoverId = undefined;
       popup.remove();
       mapa.getCanvas().style.cursor = '';
@@ -101,10 +103,20 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
       mapa.flyTo({ center: [sub.longitude, sub.latitude], zoom: ZOOM.sub, duration: 600, offset: deslocamentoDoPainel(paddingDoPainel(mapa.getContainer())) });
     };
 
+    // Trocar o tema recria a fonte: o hover e o tooltip da fonte velha não valem mais.
+    const aoTrocarEstilo = () => {
+      if (hoverId !== undefined && !mapa.getSource(ID_FONTE_REGIOES)) {
+        hoverId = undefined;
+        popup.remove();
+      }
+    };
+
+    mapa.on('styledata', aoTrocarEstilo);
     mapa.on('mousemove', FILL, mover);
     mapa.on('mouseleave', FILL, limparHover);
     mapa.on('click', FILL, clicar);
     return () => {
+      mapa.off('styledata', aoTrocarEstilo);
       mapa.off('mousemove', FILL, mover);
       mapa.off('mouseleave', FILL, limparHover);
       mapa.off('click', FILL, clicar);

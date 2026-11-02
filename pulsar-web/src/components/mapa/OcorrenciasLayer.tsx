@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Layer, Popup, Source, useMap } from 'react-map-gl/maplibre';
 import type { GeoJSONSource, Map as MapaMapLibre, MapLayerMouseEvent } from 'maplibre-gl';
 import type { OcorrenciaAlagamentoDto } from '../../types';
+import { PALETA, comAlfa } from '../../utils/paleta';
 import { formatarOcorrencia, LADO_ICONE, ocorrenciasGeojson, svgOcorrencia } from './ocorrenciaMarker';
 
 const FONTE = 'pulsar-ocorr';
@@ -10,20 +11,21 @@ const CONTAGEM = 'pulsar-ocorr-contagem';
 const PONTO = 'pulsar-ocorr-ponto';
 const TIPOS: OcorrenciaAlagamentoDto['tipo'][] = ['ALAGAMENTO', 'INUNDACAO'];
 const ESCALA = 2; // ícone rasterizado a 2x para ficar nítido em tela de alta densidade
-// Bolha com a mesma cor da .pulsar-cluster (blue-700, o azulProfundo da paleta, a 94%).
-const COR_BOLHA = 'rgba(29, 78, 216, 0.94)';
+// Bolha com a mesma cor da .pulsar-cluster: o azulProfundo da paleta a 94%.
+const COR_BOLHA = comAlfa(PALETA.azulProfundo, 0.94);
 
 const idImagem = (tipo: OcorrenciaAlagamentoDto['tipo']) => `ocorrencia-${tipo}`;
 
 /** Registra os dois ícones no estilo atual. Trocar de estilo (tema) apaga as imagens: chamar de novo. */
 async function garantirImagens(mapa: MapaMapLibre) {
   await Promise.all(
-    TIPOS.filter((t) => !mapa.hasImage(idImagem(t))).map(
+    TIPOS.filter((t) => mapa.style && !mapa.hasImage(idImagem(t))).map(
       (tipo) =>
         new Promise<void>((pronto) => {
           const img = new Image(LADO_ICONE * ESCALA, LADO_ICONE * ESCALA);
           img.onload = () => {
-            if (!mapa.hasImage(idImagem(tipo))) mapa.addImage(idImagem(tipo), img, { pixelRatio: ESCALA });
+            // O mapa pode ter sido destruído enquanto a imagem carregava (saiu da página).
+            if (mapa.style && !mapa.hasImage(idImagem(tipo))) mapa.addImage(idImagem(tipo), img, { pixelRatio: ESCALA });
             pronto();
           };
           img.onerror = () => pronto();
@@ -56,7 +58,8 @@ export default function OcorrenciasLayer({ ocorrencias }: { ocorrencias: Ocorren
       const f = e.features?.[0];
       if (!f) return;
       const fonte = mapa.getSource(FONTE) as GeoJSONSource | undefined;
-      const zoom = await fonte?.getClusterExpansionZoom(f.properties?.cluster_id as number);
+      // A fonte some se o overlay for desligado no meio do pedido: sem zoom, sem voo.
+      const zoom = await fonte?.getClusterExpansionZoom(f.properties?.cluster_id as number).catch(() => null);
       if (zoom == null || f.geometry.type !== 'Point') return;
       mapa.easeTo({ center: f.geometry.coordinates as [number, number], zoom });
     };

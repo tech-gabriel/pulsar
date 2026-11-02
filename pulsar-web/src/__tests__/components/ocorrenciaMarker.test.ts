@@ -4,7 +4,8 @@ import {
   GLIFO,
   TRANSFORM_GLIFO,
   corOcorrencia,
-  iconeOcorrencia,
+  svgOcorrencia,
+  ocorrenciasGeojson,
   formatarOcorrencia,
 } from '../../components/mapa/ocorrenciaMarker';
 import { PALETA } from '../../utils/paleta';
@@ -32,12 +33,20 @@ describe('ocorrenciaMarker', () => {
     expect(formatarOcorrencia({ ...o, nmSubprefeitura: null }).subprefeitura).toBeNull();
   });
 
-  it('iconeOcorrencia retorna um DivIcon com cor por tipo', () => {
-    const alag = iconeOcorrencia('ALAGAMENTO');
-    const inund = iconeOcorrencia('INUNDACAO');
-    expect((alag.options.html as string)).toContain('svg');
-    expect((inund.options.html as string)).toContain('svg');
-    expect(alag.options.html).not.toBe(inund.options.html);
+  it('svgOcorrencia devolve SVG distinto por tipo', () => {
+    const a = svgOcorrencia('ALAGAMENTO');
+    const i = svgOcorrencia('INUNDACAO');
+    expect(a.startsWith('<svg')).toBe(true);
+    expect(a).toContain(PALETA.azul);
+    expect(i).toContain(PALETA.azulProfundo);
+    expect(a).not.toBe(i);
+  });
+
+  it('ocorrenciasGeojson monta pontos lon/lat e lida com lista vazia', () => {
+    expect(ocorrenciasGeojson([]).features).toEqual([]);
+    const f = ocorrenciasGeojson([o]).features[0];
+    expect(f.geometry.coordinates).toEqual([-46.5, -23.6]);
+    expect(f.properties).toEqual({ id: '1', tipo: 'ALAGAMENTO' });
   });
 
   // Os glifos já saíram tortos uma vez (ondas 2,1px à esquerda, gota 1,25px

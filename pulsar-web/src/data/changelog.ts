@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.25.1',
+    data: '2026-11-02',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Mapa no celular igual ao do computador',
+        descricao: 'A barra de abas virou uma cápsula de vidro flutuando sobre o mapa, como o cabeçalho. A lista de subprefeituras ficou num cartão de vidro do tamanho do conteúdo, e o detalhe abre dentro dele com o mapa à vista, centrado na região escolhida. A escolha de camada também ganhou o vidro.',
+      },
+    ],
+  },
+  {
     versao: '1.25.0',
     data: '2026-11-01',
     itens: [

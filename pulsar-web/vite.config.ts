@@ -120,12 +120,6 @@ function fallbackSpaNoPreview(): Plugin {
 }
 
 export default defineConfig({
-  // O MapLibre padrão cria o worker a partir de um blob:, que a CSP do site (worker-src 'self')
-  // bloqueia. O build CSP do pacote recebe o worker por URL (setWorkerUrl em mapa/maplibre.ts).
-  // O alias vale também para o import dinâmico do react-map-gl; os tipos seguem do pacote.
-  resolve: {
-    alias: [{ find: /^maplibre-gl$/, replacement: path.resolve('node_modules/maplibre-gl/dist/maplibre-gl-csp.js') }],
-  },
   plugins: [
     tailwindcss(),
     react(),

@@ -269,7 +269,7 @@ export default function Header() {
       </header>
 
       {/* ── TAB BAR INFERIOR (mobile) ───────────────────────────────────────── */}
-      <nav className="tabbar-mobile md:hidden fixed bottom-0 left-0 right-0 z-[1000] flex items-stretch h-12">
+      <nav className="tabbar-mobile md:hidden fixed z-[1000] flex items-stretch">
         {TABS.map(({ to, curto, Icon, end }) => (
           <NavLink
             key={to}

@@ -490,7 +490,7 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
      translate com o transform da animação de entrada e descarta um deles. */
   position: absolute; z-index: 1200;
   left: 0; right: 0; margin-inline: auto;
-  bottom: calc(7.5rem + var(--seguro-baixo));
+  bottom: var(--topo-folha);
   width: min(28rem, calc(100% - 1.5rem));
 }
 /* Celular: a legenda e o convite de alertas ocupam o mesmo canto. Uma peça por vez: enquanto o
@@ -1034,7 +1034,7 @@ html.light {
   background: var(--vidro-luz), var(--vidro-tinta) !important;
   backdrop-filter: var(--vidro-desfoque);  box-shadow: inset 0 1px 0 var(--vidro-brilho), inset 0 0 0 .5px color-mix(in srgb, var(--vidro-brilho) 50%, transparent), var(--vidro-sombra) !important;
 }
-/* Painel lateral do computador: vidro denso. Dentro dele nada tem vidro próprio (busca e linhas
+/* Painel do mapa (lateral no computador, folha no celular): vidro denso. Dentro dele nada tem vidro próprio (busca e linhas
    são só preenchimento), e o texto apagado sobe um tom para manter o contraste sobre o mapa
    (vibrancy da Apple: sobre material translúcido, nada de cinza fraco). */
 .vidro-painel {
@@ -1132,11 +1132,30 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 }
 .menu-conta-item:hover { background: var(--bg-glass-hover); }
 
-/* Tab bar inferior (mobile) */
-.tabbar-mobile {
-  padding-bottom: var(--seguro-baixo);
-  height: calc(3rem + var(--seguro-baixo)) !important;
+/* Tab bar inferior (celular): cápsula de vidro flutuando sobre o mapa, no mesmo material e
+   recuo do cabeçalho. --base-tabbar é a altura que ela ocupa a partir do pé da tela; a folha do
+   mapa flutua 8px acima dela e --topo-folha é onde a folha fechada termina (cartões e legenda
+   do celular ficam acima). */
+:root {
+  --base-tabbar: calc(var(--seguro-baixo) + 66px);
+  --topo-folha: calc(var(--base-tabbar) + 72px);
 }
+.tabbar-mobile {
+  left: 8px; right: 8px; bottom: calc(var(--seguro-baixo) + 8px);
+  height: 58px; padding: 4px; gap: 2px; border-radius: 22px;
+}
+/* Folha do mapa no celular: o cartão do computador (28px de canto, recuo de 8px), do tamanho
+   do conteúdo e sem cobrir a busca do topo. */
+.folha-mapa {
+  left: 8px; right: 8px; bottom: calc(var(--base-tabbar) + 8px); border-radius: 28px;
+  max-height: calc(100dvh - var(--base-tabbar) - var(--topo-app) - 4.75rem);
+}
+/* Com o detalhe, a folha para em 45% da tela (testado no aparelho; 55% cobria mapa demais): o
+   detalhe rola por dentro e a região escolhida fica à vista no mapa, acima do cartão. */
+.folha-mapa[data-detalhe] { max-height: min(45dvh, calc(100dvh - var(--base-tabbar) - var(--topo-app) - 4.75rem)); }
+/* Folha aberta: os cartões e a legenda que flutuam acima dela saem, para não cobri-la. */
+body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-pill) { display: none; }
+@media (max-width: 767px) { .mapa-app .leaflet-bottom { bottom: var(--topo-folha); } }
 .tabbar-item {
   flex: 1;
   min-width: 0;
@@ -1157,9 +1176,14 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.tabbar-item { border-radius: 18px; }
+/* Aba ativa: a mesma pílula da aba ativa do cabeçalho do computador. */
 .tabbar-item.ativa {
-  color: var(--text-accent);
+  color: var(--color-pulsar-600);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--color-pulsar-500) 13%, transparent);
 }
+html:not(.light) .tabbar-item.ativa { color: var(--color-pulsar-300); background: color-mix(in srgb, var(--color-pulsar-400) 16%, transparent); }
 
 /* Badge pulsante do sino de notificações */
 @keyframes bell-pulse {

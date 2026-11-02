@@ -17,7 +17,6 @@ interface Props {
   ultimaAtualizacao: Date | null;
   onRecarregar: () => void;
   onSelecionar: (area: Area) => void;
-  hideHeader?: boolean;
 }
 
 function minutosAtras(data: Date | null): string {
@@ -43,7 +42,7 @@ function Secao({ children, estrela = false }: { children: React.ReactNode; estre
  * toque. Substitui a lista de zonas.
  */
 export default function PainelLateral({
-  areas, favoritas, carregando, erro, ultimaAtualizacao, onRecarregar, onSelecionar, hideHeader = false,
+  areas, favoritas, carregando, erro, ultimaAtualizacao, onRecarregar, onSelecionar,
 }: Props) {
   const [verTodas, setVerTodas] = useState(false);
   const [busca, setBusca] = useState('');
@@ -61,22 +60,15 @@ export default function PainelLateral({
 
   return (
     <div className="painel-glass flex flex-col h-full overflow-hidden">
-      {!hideHeader && (
-        // Sem título: o cartão "{Cidade} agora" já é o título do painel. Fica só a hora da
-        // última leitura, que num app de risco é o que diz se dá para confiar no que está na tela.
-        <div className="px-4 flex-shrink-0 flex items-center justify-end">
-          <button type="button" onClick={onRecarregar} disabled={carregando} title="Atualizar dados"
-            className="flex items-center gap-1.5 text-xs min-h-11 disabled:opacity-50" style={{ color: 'var(--text-secondary)' }}>
-            <RefreshCw size={12} className={carregando ? 'animate-spin' : ''} />
-            {erro ? 'Falha na conexão' : minutosAtras(ultimaAtualizacao)}
-          </button>
-        </div>
-      )}
-      {hideHeader && erro && (
-        <button type="button" onClick={onRecarregar} className="mx-4 mb-1 text-xs min-h-11 flex items-center gap-1.5" style={{ color: 'var(--text-secondary)' }}>
-          <RefreshCw size={12} /> Falha na conexão
+      {/* Sem título: o cartão "{Cidade} agora" já é o título do painel. Fica só a hora da
+          última leitura, que num app de risco é o que diz se dá para confiar no que está na tela. */}
+      <div className="px-4 flex-shrink-0 flex items-center justify-end">
+        <button type="button" onClick={onRecarregar} disabled={carregando} title="Atualizar dados"
+          className="flex items-center gap-1.5 text-xs min-h-11 disabled:opacity-50" style={{ color: 'var(--text-secondary)' }}>
+          <RefreshCw size={12} className={carregando ? 'animate-spin' : ''} />
+          {erro ? 'Falha na conexão' : minutosAtras(ultimaAtualizacao)}
         </button>
-      )}
+      </div>
 
       <div className="painel-scroll flex-1 overflow-y-auto overscroll-contain px-3 pb-4" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         {carregando && areas.length === 0 ? (

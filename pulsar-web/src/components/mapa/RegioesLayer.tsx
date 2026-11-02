@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Layer, Source, useMap } from 'react-map-gl/maplibre';
 import type { FeatureCollection } from 'geojson';
-import type { ExpressionSpecification, MapLayerMouseEvent } from 'maplibre-gl';
+import type { ExpressionSpecification, LngLat, MapLayerMouseEvent } from 'maplibre-gl';
 import maplibregl from './maplibre';
 import type { SubprefeituraMapaDto } from '../../types';
 import type { Camada } from '../../utils/camadas';
@@ -10,6 +10,7 @@ import { montarRegioes } from './regioesGeo';
 import { deslocamentoDoPainel, paddingDoPainel } from './geometria';
 import { tooltipSubprefeituraHtml } from './tooltipSub';
 import { ZOOM } from './zoom';
+import { criarRepouso } from './repouso';
 
 export const ID_FONTE_REGIOES = 'pulsar-regioes';
 const FILL = 'pulsar-regioes-fill';
@@ -63,13 +64,24 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
     const comMouse = window.matchMedia('(hover: hover)').matches;
     const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10, maxWidth: 'none', className: 'pulsar-tooltip' });
     let hoverId: number | string | undefined;
+    // O tooltip não persegue o mouse: aparece quando ele para (0,4 s), fica fixo e some ao mexer,
+    // arrastar ou dar zoom. Assim não atrapalha quem está navegando.
+    const tooltip = criarRepouso<{ lngLat: LngLat; subId: unknown; nome: string }>(
+      400,
+      ({ lngLat, subId, nome }) => {
+        if (!mapa.style) return;
+        const sub = subsRef.current.find((s) => s.id === subId);
+        popup.setLngLat(lngLat).setHTML(tooltipSubprefeituraHtml(sub, nome)).addTo(mapa);
+      },
+      () => popup.remove(),
+    );
 
     const limparHover = () => {
       if (hoverId !== undefined && mapa.style && mapa.getSource(ID_FONTE_REGIOES)) {
         mapa.setFeatureState({ source: ID_FONTE_REGIOES, id: hoverId }, { hover: false });
       }
       hoverId = undefined;
-      popup.remove();
+      tooltip.cancelar();
       mapa.getCanvas().style.cursor = '';
     };
     const temAlagamentoNoPonto = (e: MapLayerMouseEvent) => {
@@ -91,9 +103,7 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
         if (hoverId !== undefined) mapa.setFeatureState({ source: ID_FONTE_REGIOES, id: hoverId }, { hover: true });
       }
       mapa.getCanvas().style.cursor = 'pointer';
-      if (!comMouse) return;
-      const sub = subsRef.current.find((s) => s.id === f.properties?.subId);
-      popup.setLngLat(e.lngLat).setHTML(tooltipSubprefeituraHtml(sub, String(f.properties?.nome ?? ''))).addTo(mapa);
+      if (comMouse) tooltip.mover({ lngLat: e.lngLat, subId: f.properties?.subId, nome: String(f.properties?.nome ?? '') });
     };
     const clicar = (e: MapLayerMouseEvent) => {
       if (temAlagamentoNoPonto(e)) return;
@@ -107,20 +117,23 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
     const aoTrocarEstilo = () => {
       if (hoverId !== undefined && !mapa.getSource(ID_FONTE_REGIOES)) {
         hoverId = undefined;
-        popup.remove();
+        tooltip.cancelar();
       }
     };
+    const aoNavegar = () => tooltip.cancelar();
 
     mapa.on('styledata', aoTrocarEstilo);
+    mapa.on('movestart', aoNavegar);
     mapa.on('mousemove', FILL, mover);
     mapa.on('mouseleave', FILL, limparHover);
     mapa.on('click', FILL, clicar);
     return () => {
       mapa.off('styledata', aoTrocarEstilo);
+      mapa.off('movestart', aoNavegar);
       mapa.off('mousemove', FILL, mover);
       mapa.off('mouseleave', FILL, limparHover);
       mapa.off('click', FILL, clicar);
-      popup.remove();
+      tooltip.cancelar();
     };
   }, [mapRef]);
 

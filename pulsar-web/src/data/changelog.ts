@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.26.0',
+    data: '2026-11-02',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Mapa novo, com cara de Google Maps',
+        descricao: 'O mapa agora é desenhado no próprio aparelho: o zoom e o arrasto ficam contínuos, sem o fundo cinza enquanto carregava. As cores lembram o Google Maps, com ruas, avenidas, parques, prédios e mais comércios marcados, e os nomes das ruas aparecem por cima da cor do risco.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Resumo que não persegue o mouse',
+        descricao: 'No computador, o resumo da subprefeitura só aparece quando o mouse para sobre ela e some quando você arrasta ou dá zoom. Navegar pelo mapa ficou mais tranquilo.',
+      },
+    ],
+  },
+  {
     versao: '1.25.1',
     data: '2026-11-02',
     itens: [

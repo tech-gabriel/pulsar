@@ -20,12 +20,13 @@ const SP_ZOOM = 10;
 const BUSCA_ZOOM = 16;
 
 /**
- * Quanto do mapa o painel flutuante cobre (tablet: no pé; computador: à direita), lido do DOM.
+ * Quanto do mapa o painel flutuante cobre (celular e tablet: no pé; computador: à direita), lido do DOM.
+ * Há dois painéis (o cartão do tablet/computador e a folha do celular); vale o que está visível.
  * Usa a altura final do cartão (data-altura-final), porque ele pode estar no meio da animação.
  */
 function coberturaPainel(map: L.Map): { direita: number; baixo: number } {
-  const painel = document.querySelector<HTMLElement>('[data-painel-mapa]');
-  if (!painel || painel.offsetParent === null) return { direita: 0, baixo: 0 };
+  const painel = [...document.querySelectorAll<HTMLElement>('[data-painel-mapa]')].find((el) => el.getClientRects().length > 0);
+  if (!painel) return { direita: 0, baixo: 0 };
   const m = map.getContainer().getBoundingClientRect();
   const p = painel.getBoundingClientRect();
   if (p.width < m.width * 0.6) return { direita: Math.max(0, m.right - p.left), baixo: 0 };

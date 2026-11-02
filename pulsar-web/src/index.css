@@ -348,10 +348,9 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 }
 
 /* ── Tooltip do mapa (superfície sólida) ──────────────────────────────────────────────────────*/
-/* Combina .leaflet-tooltip + .pulsar-tooltip para vencer o default do Leaflet
-   (.leaflet-tooltip { background:#fff; color:#222 }), que tem especificidade
-   igual e é carregado depois no bundle — senão o tooltip glass fica branco. */
-.leaflet-tooltip.pulsar-tooltip {
+/* Popup do MapLibre com a classe pulsar-tooltip: o conteúdo vence o default
+   (.maplibregl-popup-content { background:#fff }) por especificidade. */
+.pulsar-tooltip .maplibregl-popup-content {
   background: var(--superficie);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
@@ -367,9 +366,10 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   max-width: 280px;
   white-space: normal;
 }
-.pulsar-tooltip::before {
-  display: none; /* setinha oculta: tooltip sticky segue o mouse */
+.pulsar-tooltip .maplibregl-popup-tip {
+  display: none; /* setinha oculta: o tooltip segue o mouse */
 }
+.pulsar-tooltip { pointer-events: none; }
 .pulsar-tooltip .pt-titulo {
   font-family: var(--font-heading);
   font-weight: 700;
@@ -1325,7 +1325,7 @@ html.light .pulsar-sub-nome {
 }
 
 /* Tooltip do mapa no tema light: superfície clara + faixas em tons mais escuros */
-html.light .leaflet-tooltip.pulsar-tooltip {
+html.light .pulsar-tooltip .maplibregl-popup-content {
   background: var(--superficie);
   border: 1px solid rgba(0, 105, 168, 0.16);
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.7);

@@ -6,6 +6,9 @@ import { carregarEstiloBase, comChaveMapTiler, urlReservaMapTiler } from './esti
 import { circuloGeojson, paddingDoPainel } from './geometria';
 import { ZOOM } from './zoom';
 import ZoomControles from './ZoomControles';
+import RegioesLayer from './RegioesLayer';
+import ScoreLabel from './ScoreLabel';
+import type { FeatureCollection } from 'geojson';
 import { centroideRegiao } from '../../utils/geo';
 import { normalizarNome } from '../../utils/texto';
 import { useTheme } from '../../hooks/useTheme';
@@ -33,14 +36,14 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { subprefeituras, subSelecionada, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
   const [estiloOfm, setEstiloOfm] = useState<StyleSpecification | null>(null);
   const [reserva, setReserva] = useState(false);
   const [carregou, setCarregou] = useState(false);
-  const [, setIdPrimeiroSimbolo] = useState<string | undefined>();
+  const [idPrimeiroSimbolo, setIdPrimeiroSimbolo] = useState<string | undefined>();
   const estilo = reserva ? (CHAVE_MAPTILER ? urlReservaMapTiler(theme, CHAVE_MAPTILER) : null) : estiloOfm;
 
   // Estilo base do tema; se o OpenFreeMap falhar, a reserva do MapTiler vale até sair do mapa.
@@ -129,6 +132,27 @@ export default function MapaGL(props: PropsMapa) {
     >
       <ZoomControles lado={isMobile ? 'direita' : 'esquerda'} />
       <AttributionControl compact position="bottom-right" />
+
+      {geojson && carregou && (
+        <>
+          <RegioesLayer
+            geojson={geojson as FeatureCollection}
+            subprefeituras={subprefeituras}
+            subSelecionada={subSelecionada}
+            onSelecionarSub={onSelecionarSub}
+            camadaAtiva={camadaAtiva}
+            zonaEmFoco={zonaEmFoco}
+            idPrimeiroSimbolo={idPrimeiroSimbolo}
+          />
+          <ScoreLabel
+            subprefeituras={subprefeituras}
+            subSelecionada={subSelecionada}
+            camadaAtiva={camadaAtiva}
+            zonaEmFoco={zonaEmFoco}
+            atenuado={overlayAlagamento}
+          />
+        </>
+      )}
 
       {pontoBusca?.precisao !== undefined && (
         <Source id="pulsar-precisao" type="geojson" data={circuloGeojson(pontoBusca.lat, pontoBusca.lon, pontoBusca.precisao)}>

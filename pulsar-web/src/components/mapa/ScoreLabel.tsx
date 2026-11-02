@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Marker, useMap, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
+import { useEffect, useState } from 'react';
+import { Marker, useMap } from 'react-map-gl/maplibre';
 import type { SubprefeituraMapaDto } from '../../types';
 import { estiloCamada, type Camada } from '../../utils/camadas';
 import { nomeAbreviado } from '../../utils/nomesSub';
 import { fundoParaTextoBranco, opaca } from '../../utils/contraste';
+import { normalizarNome } from '../../utils/texto';
+import { tamanhoParaZoom } from './zoom';
 
 interface Props {
   subprefeituras: SubprefeituraMapaDto[];
@@ -15,95 +16,73 @@ interface Props {
   atenuado?: boolean;
 }
 
-interface TamanhoLabel {
-  diametro: number;
-  fonte: number;
-  nomeFonte: number; // 0 = nome oculto neste zoom
-}
-
-// Comportamento de zoom (ETAPA 2.3/2.7):
-//  zoom <= 9  → esconde tudo;  10 → só círculo;  11 → nome 9px;  12 → 10px;  >=13 → 11px.
-// A fonte do número nunca desce de 11px (mínimo legível recomendado no mobile).
-function tamanhoParaZoom(zoom: number): TamanhoLabel | null {
-  if (zoom <= 9) return null;
-  if (zoom === 10) return { diametro: 32, fonte: 11, nomeFonte: 0 };
-  if (zoom === 11) return { diametro: 32, fonte: 11, nomeFonte: 9 };
-  if (zoom === 12) return { diametro: 35, fonte: 12, nomeFonte: 10 };
-  return { diametro: 38, fonte: 13, nomeFonte: 11 };
-}
-
-// Extrai a opacidade de uma cor rgba(...) para montar o glow (alpha ~0.5).
+// Glow do círculo: a cor da faixa com alpha ~0.5.
 function glowDaCor(cor: string): string {
   return cor.replace(/[\d.]+\)$/, '0.5)');
 }
 
-// Legibilidade do número dentro do círculo: as cores de faixa vêm com alpha
-// (~0.85), então o basemap vaza por baixo e o contraste passa a depender do que
-// está embaixo. O círculo do label vira opaco (o preenchimento translúcido
-// continua no polígono, que é quem precisa deixar o mapa aparecer) e o fundo é
-// fechado até o número branco passar em 4,5:1. Ver utils/contraste.
-
-function normalizar(nome: string): string {
-  return nome.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
-}
-
+// Legibilidade do número: o círculo é opaco e o fundo é fechado até o branco passar em 4,5:1
+// (ver utils/contraste). O preenchimento translúcido fica no polígono.
 export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco, atenuado = false }: Props) {
-  const map = useMap();
-  const [zoom, setZoom] = useState<number>(() => map.getZoom());
-  useMapEvents({ zoomend: () => setZoom(map.getZoom()) });
+  const { current: mapRef } = useMap();
+  const [zoom, setZoom] = useState(() => mapRef?.getZoom() ?? 0);
 
-  if (atenuado) return null; // modo foco: sem números de score sobre o mapa
+  useEffect(() => {
+    const mapa = mapRef?.getMap();
+    if (!mapa) return;
+    const atualizar = () => setZoom(mapa.getZoom());
+    mapa.on('zoomend', atualizar);
+    return () => {
+      mapa.off('zoomend', atualizar);
+    };
+  }, [mapRef]);
 
+  if (atenuado) return null;
   const tamanho = tamanhoParaZoom(zoom);
-  if (!tamanho) return null; // mapa muito afastado: esconde os labels
+  if (!tamanho) return null;
 
   const { diametro, fonte, nomeFonte } = tamanho;
-  const regiaoNorm = zonaEmFoco ? normalizar(zonaEmFoco) : null;
+  const zona = zonaEmFoco ? normalizarNome(zonaEmFoco) : null;
 
   return (
     <>
       {subprefeituras.map((sub) => {
         const estilo = estiloCamada(sub, camadaAtiva);
-        const glow = glowDaCor(estilo.corCirculo);
-        const selecionada = subSelecionada?.id === sub.id;
-        // Esmaecer labels de outras regiões quando há uma região selecionada (4.7).
-        const esmaecida = regiaoNorm != null && normalizar(sub.zona) !== regiaoNorm;
-        const opacidade = esmaecida ? 0.2 : 1;
-
-        const classes = [
-          'pulsar-score-circle',
-          estilo.pulsa ? 'pulsa' : '',
-          selecionada ? 'selecionado' : '',
-        ].filter(Boolean).join(' ');
-
-        const fundo = fundoParaTextoBranco(opaca(estilo.corCirculo));
-        const circuloHtml = `<div class="${classes}" style="width:${diametro}px;height:${diametro}px;font-size:${fonte}px;background:${fundo};color:#FFFFFF;box-shadow:0 0 10px ${glow};">${estilo.texto}</div>`;
-        const nomeHtml = nomeFonte > 0
-          ? `<div class="pulsar-sub-nome" style="font-size:${nomeFonte}px;">${nomeAbreviado(sub.nome)}</div>`
-          : '';
-
-        // Container coluna: círculo (no centróide) + nome abaixo. iconAnchor no
-        // centro do círculo para o ponto bater com a coordenada da subprefeitura.
-        const alturaNome = nomeFonte > 0 ? nomeFonte + 6 : 0;
-        const icon = L.divIcon({
-          className: 'pulsar-score-label',
-          iconSize: [100, diametro + alturaNome],
-          iconAnchor: [50, diametro / 2],
-          html: `<div class="pulsar-label-wrap" style="opacity:${opacidade};">${circuloHtml}${nomeHtml}</div>`,
-        });
-
+        const esmaecida = zona != null && normalizarNome(sub.zona) !== zona;
+        const classes = ['pulsar-score-circle', estilo.pulsa ? 'pulsa' : '', subSelecionada?.id === sub.id ? 'selecionado' : '']
+          .filter(Boolean)
+          .join(' ');
         return (
-          // key inclui a camada → re-monta o marker ao trocar de camada,
-          // disparando a animação de fade (ETAPA 3.3). interactive=false: o label
-          // é puramente visual; hover/click são tratados pelo polígono abaixo,
-          // evitando tooltip duplicado (ETAPA 3.5).
+          // key com a camada: remonta ao trocar de camada e dispara o fade. Sem ponteiro: o toque cai no polígono.
           <Marker
             key={`${sub.id}-${camadaAtiva}`}
-            position={[sub.latitude, sub.longitude]}
-            icon={icon}
-            keyboard={false}
-            interactive={false}
-          />
+            longitude={sub.longitude}
+            latitude={sub.latitude}
+            anchor="top"
+            offset={[0, -diametro / 2]}
+            style={{ pointerEvents: 'none' }}
+          >
+            <div className="pulsar-label-wrap" style={{ opacity: esmaecida ? 0.2 : 1 }}>
+              <div
+                className={classes}
+                style={{
+                  width: diametro,
+                  height: diametro,
+                  fontSize: fonte,
+                  background: fundoParaTextoBranco(opaca(estilo.corCirculo)),
+                  color: '#FFFFFF',
+                  boxShadow: `0 0 10px ${glowDaCor(estilo.corCirculo)}`,
+                }}
+              >
+                {estilo.texto}
+              </div>
+              {nomeFonte > 0 && (
+                <div className="pulsar-sub-nome" style={{ fontSize: nomeFonte }}>
+                  {nomeAbreviado(sub.nome)}
+                </div>
+              )}
+            </div>
+          </Marker>
         );
       })}
     </>

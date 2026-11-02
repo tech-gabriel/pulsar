@@ -1,4 +1,4 @@
-import L from 'leaflet';
+import type { FeatureCollection, Point } from 'geojson';
 import type { OcorrenciaAlagamentoDto } from '../../types';
 import { PALETA } from '../../utils/paleta';
 
@@ -80,21 +80,41 @@ function glifoParaSvg(tipo: OcorrenciaAlagamentoDto['tipo']): string {
   );
 }
 
-/** Ícone de ponto (divIcon SVG) — pictograma distinto por tipo; evita o ícone default do Leaflet (quebra no Vite). */
-export function iconeOcorrencia(tipo: OcorrenciaAlagamentoDto['tipo']): L.DivIcon {
+/** Lado do ícone (px CSS): o disco de 28px com folga de toque em volta. */
+export const LADO_ICONE = ALVO;
+
+/**
+ * SVG do ponto (disco + pictograma por tipo), rasterizado e registrado como imagem no mapa.
+ * A sombra que o Leaflet aplicava por CSS vai como filtro dentro do próprio SVG.
+ */
+export function svgOcorrencia(tipo: OcorrenciaAlagamentoDto['tipo']): string {
   const disco =
     `<circle cx="${DISCO.cx}" cy="${DISCO.cy}" r="${DISCO.r}" fill="${COR[tipo]}" ` +
-    `stroke="#ffffff" stroke-width="${DISCO.traco}"/>`;
+    `stroke="#ffffff" stroke-width="${DISCO.traco}" filter="url(#sombra)"/>`;
+  const sombra =
+    '<defs><filter id="sombra" x="-30%" y="-30%" width="160%" height="160%">' +
+    '<feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000" flood-opacity="0.45"/></filter></defs>';
+  return (
+    `<svg width="${ALVO}" height="${ALVO}" viewBox="0 0 ${ALVO} ${ALVO}" xmlns="http://www.w3.org/2000/svg">` +
+    `${sombra}<g transform="translate(${RECUO}, ${RECUO})">${disco}${glifoParaSvg(tipo)}</g></svg>`
+  );
+}
 
-  return L.divIcon({
-    className: '',
-    html:
-      `<svg width="${ALVO}" height="${ALVO}" viewBox="0 0 ${ALVO} ${ALVO}" xmlns="http://www.w3.org/2000/svg" ` +
-      `style="filter: drop-shadow(0 1px 3px rgba(0,0,0,0.45))">` +
-      `<g transform="translate(${RECUO}, ${RECUO})">${disco}${glifoParaSvg(tipo)}</g></svg>`,
-    iconSize: [ALVO, ALVO],
-    iconAnchor: [ALVO / 2, ALVO / 2],
-  });
+export interface PropsOcorrencia {
+  id: string;
+  tipo: OcorrenciaAlagamentoDto['tipo'];
+}
+
+/** Pontos das ocorrências para a fonte agrupada do mapa (GeoJSON é lon, lat). */
+export function ocorrenciasGeojson(lista: OcorrenciaAlagamentoDto[]): FeatureCollection<Point, PropsOcorrencia> {
+  return {
+    type: 'FeatureCollection',
+    features: lista.map((o) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [o.longitude, o.latitude] },
+      properties: { id: o.id, tipo: o.tipo },
+    })),
+  };
 }
 
 export interface OcorrenciaFormatada {

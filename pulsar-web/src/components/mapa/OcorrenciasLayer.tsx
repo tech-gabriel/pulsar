@@ -2,7 +2,12 @@ import L from 'leaflet';
 import { Marker, Popup } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import type { OcorrenciaAlagamentoDto } from '../../types';
-import { iconeOcorrencia, formatarOcorrencia } from './ocorrenciaMarker';
+import { svgOcorrencia, formatarOcorrencia, LADO_ICONE } from './ocorrenciaMarker';
+
+// Ponte até a troca para o MapLibre (Task 8 do plano MAP1): mesmo SVG, embrulhado em divIcon.
+function iconeOcorrencia(tipo: OcorrenciaAlagamentoDto['tipo']): L.DivIcon {
+  return L.divIcon({ className: '', html: svgOcorrencia(tipo), iconSize: [LADO_ICONE, LADO_ICONE], iconAnchor: [LADO_ICONE / 2, LADO_ICONE / 2] });
+}
 
 interface Props {
   ocorrencias: OcorrenciaAlagamentoDto[];

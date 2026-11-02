@@ -6,13 +6,3 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 maplibregl.setWorkerUrl(workerUrl);
 
 export default maplibregl;
-
-/** Sem WebGL o MapLibre não desenha nada; o MapaBase mostra um aviso no lugar. */
-export function temWebGL(): boolean {
-  try {
-    const canvas = document.createElement('canvas');
-    return !!(canvas.getContext('webgl2') ?? canvas.getContext('webgl'));
-  } catch {
-    return false;
-  }
-}

@@ -1,46 +1,8 @@
-import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, ZoomControl, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { lazy, Suspense, useState } from 'react';
 import type { GeoJsonObject } from 'geojson';
-import type { SubprefeituraMapaDto } from '../../types';
+import type { OcorrenciaAlagamentoDto, SubprefeituraMapaDto } from '../../types';
 import type { Camada } from '../../utils/camadas';
-import { centroideRegiao } from '../../utils/geo';
-import { normalizarNome } from '../../utils/texto';
-import { useTheme } from '../../hooks/useTheme';
-import { useIsMobile } from '../../hooks/useIsMobile';
-import RegioesLayer from './RegioesLayer';
-import ScoreLabel from './ScoreLabel';
-import OcorrenciasLayer from './OcorrenciasLayer';
-import type { OcorrenciaAlagamentoDto } from '../../types';
-
-// Centro geográfico de São Paulo
-const SP_CENTER: [number, number] = [-23.5505, -46.6333];
-const SP_ZOOM = 10;
-const BUSCA_ZOOM = 16;
-
-/**
- * Quanto do mapa o painel flutuante cobre (celular e tablet: no pé; computador: à direita), lido do DOM.
- * Há dois painéis (o cartão do tablet/computador e a folha do celular); vale o que está visível.
- * Usa a altura final do cartão (data-altura-final), porque ele pode estar no meio da animação.
- */
-function coberturaPainel(map: L.Map): { direita: number; baixo: number } {
-  const painel = [...document.querySelectorAll<HTMLElement>('[data-painel-mapa]')].find((el) => el.getClientRects().length > 0);
-  if (!painel) return { direita: 0, baixo: 0 };
-  const m = map.getContainer().getBoundingClientRect();
-  const p = painel.getBoundingClientRect();
-  if (p.width < m.width * 0.6) return { direita: Math.max(0, m.right - p.left), baixo: 0 };
-  const altura = Number(painel.dataset.alturaFinal) || p.height;
-  return { direita: 0, baixo: Math.max(0, m.bottom - (p.bottom - altura)) };
-}
-
-/** flyTo que põe o ponto no centro da parte VISÍVEL do mapa, e não atrás do painel. */
-function voar(map: L.Map, alvo: L.LatLngExpression, zoom: number, duration: number) {
-  const { direita, baixo } = coberturaPainel(map);
-  const desvio = L.point(-direita / 2, -baixo / 2);
-  const centro = map.unproject(map.project(alvo, zoom).subtract(desvio), zoom);
-  map.flyTo(centro, zoom, { duration });
-}
+import { temWebGL } from './webgl';
 
 export interface PontoBusca {
   lat: number;
@@ -51,54 +13,7 @@ export interface PontoBusca {
   ajustado?: boolean;
 }
 
-// Pin custom para o resultado da busca. Usamos divIcon (SVG inline) para evitar
-// o problema do ícone default do Leaflet quebrar no bundle do Vite.
-const pinBusca = L.divIcon({
-  className: '',
-  html:
-    '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" ' +
-    'style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4))" ' +
-    'xmlns="http://www.w3.org/2000/svg">' +
-    '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" ' +
-    'fill="#00BCFF" stroke="#ffffff" stroke-width="1.5"/>' +
-    '<circle cx="12" cy="9" r="2.5" fill="#ffffff"/></svg>',
-  iconSize: [30, 30],
-  iconAnchor: [15, 30],
-});
-
-// Tile layer: MapTiler (dataviz dark/light) se houver key; senão, fallback CartoDB.
-const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
-const ATTRIB_MAPTILER = '© MapTiler © OpenStreetMap contributors';
-const ATTRIB_CARTO =
-  '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
-function tileConfig(theme: 'dark' | 'light') {
-  if (MAPTILER_KEY) {
-    // streets-v2: nomes de ruas, parques (áreas verdes) e POIs legíveis, mantendo
-    // contraste com os polígonos de score por cima (fillOpacity baixa).
-    // As tiles raster do MapTiler são 512px nativas: exibi-las com o tileSize
-    // padrão (256) comprime a imagem pela metade e deixa os rótulos minúsculos.
-    // tileSize:512 + zoomOffset:-1 mostra as tiles no tamanho nativo → nomes maiores
-    // e nítidos (integração recomendada pelo MapTiler para Leaflet).
-    const estilo = theme === 'light' ? 'streets-v2' : 'streets-v2-dark';
-    return {
-      url: `https://api.maptiler.com/maps/${estilo}/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`,
-      attribution: ATTRIB_MAPTILER,
-      tileSize: 512,
-      zoomOffset: -1,
-    };
-  }
-  // Fallback sem chave: Voyager (CARTO) é mais detalhado que o dark/light_all e mostra ruas/parques.
-  const base = theme === 'light' ? 'rastertiles/voyager' : 'rastertiles/voyager_labels_under';
-  return {
-    url: `https://basemaps.cartocdn.com/${base}/{z}/{x}/{y}{r}.png`,
-    attribution: ATTRIB_CARTO,
-    tileSize: 256,
-    zoomOffset: 0,
-  };
-}
-
-interface Props {
+export interface PropsMapa {
   geojson: GeoJsonObject | null;
   subprefeituras: SubprefeituraMapaDto[];
   subSelecionada: SubprefeituraMapaDto | null;
@@ -113,153 +28,25 @@ interface Props {
   ocorrencias: OcorrenciaAlagamentoDto[];
 }
 
-/**
- * Centraliza o mapa na região selecionada (ETAPA 4.7). Quando a seleção parte
- * de um clique no mapa (subSelecionadaAtiva), o próprio handler já faz o flyTo
- * para a subprefeitura, então aqui só agimos quando a seleção vem da lista.
- * Sem região selecionada, volta ao enquadramento padrão de SP.
- */
-function MapController({
-  subprefeituras,
-  zonaEmFoco,
-  subSelecionadaAtiva,
-  subSelecionada,
-  pontoBusca,
-}: {
-  subprefeituras: SubprefeituraMapaDto[];
-  zonaEmFoco: string | null;
-  subSelecionadaAtiva: boolean;
-  subSelecionada: SubprefeituraMapaDto | null;
-  pontoBusca: PontoBusca | null;
-}) {
-  const map = useMap();
-  const subSelRef = useRef(subSelecionadaAtiva);
-  useEffect(() => {
-    subSelRef.current = subSelecionadaAtiva;
-  });
+// O MapLibre (e o worker dele) vêm num chunk próprio: a página, o painel e a busca aparecem antes.
+const MapaGL = lazy(() => import('./MapaGL'));
 
-  useEffect(() => {
-    if (!zonaEmFoco) {
-      voar(map, SP_CENTER, SP_ZOOM, 0.6);
-      return;
-    }
-    if (subSelRef.current) return; // clique no mapa já centralizou na subprefeitura
-    const daRegiao = subprefeituras.filter(
-      (s) => normalizarNome(s.zona) === normalizarNome(zonaEmFoco),
-    );
-    const centro = centroideRegiao(daRegiao);
-    if (centro) voar(map, [centro.lat, centro.lon], 11, 0.6);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zonaEmFoco]);
-
-  // SP3: a subprefeitura escolhida na lista, na busca ou no sino vira o foco do mapa
-  // (antes o foco era a zona dela). O clique no mapa já voou; repetir o destino é inofensivo.
-  useEffect(() => {
-    if (subSelecionada) voar(map, [subSelecionada.latitude, subSelecionada.longitude], 13, 0.6);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subSelecionada?.id]);
-
-  // Resultado da busca: voa até o endereço selecionado.
-  useEffect(() => {
-    if (!pontoBusca || pontoBusca.ajustado) return;
-    const centro = L.latLng(pontoBusca.lat, pontoBusca.lon);
-    // Com precisão, enquadra o círculo inteiro: no zoom da busca um erro grande cobriria a tela.
-    if (pontoBusca.precisao !== undefined) {
-      const { direita, baixo } = coberturaPainel(map);
-      map.flyToBounds(centro.toBounds(pontoBusca.precisao * 2), { maxZoom: BUSCA_ZOOM, duration: 0.8, paddingBottomRight: [direita, baixo] });
-    } else {
-      voar(map, centro, BUSCA_ZOOM, 0.8);
-    }
-  }, [pontoBusca, map]);
-
-  return null;
+function Fundo() {
+  return <div className="w-full h-full" style={{ background: 'var(--bg-primary)' }} />;
 }
 
-export default function MapaBase({
-  geojson,
-  subprefeituras,
-  subSelecionada,
-  onSelecionarSub,
-  camadaAtiva,
-  zonaEmFoco,
-  subSelecionadaAtiva,
-  pontoBusca,
-  onMoverPonto,
-  overlayAlagamento,
-  ocorrencias,
-}: Props) {
-  const { theme } = useTheme();
-  const tile = tileConfig(theme);
-  const isMobile = useIsMobile(768);
+export default function MapaBase(props: PropsMapa) {
+  const [webgl] = useState(temWebGL); // /app é só CSR: o document existe aqui
+  if (!webgl) {
+    return (
+      <div role="status" className="mapa-sem-webgl">
+        Seu navegador não conseguiu abrir o mapa. A lista, o detalhe e os alertas continuam funcionando.
+      </div>
+    );
+  }
   return (
-    <MapContainer
-      center={SP_CENTER}
-      zoom={SP_ZOOM}
-      className="w-full h-full"
-      scrollWheelZoom
-      // Celular: zoom à direita (a busca ocupa o topo à esquerda; o recuo está em index.css).
-      // Tablet e computador: à esquerda, na coluna dos controles do mapa (a busca mora no painel).
-      zoomControl={false}
-    >
-      <ZoomControl key={isMobile ? 'd' : 'e'} position={isMobile ? 'topright' : 'topleft'} />
-      <TileLayer
-        key={tile.url}
-        attribution={tile.attribution}
-        url={tile.url}
-        tileSize={tile.tileSize}
-        zoomOffset={tile.zoomOffset}
-      />
-      <MapController
-        subprefeituras={subprefeituras}
-        zonaEmFoco={zonaEmFoco}
-        subSelecionadaAtiva={subSelecionadaAtiva}
-        subSelecionada={subSelecionada}
-        pontoBusca={pontoBusca}
-      />
-      {pontoBusca?.precisao !== undefined && (
-        <Circle
-          center={[pontoBusca.lat, pontoBusca.lon]}
-          radius={pontoBusca.precisao}
-          pathOptions={{ color: '#00BCFF', weight: 1, fillOpacity: 0.12 }}
-          interactive={false}
-        />
-      )}
-      {pontoBusca && (
-        <Marker
-          position={[pontoBusca.lat, pontoBusca.lon]}
-          icon={pinBusca}
-          draggable
-          title="Arraste para ajustar o ponto"
-          eventHandlers={{
-            dragend: (e) => {
-              const { lat, lng } = (e.target as L.Marker).getLatLng();
-              onMoverPonto(lat, lng);
-            },
-          }}
-        />
-      )}
-      {overlayAlagamento && ocorrencias.length > 0 && (
-        <OcorrenciasLayer ocorrencias={ocorrencias} />
-      )}
-      {geojson && (
-        <>
-          <RegioesLayer
-            geojson={geojson}
-            subprefeituras={subprefeituras}
-            subSelecionada={subSelecionada}
-            onSelecionarSub={onSelecionarSub}
-            camadaAtiva={camadaAtiva}
-            zonaEmFoco={zonaEmFoco}
-          />
-          <ScoreLabel
-            subprefeituras={subprefeituras}
-            subSelecionada={subSelecionada}
-            camadaAtiva={camadaAtiva}
-            zonaEmFoco={zonaEmFoco}
-            atenuado={overlayAlagamento}
-          />
-        </>
-      )}
-    </MapContainer>
+    <Suspense fallback={<Fundo />}>
+      <MapaGL {...props} />
+    </Suspense>
   );
 }

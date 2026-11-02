@@ -529,6 +529,32 @@ body:has(.convite-push) .legenda-pill { display: none; }
 /* Alagamentos logo abaixo do zoom (2 x 40 px + margens). */
 .alag-toggle { position: absolute; z-index: 1000; left: 12px; top: calc(var(--topo-app) + 104px); border-radius: 999px !important; }
 
+/* Zoom do mapa: pílula de vidro com os mesmos tokens da .mapa-controle. Celular: à direita, abaixo
+   da busca e do botão de Alagamentos (top-[7.5rem] + 44px); tablet e computador: à esquerda, acima
+   do botão de Alagamentos (.alag-toggle em +104px). 36px com mouse, 44px no toque, 40px no tablet. */
+.zoom-pilula {
+  position: absolute; z-index: 1000; display: flex; flex-direction: column;
+  border-radius: 999px !important; overflow: hidden;
+}
+.zoom-pilula--direita { right: 12px; top: calc(var(--topo-app) + 172px); }
+.zoom-pilula--esquerda { left: 12px; top: calc(var(--topo-app) + 12px); }
+.zoom-pilula button {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  color: var(--mapa-controle-texto); background: transparent;
+  border-bottom: 1px solid var(--vidro-borda);
+}
+.zoom-pilula button:last-child { border-bottom: none; }
+.zoom-pilula button:hover { background: var(--bg-glass-hover); }
+.zoom-pilula button:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: -2px; }
+@media (pointer: coarse) { .zoom-pilula button { width: 44px; height: 44px; } }
+@media (min-width: 768px) { .zoom-pilula button { width: 40px; height: 40px; } }
+
+/* Sem WebGL: aviso no lugar do mapa; o resto do app continua. */
+.mapa-sem-webgl {
+  width: 100%; height: 100%; display: grid; place-items: center; padding: 24px; text-align: center;
+  background: var(--bg-primary); color: var(--text-secondary); font-size: 15px; line-height: 1.5;
+}
+
 /* O painel: cartão flutuante. A altura acompanha o conteúdo (até o limite) e anima ao mudar. */
 .painel-flutuante {
   position: absolute; z-index: 200; overflow: hidden; border-radius: 28px;

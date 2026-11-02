@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { GeoJsonObject, FeatureCollection } from 'geojson';
-import { ChevronUp, ChevronDown, Layers } from 'lucide-react';
 import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
 import BuscaUnificada from '../components/mapa/BuscaUnificada';
 import LayerControl from '../components/mapa/LayerControl';
@@ -77,6 +76,9 @@ export default function MapaPage() {
   const [painelRecolhido, setPainelRecolhido] = useState(false);
   const painelRef = useRef<HTMLElement>(null);
   useAlturaFluida(painelRef);
+  const folhaRef = useRef<HTMLDivElement>(null);
+  useAlturaFluida(folhaRef);
+  const detalheNaFolha = isMobile && subSelecionada;
   const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');
   const [pontoBusca, setPontoBusca] = useState<PontoBusca | null>(null);
   const [avisoBusca, setAvisoBusca] = useState<string | null>(null);
@@ -213,7 +215,7 @@ export default function MapaPage() {
           Abaixo do header (48px mobile / 64px desktop); no mobile termina
           acima da tab bar inferior (48px).
       ══════════════════════════════════════════ */}
-      <div data-transicao className={`mapa-app absolute left-0 right-0 bottom-[calc(3rem+var(--seguro-baixo))] md:bottom-0 top-0 z-0 `}>
+      <div data-transicao className={`mapa-app absolute inset-0 z-0 `}>
         <MapaBase
           geojson={geojson}
           subprefeituras={subprefeituras}
@@ -332,93 +334,59 @@ export default function MapaPage() {
       </aside>
 
       {/* ══════════════════════════════════════════
-          MOBILE BOTTOM DRAWER
-          Sheet que sobe do rodapé com handle
-          Altura: 72vh. Fechado: 3.5rem visíveis.
+          FOLHA DO CELULAR: o mesmo cartão de vidro do computador, flutuando acima da barra de
+          abas e do tamanho do conteúdo (useAlturaFluida anima a troca). Fechada, é só a linha do
+          resumo; aberta, a lista; com uma subprefeitura escolhida, o detalhe dela.
       ══════════════════════════════════════════ */}
       <div
-        className="painel-mapa superficie md:hidden fixed bottom-[calc(3rem+var(--seguro-baixo))] left-0 right-0 z-[500] h-[72vh] flex flex-col rounded-t-[22px] overflow-hidden"
-        style={{
-          transform: painelMobileAberto
-            ? 'translateY(0)'
-            : 'translateY(calc(100% - 3.5rem))',
-          transition: 'transform 0.36s cubic-bezier(0.32, 0.72, 0, 1)',
-        }}
+        ref={folhaRef}
+        data-painel-mapa
+        data-aberta={painelMobileAberto || detalheNaFolha ? '' : undefined}
+        data-detalhe={detalheNaFolha ? '' : undefined}
+        className="folha-mapa painel-mapa vidro-painel md:hidden fixed z-[500] flex flex-col overflow-hidden"
       >
-        {/* Handle bar. O "Sair" que vivia aqui dentro saiu: era um botão dentro
-            de outro (HTML inválido) e a quarta cópia da mesma ação na tela. O
-            logout mora no header, presente em todas as páginas, e em
-            Configurações. */}
-        <div
-          className="flex-shrink-0 h-14 flex items-stretch pr-3 rounded-t-[22px] relative select-none"
-          style={{ background: 'var(--bg-primary)' }}
-        >
-          {/* Pílula de arraste */}
-          <div className="absolute top-[9px] left-1/2 -translate-x-1/2 w-9 h-[3px] rounded-full pointer-events-none" style={{ background: 'var(--border-glass)' }} />
-
-          <button
-            type="button"
-            className="flex-1 min-w-0 flex items-center gap-2 pl-5 text-left transition-colors"
-            onClick={() => setPainelMobileAberto((v) => !v)}
-            aria-expanded={painelMobileAberto}
-            aria-label={painelMobileAberto ? 'Recolher painel' : 'Expandir painel'}
-          >
-            <span className="flex-1 text-sm font-semibold mt-1 truncate" style={{ color: 'var(--text-primary)' }}>
+        {detalheNaFolha ? (
+          <div key={detalheNaFolha.id} className="painel-conteudo flex-1 min-h-0 flex flex-col">
+            <DetalheSubprefeitura
+              area={detalheNaFolha}
+              onFechar={fecharDetalhe}
+              isFavorito={isFavorito}
+              onToggleFavorito={toggleFavorito}
+            />
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={['flex-shrink-0 w-full flex flex-col items-center select-none', painelMobileAberto ? 'h-6 justify-end' : 'h-14 justify-center'].join(' ')}
+              onClick={() => setPainelMobileAberto((v) => !v)}
+              aria-expanded={painelMobileAberto}
+              aria-label={painelMobileAberto ? 'Recolher painel' : 'Expandir painel'}
+            >
+              <span className="w-9 h-[5px] rounded-full flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--text-primary) 22%, transparent)' }} />
               {/* Fechada, a alça é a única linha visível: mostra o resumo. Aberta, o cartão da cidade já resume. */}
-              {painelMobileAberto ? 'Monitoramento' : resumoAlertas(subprefeituras, carregando)}
-            </span>
-            {painelMobileAberto
-              ? <ChevronDown size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-              : <ChevronUp size={18} className="mt-1 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-            }
-          </button>
-
-        </div>
-
-        {/* Painel (sem header duplicado) */}
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <PainelLateral
-            areas={subprefeituras}
-            favoritas={favoritas}
-            carregando={carregando}
-            erro={erro}
-            ultimaAtualizacao={ultimaAtualizacao}
-            onRecarregar={recarregar}
-            onSelecionar={(a) => {
-              handleSelecionarSub(a);
-              setPainelMobileAberto(false);
-            }}
-            hideHeader
-          />
-        </div>
+              {!painelMobileAberto && (
+                <span className="w-full px-5 mt-2 text-sm font-semibold truncate text-center" style={{ color: 'var(--text-primary)' }}>
+                  {resumoAlertas(subprefeituras, carregando)}
+                </span>
+              )}
+            </button>
+            {painelMobileAberto && (
+              <div className="painel-conteudo flex-1 min-h-0 flex flex-col">
+                <PainelLateral
+                  areas={subprefeituras}
+                  favoritas={favoritas}
+                  carregando={carregando}
+                  erro={erro}
+                  ultimaAtualizacao={ultimaAtualizacao}
+                  onRecarregar={recarregar}
+                  onSelecionar={handleSelecionarSub}
+                />
+              </div>
+            )}
+          </>
+        )}
       </div>
-
-      {/* FAB: botão flutuante para abrir o drawer (visível quando fechado) */}
-      {!painelMobileAberto && !subSelecionada && (
-        <button
-          className="md:hidden fixed z-[600] right-4 bottom-[calc(7rem+var(--seguro-baixo))] w-12 h-12 bg-pulsar-600 hover:bg-pulsar-700 active:scale-95 rounded-2xl shadow-xl flex items-center justify-center transition-all duration-150"
-          onClick={() => setPainelMobileAberto(true)}
-          aria-label="Ver subprefeituras"
-        >
-          <Layers size={20} className="text-white" />
-        </button>
-      )}
-
-      {/* ══════════════════════════════════════════
-          MOBILE DETALHE — overlay fullscreen
-          Aparece ao selecionar uma subprefeitura no mobile
-      ══════════════════════════════════════════ */}
-      {subSelecionada && isMobile && (
-        <div className="fixed inset-x-0 bottom-0 top-[var(--seguro-topo)] z-[1100] flex flex-col animate-slide-up" style={{ background: 'var(--bg-primary)' }}>
-          <DetalheSubprefeitura
-            key={subSelecionada.id}
-            area={subSelecionada}
-            onFechar={fecharDetalhe}
-            isFavorito={isFavorito}
-            onToggleFavorito={toggleFavorito}
-          />
-        </div>
-      )}
     </div>
   );
 }

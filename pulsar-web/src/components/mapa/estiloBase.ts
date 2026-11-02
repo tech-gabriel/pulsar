@@ -104,6 +104,22 @@ export async function carregarEstiloBase(tema: 'light' | 'dark', signal?: AbortS
   return recolorirEstilo(estilo, tema === 'dark' ? TOM_ESCURO : TOM_CLARO);
 }
 
+const emAndamento = new Map<'light' | 'dark', Promise<StyleSpecification>>();
+
+/**
+ * Mesmo que carregarEstiloBase, mas uma busca por tema: a página do mapa já começa a baixar o
+ * estilo enquanto o chunk do MapLibre chega, e o mapa reaproveita. Falha não fica guardada.
+ */
+export function estiloBaseCompartilhado(tema: 'light' | 'dark'): Promise<StyleSpecification> {
+  let promessa = emAndamento.get(tema);
+  if (!promessa) {
+    promessa = carregarEstiloBase(tema);
+    promessa.catch(() => emAndamento.delete(tema));
+    emAndamento.set(tema, promessa);
+  }
+  return promessa;
+}
+
 /** Estilo vetorial do MapTiler, usado só se o OpenFreeMap não abrir. */
 export function urlReservaMapTiler(tema: 'light' | 'dark', chave: string): string {
   const estilo = tema === 'dark' ? 'streets-v2-dark' : 'streets-v2';

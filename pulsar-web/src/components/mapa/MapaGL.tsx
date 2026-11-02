@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Map, { AttributionControl, Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre';
 import type { StyleSpecification } from 'maplibre-gl';
 import maplibregl from './maplibre';
-import { carregarEstiloBase, comChaveMapTiler, urlReservaMapTiler } from './estiloBase';
+import { comChaveMapTiler, estiloBaseCompartilhado, urlReservaMapTiler } from './estiloBase';
 import { circuloGeojson, paddingDoPainel } from './geometria';
 import { ZOOM } from './zoom';
 import ZoomControles from './ZoomControles';
@@ -50,13 +50,14 @@ export default function MapaGL(props: PropsMapa) {
   // Estilo base do tema; se o OpenFreeMap falhar, a reserva do MapTiler vale até sair do mapa.
   useEffect(() => {
     if (reserva) return;
-    const abortar = new AbortController();
-    carregarEstiloBase(theme, abortar.signal)
-      .then(setEstiloOfm)
-      .catch((e: unknown) => {
-        if (!abortar.signal.aborted && (e as Error)?.name !== 'AbortError') setReserva(true);
-      });
-    return () => abortar.abort();
+    // A busca é compartilhada (o MapaBase já a começou); ao trocar de tema só ignora a resposta velha.
+    let valendo = true;
+    estiloBaseCompartilhado(theme)
+      .then((e) => valendo && setEstiloOfm(e))
+      .catch(() => valendo && setReserva(true));
+    return () => {
+      valendo = false;
+    };
   }, [theme, reserva]);
 
   // Só na abertura: sem `load` em 8 s, cai para a reserva.
@@ -125,6 +126,7 @@ export default function MapaGL(props: PropsMapa) {
       attributionControl={false}
       transformRequest={reserva && CHAVE_MAPTILER ? (url) => ({ url: comChaveMapTiler(url, CHAVE_MAPTILER) }) : undefined}
       onLoad={(e) => {
+        performance.mark('mapa-base');
         setCarregou(true);
         setIdPrimeiroSimbolo(primeiroSimbolo(e.target));
         e.target.once('idle', () => performance.mark('mapa-pronto'));

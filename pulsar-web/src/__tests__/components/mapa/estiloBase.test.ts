@@ -7,6 +7,7 @@ import {
   comChaveMapTiler,
   urlReservaMapTiler,
   carregarEstiloBase,
+  estiloBaseCompartilhado,
 } from '../../../components/mapa/estiloBase';
 
 const fixture = {
@@ -97,6 +98,16 @@ describe('carregarEstiloBase', () => {
   it('lança quando o OpenFreeMap responde erro', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 503 }));
     await expect(carregarEstiloBase('light')).rejects.toThrow();
+  });
+
+  it('estiloBaseCompartilhado busca uma vez por tema e não guarda falha', async () => {
+    const espiao = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockImplementation(async () => new Response(JSON.stringify(fixture), { status: 200 }));
+    await expect(estiloBaseCompartilhado('dark')).rejects.toThrow();
+    const [a, b] = await Promise.all([estiloBaseCompartilhado('dark'), estiloBaseCompartilhado('dark')]);
+    expect(a).toBe(b);
+    expect(espiao).toHaveBeenCalledTimes(2);
   });
 
   it('devolve o estilo recolorido quando dá certo', async () => {

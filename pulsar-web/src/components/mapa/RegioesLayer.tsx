@@ -7,7 +7,7 @@ import type { SubprefeituraMapaDto } from '../../types';
 import type { Camada } from '../../utils/camadas';
 import { usePrefereMenosMovimento } from '../../hooks/usePrefereMenosMovimento';
 import { montarRegioes } from './regioesGeo';
-import { paddingDoPainel } from './geometria';
+import { deslocamentoDoPainel, paddingDoPainel } from './geometria';
 import { tooltipSubprefeituraHtml } from './tooltipSub';
 import { ZOOM } from './zoom';
 
@@ -98,7 +98,7 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
       const sub = subsRef.current.find((s) => s.id === e.features?.[0]?.properties?.subId);
       if (!sub) return;
       onSelRef.current(sub);
-      mapa.flyTo({ center: [sub.longitude, sub.latitude], zoom: ZOOM.sub, duration: 600, padding: paddingDoPainel(mapa.getContainer()) });
+      mapa.flyTo({ center: [sub.longitude, sub.latitude], zoom: ZOOM.sub, duration: 600, offset: deslocamentoDoPainel(paddingDoPainel(mapa.getContainer())) });
     };
 
     mapa.on('mousemove', FILL, mover);
@@ -123,7 +123,7 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
     let ultimo = -1;
     const tique = (t: number) => {
       const passo = Math.floor(t / 70);
-      if (passo !== ultimo && mapa.getLayer(SEL) && mapa.getLayer(BORDA)) {
+      if (passo !== ultimo && mapa.style && mapa.getLayer(SEL) && mapa.getLayer(BORDA)) {
         ultimo = passo;
         mapa.setPaintProperty(SEL, 'line-dasharray', PASSOS_TRACEJADO[passo % PASSOS_TRACEJADO.length]);
         const pulso = 0.8 + 0.2 * Math.sin((t / 1400) * 2 * Math.PI);
@@ -135,7 +135,8 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
     return () => {
       cancelAnimationFrame(quadro);
       // Volta a borda ao valor fixo (o pulso deixou um número no lugar da expressão).
-      if (mapa.getLayer(BORDA)) mapa.setPaintProperty(BORDA, 'line-opacity', OPACIDADE_BORDA);
+      // Ao sair da página o <Map> pai já destruiu o mapa (sem style): só restaura se ainda existe.
+      if (mapa.style && mapa.getLayer(BORDA)) mapa.setPaintProperty(BORDA, 'line-opacity', OPACIDADE_BORDA);
     };
   }, [mapRef, animar]);
 

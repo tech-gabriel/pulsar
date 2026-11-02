@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { circuloGeojson, paddingDoPainel } from '../../../components/mapa/geometria';
+import { circuloGeojson, deslocamentoDoPainel, paddingDoPainel } from '../../../components/mapa/geometria';
 
 describe('geometria do mapa', () => {
   it('círculo fechado com raio em metros reais', () => {
@@ -15,6 +15,12 @@ describe('geometria do mapa', () => {
     const lons = anel.map(([lon]) => lon);
     expect(Math.max(...lons) + Math.min(...lons)).toBeCloseTo(2 * -46.63, 4);
     expect(anel[0]).toEqual(anel[anel.length - 1]);
+  });
+
+  it('deslocamentoDoPainel põe o alvo no centro da parte visível (metade do que o painel cobre)', () => {
+    expect(deslocamentoDoPainel({ top: 0, right: 400, bottom: 0, left: 0 })).toEqual([-200, -0]);
+    expect(deslocamentoDoPainel({ top: 0, right: 0, bottom: 300, left: 0 })).toEqual([-0, -150]);
+    expect(deslocamentoDoPainel({ top: 0, right: 0, bottom: 0, left: 0 })).toEqual([-0, -0]);
   });
 
   it('paddingDoPainel sem painel visível devolve zeros', () => {

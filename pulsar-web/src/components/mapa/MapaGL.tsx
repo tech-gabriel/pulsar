@@ -3,7 +3,7 @@ import Map, { AttributionControl, Layer, Marker, Source, type MapRef } from 'rea
 import type { StyleSpecification } from 'maplibre-gl';
 import maplibregl from './maplibre';
 import { comChaveMapTiler, estiloBaseCompartilhado, urlReservaMapTiler } from './estiloBase';
-import { circuloGeojson, paddingDoPainel } from './geometria';
+import { circuloGeojson, deslocamentoDoPainel, paddingDoPainel } from './geometria';
 import { ZOOM } from './zoom';
 import ZoomControles from './ZoomControles';
 import RegioesLayer from './RegioesLayer';
@@ -70,7 +70,7 @@ export default function MapaGL(props: PropsMapa) {
   function voar(lonLat: [number, number], zoom: number, duracaoMs: number) {
     const mapa = mapRef.current;
     if (!mapa) return;
-    mapa.flyTo({ center: lonLat, zoom, duration: duracaoMs, padding: paddingDoPainel(mapa.getContainer()) });
+    mapa.flyTo({ center: lonLat, zoom, duration: duracaoMs, offset: deslocamentoDoPainel(paddingDoPainel(mapa.getContainer())) });
   }
 
   // Seleção vinda de clique no mapa: o próprio clique já voou para a subprefeitura.
@@ -124,7 +124,9 @@ export default function MapaGL(props: PropsMapa) {
       initialViewState={{ longitude: SP[0], latitude: SP[1], zoom: ZOOM.sp }}
       style={{ width: '100%', height: '100%' }}
       attributionControl={false}
-      transformRequest={reserva && CHAVE_MAPTILER ? (url) => ({ url: comChaveMapTiler(url, CHAVE_MAPTILER) }) : undefined}
+      // Sempre: o react-map-gl só lê o transformRequest ao criar o mapa, e a reserva pode entrar depois.
+      // O comChaveMapTiler não mexe em URL que não seja do MapTiler.
+      transformRequest={CHAVE_MAPTILER ? (url) => ({ url: comChaveMapTiler(url, CHAVE_MAPTILER) }) : undefined}
       onLoad={(e) => {
         performance.mark('mapa-base');
         setCarregou(true);

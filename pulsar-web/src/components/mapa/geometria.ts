@@ -33,3 +33,12 @@ export function paddingDoPainel(container: HTMLElement): Padding {
   const altura = Number(painel.dataset.alturaFinal) || p.height;
   return { ...zero, bottom: Math.max(0, m.bottom - (p.bottom - altura)) };
 }
+
+/**
+ * Deslocamento para o flyTo pôr o alvo no centro da parte visível do mapa. Usar no lugar do
+ * `padding` do flyTo: no MapLibre o padding de uma animação fica gravado no mapa e se soma ao do
+ * enquadramento seguinte (fitBounds da "minha região"), que então sai torto ou nem se move.
+ */
+export function deslocamentoDoPainel(p: Padding): [number, number] {
+  return [-p.right / 2, -p.bottom / 2];
+}

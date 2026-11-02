@@ -264,26 +264,19 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   animation: barra-cresce 0.5s ease-out both;
 }
 
-/* Polígono da região selecionada: borda branca pulsante (ETAPA 4.7) */
-@keyframes regiao-pulse {
-  0%, 100% { stroke-opacity: 0.55; }
-  50%      { stroke-opacity: 1; }
-}
-.poligono-regiao {
-  animation: regiao-pulse 1.4s ease-in-out infinite;
-}
-
-/* Leaflet overrides — garantir que o mapa renderize corretamente */
-.leaflet-container {
-  height: 100%;
-  width: 100%;
-  z-index: 0;
-}
-
-.leaflet-popup-content-wrapper {
+/* Detalhe do alagamento: superfície sólida do tema, como os outros cartões do mapa. */
+.pulsar-popup-ocorrencia .maplibregl-popup-content {
   border-radius: 8px;
+  padding: 8px 12px;
   font-family: var(--font-body);
+  background: var(--superficie);
+  color: var(--text-primary);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
+.pulsar-popup-ocorrencia.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--superficie); }
+.pulsar-popup-ocorrencia.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--superficie); }
+.pulsar-popup-ocorrencia.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--superficie); }
+.pulsar-popup-ocorrencia.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--superficie); }
 
 /* ── Label de score circular sobre cada subprefeitura (ETAPA 2.4/2.7) ──────────
    O divIcon tem tamanho 0; o círculo é centralizado via transform. */
@@ -339,19 +332,11 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   animation: score-pulse 1.6s ease-in-out infinite;
 }
 
-/* ── Polígono selecionado: borda branca tracejada animada (marching ants) ──────*/
-@keyframes marching-ants {
-  to { stroke-dashoffset: -16; }
-}
-.poligono-selecionado {
-  animation: marching-ants 0.7s linear infinite;
-}
 
 /* ── Tooltip do mapa (superfície sólida) ──────────────────────────────────────────────────────*/
-/* Combina .leaflet-tooltip + .pulsar-tooltip para vencer o default do Leaflet
-   (.leaflet-tooltip { background:#fff; color:#222 }), que tem especificidade
-   igual e é carregado depois no bundle — senão o tooltip glass fica branco. */
-.leaflet-tooltip.pulsar-tooltip {
+/* Popup do MapLibre com a classe pulsar-tooltip: o conteúdo vence o default
+   (.maplibregl-popup-content { background:#fff }) por especificidade. */
+.pulsar-tooltip .maplibregl-popup-content {
   background: var(--superficie);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
@@ -367,9 +352,10 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   max-width: 280px;
   white-space: normal;
 }
-.pulsar-tooltip::before {
-  display: none; /* setinha oculta: tooltip sticky segue o mouse */
+.pulsar-tooltip .maplibregl-popup-tip {
+  display: none; /* setinha oculta: o tooltip segue o mouse */
 }
+.pulsar-tooltip { pointer-events: none; }
 .pulsar-tooltip .pt-titulo {
   font-family: var(--font-heading);
   font-weight: 700;
@@ -440,44 +426,6 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 .pulsar-tooltip .pt-linha span { display: inline-flex; align-items: center; gap: 4px; }
 .pulsar-tooltip .pt-linha svg { width: 14px; height: 14px; color: var(--text-secondary); flex-shrink: 0; }
 
-/* Zoom do Leaflet: o default do plugin desenha 26x26 (30x30 no modo touch),
-   abaixo do alvo recomendado. O ícone continua igual, só a caixa cresce.
-   `!important` porque o leaflet.css é importado dentro do MapaBase (chunk
-   lazy) e entra depois deste arquivo: sem isso, a regra do plugin vence por
-   ordem, não por especificidade.
-
-   36px com mouse e 44px no toque: os 44px são a recomendação para o dedo, e no
-   desktop a barra inteira precisa caber entre a busca e o seletor de camadas
-   (mesmo critério do .acao-header, que também encolhe no ponteiro fino). */
-.leaflet-touch .leaflet-bar a,
-.leaflet-bar a {
-  width: 36px !important;
-  height: 36px !important;
-  line-height: 36px !important;
-}
-@media (pointer: coarse) {
-  .leaflet-touch .leaflet-bar a,
-  .leaflet-bar a {
-    width: 44px !important;
-    height: 44px !important;
-    line-height: 44px !important;
-  }
-}
-
-/* O controle vai para o canto superior direito (MapaBase), porque o esquerdo é
-   da barra de busca. No desktop a busca é estreita (~340px) e para longe da
-   direita, então ali o controle já fica livre com a margem padrão.
-   No mobile não: a busca atravessa a largura toda e o botão de camadas fica
-   justamente no topo à direita (top-[7.5rem] = 120px, mais 44px de altura),
-   então o controle precisa descer abaixo dos dois. Se o botão de camadas
-   mudar de posição, este recuo muda junto. */
-@media (max-width: 767px) {
-  .leaflet-top.leaflet-right .leaflet-control-zoom {
-    margin-top: 172px;
-  }
-}
-
-/* O mapa do app passa por baixo da cápsula do cabeçalho: os controles do Leaflet descem junto. */
 /* ── Mapa: layout do tablet e do computador (direção A, espelhada) ──────────────────────────
    Celular (< 768): busca no topo, folha que sobe de baixo, cards centrados acima dela.
    Tablet (768-1023): o painel vira cartão flutuante no pé do mapa (busca dentro); camadas em
@@ -505,8 +453,6 @@ body:has(.convite-push) .legenda-pill { display: none; }
   }
   .pilha-mapa > * { position: static !important; margin: 0 !important; transform: none !important; inset: auto !important; width: 100% !important; pointer-events: auto; }
   .pilha-mapa > .legenda-mapa { width: auto !important; order: -1; }
-  .mapa-app .leaflet-left .leaflet-control { margin: 12px 0 0 12px; }
-  .leaflet-control-zoom a, .leaflet-touch .leaflet-control-zoom a { width: 40px !important; height: 40px !important; line-height: 40px !important; }
 }
 @media (min-width: 1024px) {
   .pilha-mapa { right: auto; left: 12px; top: auto; bottom: 16px; align-items: flex-start; }
@@ -528,6 +474,32 @@ body:has(.convite-push) .legenda-pill { display: none; }
 }
 /* Alagamentos logo abaixo do zoom (2 x 40 px + margens). */
 .alag-toggle { position: absolute; z-index: 1000; left: 12px; top: calc(var(--topo-app) + 104px); border-radius: 999px !important; }
+
+/* Zoom do mapa: pílula de vidro com os mesmos tokens da .mapa-controle. Celular: à direita, abaixo
+   da busca e do botão de Alagamentos (top-[7.5rem] + 44px); tablet e computador: à esquerda, acima
+   do botão de Alagamentos (.alag-toggle em +104px). 36px com mouse, 44px no toque, 40px no tablet. */
+.zoom-pilula {
+  position: absolute; z-index: 1000; display: flex; flex-direction: column;
+  border-radius: 999px !important; overflow: hidden;
+}
+.zoom-pilula--direita { right: 12px; top: calc(var(--topo-app) + 172px); }
+.zoom-pilula--esquerda { left: 12px; top: calc(var(--topo-app) + 12px); }
+.zoom-pilula button {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  color: var(--mapa-controle-texto); background: transparent;
+  border-bottom: 1px solid var(--vidro-borda);
+}
+.zoom-pilula button:last-child { border-bottom: none; }
+.zoom-pilula button:hover { background: var(--bg-glass-hover); }
+.zoom-pilula button:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: -2px; }
+@media (pointer: coarse) { .zoom-pilula button { width: 44px; height: 44px; } }
+@media (min-width: 768px) { .zoom-pilula button { width: 40px; height: 40px; } }
+
+/* Sem WebGL: aviso no lugar do mapa; o resto do app continua. */
+.mapa-sem-webgl {
+  width: 100%; height: 100%; display: grid; place-items: center; padding: 24px; text-align: center;
+  background: var(--bg-primary); color: var(--text-secondary); font-size: 15px; line-height: 1.5;
+}
 
 /* O painel: cartão flutuante. A altura acompanha o conteúdo (até o limite) e anima ao mudar. */
 .painel-flutuante {
@@ -574,35 +546,6 @@ body:has(.convite-push) .legenda-pill { display: none; }
 .painel-mapa .linha-area { background: color-mix(in srgb, var(--text-primary) 4%, transparent); border: 0; border-radius: 14px; margin-bottom: 4px; }
 .painel-mapa .linha-area:hover { background: color-mix(in srgb, var(--text-primary) 8%, transparent); }
 
-.mapa-app .leaflet-top {
-  top: var(--topo-app);
-}
-
-/* O zoom vem branco de fábrica do Leaflet, o que destoava de todo o resto
-   sobreposto ao mapa (busca, camadas, legenda) — mais ainda depois que ele
-   saiu de trás da barra de busca e passou a ficar bem visível. Aqui ele passa
-   a usar os mesmos tokens de `.mapa-controle`, então acompanha o tema claro e
-   o escuro junto com os vizinhos. */
-.leaflet-control-zoom.leaflet-bar {
-  border-radius: 999px !important;
-  overflow: hidden;
-}
-.leaflet-control-zoom a,
-.leaflet-touch .leaflet-control-zoom a {
-  background: transparent !important;
-  color: var(--mapa-controle-texto) !important;
-  border-bottom: 1px solid var(--vidro-borda) !important;
-}
-.leaflet-control-zoom a:last-child {
-  border-bottom: none !important;
-}
-.leaflet-control-zoom a:hover {
-  background: var(--bg-glass-hover) !important;
-}
-.leaflet-control-zoom a.leaflet-disabled {
-  opacity: 0.45;
-}
-
 /* ── Ações do header ──────────────────────────────────────────────────────────
    Os ícones do topo (admin, tema, sino, sair) desenham 18–20px, mas a área
    clicável precisa dos 44px recomendados no mobile. O alvo cresce por padding,
@@ -626,20 +569,6 @@ body:has(.convite-push) .legenda-pill { display: none; }
     width: 40px;
     height: 40px;
   }
-}
-
-/* ── Clusters do overlay de alagamentos ───────────────────────────────────────
-   O react-leaflet-cluster 4.x não injeta mais o CSS do Leaflet.markercluster:
-   sem estas regras o cluster renderiza sem bolha, como um número solto sobre o
-   mapa. As duas primeiras vêm do MarkerCluster.css do pacote (animação de
-   agrupar/desagrupar e a "perna" do spiderfy); o resto é o visual do Pulsar,
-   aplicado via iconCreateFunction em OcorrenciasLayer. */
-.leaflet-cluster-anim .leaflet-marker-icon,
-.leaflet-cluster-anim .leaflet-marker-shadow {
-  transition: transform 300ms ease-out, opacity 300ms ease-in;
-}
-.leaflet-cluster-spider-leg {
-  transition: stroke-dashoffset 300ms ease-out, stroke-opacity 300ms ease-in;
 }
 
 .pulsar-cluster {
@@ -974,8 +903,8 @@ button, a, [role="button"], [role="radio"] {
   touch-action: manipulation;
 }
 
-/* O container do mapa gerencia o próprio gesto (sem pull-to-refresh, spec 6.8) */
-.leaflet-container {
+/* O mapa gerencia o próprio gesto (sem pull-to-refresh, spec 6.8) */
+.maplibregl-canvas-container {
   touch-action: none;
 }
 
@@ -1029,7 +958,7 @@ html.light {
   --superficie-sombra: 0 10px 30px -14px rgba(12, 38, 60, .28), 0 1px 2px rgba(12, 38, 60, .08);
 }
 @media (min-width: 768px) { :root { --topo-app: 70px; } }
-.app-header, .tabbar-mobile, .mapa-controle, .leaflet-control-zoom.leaflet-bar {
+.app-header, .tabbar-mobile, .mapa-controle {
   border: 0 !important;
   background: var(--vidro-luz), var(--vidro-tinta) !important;
   backdrop-filter: var(--vidro-desfoque);  box-shadow: inset 0 1px 0 var(--vidro-brilho), inset 0 0 0 .5px color-mix(in srgb, var(--vidro-brilho) 50%, transparent), var(--vidro-sombra) !important;
@@ -1062,16 +991,16 @@ html.sem-transparencia .vidro-painel { background: var(--superficie) !important;
 @media (min-width: 768px) {
   .app-header { top: calc(var(--seguro-topo) + 10px); left: 12px; right: 12px; height: 56px; padding: 0 8px 0 18px; border-radius: 20px; }
 }
-html.sem-transparencia :is(.app-header, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
+html.sem-transparencia :is(.app-header, .mapa-controle, .tabbar-mobile) { background: var(--bg-primary) !important; backdrop-filter: none; }
 @media (prefers-reduced-transparency: reduce) {
-  :is(.app-header, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; backdrop-filter: none; }
+  :is(.app-header, .mapa-controle, .tabbar-mobile) { background: var(--bg-primary) !important; backdrop-filter: none; }
 }
 @supports not (backdrop-filter: blur(1px)) {
-  :is(.app-header, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) { background: var(--bg-primary) !important; }
+  :is(.app-header, .mapa-controle, .tabbar-mobile) { background: var(--bg-primary) !important; }
 }
 /* Mais contraste pedido no sistema: barras opacas com contorno definido. */
 @media (prefers-contrast: more) {
-  :is(.app-header, .mapa-controle, .tabbar-mobile, .leaflet-control-zoom.leaflet-bar) {
+  :is(.app-header, .mapa-controle, .tabbar-mobile) {
     background: var(--superficie) !important; backdrop-filter: none;
     box-shadow: inset 0 0 0 1px var(--text-secondary) !important;
   }
@@ -1155,7 +1084,10 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 .folha-mapa[data-detalhe] { max-height: min(45dvh, calc(100dvh - var(--base-tabbar) - var(--topo-app) - 4.75rem)); }
 /* Folha aberta: os cartões e a legenda que flutuam acima dela saem, para não cobri-la. */
 body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-pill) { display: none; }
-@media (max-width: 767px) { .mapa-app .leaflet-bottom { bottom: var(--topo-folha); } }
+@media (max-width: 767px) { .mapa-app .maplibregl-ctrl-bottom-right { bottom: var(--topo-folha); } }
+/* Celular: o convite de alertas mora no mesmo pé do mapa; a atribuição (exigida pela licença do
+   OpenStreetMap) sobe para não ficar coberta enquanto ele está aberto. */
+@media (max-width: 767px) { body:has(.convite-push) .mapa-app .maplibregl-ctrl-bottom-right { bottom: calc(var(--topo-folha) + 68px); } }
 .tabbar-item {
   flex: 1;
   min-width: 0;
@@ -1299,7 +1231,7 @@ html.light .pulsar-sub-nome {
 }
 
 /* Tooltip do mapa no tema light: superfície clara + faixas em tons mais escuros */
-html.light .leaflet-tooltip.pulsar-tooltip {
+html.light .pulsar-tooltip .maplibregl-popup-content {
   background: var(--superficie);
   border: 1px solid rgba(0, 105, 168, 0.16);
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.7);

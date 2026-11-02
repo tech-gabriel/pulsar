@@ -34,7 +34,7 @@ vi.mock('../../contexts/ToastContext', () => ({
 vi.mock('../../components/ui/Header', () => ({ default: () => null }));
 vi.mock('../../components/notificacoes/ConvitePush', () => ({ default: () => null }));
 
-// Mapa real (react-leaflet) não roda em jsdom — stub que expõe a sub selecionada.
+// Mapa real (MapLibre, WebGL) não roda em jsdom — stub que expõe a sub selecionada.
 vi.mock('../../components/mapa/MapaBase', () => ({
   default: ({ subSelecionada, zonaEmFoco }: { subSelecionada: { nome: string } | null; zonaEmFoco: string | null }) => (
     <div data-testid="mapa-base-stub">{subSelecionada?.nome ?? ''}|{zonaEmFoco ?? ''}</div>

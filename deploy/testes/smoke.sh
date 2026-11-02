@@ -42,7 +42,7 @@ echo "Conferindo"
 espera_conter "/health responde JSON da API" "$("${CURL[@]}" "$BASE/health")" '"status"'
 
 cab_raiz="$("${CURL[@]}" -D - -o /dev/null -H 'Accept-Encoding: gzip' "$BASE/")"
-espera_conter "CSP do site" "$cab_raiz" "content-security-policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://accounts.google.com https://*.posthog.com;"
+espera_conter "CSP do site" "$cab_raiz" "content-security-policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'sha256-gOx3nRh8znDQR7T1VkI+fFXDgsNzf5enQqdi7NP11Vk=' https://accounts.google.com https://*.posthog.com;"
 espera_conter "X-Frame-Options" "$cab_raiz" "x-frame-options: DENY"
 espera_conter "X-Content-Type-Options" "$cab_raiz" "x-content-type-options: nosniff"
 espera_conter "Referrer-Policy" "$cab_raiz" "referrer-policy: strict-origin-when-cross-origin"

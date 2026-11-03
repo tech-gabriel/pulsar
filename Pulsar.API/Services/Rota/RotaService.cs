@@ -102,7 +102,9 @@ public class RotaService : IRotaService
         {
             _logger.LogWarning(ex, "Open-Meteo indisponível: a rota segue sem previsão por hora.");
         }
-        _cache.Set(ChaveCacheChuva, (Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>?)null, LimiaresRota.CacheFalha);
+        // Uma chamada lenta que falha depois de outra ter acertado não pode apagar a série boa do cache.
+        if (!_cache.TryGetValue(ChaveCacheChuva, out _))
+            _cache.Set(ChaveCacheChuva, (Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>?)null, LimiaresRota.CacheFalha);
         return null;
     }
 }

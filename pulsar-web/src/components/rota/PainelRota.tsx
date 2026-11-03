@@ -17,8 +17,15 @@ interface Props {
   onPedirAviso: () => void;
   /** Ainda descobrindo se o aparelho recebe push: o botão espera. */
   avisoIndisponivel?: boolean;
+  onCancelarAviso?: () => void;
   onTentarDeNovo?: () => void;
+  /** Ponto fora de SP: limpa e foca o campo daquele ponto. */
+  onTrocar?: (ponto: 'origem' | 'destino') => void;
+  /** Hora (epoch ms) da última avaliação recebida. */
+  atualizadoEm?: number | null;
 }
+
+const horaMinuto = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
 type App = 'google' | 'waze' | 'apple';
 
@@ -75,15 +82,21 @@ function useAppLembrado(): App {
  * a saída para o app de navegação. Um primário por estado: o app lembrado em Pode ir e Com
  * atenção, o aviso em Esperar e nenhum em Sem leitura. O traçado e os campos ficam fora daqui.
  */
-export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onTentarDeNovo }: Props) {
+export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm }: Props) {
   const app = useAppLembrado();
 
   if (erro) {
+    const fora = erro === 'origemFora' ? 'origem' : erro === 'destinoFora' ? 'destino' : null;
     return (
       <div className="mt-3">
         <p role="alert" className="text-sm" style={{ color: 'var(--text-secondary)' }}>{MENSAGEM_ERRO[erro]}</p>
         {erro === 'rede' && onTentarDeNovo && (
           <button type="button" onClick={onTentarDeNovo} className="rota-botao rota-secundario px-4 mt-2.5">Tentar de novo</button>
+        )}
+        {fora && onTrocar && (
+          <button type="button" onClick={() => onTrocar(fora)} className="rota-botao rota-secundario px-4 mt-2.5">
+            {fora === 'origem' ? 'Trocar a origem' : 'Trocar o destino'}
+          </button>
         )}
       </div>
     );
@@ -95,15 +108,18 @@ export default function PainelRota({ resultado, origem, destino, carregando, err
     <div className="mt-3">
       {/* Mesmo lugar na árvore no carregando e no resultado: o cartão não desmonta, só muda. */}
       <VereditoRota resultado={pronto ? resultado : null} />
+      {pronto && atualizadoEm && (
+        <p className="mt-1.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>Atualizado às {horaMinuto.format(atualizadoEm)}</p>
+      )}
       {pronto && <Resultado resultado={resultado} links={linksNavegacao(origem, destino)} app={app} onApp={lembrarApp}
-        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} />}
+        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso} />}
     </div>
   );
 }
 
-function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel }: {
+function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel, onCancelarAviso }: {
   resultado: RotaAvaliacao; links: Record<App, string>; app: App; onApp: (a: App) => void;
-  avisoPedido: boolean; onPedirAviso: () => void; avisoIndisponivel: boolean;
+  avisoPedido: boolean; onPedirAviso: () => void; avisoIndisponivel: boolean; onCancelarAviso?: () => void;
 }) {
   const esperar = resultado.estado === 'Esperar';
   const comHoras = (resultado.estado === 'ComAtencao' || esperar) && resultado.horas.length > 0;
@@ -138,9 +154,14 @@ function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, av
       {esperar ? (
         <>
           {avisoPedido ? (
-            <p role="status" className="rota-aviso-ok rota-texto mt-3.5 px-3">
-              <Check size={16} aria-hidden="true" className="flex-shrink-0" />Aviso pedido. Te avisamos quando melhorar.
-            </p>
+            <>
+              <p role="status" className="rota-aviso-ok rota-texto mt-3.5 px-3">
+                <Check size={16} aria-hidden="true" className="flex-shrink-0" />Aviso pedido. Te avisamos quando melhorar.
+              </p>
+              {onCancelarAviso && (
+                <button type="button" onClick={onCancelarAviso} className="rota-botao rota-secundario w-full mt-2 px-3">Cancelar aviso</button>
+              )}
+            </>
           ) : (
             <button type="button" onClick={onPedirAviso} disabled={avisoIndisponivel} aria-busy={avisoIndisponivel || undefined}
               className="rota-botao rota-primario w-full mt-3.5 px-3 disabled:opacity-70">
@@ -157,10 +178,16 @@ function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, av
         </>
       ) : resultado.estado === 'SemDado' ? (
         // Sem leitura não há recomendação para destacar: os apps ficam todos como secundários.
-        <div className="grid grid-cols-2 gap-2 mt-3.5">
-          <div className="col-span-2 grid">{secundario(app)}</div>
-          {outros.map(secundario)}
-        </div>
+        // O que existe (o CGE) vira uma linha de apoio acima deles.
+        <>
+          {!resultado.trechos.some((t) => t.alagandoCge) && (
+            <p className="mt-3.5 text-[13px]" style={{ color: 'var(--text-secondary)' }}>O CGE não registra alagamento no caminho agora.</p>
+          )}
+          <div className="grid grid-cols-2 gap-2 mt-3.5">
+            <div className="col-span-2 grid">{secundario(app)}</div>
+            {outros.map(secundario)}
+          </div>
+        </>
       ) : (
         <>
           <a href={links[app]} target="_blank" rel="noopener noreferrer" onClick={abrir(app)} className="rota-botao rota-primario w-full mt-3.5 px-3">

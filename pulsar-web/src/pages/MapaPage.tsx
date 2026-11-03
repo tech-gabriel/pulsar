@@ -97,7 +97,7 @@ export default function MapaPage() {
   const [rotuloBusca, setRotuloBusca] = useState<string | null>(null);
   // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
-  const rota = useRota(contornoLeve.dados, subprefeituras);
+  const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
   const rotaSemPontos = rotaAberta && !(rota.origem && rota.destino);
   useAlturaFluida(folhaRef, !rotaSemPontos); // a folha sai e volta (AnimatePresence)
   const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
@@ -275,6 +275,13 @@ export default function MapaPage() {
       onPedirAviso={() => void rota.pedirAviso()}
       avisoIndisponivel={rota.avisoIndisponivel}
       onTentarDeNovo={rota.tentarDeNovo}
+      onCancelarAviso={() => void rota.cancelarAviso()}
+      onTrocar={(ponto) => {
+        (ponto === 'origem' ? rota.setOrigem : rota.setDestino)(null);
+        // O De/Para é o mesmo no celular e no painel: um só está montado.
+        document.querySelector<HTMLInputElement>(`[data-campos-rota] input[aria-label="${ponto === 'origem' ? 'De' : 'Para'}"]`)?.focus();
+      }}
+      atualizadoEm={rota.atualizadoEm}
     />
   );
 

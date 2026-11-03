@@ -197,3 +197,50 @@ describe('PainelRota: trecho e veredito', () => {
     expect(semDado.container.querySelector('.rota-ponto')).not.toHaveAttribute('data-pulso');
   });
 });
+
+describe('PainelRota: pendências da revisão', () => {
+  const base = { origem, destino, carregando: false, onPedirAviso: vi.fn() };
+
+  it('"Aviso pedido" tem um "Cancelar aviso" secundário que chama o callback', () => {
+    const onCancelarAviso = vi.fn();
+    render(<PainelRota {...base} resultado={rota('Esperar')} erro={null} avisoPedido onCancelarAviso={onCancelarAviso} />);
+    const botao = screen.getByRole('button', { name: 'Cancelar aviso' });
+    expect(botao).toHaveClass('rota-secundario');
+    fireEvent.click(botao);
+    expect(onCancelarAviso).toHaveBeenCalled();
+  });
+
+  it.each([['destinoFora', 'Trocar o destino', 'destino'], ['origemFora', 'Trocar a origem', 'origem']] as const)(
+    '%s oferece "%s"', (erro, rotulo, ponto) => {
+      const onTrocar = vi.fn();
+      render(<PainelRota {...base} resultado={null} erro={erro} avisoPedido={false} onTrocar={onTrocar} />);
+      fireEvent.click(screen.getByRole('button', { name: rotulo }));
+      expect(onTrocar).toHaveBeenCalledWith(ponto);
+    });
+
+  it('erro de rede não oferece trocar ponto', () => {
+    render(<PainelRota {...base} resultado={null} erro="rede" avisoPedido={false} onTrocar={vi.fn()} onTentarDeNovo={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /Trocar/ })).not.toBeInTheDocument();
+  });
+
+  it('sem leitura e sem alagamento do CGE: a linha de apoio aparece; com alagamento, não', () => {
+    const { unmount } = render(<PainelRota {...base} resultado={rota('SemDado')} erro={null} avisoPedido={false} />);
+    expect(screen.getByText('O CGE não registra alagamento no caminho agora.')).toBeInTheDocument();
+    unmount();
+    const r = rota('SemDado');
+    r.trechos[0] = { ...r.trechos[0], alagandoCge: true };
+    render(<PainelRota {...base} resultado={r} erro={null} avisoPedido={false} />);
+    expect(screen.queryByText('O CGE não registra alagamento no caminho agora.')).not.toBeInTheDocument();
+  });
+
+  it('a linha de apoio é só do Sem leitura', () => {
+    render(<PainelRota {...base} resultado={rota('PodeIr')} erro={null} avisoPedido={false} />);
+    expect(screen.queryByText('O CGE não registra alagamento no caminho agora.')).not.toBeInTheDocument();
+  });
+
+  it('mostra "Atualizado às HH:MM" no fuso do navegador', () => {
+    const em = new Date(2026, 10, 3, 14, 5).getTime();
+    render(<PainelRota {...base} resultado={rota('PodeIr')} erro={null} avisoPedido={false} atualizadoEm={em} />);
+    expect(screen.getByText('Atualizado às 14:05')).toBeInTheDocument();
+  });
+});

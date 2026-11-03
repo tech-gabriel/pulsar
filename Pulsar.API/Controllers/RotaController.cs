@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Pulsar.API.DTOs;
+using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services.Interfaces;
 
 namespace Pulsar.API.Controllers;
@@ -16,11 +17,13 @@ public class RotaController : ControllerBase
     private const int MaxSubprefeituras = 32;
     private readonly IRotaService _service;
     private readonly IAvisoRotaService _aviso;
+    private readonly ISubprefeituraRepository _subprefeituras;
 
-    public RotaController(IRotaService service, IAvisoRotaService aviso)
+    public RotaController(IRotaService service, IAvisoRotaService aviso, ISubprefeituraRepository subprefeituras)
     {
         _service = service;
         _aviso = aviso;
+        _subprefeituras = subprefeituras;
     }
 
     /// <summary>Veredito de risco de um caminho (subprefeituras em ordem): pode ir, com atenção ou esperar.</summary>
@@ -44,6 +47,7 @@ public class RotaController : ControllerBase
 
     /// <summary>Guarda o pedido "me avise quando melhorar" da pessoa (um por vez).</summary>
     [HttpPost("aviso")]
+    [EnableRateLimiting("busca")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PedirAviso([FromBody] PedirAvisoRotaRequest req, CancellationToken ct)
@@ -56,12 +60,17 @@ public class RotaController : ControllerBase
             return BadRequest(new { mensagem = "Informe o destino, com até 80 caracteres." });
         if (UsuarioId() is not { } usuarioId)
             return Unauthorized();
+        // O pedido vira cálculo a cada ciclo do job: id que não é de subprefeitura ativa não entra.
+        var ativas = (await _subprefeituras.ObterAtivasAsync()).Select(s => s.Id).ToHashSet();
+        if (req.SubprefeituraIds.Any(id => !ativas.Contains(id)))
+            return BadRequest(new { mensagem = "Subprefeitura desconhecida no caminho." });
 
         await _aviso.RegistrarAsync(usuarioId, req.SubprefeituraIds, destino, DateTime.UtcNow, ct);
         return NoContent();
     }
 
     [HttpDelete("aviso")]
+    [EnableRateLimiting("busca")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> CancelarAviso(CancellationToken ct)
     {

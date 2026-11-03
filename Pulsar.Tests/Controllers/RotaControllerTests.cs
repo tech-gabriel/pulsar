@@ -5,6 +5,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Pulsar.API.Controllers;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Data;
@@ -260,5 +261,56 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
     {
         var client = await LogadoAsync(_factory);
         (await client.DeleteAsync(Aviso)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task PedirAviso_IdDeSubprefeituraInexistente_400()
+    {
+        var client = await LogadoAsync(_factory);
+        (await client.PostAsJsonAsync(Aviso, new PedirAvisoRotaRequest([Guid.NewGuid()], "Penha"))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task PedirAviso_SubprefeituraInativa_400()
+    {
+        using var f = new PulsarWebApplicationFactory();
+        var mooca = (await IdsAsync(f, "Mooca"))[0];
+        using (var scope = f.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PulsarDbContext>();
+            (await db.Subprefeituras.SingleAsync(s => s.Id == mooca)).Ativa = false;
+            await db.SaveChangesAsync();
+        }
+        var client = await LogadoAsync(f);
+        (await client.PostAsJsonAsync(Aviso, new PedirAvisoRotaRequest([mooca], "Mooca"))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [InlineData(nameof(RotaController.PedirAviso))]
+    [InlineData(nameof(RotaController.CancelarAviso))]
+    public void Aviso_TemRateLimitBusca(string acao)
+    {
+        var atributo = typeof(RotaController).GetMethod(acao)!
+            .GetCustomAttributes(typeof(Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute), false)
+            .Cast<Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute>().SingleOrDefault();
+        atributo.Should().NotBeNull();
+        atributo!.PolicyName.Should().Be("busca");
+    }
+
+    [Fact]
+    public async Task Avaliar_OpenMeteoLento_RespondeSemHorasNoTetoDe3s()
+    {
+        using var f = new PulsarWebApplicationFactory();
+        f.ChuvaReferencia.Atraso = TimeSpan.FromSeconds(100);
+        var ids = await IdsAsync(f, "Mooca");
+        var client = await LogadoAsync(f);
+        var relogio = System.Diagnostics.Stopwatch.StartNew();
+
+        var resp = await client.PostAsJsonAsync(Rota, new AvaliarRotaRequest(ids));
+
+        relogio.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var json = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+        json.RootElement.GetProperty("horas").GetArrayLength().Should().Be(0);
     }
 }

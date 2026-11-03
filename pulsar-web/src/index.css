@@ -2227,23 +2227,27 @@ html:not(.light) .ah-cge-titulo { color: #f87171; }
    transiciona quando a resposta chega (o cartão já existe no "Avaliando o caminho…"). */
 @property --c { syntax: '<color>'; inherits: true; initial-value: transparent; }
 .rota-veredito { overflow: clip; transition: --c 320ms cubic-bezier(.16, 1, .3, 1); }
-.rota-ponto { position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: var(--c); }
-.rota-ponto::before, .rota-ponto::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
-.rota-ponto::before {
+/* Uma caixa do tamanho do ponto; onda, halo e núcleo empilhados dentro dela (onda por baixo). */
+.rota-ponto { position: relative; display: block; width: 44px; height: 44px; flex: 0 0 44px; }
+.rota-ponto > span { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
+.rota-ponto-onda { background: var(--c); opacity: 0; }
+.rota-ponto-halo {
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 26%, transparent), 0 0 0 10px color-mix(in srgb, var(--c) 14%, transparent);
 }
-.rota-ponto::after { background: var(--c); opacity: 0; }
+.rota-ponto-nucleo { background: var(--c); }
+/* Chegada: o núcleo entra aceso (1.1) e assenta. No laço ele acende sem salto: 1 → 1.1 → 1. */
 @keyframes veredito-acende { 0% { transform: scale(1.1); } 30%, 100% { transform: scale(1); } }
+@keyframes veredito-acende-laco { 0%, 100% { transform: scale(1); } 8% { transform: scale(1.1); } 30% { transform: scale(1); } }
 @keyframes veredito-onda { 0% { transform: scale(1); opacity: .35; } 55%, 100% { transform: scale(2.2); opacity: 0; } }
 @keyframes veredito-onda-leve { 0% { transform: scale(1); opacity: .2; } 55%, 100% { transform: scale(2.2); opacity: 0; } }
 @keyframes veredito-halo { from { opacity: 0; } to { opacity: 1; } }
 /* Chegada: um pulso. Esperar segue pulsando a cada 4 s; Com atenção, mais leve, a cada 6 s. */
-.rota-ponto[data-pulso] { animation: veredito-acende .9s cubic-bezier(.16, 1, .3, 1); }
-.rota-ponto[data-pulso]::after { animation: veredito-onda .9s cubic-bezier(.16, 1, .3, 1); }
-.rota-ponto[data-pulso='esperar'] { animation: veredito-acende .9s cubic-bezier(.16, 1, .3, 1), veredito-acende 4s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
-.rota-ponto[data-pulso='esperar']::after { animation: veredito-onda .9s cubic-bezier(.16, 1, .3, 1), veredito-onda 4s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
-.rota-ponto[data-pulso='atencao'] { animation: veredito-acende .9s cubic-bezier(.16, 1, .3, 1), veredito-acende 6s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
-.rota-ponto[data-pulso='atencao']::after { animation: veredito-onda .9s cubic-bezier(.16, 1, .3, 1), veredito-onda-leve 6s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
+.rota-ponto[data-pulso] .rota-ponto-nucleo { animation: veredito-acende .9s cubic-bezier(.16, 1, .3, 1); }
+.rota-ponto[data-pulso] .rota-ponto-onda { animation: veredito-onda .9s cubic-bezier(.16, 1, .3, 1); }
+.rota-ponto[data-pulso='esperar'] .rota-ponto-nucleo { animation: veredito-acende .9s cubic-bezier(.16, 1, .3, 1), veredito-acende-laco 4s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
+.rota-ponto[data-pulso='esperar'] .rota-ponto-onda { animation: veredito-onda .9s cubic-bezier(.16, 1, .3, 1), veredito-onda 4s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
+.rota-ponto[data-pulso='atencao'] .rota-ponto-nucleo { animation: veredito-acende .9s cubic-bezier(.16, 1, .3, 1), veredito-acende-laco 6s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
+.rota-ponto[data-pulso='atencao'] .rota-ponto-onda { animation: veredito-onda .9s cubic-bezier(.16, 1, .3, 1), veredito-onda-leve 6s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
 @keyframes rota-surge { from { opacity: 0; } to { opacity: 1; } }
 .rota-texto { animation: rota-surge 160ms ease-out both; }
 
@@ -2274,8 +2278,8 @@ html.light .rota-aviso-ok { color: var(--color-pulsar-700); }
 
 @media (prefers-reduced-motion: reduce) {
   /* Só opacidade: sem onda, sem escala; a chegada vira o halo acendendo. */
-  .rota-ponto[data-pulso], .rota-ponto[data-pulso]::after { animation: none; }
-  .rota-ponto[data-pulso]::before { animation: veredito-halo .2s ease-out; }
+  .rota-ponto[data-pulso] .rota-ponto-nucleo, .rota-ponto[data-pulso] .rota-ponto-onda { animation: none; }
+  .rota-ponto[data-pulso] .rota-ponto-halo { animation: veredito-halo .2s ease-out; }
   .rota-trecho { animation: rota-surge .2s ease-out both; animation-delay: 0s !important; }
   .rota-barra { animation: rota-surge .2s ease-out both; animation-delay: 0s !important; }
   .rota-botao, .rota-botao:active { transform: none; }

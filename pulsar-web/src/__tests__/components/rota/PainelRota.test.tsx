@@ -132,6 +132,13 @@ describe('PainelRota: hierarquia dos botões por estado', () => {
     for (const nome of ['Google Maps', 'Waze', 'Apple Maps']) expect(screen.getByRole('link', { name: nome })).toHaveClass('rota-secundario');
   });
 
+  it('valor estranho no armazenamento cai no padrão', () => {
+    localStorage.setItem('pulsar-app-rota', 'uber');
+    monta('PodeIr');
+    expect(screen.getByRole('link', { name: 'Abrir no Google Maps' })).toBeInTheDocument();
+  });
+
+  // Por último entre os que olham o app: o app tocado fica na memória da sessão.
   it('o app lembrado vira o primário, e o último tocado passa a ser o lembrado', () => {
     localStorage.setItem('pulsar-app-rota', 'waze');
     monta('PodeIr');
@@ -140,12 +147,6 @@ describe('PainelRota: hierarquia dos botões por estado', () => {
     expect(localStorage.getItem('pulsar-app-rota')).toBe('apple');
     expect(screen.getByRole('link', { name: 'Abrir no Apple Maps' })).toHaveClass('rota-primario');
     expect(screen.getByRole('link', { name: 'Waze' })).toHaveClass('rota-secundario');
-  });
-
-  it('valor estranho no armazenamento cai no padrão', () => {
-    localStorage.setItem('pulsar-app-rota', 'uber');
-    monta('PodeIr');
-    expect(screen.getByRole('link', { name: 'Abrir no Google Maps' })).toBeInTheDocument();
   });
 
   it('"Aviso pedido" é um estado de sucesso, não um botão apagado', () => {
@@ -164,6 +165,17 @@ describe('PainelRota: trecho e veredito', () => {
       avisoPedido={false} onPedirAviso={vi.fn()} />);
     expect(screen.getByText('Alagando, CGE')).toBeInTheDocument();
     expect(screen.queryByText('Alerta')).not.toBeInTheDocument();
+  });
+
+  it('o ponto é uma caixa só, com onda, halo e núcleo dentro dela (não lado a lado no cartão)', () => {
+    const { container } = monta('Esperar');
+    const cartao = container.querySelector('.rota-veredito')!;
+    const pontos = cartao.querySelectorAll('.rota-ponto');
+    expect(pontos).toHaveLength(1);
+    expect(pontos[0]).toHaveAttribute('aria-hidden', 'true');
+    expect([...pontos[0].children].map((c) => c.className)).toEqual(['rota-ponto-onda', 'rota-ponto-halo', 'rota-ponto-nucleo']);
+    // No cartão, só o ponto e a coluna do texto.
+    expect(cartao.children).toHaveLength(2);
   });
 
   it('o cartão do veredito existe já no carregando e não desmonta quando a resposta chega', () => {

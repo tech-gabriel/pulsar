@@ -32,7 +32,7 @@ const NOME_APP: Record<App, string> = { google: 'Google Maps', waze: 'Waze', app
 const APPS: App[] = ['google', 'waze', 'apple'];
 const CHAVE_APP_ROTA = 'pulsar-app-rota';
 
-// Quem escuta a troca do app lembrado; memória para quando o armazenamento falha (aba privada).
+// Quem escuta a troca do app lembrado. A memória vale na sessão mesmo se o armazenamento falhar (aba privada).
 const ouvintes = new Set<() => void>();
 let appNaMemoria: App | null = null;
 
@@ -47,7 +47,8 @@ function lerApp(): App {
 }
 
 function lembrarApp(a: App) {
-  try { localStorage.setItem(CHAVE_APP_ROTA, a); } catch { appNaMemoria = a; }
+  appNaMemoria = a;
+  try { localStorage.setItem(CHAVE_APP_ROTA, a); } catch { /* fica só na memória da sessão */ }
   ouvintes.forEach((f) => f());
 }
 
@@ -56,9 +57,14 @@ function lembrarApp(a: App) {
  * iPad). Só conveniência. No servidor (SSG) e na hidratação vale o padrão; o localStorage só é
  * lido no cliente, pelo useSyncExternalStore (sem setState em efeito).
  */
+function assinarApp(f: () => void) {
+  ouvintes.add(f);
+  return () => { ouvintes.delete(f); };
+}
+
 function useAppLembrado(): App {
   return useSyncExternalStore(
-    (f) => { ouvintes.add(f); return () => { ouvintes.delete(f); }; },
+    assinarApp,
     lerApp,
     () => 'google',
   );

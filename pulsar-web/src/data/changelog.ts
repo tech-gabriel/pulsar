@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.27.0',
+    data: '2026-11-03',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Pontos de alagamento em SP hoje',
+        descricao: 'Uma página aberta, sem precisar de conta, que mostra o risco agora na sua região, as ruas alagadas neste momento segundo o CGE e onde costuma alagar perto de você. Dá para usar a localização ou escolher o bairro.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Sua região já vem escolhida',
+        descricao: 'Quem cria a conta a partir de uma página de região chega no primeiro acesso com essa subprefeitura já marcada.',
+      },
+    ],
+  },
+  {
     versao: '1.26.0',
     data: '2026-11-02',
     itens: [

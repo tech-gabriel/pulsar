@@ -1,4 +1,5 @@
-import { BellRing, Loader2 } from 'lucide-react';
+import { useSyncExternalStore } from 'react';
+import { BellRing, Check, ExternalLink, Navigation } from 'lucide-react';
 import { track } from '../../analytics';
 import { linksNavegacao } from '../../features/rota/links';
 import type { PontoRota, RotaAvaliacao } from '../../features/rota/tipos';
@@ -19,84 +20,149 @@ interface Props {
   onTentarDeNovo?: () => void;
 }
 
+type App = 'google' | 'waze' | 'apple';
+
 const MENSAGEM_ERRO = {
   origemFora: 'O ponto de partida fica fora de São Paulo. A rota cobre só a cidade.',
   destinoFora: 'O destino fica fora de São Paulo. A rota cobre só a cidade.',
   rede: 'Não consegui avaliar o caminho agora. Tente de novo em instantes.',
 } as const;
 
-const BOTAO = 'rounded-[14px] min-h-11 flex items-center justify-center gap-1.5 font-semibold text-center';
+const NOME_APP: Record<App, string> = { google: 'Google Maps', waze: 'Waze', apple: 'Apple Maps' };
+const APPS: App[] = ['google', 'waze', 'apple'];
+const CHAVE_APP_ROTA = 'pulsar-app-rota';
+
+// Quem escuta a troca do app lembrado; memória para quando o armazenamento falha (aba privada).
+const ouvintes = new Set<() => void>();
+let appNaMemoria: App | null = null;
+
+function lerApp(): App {
+  if (appNaMemoria) return appNaMemoria;
+  let salvo: string | null = null;
+  try { salvo = localStorage.getItem(CHAVE_APP_ROTA); } catch { /* sem armazenamento: fica o padrão */ }
+  if (salvo === 'google' || salvo === 'waze' || salvo === 'apple') return salvo;
+  // iPadOS se apresenta como Mac; o toque denuncia.
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  return ios ? 'apple' : 'google';
+}
+
+function lembrarApp(a: App) {
+  try { localStorage.setItem(CHAVE_APP_ROTA, a); } catch { appNaMemoria = a; }
+  ouvintes.forEach((f) => f());
+}
+
+/**
+ * O app de navegação da pessoa: o último tocado, senão Google Maps (Apple Maps no iPhone e no
+ * iPad). Só conveniência. No servidor (SSG) e na hidratação vale o padrão; o localStorage só é
+ * lido no cliente, pelo useSyncExternalStore (sem setState em efeito).
+ */
+function useAppLembrado(): App {
+  return useSyncExternalStore(
+    (f) => { ouvintes.add(f); return () => { ouvintes.delete(f); }; },
+    lerApp,
+    () => 'google',
+  );
+}
 
 /**
  * Resultado da rota: veredito, risco hora a hora (só quando há o que esperar), os trechos e
- * a saída para o app de navegação. O traçado e os campos De/Para ficam fora daqui.
+ * a saída para o app de navegação. Um primário por estado: o app lembrado em Pode ir e Com
+ * atenção, o aviso em Esperar e nenhum em Sem leitura. O traçado e os campos ficam fora daqui.
  */
 export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onTentarDeNovo }: Props) {
+  const app = useAppLembrado();
+
   if (erro) {
     return (
       <div className="mt-3">
         <p role="alert" className="text-sm" style={{ color: 'var(--text-secondary)' }}>{MENSAGEM_ERRO[erro]}</p>
         {erro === 'rede' && onTentarDeNovo && (
-          <button type="button" onClick={onTentarDeNovo} className={`${BOTAO} px-4 mt-2.5`}
-            style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}>Tentar de novo</button>
+          <button type="button" onClick={onTentarDeNovo} className="rota-botao rota-secundario px-4 mt-2.5">Tentar de novo</button>
         )}
       </div>
     );
   }
-  if (carregando) {
-    return (
-      <p role="status" className="mt-3 flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-        <Loader2 size={15} className="animate-spin" aria-hidden="true" />Avaliando o caminho…
-      </p>
-    );
-  }
-  if (!resultado || !origem || !destino) return null;
-
-  const links = linksNavegacao(origem, destino);
-  const esperar = resultado.estado === 'Esperar';
-  const comHoras = (resultado.estado === 'ComAtencao' || esperar) && resultado.horas.length > 0;
-  const principal = { background: 'var(--color-pulsar-600)' };
-  const secundario = { background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 };
-  const link = (app: 'google' | 'waze' | 'apple', href: string, texto: string, classe: string, estilo: React.CSSProperties) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" onClick={() => track.abriuAppRota(app)}
-      className={classe} style={estilo}>{texto}</a>
-  );
+  const pronto = !carregando && resultado && origem && destino;
+  if (!carregando && !pronto) return null;
 
   return (
     <div className="mt-3">
-      <VereditoRota resultado={resultado} />
+      {/* Mesmo lugar na árvore no carregando e no resultado: o cartão não desmonta, só muda. */}
+      <VereditoRota resultado={pronto ? resultado : null} />
+      {pronto && <Resultado resultado={resultado} links={linksNavegacao(origem, destino)} app={app} onApp={lembrarApp}
+        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} />}
+    </div>
+  );
+}
+
+function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel }: {
+  resultado: RotaAvaliacao; links: Record<App, string>; app: App; onApp: (a: App) => void;
+  avisoPedido: boolean; onPedirAviso: () => void; avisoIndisponivel: boolean;
+}) {
+  const esperar = resultado.estado === 'Esperar';
+  const comHoras = (resultado.estado === 'ComAtencao' || esperar) && resultado.horas.length > 0;
+  const outros = APPS.filter((a) => a !== app);
+  const abrir = (a: App) => () => { track.abriuAppRota(a); onApp(a); };
+  // A cascata só toca quando o conjunto de trechos muda (a chave remonta a lista).
+  const chaveTrechos = resultado.trechos.map((t) => t.subprefeituraId).join(',');
+
+  const secundario = (a: App) => (
+    <a key={a} href={links[a]} target="_blank" rel="noopener noreferrer" onClick={abrir(a)} className="rota-botao rota-secundario px-2">
+      {NOME_APP[a]}<ExternalLink size={14} aria-hidden="true" className="flex-shrink-0 opacity-70" />
+    </a>
+  );
+
+  return (
+    <>
       {comHoras && <FaixaHorasRota horas={resultado.horas} />}
 
-      <ul className="mt-3 flex flex-col gap-1.5 list-none p-0">
-        {resultado.trechos.map((t) => (
-          <li key={t.subprefeituraId} className="flex items-center gap-2 text-[13.5px]" style={{ color: 'var(--text-secondary)' }}>
+      <ul key={chaveTrechos} className="mt-3 flex flex-col gap-1.5 list-none p-0">
+        {resultado.trechos.map((t, i) => (
+          <li key={t.subprefeituraId} className="rota-trecho flex items-center gap-2 text-[13.5px]"
+            style={{ color: 'var(--text-secondary)', animationDelay: `${Math.min(i * 30, 150)}ms` }}>
             <i aria-hidden="true" className="w-[9px] h-[9px] rounded-full flex-shrink-0" style={{ background: coresParaFaixa(t.faixa).fill }} />
             <span className="min-w-0 truncate">{t.nome}</span>
-            <span className="ml-auto flex-shrink-0">{labelFaixa(t.faixa)}</span>
-            {t.alagandoCge && <span className="flex-shrink-0 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>alagando (CGE)</span>}
+            {t.alagandoCge
+              ? <span className="ml-auto flex-shrink-0 font-semibold" style={{ color: 'var(--text-primary)' }}>Alagando, CGE</span>
+              : <span className="ml-auto flex-shrink-0">{labelFaixa(t.faixa)}</span>}
           </li>
         ))}
       </ul>
 
       {esperar ? (
         <>
-          <button type="button" onClick={onPedirAviso} disabled={avisoPedido || avisoIndisponivel}
-            className={`${BOTAO} w-full mt-3.5 text-white disabled:opacity-70`} style={{ ...principal, fontSize: 14 }}>
-            <BellRing size={16} aria-hidden="true" />{avisoPedido ? 'Aviso pedido' : 'Me avise quando melhorar'}
-          </button>
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {link('google', links.google, 'Google Maps', `${BOTAO} px-1`, secundario)}
-            {link('waze', links.waze, 'Waze', `${BOTAO} px-1`, secundario)}
-            {link('apple', links.apple, 'Apple Maps', `${BOTAO} px-1`, secundario)}
+          {avisoPedido ? (
+            <p role="status" className="rota-aviso-ok rota-texto mt-3.5 px-3">
+              <Check size={16} aria-hidden="true" className="flex-shrink-0" />Aviso pedido. Te avisamos quando melhorar.
+            </p>
+          ) : (
+            <button type="button" onClick={onPedirAviso} disabled={avisoIndisponivel} aria-busy={avisoIndisponivel || undefined}
+              className="rota-botao rota-primario w-full mt-3.5 px-3 disabled:opacity-70">
+              <BellRing size={16} aria-hidden="true" />Me avise quando melhorar
+            </button>
+          )}
+          {/* Quem precisa sair mesmo assim tem os três apps, com peso menor. */}
+          <div className="flex flex-wrap items-center justify-center mt-1.5 text-[13px]" style={{ color: 'var(--text-secondary)' }}>
+            <span className="mr-0.5">Ir mesmo assim:</span>
+            {APPS.map((a) => (
+              <a key={a} href={links[a]} target="_blank" rel="noopener noreferrer" onClick={abrir(a)} className="rota-botao rota-sutil">{NOME_APP[a]}</a>
+            ))}
           </div>
         </>
-      ) : (
-        <div className="grid grid-cols-[1.6fr_1fr_1fr] gap-2 mt-3.5">
-          {link('google', links.google, 'Abrir no Google Maps', `${BOTAO} px-1 text-white`, { ...principal, fontSize: 14 })}
-          {link('waze', links.waze, 'Waze', `${BOTAO} px-1`, secundario)}
-          {link('apple', links.apple, 'Apple Maps', `${BOTAO} px-1`, secundario)}
+      ) : resultado.estado === 'SemDado' ? (
+        // Sem leitura não há recomendação para destacar: os apps ficam todos como secundários.
+        <div className="grid grid-cols-2 gap-2 mt-3.5">
+          <div className="col-span-2 grid">{secundario(app)}</div>
+          {outros.map(secundario)}
         </div>
+      ) : (
+        <>
+          <a href={links[app]} target="_blank" rel="noopener noreferrer" onClick={abrir(app)} className="rota-botao rota-primario w-full mt-3.5 px-3">
+            <Navigation size={16} aria-hidden="true" className="flex-shrink-0" />Abrir no {NOME_APP[app]}
+          </a>
+          <div className="grid grid-cols-2 gap-2 mt-2">{outros.map(secundario)}</div>
+        </>
       )}
-    </div>
+    </>
   );
 }

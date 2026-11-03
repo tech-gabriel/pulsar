@@ -517,8 +517,8 @@ body:has(.convite-push) .legenda-pill { display: none; }
 @keyframes vidro-surge { from { opacity: 0; transform: scale(.965); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 .vidro-surge { animation: vidro-surge .55s cubic-bezier(.32, .72, 0, 1) both; }
 /* O conteúdo novo do painel (lista ou detalhe) entra deslizando pouco, enquanto o cartão muda de altura. */
-@keyframes painel-conteudo { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.painel-conteudo { animation: painel-conteudo .4s cubic-bezier(.32, .72, 0, 1) both; }
+@keyframes painel-conteudo { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.painel-conteudo { animation: painel-conteudo .3s cubic-bezier(.32, .72, 0, 1) both; }
 @media (prefers-reduced-motion: reduce) { .vidro-surge, .painel-conteudo { animation: none; } }
 
 /* Busca dentro do painel: campo preenchido, sem vidro próprio (nunca vidro sobre vidro). */
@@ -2221,3 +2221,62 @@ html:not(.light) .ah-cge-titulo { color: #f87171; }
 }
 .ah-regioes a:hover { background: color-mix(in srgb, var(--text-primary) 10%, transparent); }
 @media (prefers-reduced-motion: reduce) { .ah-pilula:active { transform: none; } }
+
+/* ── Rota com risco no caminho (11/2026) ─────────────────────────────────────────
+   O ponto do veredito é a marca: núcleo, halo em dois anéis e uma onda. A cor do cartão
+   transiciona quando a resposta chega (o cartão já existe no "Avaliando o caminho…"). */
+@property --c { syntax: '<color>'; inherits: true; initial-value: transparent; }
+.rota-veredito { overflow: clip; transition: --c 320ms cubic-bezier(.16, 1, .3, 1); }
+.rota-ponto { position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: var(--c); }
+.rota-ponto::before, .rota-ponto::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
+.rota-ponto::before {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 26%, transparent), 0 0 0 10px color-mix(in srgb, var(--c) 14%, transparent);
+}
+.rota-ponto::after { background: var(--c); opacity: 0; }
+@keyframes veredito-acende { 0% { transform: scale(1.1); } 30%, 100% { transform: scale(1); } }
+@keyframes veredito-onda { 0% { transform: scale(1); opacity: .35; } 55%, 100% { transform: scale(2.2); opacity: 0; } }
+@keyframes veredito-onda-leve { 0% { transform: scale(1); opacity: .2; } 55%, 100% { transform: scale(2.2); opacity: 0; } }
+@keyframes veredito-halo { from { opacity: 0; } to { opacity: 1; } }
+/* Chegada: um pulso. Esperar segue pulsando a cada 4 s; Com atenção, mais leve, a cada 6 s. */
+.rota-ponto[data-pulso] { animation: veredito-acende .9s cubic-bezier(.16, 1, .3, 1); }
+.rota-ponto[data-pulso]::after { animation: veredito-onda .9s cubic-bezier(.16, 1, .3, 1); }
+.rota-ponto[data-pulso='esperar'] { animation: veredito-acende .9s cubic-bezier(.16, 1, .3, 1), veredito-acende 4s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
+.rota-ponto[data-pulso='esperar']::after { animation: veredito-onda .9s cubic-bezier(.16, 1, .3, 1), veredito-onda 4s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
+.rota-ponto[data-pulso='atencao'] { animation: veredito-acende .9s cubic-bezier(.16, 1, .3, 1), veredito-acende 6s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
+.rota-ponto[data-pulso='atencao']::after { animation: veredito-onda .9s cubic-bezier(.16, 1, .3, 1), veredito-onda-leve 6s cubic-bezier(.16, 1, .3, 1) .9s infinite; }
+@keyframes rota-surge { from { opacity: 0; } to { opacity: 1; } }
+.rota-texto { animation: rota-surge 160ms ease-out both; }
+
+/* Faixa de horas: a barrinha cresce em sequência; a altura também diz o risco. */
+.rota-barra { transform-origin: left; animation: barra-cresce .32s cubic-bezier(.16, 1, .3, 1) both; }
+/* Trechos entram em cascata curta (atraso por item no estilo, teto de 150 ms). */
+@keyframes rota-trecho { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.rota-trecho { animation: rota-trecho .24s cubic-bezier(.22, 1, .36, 1) both; }
+
+/* Botões da rota: um primário por estado; retorno de toque imediato e soltura mais lenta. */
+.rota-botao {
+  display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 14px; text-align: center;
+  transition: transform 200ms cubic-bezier(.16, 1, .3, 1), filter 160ms ease; -webkit-tap-highlight-color: transparent;
+}
+.rota-botao:active { transform: scale(.97); filter: brightness(.94); transition-duration: 90ms; }
+@media (hover: hover) { .rota-botao:hover { filter: brightness(1.06); } }
+.rota-botao:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: 2px; }
+.rota-primario { min-height: 48px; font: 600 15px var(--font-body); background: var(--color-pulsar-700); color: #fff; }
+.rota-secundario { min-height: 44px; font: 600 13px var(--font-body); background: var(--bg-input); color: var(--text-primary); }
+.rota-sutil { min-height: 44px; padding: 0 6px; font: 600 13px var(--font-body); color: var(--text-primary); }
+.rota-sutil:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* "Aviso pedido": estado de sucesso, não botão apagado. */
+.rota-aviso-ok {
+  min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 14px;
+  font: 600 14px var(--font-body); background: color-mix(in srgb, var(--color-pulsar-500) 14%, transparent); color: var(--color-pulsar-300);
+}
+html.light .rota-aviso-ok { color: var(--color-pulsar-700); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Só opacidade: sem onda, sem escala; a chegada vira o halo acendendo. */
+  .rota-ponto[data-pulso], .rota-ponto[data-pulso]::after { animation: none; }
+  .rota-ponto[data-pulso]::before { animation: veredito-halo .2s ease-out; }
+  .rota-trecho { animation: rota-surge .2s ease-out both; animation-delay: 0s !important; }
+  .rota-barra { animation: rota-surge .2s ease-out both; animation-delay: 0s !important; }
+  .rota-botao, .rota-botao:active { transform: none; }
+}

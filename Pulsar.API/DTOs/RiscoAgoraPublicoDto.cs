@@ -13,5 +13,10 @@ public class RiscoAgoraPublicoDto
     public double? Score { get; set; }
     /// <summary>Hora do score atual, em UTC (a página converte pelo fuso do navegador).</summary>
     public DateTime? AtualizadoEmUtc { get; set; }
+    // O que a frase do risco usa (a mesma do detalhe do app): o perigo que puxa o risco e a leitura dele.
+    public TipoPerigo? PerigoPrincipal { get; set; }
+    public double? Chuva3hMm { get; set; }
+    public double? VentoKmH { get; set; }
+    public double? SensacaoTermica { get; set; }
     public IReadOnlyList<PontoAlagamentoCgeDto> AlagamentosCge { get; set; } = [];
 }

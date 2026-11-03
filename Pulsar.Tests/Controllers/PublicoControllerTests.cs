@@ -55,6 +55,10 @@ public class PublicoControllerTests : IClassFixture<PulsarWebApplicationFactory>
         itens.Select(i => i.GetProperty("faixaRisco").GetString()).Should().OnlyContain(f => FaixasValidas.Contains(f));
         var nomes = itens.Select(i => i.GetProperty("nome").GetString()).ToList();
         nomes.Should().BeInAscendingOrder(StringComparer.Ordinal);
+        // Campos da frase do risco (a mesma do detalhe do app): presentes em todo item.
+        string[] camposFrase = ["perigoPrincipal", "chuva3hMm", "ventoKmH", "sensacaoTermica"];
+        foreach (var item in itens)
+            camposFrase.Should().OnlyContain(c => item.EnumerateObject().Any(p => p.Name == c));
 
         var mooca = itens.Single(i => i.GetProperty("nome").GetString() == "Mooca");
         var vias = mooca.GetProperty("alagamentosCge").EnumerateArray().Select(p => p.GetProperty("via").GetString()).ToList();

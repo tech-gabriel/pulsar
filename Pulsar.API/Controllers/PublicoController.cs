@@ -58,6 +58,10 @@ public class PublicoController : ControllerBase
                         FaixaRisco = resumo.FaixaRisco,
                         Score = resumo.ScoreAtual?.Valor,
                         AtualizadoEmUtc = resumo.ScoreAtual is null ? null : DateTime.SpecifyKind(resumo.ScoreAtual.Timestamp, DateTimeKind.Utc),
+                        PerigoPrincipal = resumo.ScoreAtual?.PerigoPrincipal,
+                        Chuva3hMm = resumo.ScoreAtual?.Chuva3hMm,
+                        VentoKmH = resumo.UltimaLeitura?.VentoKmH,
+                        SensacaoTermica = resumo.UltimaLeitura?.SensacaoTermica,
                         AlagamentosCge = [.. pontos[s.Id].Select(PontoAlagamentoCgeDto.De)],
                     };
                 })

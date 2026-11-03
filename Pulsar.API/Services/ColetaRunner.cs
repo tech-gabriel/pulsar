@@ -23,6 +23,7 @@ public class ColetaRunner : IColetaRunner
     private readonly IPrevisaoService _previsaoService;
     private readonly IAlagamentoCgeService _cgeService;
     private readonly IMotorNotificacoes _motor;
+    private readonly IAvisoRotaService _avisoRota;
     private readonly PulsarDbContext _db;
     private readonly ILogger<ColetaRunner> _logger;
 
@@ -33,6 +34,7 @@ public class ColetaRunner : IColetaRunner
         IPrevisaoService previsaoService,
         IAlagamentoCgeService cgeService,
         IMotorNotificacoes motor,
+        IAvisoRotaService avisoRota,
         PulsarDbContext db,
         ILogger<ColetaRunner> logger)
     {
@@ -42,6 +44,7 @@ public class ColetaRunner : IColetaRunner
         _previsaoService = previsaoService;
         _cgeService = cgeService;
         _motor = motor;
+        _avisoRota = avisoRota;
         _db = db;
         _logger = logger;
     }
@@ -103,6 +106,7 @@ public class ColetaRunner : IColetaRunner
         }
 
         var pushEnviados = await AvaliarNotificacoesAsync(ct);
+        pushEnviados += await AvaliarAvisosRotaAsync(ct);
 
         // "pelo menos": uma exceção que estoure DEPOIS de o push sair (a limpeza de inscrições
         // mortas, por exemplo) leva junto a soma daquela região. A falha só ao gravar no
@@ -139,6 +143,22 @@ public class ColetaRunner : IColetaRunner
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Falha ao avaliar notificações do ciclo.");
+            return 0;
+        }
+    }
+
+    /// <summary>Avisos "me avise quando melhorar" da rota. try/catch próprio: falha aqui não derruba o ciclo nem o motor.</summary>
+    private async Task<int> AvaliarAvisosRotaAsync(CancellationToken ct)
+    {
+        if (ct.IsCancellationRequested)
+            return 0;
+        try
+        {
+            return await _avisoRota.AvaliarEDispararAsync(DateTime.UtcNow, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao avaliar avisos de rota do ciclo.");
             return 0;
         }
     }

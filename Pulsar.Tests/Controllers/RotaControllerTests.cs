@@ -192,4 +192,41 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
         horas.Should().NotBeEmpty().And.BeInAscendingOrder();
         horas.Count.Should().BeLessThanOrEqualTo(Pulsar.API.Services.Rota.LimiaresRota.HorasNaFaixa);
     }
+
+    private const string Aviso = "/api/rota/aviso";
+
+    [Fact]
+    public async Task PedirAviso_SemLogin_401()
+    {
+        var resp = await _factory.CreateClient().PostAsJsonAsync(Aviso, new PedirAvisoRotaRequest([Guid.NewGuid()], "Penha"));
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task PedirAviso_DestinoVazio_400()
+    {
+        var ids = await IdsAsync(_factory, "Mooca");
+        var client = await LogadoAsync(_factory);
+        (await client.PostAsJsonAsync(Aviso, new PedirAvisoRotaRequest(ids, "  "))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task PedirAviso_Valido_204_ECancelarAviso_204()
+    {
+        var ids = await IdsAsync(_factory, "Mooca");
+        var client = await LogadoAsync(_factory);
+
+        (await client.PostAsJsonAsync(Aviso, new PedirAvisoRotaRequest(ids, "Penha"))).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        using (var scope = _factory.Services.CreateScope())
+            (await scope.ServiceProvider.GetRequiredService<PulsarDbContext>().PedidosAvisoRota.CountAsync(p => p.Destino == "Penha")).Should().BeGreaterThan(0);
+
+        (await client.DeleteAsync(Aviso)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task CancelarAviso_204()
+    {
+        var client = await LogadoAsync(_factory);
+        (await client.DeleteAsync(Aviso)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
 }

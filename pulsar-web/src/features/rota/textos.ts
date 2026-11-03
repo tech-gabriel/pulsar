@@ -45,7 +45,8 @@ export function textoVeredito(r: RotaAvaliacao, fuso?: string): { titulo: string
     }
     case 'Esperar': {
       const h = hora(r.esperarAteUtc);
-      const base = trecho?.alagandoCge ? `Alagando agora ${em}, segundo o CGE.` : `Risco alto ${em}.`;
+      const cge = r.trechos.find((t) => t.subprefeituraId === r.trechoDecisivoId)?.alagandoCge;
+      const base = cge ? `Alagando agora ${em}, segundo o CGE.` : `Risco alto ${em}.`;
       return {
         titulo: h ? `Melhor esperar até umas ${h}` : 'Melhor esperar',
         detalhe: h ? base : `${base} Ainda não dá para saber quando melhora.`,

@@ -47,5 +47,7 @@ export function tracarCorredor(
 
 export function idsDosTrechos(nomes: string[], subs: { id: string; nome: string }[]): string[] {
   const porNome = new Map(subs.map((s) => [normalizarNome(s.nome), s.id]));
-  return nomes.map((n) => porNome.get(normalizarNome(n))).filter((id): id is string => !!id);
+  // Únicos, na ordem do caminho: a API recusa (400) id repetido.
+  const ids = nomes.map((n) => porNome.get(normalizarNome(n))).filter((id): id is string => !!id);
+  return [...new Set(ids)];
 }

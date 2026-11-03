@@ -42,5 +42,16 @@ describe('idsDosTrechos', () => {
   it('casa nome do mapa com o da API ignorando acento e caixa', () => {
     const subs = [{ id: 'a', nome: 'Sé' }, { id: 'b', nome: 'Butantã' }];
     expect(idsDosTrechos(['SE', 'BUTANTA', 'XXX'], subs)).toEqual(['a', 'b']);
+    expect(idsDosTrechos(['SE', 'BUTANTA', 'SE'], subs)).toEqual(['a', 'b']);
+  });
+});
+
+describe('corredor + idsDosTrechos', () => {
+  it('diagonal Sé para Mooca (nomes repetem) gera ids únicos', () => {
+    const c = tracarCorredor(se, { lat: -23.5650, lon: -46.5850, rotulo: 'x' }, leve);
+    if (!c.ok) throw new Error('fora');
+    const ids = idsDosTrechos(c.nomes, [{ id: 'se', nome: 'Sé' }, { id: 'mo', nome: 'Mooca' }]);
+    expect(c.nomes.length).toBeGreaterThan(2);
+    expect(ids).toEqual(['se', 'mo']);
   });
 });

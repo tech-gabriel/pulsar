@@ -39,3 +39,15 @@ describe('textos do veredito', () => {
     expect(textoVeredito({ ...base, estado: 'Esperar', trechos: [baixo, mooca] }, SP).detalhe).toContain('Mooca');
   });
 });
+
+describe('CGE só vale no trecho decisivo', () => {
+  it('CGE em outro trecho não muda o texto do decisivo', () => {
+    const r: RotaAvaliacao = { ...base, estado: 'Esperar', trechoDecisivoId: 'm', esperarAteUtc: '2026-11-03T21:00:00Z',
+      trechos: [mooca, { subprefeituraId: 'l', nome: 'Lapa', faixa: 'ALTO', alagandoCge: true }] };
+    expect(textoVeredito(r, SP).detalhe).toBe('Risco alto na Mooca.');
+  });
+  it('sem decisivo, o pior trecho com CGE não ativa a frase do CGE', () => {
+    const r: RotaAvaliacao = { ...base, estado: 'Esperar', trechos: [{ ...mooca, alagandoCge: true }] };
+    expect(textoVeredito(r, SP).detalhe).toContain('Risco alto');
+  });
+});

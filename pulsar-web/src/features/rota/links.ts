@@ -1,7 +1,5 @@
 import type { PontoRota } from './tipos';
 
-
-
 // Modo carro. O Waze só aceita destino (abre a partir da posição do aparelho).
 export function linksNavegacao(o: PontoRota, d: PontoRota): { google: string; waze: string; apple: string } {
   const a = `${o.lat},${o.lon}`;

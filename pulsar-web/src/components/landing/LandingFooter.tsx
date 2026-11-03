@@ -77,6 +77,13 @@ export default function LandingFooter() {
               {z.nome}
             </Link>
           ))}
+          <Link
+            to="/pontos-de-alagamento-hoje"
+            className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Pontos de alagamento hoje
+          </Link>
         </div>
       </nav>
 

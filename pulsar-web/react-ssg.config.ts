@@ -10,5 +10,5 @@ export default defineReactSsgConfig({
   history: 'browser',
   origin: 'https://app-pulsar.com.br',
   routes: routesSSG,
-  paths: ['/', '/sobre', '/privacidade', '/termos', '/novidades', ...regiaoPaths()],
+  paths: ['/', '/sobre', '/privacidade', '/termos', '/novidades', '/pontos-de-alagamento-hoje', ...regiaoPaths()],
 });

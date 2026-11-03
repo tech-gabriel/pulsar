@@ -31,11 +31,27 @@ describe('CamposDePara: sugestões', () => {
     expect(screen.getByRole('button', { name: 'Rua da Mooca' })).toBeInTheDocument();
   });
 
-  it('no painel a lista fica no fluxo, para o painel crescer em vez de cortá-la', () => {
-    expect(monta(true)).not.toHaveClass('absolute');
+  it('no painel a lista fica no fluxo e abaixo da cápsula inteira, fora da coluna dos campos', () => {
+    const lista = monta(true);
+    expect(lista).not.toHaveClass('absolute');
+    expect(lista.closest('.mapa-controle')).toBeNull();
+    expect(lista.closest('[data-campos-rota]')).not.toBeNull();
+  });
+
+  it('no painel escolher uma sugestão funciona (o clique na lista não conta como clique fora)', () => {
+    const onDestino = vi.fn();
+    render(<CamposDePara areas={areas} origem={null} destino={null} onOrigem={vi.fn()} onDestino={onDestino}
+      onInverter={vi.fn()} onFechar={vi.fn()} embutida />);
+    fireEvent.change(screen.getByLabelText('Para'), { target: { value: 'Mooca' } });
+    const botao = screen.getByRole('button', { name: 'Rua da Mooca' });
+    fireEvent.mouseDown(botao);
+    fireEvent.click(botao);
+    expect(onDestino).toHaveBeenCalledWith(expect.objectContaining({ rotulo: 'Rua da Mooca' }));
   });
 
   it('no celular a lista flutua sobre o mapa', () => {
-    expect(monta(false)).toHaveClass('absolute');
+    const lista = monta(false);
+    expect(lista).toHaveClass('absolute');
+    expect(lista.closest('.mapa-controle')).not.toBeNull();
   });
 });

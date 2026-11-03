@@ -354,6 +354,40 @@ namespace Pulsar.API.Migrations
                     b.ToTable("OcorrenciasAlagamento");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.PedidoAvisoRota", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Destino")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTime>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SubprefeituraIds")
+                        .IsRequired()
+                        .HasMaxLength(1200)
+                        .HasColumnType("character varying(1200)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiraEm");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("PedidosAvisoRota");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.PontoAlagamentoCge", b =>
                 {
                     b.Property<Guid>("Id")

@@ -61,7 +61,7 @@ function mesmaChave(sub: PushSubscription, chaveAtual: Uint8Array): boolean {
  * Gerencia a inscrição de Web Push do dispositivo: descobre suporte/estado,
  * permite ativar/desativar e mantém as preferências sincronizadas com o backend.
  */
-export function usePushSubscription(prefs: NotificacoesPrefs) {
+export function usePushSubscription(prefs: NotificacoesPrefs, ligado = true) {
   const [estado, setEstado] = useState<EstadoPush>('carregando');
   const [ocupado, setOcupado] = useState(false);
   const chaveRef = useRef<string | null>(null);
@@ -91,7 +91,9 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
   }, []);
 
   // Descoberta inicial: suporte → permissão → servidor habilitado → inscrição existente.
+  // Desligado (ex.: rota fechada), não consulta nada e fica em `carregando`.
   useEffect(() => {
+    if (!ligado) return;
     let cancelado = false;
     void (async () => {
       if (!suportaPush()) {
@@ -124,7 +126,7 @@ export function usePushSubscription(prefs: NotificacoesPrefs) {
     return () => {
       cancelado = true;
     };
-  }, []);
+  }, [ligado]);
 
   // Devolve o estado final para quem precisa decidir o próximo passo (onboarding).
   const ativar = useCallback(async (): Promise<EstadoPush> => {

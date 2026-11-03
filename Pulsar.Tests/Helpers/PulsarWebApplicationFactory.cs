@@ -29,6 +29,8 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
     /// <summary>Remetente falso: os testes leem daqui o link de confirmação.</summary>
     public CapturaEmailSender Emails { get; } = new();
 
+    public FakeChuvaReferenciaClient ChuvaReferencia { get; } = new();
+
     /// <summary>Segundo e-mail de Admin:Emails que nenhum teste cadastra (alvo de ataques de troca de e-mail).</summary>
     public const string EmailAdminSemDono = "admin.semdono@pulsar.test";
 
@@ -99,6 +101,11 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
             foreach (var d in geocodingDescriptors)
                 services.Remove(d);
             services.AddScoped<IGeocodingClient, FakeGeocodingClient>();
+
+            // Open-Meteo falso (série vazia por padrão); o teste liga ChuvaReferencia.Falhar para simular queda.
+            foreach (var d in services.Where(d => d.ServiceType == typeof(IChuvaReferenciaClient)).ToList())
+                services.Remove(d);
+            services.AddSingleton<IChuvaReferenciaClient>(ChuvaReferencia);
 
             foreach (var d in services.Where(d => d.ServiceType == typeof(IEmailSender)).ToList())
                 services.Remove(d);

@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.28.0',
+    data: '2026-11-03',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Rota com risco no caminho',
+        descricao: 'Antes de sair, toque em Rota na busca ou em Como chegar no detalhe de uma subprefeitura, diga de onde sai e para onde vai, e o Pulsar responde numa frase se pode ir, se vale ir com atenção ou se é melhor esperar, e até que horas. O caminho aparece no mapa com a cor do risco de cada subprefeitura, e um toque abre o trajeto no Google Maps, no Waze ou no Apple Maps.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Me avise quando melhorar',
+        descricao: 'Quando a resposta é esperar, peça o aviso e o Pulsar manda uma notificação assim que o caminho ficar tranquilo. Vale por 3 horas e dá para cancelar.',
+      },
+    ],
+  },
+  {
     versao: '1.27.0',
     data: '2026-11-03',
     itens: [

@@ -84,6 +84,31 @@ export function acumularPontos(anteriores, features) {
   return { periodo: { de, ate: pontos.length ? ate : null }, pontos };
 }
 
+const PONTOS_EM_PRODUCAO = 'https://app-pulsar.com.br/pontos-alagamento.json';
+
+/**
+ * Base do acúmulo: o arquivo que está no ar. O build do CI não commita o que acumulou, então
+ * partir só do arquivo do repositório perderia tudo o que foi publicado desde o último commit.
+ * Produção fora: cai no arquivo do repositório; sem nenhum dos dois, começa vazio.
+ */
+export async function lerPontosAnteriores(fetchFn, lerLocal) {
+  try {
+    const r = await fetchFn(PONTOS_EM_PRODUCAO, { signal: AbortSignal.timeout(30_000) });
+    if (r.ok) {
+      const j = await r.json();
+      if (Array.isArray(j?.pontos)) return j.pontos;
+    }
+  } catch {
+    /* produção fora: usa o local */
+  }
+  return lerLocal()?.pontos ?? [];
+}
+
+/** O GeoSampa respondendo sem nenhuma ocorrência (a camada parece zerar na virada do ano) é falha, não "zero". */
+export function exigirOcorrencias(features) {
+  if (features.length === 0) throw new Error('GeoSampa respondeu sem nenhuma ocorrência; mantendo o snapshot anterior');
+}
+
 async function main() {
   const dest = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'data', 'ocorrencias-snapshot.json');
   try {
@@ -96,13 +121,14 @@ async function main() {
       // Falha de camada aborta tudo: snapshot parcial subnotificaria em silêncio.
       features.push(...(await res.json()).features);
     }
+    exigirOcorrencias(features);
     const out = { geradoEm: new Date().toISOString().slice(0, 10), ...agregar(features) };
     writeFileSync(dest, JSON.stringify(out, null, 2) + '\n');
     console.log(`Snapshot de ocorrências: ${features.length} (${out.periodo.de} a ${out.periodo.ate})`);
 
     // Pontos da página pública, acumulados com o arquivo anterior (servido de public/, compacto).
     const destPontos = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'pontos-alagamento.json');
-    const anteriores = existsSync(destPontos) ? JSON.parse(readFileSync(destPontos, 'utf8')).pontos ?? [] : [];
+    const anteriores = await lerPontosAnteriores(fetch, () => (existsSync(destPontos) ? JSON.parse(readFileSync(destPontos, 'utf8')) : null));
     const pontos = { geradoEm: out.geradoEm, ...acumularPontos(anteriores, features) };
     writeFileSync(destPontos, JSON.stringify(pontos) + '\n');
     console.log(`Pontos de alagamento: ${pontos.pontos.length} (${pontos.periodo.de} a ${pontos.periodo.ate})`);

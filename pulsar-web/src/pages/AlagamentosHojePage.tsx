@@ -29,7 +29,7 @@ interface Regiao {
   sub: SubprefeituraSeo;
   centro?: { lat: number; lon: number };
 }
-type EstadoLocalizacao = 'ocioso' | 'procurando' | 'negada' | 'fora';
+type EstadoLocalizacao = 'ocioso' | 'procurando' | 'negada' | 'fora' | 'semContorno';
 
 const DISTRITOS = [...new Set(subprefeituras.flatMap((s) => s.distritos))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
@@ -71,6 +71,11 @@ export default function AlagamentosHojePage() {
     if (sub) setRegiao({ sub, centro: coords });
     setCoords(null);
   }
+  // O contorno não baixou: sem ele não dá para achar a subprefeitura. Nunca fica "procurando" para sempre.
+  if (coords && contorno.erro && localizacao === 'procurando') {
+    setLocalizacao('semContorno');
+    setCoords(null);
+  }
 
   function pedirLocalizacao() {
     if (!('geolocation' in navigator)) {
@@ -91,8 +96,8 @@ export default function AlagamentosHojePage() {
     );
   }
 
+  /** Só confirma numa escolha explícita (item da lista, Enter, sair do campo), nunca no meio da digitação. */
   function escolherBairro(valor: string) {
-    setBairro(valor);
     const sub = subprefeituraDoDistrito(valor) ?? subprefeituras.find((s) => normalizarNome(s.nome) === normalizarNome(valor));
     if (sub) {
       setRegiao({ sub });
@@ -116,6 +121,7 @@ export default function AlagamentosHojePage() {
             regiao={regiao}
             risco={risco}
             pontos={pontos.dados}
+            pontosErro={pontos.erro}
             contorno={contorno.dados}
             logado={!!usuario}
             onTrocar={() => {
@@ -129,8 +135,10 @@ export default function AlagamentosHojePage() {
               localizacao={localizacao}
               bairro={bairro}
               onLocalizar={pedirLocalizacao}
+              onDigitar={setBairro}
               onBairro={escolherBairro}
             />
+            {RANKING[0]?.total > 0 && (
             <section className="ah-secao" aria-labelledby="ah-ranking">
               <h2 id="ah-ranking">Onde mais alagou em SP</h2>
               <p className="ah-apoio">Ocorrências registradas pela Defesa Civil {PERIODO_SNAPSHOT}.</p>
@@ -146,6 +154,7 @@ export default function AlagamentosHojePage() {
                 ))}
               </ol>
             </section>
+            )}
           </>
         )}
 
@@ -162,8 +171,8 @@ export default function AlagamentosHojePage() {
   );
 }
 
-function Escolha({ localizacao, bairro, onLocalizar, onBairro }: {
-  localizacao: EstadoLocalizacao; bairro: string; onLocalizar: () => void; onBairro: (v: string) => void;
+function Escolha({ localizacao, bairro, onLocalizar, onDigitar, onBairro }: {
+  localizacao: EstadoLocalizacao; bairro: string; onLocalizar: () => void; onDigitar: (v: string) => void; onBairro: (v: string) => void;
 }) {
   return (
     <div className="ah-escolha">
@@ -172,13 +181,21 @@ function Escolha({ localizacao, bairro, onLocalizar, onBairro }: {
       </button>
       {localizacao === 'negada' && <p className="ah-aviso" role="status">Sem acesso à localização. Escolha o bairro abaixo.</p>}
       {localizacao === 'fora' && <p className="ah-aviso" role="status">Esse lugar fica fora da cidade de São Paulo. Escolha um bairro da capital.</p>}
+      {localizacao === 'semContorno' && <p className="ah-aviso" role="status">Não deu para achar a sua região agora. Escolha o bairro abaixo.</p>}
       <label className="ah-campo">
         <Search size={18} aria-hidden="true" />
         <span className="sr-only">Bairro</span>
         <input
           list="ah-distritos"
           value={bairro}
-          onChange={(e) => onBairro(e.target.value)}
+          onChange={(e) => {
+            onDigitar(e.target.value);
+            // Item escolhido na lista (ou valor colado de uma vez) confirma; letra digitada não.
+            const tipo = (e.nativeEvent as InputEvent).inputType;
+            if (!tipo || tipo === 'insertReplacementText') onBairro(e.target.value);
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && onBairro(e.currentTarget.value)}
+          onBlur={(e) => onBairro(e.currentTarget.value)}
           placeholder="Ou digite o seu bairro"
           autoComplete="off"
         />
@@ -191,10 +208,11 @@ function Escolha({ localizacao, bairro, onLocalizar, onBairro }: {
   );
 }
 
-function RegiaoEscolhida({ regiao, risco, pontos, contorno, logado, onTrocar }: {
+function RegiaoEscolhida({ regiao, risco, pontos, pontosErro, contorno, logado, onTrocar }: {
   regiao: Regiao;
   risco: { dados: RiscoAgoraPublico[] | null; erro: boolean; atualizar: () => void };
   pontos: { periodo: Periodo; pontos: Ponto[] } | null;
+  pontosErro: boolean;
   contorno: FeatureCollection | null;
   logado: boolean;
   onTrocar: () => void;
@@ -217,10 +235,13 @@ function RegiaoEscolhida({ regiao, risco, pontos, contorno, logado, onTrocar }: 
 
       <section className="ah-risco" aria-label={`Risco agora ${sub.emNome}`}>
         <p className="ah-risco-titulo">Risco agora {sub.emNome}</p>
-        {atual ? (
+        {atual && atual.score == null ? (
+          // Sem score a faixa da API cai em BAIXO por padrão: nunca afirmar "Tranquilo" sem leitura.
+          <p className="ah-erro" role="status">Sem leitura agora {sub.emNome}. O risco volta a aparecer na próxima coleta.</p>
+        ) : atual ? (
           <>
             <div className="det-hero" style={{ '--c': coresParaFaixa(atual.faixaRisco).fill } as React.CSSProperties}>
-              <span className="det-hero-num" aria-label={`Score ${Math.round(atual.score ?? 0)} de 100`}>{atual.score == null ? '–' : Math.round(atual.score)}</span>
+              <span className="det-hero-num" aria-label={`Score ${Math.round(atual.score ?? 0)} de 100`}>{Math.round(atual.score ?? 0)}</span>
               <div className="min-w-0">
                 <p className="det-hero-faixa">{labelFaixa(atual.faixaRisco)}</p>
                 <p className="det-hero-frase">
@@ -267,11 +288,15 @@ function RegiaoEscolhida({ regiao, risco, pontos, contorno, logado, onTrocar }: 
 
       <section className="ah-secao" aria-labelledby="ah-perto">
         <h2 id="ah-perto">
-          {plural(perto.length, 'alagamento registrado', 'alagamentos registrados')} {centro ? 'a até 2 km de você' : sub.emNome}
+          {!pontos
+            ? (pontosErro ? 'Não deu para carregar os alagamentos registrados' : 'Carregando os alagamentos registrados…')
+            : `${perto.length === 0 ? 'Nenhum alagamento registrado' : plural(perto.length, 'alagamento registrado', 'alagamentos registrados')} ${centro ? 'a até 2 km de você' : sub.emNome}`}
         </h2>
-        <p className="ah-apoio">
-          Ocorrências da Defesa Civil {pontos ? periodoLegivel(pontos.periodo) : ''}. Mostram onde costuma alagar, não o que está alagado agora.
-        </p>
+        {pontos && (
+          <p className="ah-apoio">
+            Ocorrências da Defesa Civil {periodoLegivel(pontos.periodo)}. Mostram onde costuma alagar, não o que está alagado agora.
+          </p>
+        )}
         <Suspense fallback={<div className="mapa-perto" aria-hidden="true" />}>
           <MapaPerto pontos={perto} centro={centro} nomeSubprefeitura={sub.nome} contorno={contorno} />
         </Suspense>

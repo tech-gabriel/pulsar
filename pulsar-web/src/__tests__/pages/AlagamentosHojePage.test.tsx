@@ -8,6 +8,8 @@ import type { RiscoAgoraPublico } from '../../types';
 const estado = vi.hoisted(() => ({
   risco: { dados: null as RiscoAgoraPublico[] | null, erro: false, atualizar: () => {} },
   usuario: null as object | null,
+  falhaJson: '' as string, // trecho da URL que deve falhar
+  semDados: '' as string, // trecho da URL que fica carregando
 }));
 
 vi.mock('../../hooks/useSeoHead', () => ({ useSeoHead: () => {} }));
@@ -19,7 +21,11 @@ const PUBLICO = join(__dirname, '../../../public');
 const leve = JSON.parse(readFileSync(join(PUBLICO, 'subprefeituras-leve.geojson'), 'utf8'));
 const pontos = JSON.parse(readFileSync(join(PUBLICO, 'pontos-alagamento.json'), 'utf8'));
 vi.mock('../../hooks/useJsonPublico', () => ({
-  useJsonPublico: (url: string, ativo: boolean) => ({ dados: ativo ? (url.includes('leve') ? leve : pontos) : null, erro: false }),
+  useJsonPublico: (url: string, ativo: boolean) => {
+    if (!ativo || (estado.semDados && url.includes(estado.semDados))) return { dados: null, erro: false };
+    if (estado.falhaJson && url.includes(estado.falhaJson)) return { dados: null, erro: true };
+    return { dados: url.includes('leve') ? leve : pontos, erro: false };
+  },
 }));
 
 import AlagamentosHojePage from '../../pages/AlagamentosHojePage';
@@ -43,6 +49,8 @@ describe('AlagamentosHojePage', () => {
   beforeEach(() => {
     estado.risco = { dados: [mooca()], erro: false, atualizar: () => {} };
     estado.usuario = null;
+    estado.falhaJson = '';
+    estado.semDados = '';
   });
 
   it('sem escolha: título, escolha da região, ranking e nenhuma faixa de risco', () => {
@@ -116,5 +124,52 @@ describe('AlagamentosHojePage', () => {
     abrir();
     escolherBairro('Mooca');
     expect(screen.queryByRole('region', { name: 'Alagando agora' })).not.toBeInTheDocument();
+  });
+
+  it('digitar letra a letra não escolhe no meio: Vila Maria a caminho de Vila Mariana', () => {
+    abrir();
+    const campo = screen.getByLabelText(/bairro/i);
+    for (const parcial of ['Vila', 'Vila Maria', 'Vila Mariana']) fireEvent.input(campo, { target: { value: parcial }, inputType: 'insertText' });
+    expect(screen.queryByRole('region', { name: /Risco agora/ })).not.toBeInTheDocument();
+    fireEvent.keyDown(campo, { key: 'Enter' });
+    expect(screen.getByRole('region', { name: /Risco agora na Vila Mariana/ })).toBeInTheDocument();
+  });
+
+  it('contorno que não baixa: sai do Procurando e pede o bairro', async () => {
+    estado.falhaJson = 'leve';
+    geolocalizacao((ok) => ok({ coords: { latitude: -23.5489, longitude: -46.6001, accuracy: 30 } } as GeolocationPosition));
+    abrir();
+    fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
+    expect(await screen.findByText(/Não deu para achar a sua região/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Ver a minha região/ })).toBeEnabled();
+  });
+
+  it('pontos carregando ou com erro nunca dizem 0 alagamentos', () => {
+    estado.semDados = 'pontos';
+    const { unmount } = abrir();
+    escolherBairro('Mooca');
+    expect(screen.getByText(/Carregando os alagamentos/)).toBeInTheDocument();
+    expect(screen.queryByText(/^0 alagamentos/)).not.toBeInTheDocument();
+    unmount();
+    estado.semDados = '';
+    estado.falhaJson = 'pontos';
+    abrir();
+    escolherBairro('Mooca');
+    expect(screen.getByText(/Não deu para carregar os alagamentos/)).toBeInTheDocument();
+  });
+
+  it('zero alagamentos de verdade vira frase honesta', async () => {
+    geolocalizacao((ok) => ok({ coords: { latitude: -23.9001, longitude: -46.7001, accuracy: 30 } } as GeolocationPosition));
+    abrir();
+    fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
+    expect(await screen.findByText(/Nenhum alagamento registrado a até 2 km de você/)).toBeInTheDocument();
+  });
+
+  it('sem score: diz que está sem leitura, nunca Tranquilo', () => {
+    estado.risco = { dados: [mooca({ score: null, atualizadoEmUtc: null, faixaRisco: 'BAIXO' })], erro: false, atualizar: () => {} };
+    abrir();
+    escolherBairro('Mooca');
+    expect(screen.getByText(/Sem leitura agora/)).toBeInTheDocument();
+    expect(screen.queryByText('Tranquilo')).not.toBeInTheDocument();
   });
 });

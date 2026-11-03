@@ -64,3 +64,27 @@ describe('gerar-snapshot-ocorrencias: acumularPontos', () => {
     expect(r.periodo).toEqual({ de: '2026-01-04', ate: '2026-08-30' });
   });
 });
+
+// @ts-expect-error script .mjs sem tipos
+import { lerPontosAnteriores, exigirOcorrencias } from '../../../scripts/gerar-snapshot-ocorrencias.mjs';
+
+describe('gerar-snapshot-ocorrencias: base do acúmulo e camada vazia', () => {
+  const local = { pontos: [{ id: 'local' }] };
+  const prod = { pontos: [{ id: 'prod' }] };
+
+  it('usa o arquivo em produção como base (o CI não commita o acumulado)', async () => {
+    const f = async () => new Response(JSON.stringify(prod), { status: 200 });
+    expect(await lerPontosAnteriores(f, () => local)).toEqual(prod.pontos);
+  });
+
+  it('produção fora ou com erro: cai no arquivo do repositório', async () => {
+    expect(await lerPontosAnteriores(async () => new Response('', { status: 503 }), () => local)).toEqual(local.pontos);
+    expect(await lerPontosAnteriores(async () => { throw new Error('rede'); }, () => local)).toEqual(local.pontos);
+    expect(await lerPontosAnteriores(async () => { throw new Error('rede'); }, () => null)).toEqual([]);
+  });
+
+  it('camada sem nenhuma ocorrência é tratada como falha (não zera o ranking em janeiro)', () => {
+    expect(() => exigirOcorrencias([])).toThrow();
+    expect(() => exigirOcorrencias([{}])).not.toThrow();
+  });
+});

@@ -79,3 +79,17 @@ describe('DetalheSubprefeitura', () => {
   });
 });
 
+
+describe('DetalheSubprefeitura: como chegar', () => {
+  it('o botão Como chegar chama onComoChegar', () => {
+    const onComoChegar = vi.fn();
+    renderiza({ onComoChegar });
+    fireEvent.click(screen.getByRole('button', { name: /Como chegar/ }));
+    expect(onComoChegar).toHaveBeenCalled();
+  });
+
+  it('sem onComoChegar o botão não existe', () => {
+    renderiza();
+    expect(screen.queryByRole('button', { name: /Como chegar/ })).not.toBeInTheDocument();
+  });
+});

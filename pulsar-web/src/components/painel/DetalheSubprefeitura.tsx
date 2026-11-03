@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
-  ArrowLeft, Thermometer, CloudRain, Wind, Droplets, Sun, ShieldAlert, History, Bell, BellRing,
+  ArrowLeft, Thermometer, CloudRain, Wind, Droplets, Sun, ShieldAlert, History, Bell, BellRing, Route,
 } from 'lucide-react';
 import { useCountUp } from '../../hooks/useCountUp';
 import { useNotificacoesPrefs } from '../../hooks/useNotificacoesPrefs';
@@ -81,6 +81,8 @@ interface Props {
   isFavorito: (subprefeituraId: string) => boolean;
   onToggleFavorito: (subprefeituraId: string) => void;
   onFechar: () => void;
+  /** Abre a rota até aqui; sem ele o botão "Como chegar" não aparece. */
+  onComoChegar?: () => void;
 }
 
 /**
@@ -89,7 +91,7 @@ interface Props {
  * e as ações. Tudo é preenchimento leve dentro do painel: nada de cartão com borda nem
  * vidro sobre o vidro do painel.
  */
-export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorito, onFechar }: Props) {
+export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorito, onFechar, onComoChegar }: Props) {
   const navigate = useNavigate();
   const { prefs } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
@@ -212,6 +214,12 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
               <History size={15} /> Histórico
             </button>
             <BotaoCompartilhar area={area} />
+            {onComoChegar && (
+              <button type="button" className="col-span-2 rounded-[14px] min-h-11 flex items-center justify-center gap-1.5 font-semibold"
+                style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }} onClick={onComoChegar}>
+                <Route size={15} aria-hidden="true" /> Como chegar
+              </button>
+            )}
           </motion.div>
 
           <motion.p variants={itemStagger} className="mt-3" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>

@@ -17,6 +17,7 @@ public class PulsarDbContext : DbContext
     public DbSet<AgregadoHorario> AgregadosHorarios => Set<AgregadoHorario>();
     public DbSet<PontoAlagamentoCge> PontosAlagamentoCge => Set<PontoAlagamentoCge>();
     public DbSet<ExecucaoSincronizacao> ExecucoesSincronizacao => Set<ExecucaoSincronizacao>();
+    public DbSet<PedidoAvisoRota> PedidosAvisoRota => Set<PedidoAvisoRota>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioSubprefeitura> UsuarioSubprefeituras => Set<UsuarioSubprefeitura>();
     public DbSet<TokenRecuperacaoSenha> TokensRecuperacaoSenha => Set<TokenRecuperacaoSenha>();
@@ -203,6 +204,15 @@ public class PulsarDbContext : DbContext
             e.HasIndex(x => new { x.Fonte, x.IniciadoEm });
             e.Property(x => x.Fonte).IsRequired().HasMaxLength(40);
             e.Property(x => x.Erro).HasMaxLength(1000);
+        });
+
+        modelBuilder.Entity<PedidoAvisoRota>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.UsuarioId);
+            e.HasIndex(x => x.ExpiraEm);
+            e.Property(x => x.SubprefeituraIds).IsRequired().HasMaxLength(1200);
+            e.Property(x => x.Destino).IsRequired().HasMaxLength(80);
         });
 
         modelBuilder.Entity<PrevisaoClimatica>(e =>

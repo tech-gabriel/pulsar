@@ -155,3 +155,15 @@ describe('usePushSubscription', () => {
     expect(result.current.estado).toBe('inativo');
   });
 });
+
+describe('usePushSubscription: desligado', () => {
+  it('desligado não consulta a chave VAPID; ao ligar, consulta', async () => {
+    const { result, rerender } = renderHook(({ ligado }) => usePushSubscription(prefs, ligado), { initialProps: { ligado: false } });
+    await act(async () => {});
+    expect(mockedApi.get).not.toHaveBeenCalled();
+    expect(result.current.estado).toBe('carregando');
+    rerender({ ligado: true });
+    await waitFor(() => expect(result.current.estado).toBe('inativo'));
+    expect(mockedApi.get).toHaveBeenCalledWith('/notificacoes/vapid-public-key');
+  });
+});

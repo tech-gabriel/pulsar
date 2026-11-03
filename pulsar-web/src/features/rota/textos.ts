@@ -23,14 +23,18 @@ function trechoEm(r: RotaAvaliacao): TrechoRota | undefined {
   return pior;
 }
 
-export function textoVeredito(r: RotaAvaliacao, fuso?: string): { titulo: string; detalhe: string } {
+// Horário de "tranquilo até" muito à frente é o fim do horizonte da previsão, não uma promessa útil.
+const MAX_HORAS_A_FRENTE = 6;
+
+export function textoVeredito(r: RotaAvaliacao, fuso?: string, agora: number = Date.now()): { titulo: string; detalhe: string } {
   const trecho = trechoEm(r);
   const em = trecho ? emNomeDe(trecho.nome) : 'no caminho';
   const hora = (utc: string | null) => (utc ? rotuloHora(utc, fuso) : null);
 
   switch (r.estado) {
     case 'PodeIr': {
-      const h = hora(r.tranquiloAteUtc);
+      const perto = r.tranquiloAteUtc && new Date(r.tranquiloAteUtc).getTime() - agora <= MAX_HORAS_A_FRENTE * 3_600_000;
+      const h = perto ? hora(r.tranquiloAteUtc) : null;
       return {
         titulo: 'Pode ir: caminho tranquilo',
         detalhe: h ? `Sem chuva forte prevista no trajeto até umas ${h}.` : 'Sem chuva forte prevista no trajeto agora.',

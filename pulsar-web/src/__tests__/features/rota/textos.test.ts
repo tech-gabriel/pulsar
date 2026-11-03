@@ -12,9 +12,13 @@ describe('textos do veredito', () => {
   });
 
   it('PodeIr com e sem horário', () => {
-    expect(textoVeredito({ ...base, tranquiloAteUtc: '2026-11-03T21:00:00Z' }, SP)).toEqual({
+    const agora = Date.parse('2026-11-03T18:00:00Z');
+    expect(textoVeredito({ ...base, tranquiloAteUtc: '2026-11-03T21:00:00Z' }, SP, agora)).toEqual({
       titulo: 'Pode ir: caminho tranquilo', detalhe: 'Sem chuva forte prevista no trajeto até umas 18h.' });
-    expect(textoVeredito(base, SP).detalhe).toBe('Sem chuva forte prevista no trajeto agora.');
+    expect(textoVeredito(base, SP, agora).detalhe).toBe('Sem chuva forte prevista no trajeto agora.');
+    // Mais de 6 h à frente (fim do horizonte da previsão): a frase sem horário.
+    expect(textoVeredito({ ...base, tranquiloAteUtc: '2026-11-04T01:00:00Z' }, SP, agora).detalhe)
+      .toBe('Sem chuva forte prevista no trajeto agora.');
   });
 
   it('ComAtencao com hora que volta a BAIXO e sem ela', () => {

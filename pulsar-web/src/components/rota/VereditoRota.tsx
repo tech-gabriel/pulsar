@@ -11,7 +11,7 @@ export default function VereditoRota({ resultado }: { resultado: RotaAvaliacao }
   const { titulo, detalhe } = textoVeredito(resultado);
   const cores = coresParaFaixa(FAIXA_DO_ESTADO[resultado.estado]);
   return (
-    <div className="det-hero" style={{ '--c': cores.fill, '--c-escura': cores.text } as CSSProperties}>
+    <div className="det-hero" aria-live="polite" style={{ '--c': cores.fill, '--c-escura': cores.text } as CSSProperties}>
       <span aria-hidden="true" className="w-11 h-11 rounded-full flex-shrink-0"
         style={{ background: 'var(--c)', boxShadow: '0 0 0 7px color-mix(in srgb, var(--c) 22%, transparent)' }} />
       <div className="min-w-0">

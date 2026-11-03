@@ -82,3 +82,26 @@ describe('PainelRota', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/fora/i);
   });
 });
+
+describe('PainelRota: erro de rede e aviso', () => {
+  it('erro de rede mostra "Tentar de novo" e chama o callback', () => {
+    const onTentarDeNovo = vi.fn();
+    render(<PainelRota resultado={null} origem={origem} destino={destino} carregando={false} erro="rede"
+      avisoPedido={false} onPedirAviso={vi.fn()} onTentarDeNovo={onTentarDeNovo} />);
+    screen.getByRole('button', { name: 'Tentar de novo' }).click();
+    expect(onTentarDeNovo).toHaveBeenCalled();
+  });
+
+  it('o botão de aviso fica desabilitado enquanto o push carrega', () => {
+    render(<PainelRota resultado={rota('Esperar')} origem={origem} destino={destino} carregando={false} erro={null}
+      avisoPedido={false} onPedirAviso={vi.fn()} avisoIndisponivel />);
+    expect(screen.getByRole('button', { name: /Me avise quando melhorar/ })).toBeDisabled();
+  });
+});
+
+describe('VereditoRota', () => {
+  it('o bloco do veredito é uma região aria-live', () => {
+    monta('PodeIr');
+    expect(screen.getByText(textoVeredito(rota('PodeIr')).titulo).closest('[aria-live]')).toHaveAttribute('aria-live', 'polite');
+  });
+});

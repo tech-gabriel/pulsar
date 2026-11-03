@@ -23,8 +23,8 @@ function iconePara(tipo: string) {
 }
 
 /** Um campo do De/Para: mostra o ponto escolhido e, ao digitar, sugere subprefeituras e endereços. */
-function Campo({ rotulo, ponto, placeholder, areas, onEscolher }: {
-  rotulo: string; ponto: PontoRota | null; placeholder: string; areas: Area[]; onEscolher: (p: PontoRota) => void;
+function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false }: {
+  rotulo: string; ponto: PontoRota | null; placeholder: string; areas: Area[]; onEscolher: (p: PontoRota) => void; focar?: boolean;
 }) {
   const { setTermo, resultados, carregando, limpar } = useBuscaEndereco();
   // null = não está editando: o campo mostra o ponto escolhido.
@@ -56,6 +56,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher }: {
           value={texto ?? ponto?.rotulo ?? ''}
           placeholder={placeholder}
           aria-label={rotulo}
+          autoFocus={focar}
           onFocus={(e) => e.currentTarget.select()}
           onChange={(e) => { setTexto(e.target.value); setTermo(e.target.value); }}
           className="mapa-input flex-1 min-w-0 h-11 px-2.5 bg-transparent text-sm outline-none"
@@ -112,7 +113,7 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-1.5 ml-1">
           <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} />
-          <Campo rotulo="Para" ponto={destino} placeholder="Para onde você vai?" areas={areas} onEscolher={onDestino} />
+          <Campo rotulo="Para" ponto={destino} placeholder="Para onde você vai?" areas={areas} onEscolher={onDestino} focar={!destino} />
         </div>
         <button type="button" onClick={onInverter} aria-label="Inverter origem e destino"
           className="mapa-txt-suave flex items-center justify-center w-11 h-11 flex-shrink-0">

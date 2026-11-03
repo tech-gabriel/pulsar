@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useReducedMotion } from 'motion/react';
 import Map, { AttributionControl, Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre';
 import type { GeoJSONSource, StyleSpecification } from 'maplibre-gl';
 import maplibregl from './maplibre';
 import { comChaveMapTiler, estiloBaseCompartilhado, urlReservaMapTiler } from './estiloBase';
-import { circuloGeojson, deslocamentoDoPainel, paddingDoPainel } from './geometria';
+import { circuloGeojson, deslocamentoDoPainel, paddingDaRota, paddingDoPainel } from './geometria';
 import { ZOOM } from './zoom';
 import ZoomControles from './ZoomControles';
 import RegioesLayer from './RegioesLayer';
@@ -23,6 +24,9 @@ const CHAVE_MAPTILER = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
 const COR_BUSCA = '#00BCFF';
 // Marinho da marca: o miolo do destino e a borda da origem na rota.
 const COR_PONTO_ROTA = '#052F4A';
+// Halo da linha e contorno dos pontos da rota: o branco do texto sobre o azul da marca (#fff),
+// que separa o traçado do mapa nos dois temas.
+const COR_HALO_ROTA = '#ffffff';
 const DESENHO_MS = 600;
 // Aproxima a curva de chegada do app, cubic-bezier(.16, 1, .3, 1): sai rápido e assenta devagar.
 const chegada = (x: number) => 1 - Math.pow(1 - x, 4);
@@ -122,35 +126,47 @@ export default function MapaGL(props: PropsMapa) {
   // Traçado da rota. A linha se desenha da origem ao destino depois do enquadramento, cortando a
   // geometria quadro a quadro (o MapLibre não tem line-trim); o destino "nasce" no fim. Cor nova
   // com os mesmos pontos (a resposta chegou) só repinta, no ponto em que o desenho está.
-  const [dadosRota, setDadosRota] = useState<FeatureCollection | null>(null);
+  // O desenho guarda a chave dos pontos e a fração desenhada (0 no começo, 1 no fim; no meio o
+  // rAF escreve direto na fonte). O Source só aparece com o desenho da rota atual: uma rota
+  // velha (fechar e abrir, ponto novo) nunca pinta nem um quadro.
+  const [desenho, setDesenho] = useState<{ chave: string; t: number } | null>(null);
   const [destinoNasceu, setDestinoNasceu] = useState(false);
   const rotaRef = useRef(rota);
   const progresso = useRef(1);
   const chaveRota = rota ? chaveGeometria(rota) : null;
-  const reduzido = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reduzido = !!useReducedMotion();
   // Na saída e na chegada o número da subprefeitura cobriria o ponto da rota: some no modo rota.
   const ocultos = useMemo(
     () => new Set((rota?.features ?? []).map((f) => f.properties?.subId as string | undefined).filter((id): id is string => !!id)),
     [rota],
   );
 
-  useEffect(() => {
+  // Antes do efeito de desenho (layout, roda primeiro), que lê a rota atual daqui.
+  useLayoutEffect(() => {
     rotaRef.current = rota;
-    if (rota) setDadosRota(cortarRota(rota, progresso.current));
+  }, [rota]);
+
+  const dadosRota = useMemo(() => (rota && desenho ? cortarRota(rota, desenho.t) : null), [rota, desenho]);
+
+  // Cor nova no meio do desenho: o Source acabou de receber o corte da fração salva; este efeito
+  // (do pai, roda depois do dele) devolve a linha à fração em que o desenho está.
+  useEffect(() => {
+    if (!rota || progresso.current >= 1) return;
+    (mapRef.current?.getMap().getSource('pulsar-rota') as GeoJSONSource | undefined)?.setData(cortarRota(rota, progresso.current));
   }, [rota]);
 
   // Rota nova: enquadra o caminho inteiro, com folga para o painel, e desenha. Um ponto novo no
   // meio do desenho cancela este e recomeça.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const mapa = mapRef.current?.getMap();
     const r = rotaRef.current;
-    if (!carregou || !mapa || !r) return;
+    if (!carregou || !mapa || !r || !chaveRota) return;
     const coords = r.features.flatMap((f) => (f.geometry.type === 'Point' ? [f.geometry.coordinates] : f.geometry.type === 'LineString' ? f.geometry.coordinates : []));
     if (coords.length === 0) return;
     const lons = coords.map((c) => c[0]);
     const lats = coords.map((c) => c[1]);
     mapa.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], {
-      maxZoom: ZOOM.sub, duration: 700, padding: paddingDoPainel(mapa.getContainer()),
+      maxZoom: ZOOM.sub, duration: 700, padding: paddingDaRota(mapa.getContainer()),
     });
 
     let raf = 0;
@@ -159,7 +175,7 @@ export default function MapaGL(props: PropsMapa) {
     setDestinoNasceu(false);
     // Menos movimento: a linha inteira de uma vez, aparecendo por opacidade.
     progresso.current = reduzido ? 1 : 0;
-    setDadosRota(cortarRota(r, progresso.current));
+    setDesenho({ chave: chaveRota, t: progresso.current });
     const desenhar = () => {
       if (comecou) return;
       comecou = true;
@@ -172,7 +188,7 @@ export default function MapaGL(props: PropsMapa) {
           (mapa.getSource('pulsar-rota') as GeoJSONSource | undefined)?.setData(cortarRota(atual, progresso.current));
           raf = requestAnimationFrame(passo);
         } else {
-          setDadosRota(cortarRota(atual, 1));
+          setDesenho({ chave: chaveRota, t: 1 });
           setDestinoNasceu(true);
         }
       };
@@ -190,8 +206,7 @@ export default function MapaGL(props: PropsMapa) {
       window.clearTimeout(espera);
       mapa.off('moveend', desenhar);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chaveRota, carregou]);
+  }, [chaveRota, carregou, reduzido]);
 
   // Objeto estável: um GeoJSON novo a cada render faria o Source reprocessar o círculo no worker.
   const precisao = pontoBusca?.precisao;
@@ -258,27 +273,30 @@ export default function MapaGL(props: PropsMapa) {
           <Layer id="pulsar-precisao-linha" type="line" paint={{ 'line-color': COR_BUSCA, 'line-width': 1 }} />
         </Source>
       )}
-      {rota && dadosRota && (
+      {dadosRota && desenho?.chave === chaveRota && (
         // Abaixo dos rótulos, como as regiões: um corredor avaliado, não um trajeto. Tracejado na
         // cor de cada trecho sobre um halo branco (lê no mapa claro e no escuro), com um ponto onde
         // o caminho entra em cada subprefeitura.
         <Source id="pulsar-rota" type="geojson" data={dadosRota}>
           <Layer id="pulsar-rota-borda" type="line" beforeId={idPrimeiroSimbolo} filter={['==', ['geometry-type'], 'LineString']}
             layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-            paint={{ 'line-color': '#ffffff', 'line-width': 9, 'line-opacity': reduzido && !destinoNasceu ? 0 : 0.92, 'line-opacity-transition': { duration: 200, delay: 0 } }} />
+            paint={{ 'line-color': COR_HALO_ROTA, 'line-width': 9, 'line-opacity': reduzido && !destinoNasceu ? 0 : 0.92, 'line-opacity-transition': { duration: 200, delay: 0 } }} />
           <Layer id="pulsar-rota-linha" type="line" beforeId={idPrimeiroSimbolo} filter={['==', ['geometry-type'], 'LineString']}
             layout={{ 'line-cap': 'butt', 'line-join': 'round' }}
             paint={{ 'line-color': ['get', 'cor'], 'line-width': 5, 'line-dasharray': [2, 1.4], 'line-opacity': reduzido && !destinoNasceu ? 0 : 1, 'line-opacity-transition': { duration: 200, delay: 0 } }} />
           <Layer id="pulsar-rota-entrada" type="circle" filter={['==', ['get', 'papel'], 'entrada']}
-            paint={{ 'circle-radius': 4.5, 'circle-color': ['get', 'cor'], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 }} />
+            paint={{ 'circle-radius': 4.5, 'circle-color': ['get', 'cor'], 'circle-stroke-color': COR_HALO_ROTA, 'circle-stroke-width': 2 }} />
           <Layer id="pulsar-rota-origem" type="circle" filter={['==', ['get', 'papel'], 'origem']}
-            paint={{ 'circle-radius': 8, 'circle-color': '#ffffff', 'circle-stroke-color': COR_PONTO_ROTA, 'circle-stroke-width': 3.5 }} />
+            paint={{ 'circle-radius': 8, 'circle-color': COR_HALO_ROTA, 'circle-stroke-color': COR_PONTO_ROTA, 'circle-stroke-width': 3.5 }} />
           <Layer id="pulsar-rota-destino" type="circle" filter={['==', ['get', 'papel'], 'destino']}
             paint={{
               'circle-radius': destinoNasceu ? 9 : 0, 'circle-stroke-width': destinoNasceu ? 3 : 0,
+              // A opacidade troca na hora: sem ela o destino novo aparecia grande, encolhia e crescia.
+              'circle-opacity': destinoNasceu ? 1 : 0, 'circle-stroke-opacity': destinoNasceu ? 1 : 0,
+              'circle-opacity-transition': { duration: 0, delay: 0 }, 'circle-stroke-opacity-transition': { duration: 0, delay: 0 },
               'circle-radius-transition': { duration: reduzido ? 0 : 220, delay: 0 },
               'circle-stroke-width-transition': { duration: reduzido ? 0 : 220, delay: 0 },
-              'circle-color': COR_PONTO_ROTA, 'circle-stroke-color': '#ffffff',
+              'circle-color': COR_PONTO_ROTA, 'circle-stroke-color': COR_HALO_ROTA,
             }} />
         </Source>
       )}

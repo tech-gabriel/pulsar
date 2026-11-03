@@ -193,6 +193,38 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
         horas.Count.Should().BeLessThanOrEqualTo(Pulsar.API.Services.Rota.LimiaresRota.HorasNaFaixa);
     }
 
+    [Fact]
+    public async Task Avaliar_AlertaSoPorCalor_DevolvePodeIrETrechoBaixo()
+    {
+        using var f = new PulsarWebApplicationFactory();
+        var agora = DateTime.UtcNow;
+        var mooca = (await IdsAsync(f, "Mooca"))[0];
+        using (var scope = f.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PulsarDbContext>();
+            var leitura = new LeituraClimatica
+            {
+                SubprefeituraId = mooca, Timestamp = agora.AddMinutes(-5), ChuvaMmH = 0, VentoKmH = 5,
+                VisibilidadeKm = 10, IndiceUv = 11, TemperaturaC = 38, SensacaoTermica = 42, Umidade = 30,
+            };
+            db.LeiturasClimaticas.Add(leitura);
+            db.ScoresPerigo.Add(new ScorePerigo
+            {
+                SubprefeituraId = mooca, LeituraId = leitura.Id, Timestamp = agora.AddMinutes(-5),
+                Valor = 80, Faixa = Pulsar.API.Domain.Enums.FaixaRisco.ALTO,
+                FaixaCalor = Pulsar.API.Domain.Enums.FaixaRisco.ALTO,
+            });
+            await db.SaveChangesAsync();
+        }
+        var client = await LogadoAsync(f);
+
+        var resp = await client.PostAsJsonAsync(Rota, new AvaliarRotaRequest([mooca]));
+
+        using var json = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+        json.RootElement.GetProperty("estado").GetString().Should().Be("PodeIr");
+        json.RootElement.GetProperty("trechos")[0].GetProperty("faixa").GetString().Should().Be("BAIXO");
+    }
+
     private const string Aviso = "/api/rota/aviso";
 
     [Fact]

@@ -80,8 +80,9 @@ public class AvisoRotaService : IAvisoRotaService
                 }
 
                 // Se o SaveChanges falhar depois do push, o próximo ciclo manda um duplicado (aceito).
-                _db.PedidosAvisoRota.Remove(pedido);
-                await _db.SaveChangesAsync(ct);
+                // ExecuteDelete em vez de Remove+SaveChanges: o contexto é compartilhado e o SaveChanges
+                // levaria junto qualquer outra mudança pendente.
+                await _db.PedidosAvisoRota.Where(p => p.Id == pedido.Id).ExecuteDeleteAsync(ct);
                 enviados++;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)

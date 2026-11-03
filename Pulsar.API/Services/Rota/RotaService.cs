@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 using Pulsar.API.Domain.Entities;
+using Pulsar.API.Domain.Enums;
 using Pulsar.API.DTOs;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Repositories.Interfaces;
@@ -60,7 +61,12 @@ public class RotaService : IRotaService
                 proximas = [.. serie.Keys.Where(h => h > agora && h <= limite).OrderBy(h => h)
                     .Select(h => new HoraPrevista(h, AvaliadorRota.FaixaPrevista(serie, h, score?.Chuva48hMm ?? 0, sub.Nome)))];
 
-            return new TrechoEntrada(id, sub.Nome, recente ? score!.Faixa : null, comCge.Contains(id), proximas);
+            // Rota a pé ou de carro só se importa com alagamento e vento; calor não decide o caminho.
+            FaixaRisco? faixa = recente
+                ? (FaixaRisco)Math.Max((int)score!.Componentes.Alagamento.Faixa, (int)score.Componentes.Vento.Faixa)
+                : null;
+
+            return new TrechoEntrada(id, sub.Nome, faixa, comCge.Contains(id), proximas);
         }).ToList();
 
         var r = AvaliadorRota.Avaliar(trechos, agora);

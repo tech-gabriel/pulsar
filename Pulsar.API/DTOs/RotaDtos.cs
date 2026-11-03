@@ -9,7 +9,7 @@ public record AvaliarRotaRequest(IReadOnlyList<Guid> SubprefeituraIds);
 /// <param name="Destino">Rótulo curto do destino (1 a 80 caracteres), usado na copy do push.</param>
 public record PedirAvisoRotaRequest(IReadOnlyList<Guid> SubprefeituraIds, string Destino);
 
-/// <param name="Faixa">Faixa geral da subprefeitura agora (a pior dos perigos, igual ao mapa); null sem score recente.</param>
+/// <param name="Faixa">Faixa da subprefeitura agora para quem está na rua: a pior entre alagamento e vento (calor fica de fora, então pode diferir do mapa); null sem score recente.</param>
 public record TrechoRotaDto(Guid SubprefeituraId, string Nome, FaixaRisco? Faixa, bool AlagandoCge);
 
 public record HoraRotaDto(DateTime InicioUtc, FaixaRisco PiorFaixa);

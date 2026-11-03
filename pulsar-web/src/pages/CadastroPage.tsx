@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, XCircle, Check, User, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDestinoPosAuth } from '../hooks/useDestinoPosAuth';
+import { guardarRegiaoPendente } from '../features/ativacao/regiaoPendente';
 import AuthLayout from '../components/auth/AuthLayout';
 import SocialAuthButtons from '../components/auth/SocialAuthButtons';
 
@@ -17,6 +18,12 @@ export default function CadastroPage() {
   const navigate = useNavigate();
   const { cadastrar } = useAuth();
   const destino = useDestinoPosAuth();
+  const [searchParams] = useSearchParams();
+  const regiao = searchParams.get('regiao');
+  // Veio de uma página pública (/cadastro?regiao=<slug>): a subprefeitura chega marcada no onboarding.
+  useEffect(() => {
+    if (regiao) guardarRegiaoPendente(regiao);
+  }, [regiao]);
 
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');

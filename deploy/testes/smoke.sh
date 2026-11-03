@@ -40,6 +40,7 @@ done
 
 echo "Conferindo"
 espera_conter "/health responde JSON da API" "$("${CURL[@]}" "$BASE/health")" '"status"'
+espera_conter "risco agora publico responde" "$("${CURL[@]}" "$BASE/api/publico/risco-agora")" '"faixaRisco"'
 
 cab_raiz="$("${CURL[@]}" -D - -o /dev/null -H 'Accept-Encoding: gzip' "$BASE/")"
 espera_conter "CSP do site" "$cab_raiz" "content-security-policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'sha256-gOx3nRh8znDQR7T1VkI+fFXDgsNzf5enQqdi7NP11Vk=' https://accounts.google.com https://*.posthog.com;"

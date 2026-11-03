@@ -334,5 +334,9 @@ export interface RiscoAgoraPublico {
   faixaRisco: FaixaRisco;
   score: number | null;
   atualizadoEmUtc: string | null;
+  perigoPrincipal: TipoPerigo | null;
+  chuva3hMm: number | null;
+  ventoKmH: number | null;
+  sensacaoTermica: number | null;
   alagamentosCge: PontoAlagamentoCge[];
 }

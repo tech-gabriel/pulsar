@@ -53,6 +53,13 @@ public class AvisoRotaService : IAvisoRotaService
         {
             try
             {
+                // Sem aparelho inscrito nenhum critério chegaria: poupa a avaliação e as três tentativas.
+                if (!await _db.AssinaturasPush.AnyAsync(a => a.UsuarioId == pedido.UsuarioId, ct))
+                {
+                    _logger.LogInformation("Aviso de rota {Pedido}: pessoa sem aparelho inscrito; mantido.", pedido.Id);
+                    continue;
+                }
+
                 var ids = pedido.SubprefeituraIds.Split(',').Select(Guid.Parse).ToList();
                 var estado = (await _rota.AvaliarAsync(ids, ct)).Estado;
                 if (estado is EstadoRota.Esperar or EstadoRota.SemDado)

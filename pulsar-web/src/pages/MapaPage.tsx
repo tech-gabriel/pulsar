@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { GeoJsonObject, FeatureCollection } from 'geojson';
 import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
@@ -84,7 +85,7 @@ export default function MapaPage() {
   const painelRef = useRef<HTMLElement>(null);
   useAlturaFluida(painelRef);
   const folhaRef = useRef<HTMLDivElement>(null);
-  useAlturaFluida(folhaRef);
+  const menosMovimento = useReducedMotion();
   const detalheNaFolha = isMobile && subSelecionada;
   const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');
   const [pontoBusca, setPontoBusca] = useState<PontoBusca | null>(null);
@@ -98,6 +99,7 @@ export default function MapaPage() {
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras);
   const rotaSemPontos = rotaAberta && !(rota.origem && rota.destino);
+  useAlturaFluida(folhaRef, !rotaSemPontos); // a folha sai e volta (AnimatePresence)
   const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
 
 
@@ -414,13 +416,24 @@ export default function MapaPage() {
           abas e do tamanho do conteúdo (useAlturaFluida anima a troca). Fechada, é só a linha do
           resumo; aberta, a lista; com uma subprefeitura escolhida, o detalhe dela.
       ══════════════════════════════════════════ */}
-      <div
+      {/* Na rota sem os dois pontos a folha sai por baixo, e volta pelo mesmo caminho quando há
+          caminho para avaliar (ou ao fechar a rota). Com menos movimento, só opacidade. */}
+      <AnimatePresence initial={false}>
+      {!rotaSemPontos && (
+      <motion.div
+        key="folha"
         ref={folhaRef}
         data-painel-mapa
         data-aberta={painelMobileAberto || detalheNaFolha || rotaAberta ? '' : undefined}
         data-detalhe={detalheNaFolha || rotaAberta ? '' : undefined}
         className="folha-mapa painel-mapa vidro-painel md:hidden fixed z-[500] flex flex-col overflow-hidden"
-        style={rotaSemPontos ? { display: 'none' } : undefined}
+        initial={menosMovimento ? { opacity: 0 } : { y: 'calc(100% + 16px)' }}
+        animate={menosMovimento
+          ? { opacity: 1, transition: { duration: 0.15 } }
+          : { y: 0, transition: { type: 'spring', bounce: 0.15, visualDuration: 0.45 } }}
+        exit={menosMovimento
+          ? { opacity: 0, transition: { duration: 0.15 } }
+          : { y: 'calc(100% + 16px)', transition: { duration: 0.28, ease: [0.4, 0, 1, 1] } }}
       >
         {rotaAberta ? (
           <div key="rota" className="painel-conteudo flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-2 pb-4">{resultadoRota}</div>
@@ -466,7 +479,9 @@ export default function MapaPage() {
             )}
           </>
         )}
-      </div>
+      </motion.div>
+      )}
+      </AnimatePresence>
     </div>
   );
 }

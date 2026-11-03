@@ -209,9 +209,12 @@ export default function MapaGL(props: PropsMapa) {
     };
   }, [chaveRota, carregou, reduzido]);
 
-  // Os pontos da rota ficam acima de tudo, inclusive dos rótulos do mapa ("São Paulo" não os
-  // cobre). Entram sem beforeId, mas a troca do estilo base (tema, reserva) pode reempilhar os
-  // nomes por cima: a cada rota nova e a cada estilo novo, eles voltam ao topo.
+  // Os pontos da rota ficam acima dos rótulos do mapa ("São Paulo" não os cobre). Entram sem
+  // beforeId, então já nascem no topo; na troca do estilo base o react-map-gl readiciona as
+  // camadas na ordem do JSX, o que também os mantém acima dos rótulos. Este reforço os sobe de
+  // novo a cada rota desenhada e a cada estilo novo, para o caso de alguma troca deixar rótulos
+  // por cima. Camadas montadas depois sem beforeId (círculo de precisão, ocorrências) podem
+  // ficar acima deles, e tudo bem: não são rótulos.
   const desenhoDaRota = desenho?.chave;
   useEffect(() => {
     const mapa = mapRef.current?.getMap();

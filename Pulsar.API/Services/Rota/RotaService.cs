@@ -69,7 +69,10 @@ public class RotaService : IRotaService
             [.. r.Horas.Select(h => new HoraRotaDto(h.InicioUtc, h.PiorFaixa))]);
     }
 
-    /// <summary>Uma chamada só para todas as ativas, em cache. Falha vira null (sem previsão), nunca exceção.</summary>
+    /// <summary>
+    /// Uma chamada só para todas as ativas, em cache. Qualquer falha (inclusive timeout) vira null
+    /// (sem previsão) e também fica em cache por pouco tempo; só o cancelamento do próprio pedido propaga.
+    /// </summary>
     private async Task<Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>?> ObterSeriesAsync(
         IReadOnlyList<Subprefeitura> subs, CancellationToken ct)
     {
@@ -77,16 +80,23 @@ public class RotaService : IRotaService
             return emCache;
         try
         {
-            var series = await _chuva.ObterHorariaAsync([.. subs.Select(s => (s.Latitude, s.Longitude))], ct);
-            if (series is null || series.Count != subs.Count) return null;
-            var porId = subs.Select((s, i) => (s.Id, series[i])).ToDictionary(x => x.Id, x => x.Item2);
-            // ponytail: sem trava contra duas chamadas simultâneas no cache frio; uma chamada extra é aceitável.
-            return _cache.Set(ChaveCacheChuva, porId, DuracaoCache);
+            using var limite = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            limite.CancelAfter(LimiaresRota.TimeoutPrevisao);
+            var series = await _chuva.ObterHorariaAsync([.. subs.Select(s => (s.Latitude, s.Longitude))], limite.Token);
+            if (series is not null && series.Count == subs.Count)
+            {
+                var porId = subs.Select((s, i) => (s.Id, series[i])).ToDictionary(x => x.Id, x => x.Item2);
+                // ponytail: sem trava contra duas chamadas simultâneas no cache frio; uma chamada extra é aceitável.
+                return _cache.Set(ChaveCacheChuva, porId, DuracaoCache);
+            }
+            _logger.LogWarning("Open-Meteo devolveu {Recebidas} séries para {Esperadas} subprefeituras: rota sem previsão por hora.",
+                series?.Count ?? 0, subs.Count);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             _logger.LogWarning(ex, "Open-Meteo indisponível: a rota segue sem previsão por hora.");
-            return null;
         }
+        _cache.Set(ChaveCacheChuva, (Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>?)null, LimiaresRota.CacheFalha);
+        return null;
     }
 }

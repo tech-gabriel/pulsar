@@ -70,8 +70,10 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
     [Fact]
     public async Task Avaliar_PontoCgeAtivoNaMooca_DevolveEsperar_ComTrechoDecisivoMooca()
     {
-        var mooca = (await IdsAsync(_factory, "Mooca"))[0];
-        using (var scope = _factory.Services.CreateScope())
+        // Factory nova: o ponto semeado não pode vazar para os outros testes.
+        using var f = new PulsarWebApplicationFactory();
+        var mooca = (await IdsAsync(f, "Mooca"))[0];
+        using (var scope = f.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<PulsarDbContext>();
             var agora = DateTime.UtcNow;
@@ -82,7 +84,7 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
             });
             await db.SaveChangesAsync();
         }
-        var client = await LogadoAsync(_factory);
+        var client = await LogadoAsync(f);
 
         var resp = await client.PostAsJsonAsync(Rota, new AvaliarRotaRequest([mooca]));
 
@@ -121,5 +123,73 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
         using var json = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
         json.RootElement.GetProperty("trechos").EnumerateArray()
             .Select(t => t.GetProperty("subprefeituraId").GetGuid()).Should().Equal(ids);
+    }
+
+    [Fact]
+    public async Task Avaliar_OpenMeteoComTimeout_Responde200SemHoras()
+    {
+        using var f = new PulsarWebApplicationFactory();
+        f.ChuvaReferencia.FalharComTimeout = true;
+        var ids = await IdsAsync(f, "Mooca");
+        var client = await LogadoAsync(f);
+
+        var resp = await client.PostAsJsonAsync(Rota, new AvaliarRotaRequest(ids));
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var json = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+        json.RootElement.GetProperty("horas").GetArrayLength().Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Avaliar_OpenMeteoFalhando_GuardaAFalhaEmCache()
+    {
+        using var f = new PulsarWebApplicationFactory();
+        f.ChuvaReferencia.Falhar = true;
+        var ids = await IdsAsync(f, "Mooca");
+        var client = await LogadoAsync(f);
+
+        await client.PostAsJsonAsync(Rota, new AvaliarRotaRequest(ids));
+        await client.PostAsJsonAsync(Rota, new AvaliarRotaRequest(ids));
+
+        f.ChuvaReferencia.Chamadas.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Avaliar_ComChuvaForteNaProximaHora_DevolveComAtencaoEFaixaDeHoras()
+    {
+        using var f = new PulsarWebApplicationFactory();
+        var agora = DateTime.UtcNow;
+        var horaAtual = new DateTime(agora.Year, agora.Month, agora.Day, agora.Hour, 0, 0, DateTimeKind.Utc);
+        // Chuva pesada da próxima hora em diante, nas chaves de hora cheia UTC como o Open-Meteo devolve.
+        f.ChuvaReferencia.SerieParaTodos = Enumerable.Range(0, 13)
+            .ToDictionary(i => horaAtual.AddHours(i), i => i == 0 ? 0.0 : 80.0);
+        var mooca = (await IdsAsync(f, "Mooca"))[0];
+        using (var scope = f.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PulsarDbContext>();
+            var leitura = new LeituraClimatica
+            {
+                SubprefeituraId = mooca, Timestamp = agora.AddMinutes(-5), ChuvaMmH = 0, VentoKmH = 5,
+                VisibilidadeKm = 10, IndiceUv = 1, TemperaturaC = 20, SensacaoTermica = 20, Umidade = 60,
+            };
+            db.LeiturasClimaticas.Add(leitura);
+            db.ScoresPerigo.Add(new ScorePerigo
+            {
+                SubprefeituraId = mooca, LeituraId = leitura.Id, Timestamp = agora.AddMinutes(-5),
+                Valor = 5, Faixa = Pulsar.API.Domain.Enums.FaixaRisco.BAIXO,
+            });
+            await db.SaveChangesAsync();
+        }
+        var client = await LogadoAsync(f);
+
+        var resp = await client.PostAsJsonAsync(Rota, new AvaliarRotaRequest([mooca]));
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var json = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+        json.RootElement.GetProperty("estado").GetString().Should().Be("ComAtencao");
+        var horas = json.RootElement.GetProperty("horas").EnumerateArray()
+            .Select(h => h.GetProperty("inicioUtc").GetDateTime()).ToList();
+        horas.Should().NotBeEmpty().And.BeInAscendingOrder();
+        horas.Count.Should().BeLessThanOrEqualTo(Pulsar.API.Services.Rota.LimiaresRota.HorasNaFaixa);
     }
 }

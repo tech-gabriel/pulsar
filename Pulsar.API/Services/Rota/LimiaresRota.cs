@@ -14,4 +14,10 @@ public static class LimiaresRota
 
     /// <summary>Validade de um pedido de rota guardado para acompanhamento.</summary>
     public const int ExpiracaoPedidoHoras = 3;
+
+    /// <summary>Teto de espera pelo Open-Meteo: acima disso a rota segue sem previsão por hora.</summary>
+    public static readonly TimeSpan TimeoutPrevisao = TimeSpan.FromSeconds(3);
+
+    /// <summary>Quanto tempo uma falha do Open-Meteo vale, para uma queda não custar o timeout a cada pedido.</summary>
+    public static readonly TimeSpan CacheFalha = TimeSpan.FromMinutes(2);
 }

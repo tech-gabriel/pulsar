@@ -6,6 +6,7 @@ namespace Pulsar.API.DTOs;
 /// <param name="SubprefeituraIds">1 a 32 subprefeituras, na ordem do caminho.</param>
 public record AvaliarRotaRequest(IReadOnlyList<Guid> SubprefeituraIds);
 
+/// <param name="Faixa">Faixa geral da subprefeitura agora (a pior dos perigos, igual ao mapa); null sem score recente.</param>
 public record TrechoRotaDto(Guid SubprefeituraId, string Nome, FaixaRisco? Faixa, bool AlagandoCge);
 
 public record HoraRotaDto(DateTime InicioUtc, FaixaRisco PiorFaixa);

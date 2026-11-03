@@ -131,6 +131,28 @@ public class AvaliadorRotaTests
             .Should().Be(FaixaRisco.ALTO);
 
     [Fact]
+    public void ChuvaForteSoEmUmDeDoisTrechos_ComAtencao_ComODecisivoCorreto()
+    {
+        var r = AvaliadorRota.Avaliar([
+            T(Mooca, FaixaRisco.BAIXO, false, Baixas(21, 22)),
+            T(Se, FaixaRisco.BAIXO, false, P(21, FaixaRisco.ALTO), P(22, FaixaRisco.BAIXO))], Agora);
+        r.Estado.Should().Be(EstadoRota.ComAtencao);
+        r.TrechoDecisivoId.Should().Be(Se);
+    }
+
+    [Fact]
+    public void CgeEmUmDeDoisTrechos_Esperar_ComODecisivoCorretoEHoraMinima()
+    {
+        // 21h UTC está a menos de 1 h de 20:40, então a espera termina às 22h.
+        var r = AvaliadorRota.Avaliar([
+            T(Mooca, FaixaRisco.BAIXO, false, Baixas(21, 22)),
+            T(Se, FaixaRisco.BAIXO, true, Baixas(21, 22))], Agora);
+        r.Estado.Should().Be(EstadoRota.Esperar);
+        r.TrechoDecisivoId.Should().Be(Se);
+        r.EsperarAteUtc.Should().Be(H(22));
+    }
+
+    [Fact]
     public void FaixaPrevista_SemChuva_DaBaixo()
         => AvaliadorRota.FaixaPrevista(new Dictionary<DateTime, double>(), H(21), 50, "Mooca")
             .Should().Be(FaixaRisco.BAIXO);

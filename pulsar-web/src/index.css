@@ -667,7 +667,8 @@ html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
 }
 
 /* Item de lista dentro de um controle (resultados da busca). */
-.mapa-item:hover {
+.mapa-item:hover,
+.mapa-item[aria-selected='true'] {
   background: var(--bg-glass-hover);
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ArrowUpDown, Building2, Landmark, Loader2, MapPin } from 'lucide-react';
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
@@ -33,6 +33,8 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
   const { setTermo, resultados, carregando, limpar } = useBuscaEndereco();
   // null = não está editando: o campo mostra o ponto escolhido.
   const [texto, setTexto] = useState<string | null>(null);
+  const [ativo, setAtivo] = useState(-1); // sugestão marcada pelas setas
+  const idLista = useId();
   const ref = useRef<HTMLDivElement>(null);
   const listaRef = useRef<HTMLUListElement>(null);
 
@@ -48,6 +50,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
   function escolher(p: PontoRota) {
     onEscolher(p);
     setTexto(null);
+    setAtivo(-1);
     limpar();
   }
 
@@ -57,33 +60,50 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
   const nomesSubs = new Set(subs.map((a) => normalizarNome(a.nome)));
   const enderecos = resultados.filter((r) => !nomesSubs.has(normalizarNome(r.nome || r.descricao)));
 
-  const mostrar = texto !== null && (subs.length > 0 || enderecos.length > 0);
+  // Subprefeituras primeiro, depois endereços: uma lista só, para as setas andarem por todas.
+  const opcoes = [
+    ...subs.map((a) => ({ chave: `sub-${a.id}`, ponto: { lat: a.latitude, lon: a.longitude, rotulo: a.nome }, Icone: Building2, peso: 'font-semibold' })),
+    ...enderecos.map((r, i) => ({
+      chave: `end-${r.descricao}-${i}`, ponto: { lat: r.latitude, lon: r.longitude, rotulo: r.nome || r.descricao }, Icone: iconePara(r.tipo), peso: 'font-medium',
+    })),
+  ];
+  const mostrar = texto !== null && opcoes.length > 0;
+  const idOpcao = (i: number) => `${idLista}-${i}`;
+
+  function teclar(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Escape') {
+      if (texto === null) return;
+      e.preventDefault();
+      setTexto(null); // volta a mostrar o ponto escolhido
+      setAtivo(-1);
+      limpar();
+      return;
+    }
+    if (!mostrar) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const n = opcoes.length;
+      const prox = e.key === 'ArrowDown' ? (ativo + 1) % n : (ativo <= 0 ? n - 1 : ativo - 1);
+      setAtivo(prox);
+      document.getElementById(idOpcao(prox))?.scrollIntoView?.({ block: 'nearest' });
+    } else if (e.key === 'Enter' && opcoes[ativo]) {
+      e.preventDefault();
+      escolher(opcoes[ativo].ponto);
+    }
+  }
+
   const lista = mostrar && (
     // No painel (overflow escondido, altura do conteúdo) a lista fica no fluxo, abaixo da
     // cápsula, para o painel crescer com ela; no celular ela flutua sobre o mapa.
-    <ul ref={listaRef} className={['superficie rounded-2xl mt-1.5 max-h-60 overflow-y-auto', alvoLista ? '' : 'absolute left-0 right-0 z-10'].join(' ')}>
-      {subs.map((a) => (
-        <li key={a.id}>
-          <button type="button" onClick={() => escolher({ lat: a.latitude, lon: a.longitude, rotulo: a.nome })}
-            className="mapa-item flex w-full items-center gap-2 px-3 py-2.5 text-left min-h-11">
-            <Building2 size={15} className="flex-shrink-0" style={{ color: 'var(--text-accent)' }} aria-hidden="true" />
-            <span className="mapa-txt truncate text-xs font-semibold">{a.nome}</span>
-          </button>
+    <ul ref={listaRef} id={idLista} role="listbox" aria-label={`Sugestões para ${rotulo}`}
+      className={['superficie rounded-2xl mt-1.5 max-h-60 overflow-y-auto', alvoLista ? '' : 'absolute left-0 right-0 z-10'].join(' ')}>
+      {opcoes.map(({ chave, ponto: p, Icone, peso }, i) => (
+        <li key={chave} id={idOpcao(i)} role="option" aria-selected={i === ativo} onClick={() => escolher(p)}
+          className="mapa-item flex w-full items-center gap-2 px-3 py-2.5 text-left min-h-11 cursor-pointer">
+          <Icone size={15} className="flex-shrink-0" style={{ color: 'var(--text-accent)' }} aria-hidden="true" />
+          <span className={`mapa-txt truncate text-xs ${peso}`}>{p.rotulo}</span>
         </li>
       ))}
-      {enderecos.map((r, i) => {
-        const Icone = iconePara(r.tipo);
-        const nome = r.nome || r.descricao;
-        return (
-          <li key={`${r.descricao}-${i}`}>
-            <button type="button" onClick={() => escolher({ lat: r.latitude, lon: r.longitude, rotulo: nome })}
-              className="mapa-item flex w-full items-center gap-2 px-3 py-2.5 text-left min-h-11">
-              <Icone size={15} className="flex-shrink-0" style={{ color: 'var(--text-accent)' }} aria-hidden="true" />
-              <span className="mapa-txt truncate text-xs font-medium">{nome}</span>
-            </button>
-          </li>
-        );
-      })}
     </ul>
   );
 
@@ -92,12 +112,18 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
       <div className="flex items-center rounded-[10px]" style={{ background: 'var(--bg-input)' }}>
         <input
           type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={!!mostrar}
+          aria-controls={mostrar ? idLista : undefined}
+          aria-activedescendant={mostrar && ativo >= 0 ? idOpcao(ativo) : undefined}
           value={texto ?? ponto?.rotulo ?? ''}
           placeholder={placeholder}
           aria-label={rotulo}
           autoFocus={focar}
           onFocus={(e) => e.currentTarget.select()}
-          onChange={(e) => { setTexto(e.target.value); setTermo(e.target.value); }}
+          onKeyDown={teclar}
+          onChange={(e) => { setTexto(e.target.value); setTermo(e.target.value); setAtivo(-1); }}
           className="mapa-input flex-1 min-w-0 h-11 px-2.5 bg-transparent text-sm outline-none"
         />
         {carregando && <Loader2 size={15} className="mapa-txt-suave animate-spin mr-2.5 flex-shrink-0" aria-hidden="true" />}

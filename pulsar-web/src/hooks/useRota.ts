@@ -93,11 +93,12 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
         geometry: { type: 'LineString', coordinates: proximo ? [...seg.coords, proximo] : seg.coords },
       };
     });
-    const ponto = (p: PontoRota, papel: 'origem' | 'destino'): Feature => ({
-      type: 'Feature', properties: { papel }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
+    // subId: no modo rota o mapa esconde o número da subprefeitura de saída e de chegada, que cobriria o ponto.
+    const ponto = (p: PontoRota, papel: 'origem' | 'destino', subId: string | undefined): Feature => ({
+      type: 'Feature', properties: { papel, subId }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
     });
-    return { type: 'FeatureCollection', features: [...trechos, ponto(origem, 'origem'), ponto(destino, 'destino')] };
-  }, [corredor, resultado, origem, destino]);
+    return { type: 'FeatureCollection', features: [...trechos, ponto(origem, 'origem', ids[0]), ponto(destino, 'destino', ids[ids.length - 1])] };
+  }, [corredor, resultado, origem, destino, ids]);
 
   const pedirAviso = useCallback(async () => {
     if (!chave || !destino) return;

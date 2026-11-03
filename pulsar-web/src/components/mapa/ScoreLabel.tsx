@@ -14,6 +14,8 @@ interface Props {
   zonaEmFoco: string | null;
   /** Modo foco: oculta os números de score (ex.: quando o overlay de alagamentos está ligado). */
   atenuado?: boolean;
+  /** Ids que não mostram o número (modo rota: a subprefeitura de saída e a de chegada). */
+  ocultos?: Set<string>;
 }
 
 // Glow do círculo: a cor da faixa com alpha ~0.5.
@@ -23,7 +25,7 @@ function glowDaCor(cor: string): string {
 
 // Legibilidade do número: o círculo é opaco e o fundo é fechado até o branco passar em 4,5:1
 // (ver utils/contraste). O preenchimento translúcido fica no polígono.
-export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco, atenuado = false }: Props) {
+export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco, atenuado = false, ocultos }: Props) {
   const { current: mapRef } = useMap();
   const [zoom, setZoom] = useState(() => mapRef?.getZoom() ?? 0);
 
@@ -46,7 +48,7 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
 
   return (
     <>
-      {subprefeituras.map((sub) => {
+      {subprefeituras.filter((sub) => !ocultos?.has(sub.id)).map((sub) => {
         const estilo = estiloCamada(sub, camadaAtiva);
         const esmaecida = zona != null && normalizarNome(sub.zona) !== zona;
         const classes = ['pulsar-score-circle', estilo.pulsa ? 'pulsa' : '', subSelecionada?.id === sub.id ? 'selecionado' : '']

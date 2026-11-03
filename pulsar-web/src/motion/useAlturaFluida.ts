@@ -15,7 +15,7 @@ const DURACAO = 420;
 export function useAlturaFluida(ref: RefObject<HTMLElement | null>, montado = true) {
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
+    if (!montado || !el || typeof ResizeObserver === 'undefined') return;
     const semMovimento = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     let ultima = el.getBoundingClientRect().height;
     el.dataset.alturaFinal = String(ultima);

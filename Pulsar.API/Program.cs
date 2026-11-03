@@ -261,6 +261,7 @@ builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
 builder.Services.AddScoped<IAlagamentoCgeService, AlagamentoCgeService>();
 builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
+builder.Services.AddScoped<IRotaService, Pulsar.API.Services.Rota.RotaService>();
 
 // --- Motor de notificações ---
 // A ordem do registro não importa para a escolha: o motor ordena por Prioridade da

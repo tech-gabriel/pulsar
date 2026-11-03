@@ -40,7 +40,7 @@ public class AvaliadorRotaTests
     {
         var r = AvaliadorRota.Avaliar([
             T(Mooca, FaixaRisco.MODERADO, false, Baixas(21, 22, 23, 24)),
-            T(Se, FaixaRisco.BAIXO)], Agora);
+            T(Se, FaixaRisco.BAIXO, false, Baixas(21, 22, 23, 24))], Agora);
         r.Estado.Should().Be(EstadoRota.ComAtencao);
         r.Horas.Should().HaveCount(4);
         r.Horas[0].PiorFaixa.Should().Be(FaixaRisco.MODERADO);
@@ -59,7 +59,7 @@ public class AvaliadorRotaTests
     public void AlertaNaMooca_MelhoraAs22h_Esperar_Ate22h()
     {
         var r = AvaliadorRota.Avaliar([
-            T(Se, FaixaRisco.BAIXO),
+            T(Se, FaixaRisco.BAIXO, false, Baixas(21, 22)),
             T(Mooca, FaixaRisco.ALTO, false, P(21, FaixaRisco.ALTO), P(22, FaixaRisco.BAIXO))], Agora);
         r.Estado.Should().Be(EstadoRota.Esperar);
         r.TrechoDecisivoId.Should().Be(Mooca);
@@ -71,8 +71,29 @@ public class AvaliadorRotaTests
     {
         var r = AvaliadorRota.Avaliar([T(Mooca, FaixaRisco.BAIXO, true, Baixas(21, 22))], Agora);
         r.Estado.Should().Be(EstadoRota.Esperar);
-        r.EsperarAteUtc.Should().NotBeNull();
-        r.EsperarAteUtc!.Value.Should().BeOnOrAfter(Agora.AddHours(1));
+        r.EsperarAteUtc.Should().Be(H(22));
+        r.Horas[0].PiorFaixa.Should().Be(FaixaRisco.ALTO);
+    }
+
+    [Fact]
+    public void Alerta_SoUmTrechoTemPrevisao_NaoLiberaEspera()
+    {
+        var r = AvaliadorRota.Avaliar([
+            T(Mooca, FaixaRisco.ALTO, false, Baixas(21, 22)),
+            T(Se, FaixaRisco.BAIXO)], Agora);
+        r.Estado.Should().Be(EstadoRota.Esperar);
+        r.EsperarAteUtc.Should().BeNull();
+        r.Horas.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void PodeIr_TranquiloAte_ParaNaPrimeiraHoraSemCobertura()
+    {
+        var r = AvaliadorRota.Avaliar([
+            T(Mooca, FaixaRisco.BAIXO, false, Baixas(21, 22, 23)),
+            T(Se, FaixaRisco.BAIXO, false, Baixas(21, 22))], Agora);
+        r.Estado.Should().Be(EstadoRota.PodeIr);
+        r.TranquiloAteUtc.Should().Be(H(22));
     }
 
     [Fact]

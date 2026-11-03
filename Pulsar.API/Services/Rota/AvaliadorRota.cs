@@ -26,10 +26,16 @@ public static class AvaliadorRota
     {
         var horaAtual = new DateTime(agoraUtc.Year, agoraUtc.Month, agoraUtc.Day, agoraUtc.Hour, 0, 0, DateTimeKind.Utc);
 
-        // Pior faixa prevista por hora cheia, entre todos os trechos que têm previsão para ela.
-        var futuras = trechos.SelectMany(t => t.Proximas)
+        // Pior faixa prevista por hora cheia. "uniao" tem toda hora que algum trecho prevê (serve para
+        // avisar de chuva); "futuras" só as horas que TODOS os trechos preveem: hora sem previsão num
+        // trecho não é hora tranquila, então não pode liberar espera nem aparecer como livre.
+        var porHora = trechos.SelectMany(t => t.Proximas)
             .GroupBy(h => h.InicioUtc)
             .OrderBy(g => g.Key)
+            .ToList();
+        var uniao = porHora.Select(g => new HoraRota(g.Key, g.Max(h => h.Faixa))).ToList();
+        var futuras = porHora
+            .Where(g => trechos.All(t => t.Proximas.Any(h => h.InicioUtc == g.Key)))
             .Select(g => new HoraRota(g.Key, g.Max(h => h.Faixa)))
             .ToList();
 
@@ -52,8 +58,9 @@ public static class AvaliadorRota
 
         // Chuva forte na próxima hora vira "com atenção" e não "esperar": o conselho útil é sair já.
         var moderadoAgora = trechos.FirstOrDefault(t => t.FaixaAgora == FaixaRisco.MODERADO);
-        var proximaHora = futuras.FirstOrDefault();
-        if (moderadoAgora is not null || proximaHora?.PiorFaixa >= FaixaRisco.MODERADO)
+        var proximaHora = uniao.Count > 0 ? uniao[0] : null;
+        var chuvaForteNaProxima = proximaHora is not null && proximaHora.PiorFaixa >= FaixaRisco.MODERADO;
+        if (moderadoAgora is not null || chuvaForteNaProxima)
         {
             var id = moderadoAgora?.SubprefeituraId
                 ?? trechos.First(t => t.Proximas.Any(h => h.InicioUtc == proximaHora!.InicioUtc && h.Faixa >= FaixaRisco.MODERADO)).SubprefeituraId;
@@ -73,8 +80,11 @@ public static class AvaliadorRota
     private static IReadOnlyList<HoraRota> Faixa(IReadOnlyList<TrechoEntrada> trechos, DateTime horaAtual, List<HoraRota> futuras)
     {
         if (futuras.Count == 0) return [];
-        var agora = trechos.Where(t => t.FaixaAgora is not null).Select(t => t.FaixaAgora!.Value)
-            .DefaultIfEmpty(FaixaRisco.BAIXO).Max();
+        // CGE alagando pesa como ALTO: a célula "agora" não pode ficar verde num veredito de esperar.
+        var agora = trechos.Any(t => t.AlagandoCge)
+            ? FaixaRisco.ALTO
+            : trechos.Where(t => t.FaixaAgora is not null).Select(t => t.FaixaAgora!.Value)
+                .DefaultIfEmpty(FaixaRisco.BAIXO).Max();
         return [new HoraRota(horaAtual, agora), .. futuras.Take(LimiaresRota.HorasNaFaixa - 1)];
     }
 

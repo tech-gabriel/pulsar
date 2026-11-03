@@ -170,4 +170,37 @@ public class AvisoRotaServiceTests
         pedido.Destino.Should().Be("Penha");
         pedido.SubprefeituraIds.Should().Be(Penha.ToString());
     }
+
+    [Fact]
+    public async Task AvaliarEDisparar_SoModeradoRecebe_TentaOsCriteriosEApaga()
+    {
+        using var conn = Abrir();
+        using var ctx = NovoContexto(conn);
+        var svc = Novo(ctx, EstadoRota.PodeIr);
+        var usuario = Guid.NewGuid();
+        _push.Setup(p => p.NotificarUsuarioAsync(usuario, CriterioOptIn.RiscoAlto, It.IsAny<PushPayload>(), It.IsAny<CancellationToken>())).ReturnsAsync(0);
+        _push.Setup(p => p.NotificarUsuarioAsync(usuario, CriterioOptIn.RiscoModerado, It.IsAny<PushPayload>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        await svc.RegistrarAsync(usuario, [Mooca], "Mooca", Agora);
+
+        var enviados = await svc.AvaliarEDispararAsync(Agora.AddMinutes(15));
+
+        enviados.Should().Be(1);
+        _push.Verify(p => p.NotificarUsuarioAsync(usuario, CriterioOptIn.ResumoDiario, It.IsAny<PushPayload>(), It.IsAny<CancellationToken>()), Times.Never);
+        (await ctx.PedidosAvisoRota.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task AvaliarEDisparar_NenhumAparelhoRecebe_MantemOPedido()
+    {
+        using var conn = Abrir();
+        using var ctx = NovoContexto(conn);
+        var svc = Novo(ctx, EstadoRota.PodeIr);
+        _push.Setup(p => p.NotificarUsuarioAsync(It.IsAny<Guid>(), It.IsAny<CriterioOptIn>(), It.IsAny<PushPayload>(), It.IsAny<CancellationToken>())).ReturnsAsync(0);
+        await svc.RegistrarAsync(Guid.NewGuid(), [Mooca], "Mooca", Agora);
+
+        var enviados = await svc.AvaliarEDispararAsync(Agora.AddMinutes(15));
+
+        enviados.Should().Be(0);
+        (await ctx.PedidosAvisoRota.CountAsync()).Should().Be(1);
+    }
 }

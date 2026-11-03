@@ -60,8 +60,26 @@ public class AvisoRotaService : IAvisoRotaService
 
                 var corpo = estado == EstadoRota.PodeIr ? "Agora o caminho está tranquilo." : "Dá para ir, com atenção.";
                 // Fora do livro-caixa do motor: é um pedido explícito, não entra no teto nem no dedup.
-                await _push.NotificarUsuarioAsync(pedido.UsuarioId, CriterioOptIn.RiscoAlto,
-                    new PushPayload($"O caminho até {pedido.Destino} melhorou", corpo, "/app", "rota"), ct);
+                // Como a pessoa pediu este aviso, vale qualquer aparelho dela: tenta cada interruptor
+                // até um chegar a pelo menos um aparelho.
+                var payload = new PushPayload($"O caminho até {pedido.Destino} melhorou", corpo, "/app", "rota");
+                var recebeu = false;
+                foreach (var criterio in new[] { CriterioOptIn.RiscoAlto, CriterioOptIn.RiscoModerado, CriterioOptIn.ResumoDiario })
+                {
+                    if (await _push.NotificarUsuarioAsync(pedido.UsuarioId, criterio, payload, ct) > 0)
+                    {
+                        recebeu = true;
+                        break;
+                    }
+                }
+                if (!recebeu)
+                {
+                    // Sem aparelho que receba: mantém o pedido, tenta no próximo ciclo e vence sozinho em 3 h.
+                    _logger.LogInformation("Aviso de rota {Pedido} não chegou a nenhum aparelho; mantido.", pedido.Id);
+                    continue;
+                }
+
+                // Se o SaveChanges falhar depois do push, o próximo ciclo manda um duplicado (aceito).
                 _db.PedidosAvisoRota.Remove(pedido);
                 await _db.SaveChangesAsync(ct);
                 enviados++;

@@ -2265,7 +2265,11 @@ html:not(.light) .ah-cge-titulo { color: #f87171; }
 .rota-botao:active { transform: scale(.97); filter: brightness(.94); transition-duration: 90ms; }
 @media (hover: hover) { .rota-botao:hover { filter: brightness(1.06); } }
 .rota-botao:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: 2px; }
-.rota-primario { min-height: 48px; font: 600 15px var(--font-body); background: var(--color-pulsar-700); color: #fff; }
+/* Mesmo primário do app (Ativar alertas no detalhe, .at-cta das boas-vindas): pulsar-600, branco e sombra azul. */
+.rota-primario {
+  min-height: 48px; font: 700 15px var(--font-heading); background: var(--color-pulsar-600); color: #fff;
+  box-shadow: 0 8px 22px -8px rgba(0, 132, 209, .6), inset 0 1px 0 rgba(255, 255, 255, .22);
+}
 .rota-secundario { min-height: 44px; font: 600 13px var(--font-body); background: var(--bg-input); color: var(--text-primary); }
 .rota-sutil { min-height: 44px; padding: 0 6px; font: 600 13px var(--font-body); color: var(--text-primary); }
 .rota-sutil:hover { text-decoration: underline; text-underline-offset: 3px; }

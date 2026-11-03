@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowUpDown, Building2, Landmark, Loader2, MapPin } from 'lu
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
 import { buscarAreas, type Area } from '../../features/cidade/areas';
 import type { PontoRota } from '../../features/rota/tipos';
+import { normalizarNome } from '../../utils/texto';
 
 interface Props {
   areas: Area[];
@@ -23,8 +24,8 @@ function iconePara(tipo: string) {
 }
 
 /** Um campo do De/Para: mostra o ponto escolhido e, ao digitar, sugere subprefeituras e endereços. */
-function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false }: {
-  rotulo: string; ponto: PontoRota | null; placeholder: string; areas: Area[]; onEscolher: (p: PontoRota) => void; focar?: boolean;
+function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, embutida }: {
+  rotulo: string; ponto: PontoRota | null; placeholder: string; areas: Area[]; onEscolher: (p: PontoRota) => void; focar?: boolean; embutida: boolean;
 }) {
   const { setTermo, resultados, carregando, limpar } = useBuscaEndereco();
   // null = não está editando: o campo mostra o ponto escolhido.
@@ -47,6 +48,9 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false }:
 
   const termo = texto?.trim() ?? '';
   const subs = termo.length >= 2 ? buscarAreas(termo, areas).slice(0, 3) : [];
+  // O geocoder também devolve o bairro com o nome da subprefeitura ("Mooca"): não repete.
+  const nomesSubs = new Set(subs.map((a) => normalizarNome(a.nome)));
+  const enderecos = resultados.filter((r) => !nomesSubs.has(normalizarNome(r.nome || r.descricao)));
 
   return (
     <div ref={ref} className="relative">
@@ -63,8 +67,10 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false }:
         />
         {carregando && <Loader2 size={15} className="mapa-txt-suave animate-spin mr-2.5 flex-shrink-0" aria-hidden="true" />}
       </div>
-      {texto !== null && (subs.length > 0 || resultados.length > 0) && (
-        <ul className="superficie rounded-2xl mt-1.5 max-h-60 overflow-y-auto absolute left-0 right-0 z-10">
+      {texto !== null && (subs.length > 0 || enderecos.length > 0) && (
+        // No painel (overflow escondido, altura do conteúdo) a lista fica no fluxo para o painel
+        // crescer com ela; no celular ela flutua sobre o mapa.
+        <ul className={['superficie rounded-2xl mt-1.5 max-h-60 overflow-y-auto', embutida ? '' : 'absolute left-0 right-0 z-10'].join(' ')}>
           {subs.map((a) => (
             <li key={a.id}>
               <button type="button" onClick={() => escolher({ lat: a.latitude, lon: a.longitude, rotulo: a.nome })}
@@ -74,7 +80,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false }:
               </button>
             </li>
           ))}
-          {resultados.map((r, i) => {
+          {enderecos.map((r, i) => {
             const Icone = iconePara(r.tipo);
             const nome = r.nome || r.descricao;
             return (
@@ -112,8 +118,8 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
           <i className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--text-primary)' }} />
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-1.5 ml-1">
-          <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} />
-          <Campo rotulo="Para" ponto={destino} placeholder="Para onde você vai?" areas={areas} onEscolher={onDestino} focar={!destino} />
+          <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} embutida={embutida} />
+          <Campo rotulo="Para" ponto={destino} placeholder="Para onde você vai?" areas={areas} onEscolher={onDestino} focar={!destino} embutida={embutida} />
         </div>
         <button type="button" onClick={onInverter} aria-label="Inverter origem e destino"
           className="mapa-txt-suave flex items-center justify-center w-11 h-11 flex-shrink-0">

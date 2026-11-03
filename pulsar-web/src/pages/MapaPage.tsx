@@ -31,7 +31,9 @@ import { useOcorrenciasAlagamento } from '../hooks/useOcorrenciasAlagamento';
 import { buscarOcorrenciasProximas, RAIO_PROXIMAS_M } from '../api/ocorrencias';
 import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from '../types';
 import { useAlturaFluida } from '../motion/useAlturaFluida';
-import { useRota } from '../hooks/useRota';
+import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
+import { useJsonPublico } from '../hooks/useJsonPublico';
+import { escolherDestinoComoChegar } from '../features/rota/destino';
 import CamposDePara from '../components/rota/CamposDePara';
 import PainelRota from '../components/rota/PainelRota';
 import { track } from '../analytics';
@@ -92,7 +94,9 @@ export default function MapaPage() {
   // Modo rota: o De/Para toma o lugar da busca e o resultado, o do painel/folha.
   const [rotaAberta, setRotaAberta] = useState(false);
   const [rotuloBusca, setRotuloBusca] = useState<string | null>(null);
-  const rota = useRota(geojson as FeatureCollection | null, subprefeituras);
+  // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
+  const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
+  const rota = useRota(contornoLeve.dados, subprefeituras);
   const rotaSemPontos = rotaAberta && !(rota.origem && rota.destino);
   const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
 
@@ -131,7 +135,7 @@ export default function MapaPage() {
     rota.setDestino(destino);
     try {
       const { lat, lon } = await detectar();
-      rota.setOrigem((atual) => atual ?? { lat, lon, rotulo: 'Minha localização' });
+      rota.setOrigem((atual) => atual ?? { lat, lon, rotulo: ROTULO_LOCALIZACAO });
     } catch {
       /* sem localização: a pessoa escolhe o ponto de partida */
     }
@@ -143,11 +147,9 @@ export default function MapaPage() {
     rota.setDestino(null);
   }
 
-  // "Como chegar" no detalhe: o destino é o ponto buscado, se houver, senão o centro da subprefeitura.
+  // "Como chegar" no detalhe: o destino é o ponto buscado só se ele é desta subprefeitura; senão o centro dela.
   function comoChegar(sub: SubprefeituraMapaDto) {
-    void abrirRota('como_chegar', pontoBusca
-      ? { lat: pontoBusca.lat, lon: pontoBusca.lon, rotulo: rotuloBusca ?? 'Ponto escolhido' }
-      : { lat: sub.latitude, lon: sub.longitude, rotulo: sub.nome });
+    void abrirRota('como_chegar', escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? (geojson as FeatureCollection | null)));
   }
 
   function fecharDetalhe() {
@@ -269,6 +271,8 @@ export default function MapaPage() {
       erro={rota.erro}
       avisoPedido={rota.avisoPedido}
       onPedirAviso={() => void rota.pedirAviso()}
+      avisoIndisponivel={rota.avisoIndisponivel}
+      onTentarDeNovo={rota.tentarDeNovo}
     />
   );
 
@@ -292,7 +296,7 @@ export default function MapaPage() {
           camadaAtiva={camadaAtiva}
           zonaEmFoco={zonaEmFoco}
           subSelecionadaAtiva={!!subSelecionada}
-          pontoBusca={pontoBusca}
+          pontoBusca={rotaAberta ? null : pontoBusca}
           onMoverPonto={handleMoverPonto}
           overlayAlagamento={overlayAlagamento}
           ocorrencias={ocorrencias}

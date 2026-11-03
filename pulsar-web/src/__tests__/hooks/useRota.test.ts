@@ -93,7 +93,7 @@ describe('useRota', () => {
     expect(result.current.avisoPedido).toBe(true);
   });
 
-  it('pedir aviso com push desligado liga primeiro; se negar, avisa e não registra', async () => {
+  it('pedir aviso com push desligado liga primeiro; se o navegador negar, avisa e não registra', async () => {
     push.estado = 'inativo';
     push.ativar.mockResolvedValue('negado');
     const { result } = renderHook(() => useRota(leve, subs));
@@ -102,6 +102,60 @@ describe('useRota', () => {
     await act(() => result.current.pedirAviso());
     expect(push.ativar).toHaveBeenCalled();
     expect(avisar).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith('Permita as notificações do Pulsar no navegador para receber o aviso.', expect.anything());
+  });
+});
+
+describe('useRota: nova tentativa e avisos', () => {
+  const abre = async () => {
+    const h = renderHook(() => useRota(leve, subs));
+    act(() => { h.result.current.setOrigem(se); h.result.current.setDestino(mooca); });
+    await waitFor(() => expect(h.result.current.resultado).not.toBeNull());
+    return h;
+  };
+
+  it('tentarDeNovo refaz a avaliação depois de um erro de rede', async () => {
+    avaliar.mockRejectedValueOnce(new Error('x'));
+    const { result } = renderHook(() => useRota(leve, subs));
+    act(() => { result.current.setOrigem(se); result.current.setDestino(mooca); });
+    await waitFor(() => expect(result.current.erro).toBe('rede'));
+    act(() => result.current.tentarDeNovo());
+    await waitFor(() => expect(result.current.resultado?.estado).toBe('PodeIr'));
+    expect(avaliar).toHaveBeenCalledTimes(2);
+    expect(result.current.erro).toBeNull();
+  });
+
+  it.each([
+    ['indisponivel', 'Este aparelho não recebe avisos. No iPhone, instale o Pulsar na tela de início.'],
+    ['negado', 'Permita as notificações do Pulsar no navegador para receber o aviso.'],
+  ])('push %s tem o seu texto e não tenta ativar', async (estado, texto) => {
+    push.estado = estado;
+    const { result } = await abre();
+    await act(() => result.current.pedirAviso());
+    expect(showToast).toHaveBeenCalledWith(texto, expect.anything());
+    expect(push.ativar).not.toHaveBeenCalled();
+    expect(avisar).not.toHaveBeenCalled();
+  });
+
+  it('recusar no pedido (continua inativo) usa o texto de ligar os avisos', async () => {
+    push.estado = 'inativo';
+    push.ativar.mockResolvedValue('inativo');
+    const { result } = await abre();
+    await act(() => result.current.pedirAviso());
     expect(showToast).toHaveBeenCalledWith('Ligue os avisos para saber quando o caminho melhorar.', expect.anything());
+  });
+
+  it('push carregando marca o aviso como indisponível', async () => {
+    push.estado = 'carregando';
+    const { result } = await abre();
+    expect(result.current.avisoIndisponivel).toBe(true);
+  });
+
+  it('destino "Minha localização" vai ao pedido com o nome da última subprefeitura', async () => {
+    const { result } = renderHook(() => useRota(leve, subs));
+    act(() => { result.current.setOrigem(se); result.current.setDestino({ ...mooca, rotulo: 'Minha localização' }); });
+    await waitFor(() => expect(result.current.resultado).not.toBeNull());
+    await act(() => result.current.pedirAviso());
+    expect(avisar).toHaveBeenCalledWith(['se', 'mooca'], 'Mooca');
   });
 });

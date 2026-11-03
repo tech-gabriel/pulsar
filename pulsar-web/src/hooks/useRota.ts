@@ -14,6 +14,14 @@ import { usePushSubscription } from './usePushSubscription';
 // A API recusa (400) mais de 32 ids; hoje a cidade tem 32 subprefeituras, então é só uma guarda.
 const MAX_TRECHOS = 32;
 
+export const ROTULO_LOCALIZACAO = 'Minha localização';
+
+const TEXTO_PUSH: Record<string, string> = {
+  indisponivel: 'Este aparelho não recebe avisos. No iPhone, instale o Pulsar na tela de início.',
+  negado: 'Permita as notificações do Pulsar no navegador para receber o aviso.',
+  inativo: 'Ligue os avisos para saber quando o caminho melhorar.',
+};
+
 type Erro = 'origemFora' | 'destinoFora' | 'rede';
 type Resposta = { chave: string; resultado: RotaAvaliacao | null };
 
@@ -28,6 +36,7 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
   const [destino, setDestino] = useState<PontoRota | null>(null);
   const [resposta, setResposta] = useState<Resposta | null>(null);
   const [chaveAviso, setChaveAviso] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0); // "Tentar de novo" refaz a avaliação da mesma chave
   const { prefs } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
   const { showToast } = useToast();
@@ -56,7 +65,12 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
     return () => {
       valendo = false;
     };
-  }, [chave]);
+  }, [chave, tentativa]);
+
+  const tentarDeNovo = useCallback(() => {
+    setResposta(null);
+    setTentativa((n) => n + 1);
+  }, []);
 
   const atual = chave && resposta?.chave === chave ? resposta : null;
   const resultado = atual?.resultado ?? null;
@@ -88,21 +102,29 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
   const pedirAviso = useCallback(async () => {
     if (!chave || !destino) return;
     try {
-      if (push.estado !== 'ativo' && (await push.ativar()) !== 'ativo') {
-        showToast('Ligue os avisos para saber quando o caminho melhorar.', 'info');
-        return;
+      if (push.estado !== 'ativo') {
+        const estado = push.estado === 'inativo' ? await push.ativar() : push.estado;
+        if (estado !== 'ativo') {
+          showToast(TEXTO_PUSH[estado] ?? TEXTO_PUSH.inativo, 'info');
+          return;
+        }
       }
-      await pedirAvisoRota(chave.split(','), destino.rotulo.slice(0, 80));
+      // "Minha localização" não diz nada no push: usa o nome da última subprefeitura do caminho.
+      const rotulo = destino.rotulo === ROTULO_LOCALIZACAO
+        ? resultado?.trechos[resultado.trechos.length - 1]?.nome ?? destino.rotulo
+        : destino.rotulo;
+      await pedirAvisoRota(chave.split(','), rotulo.slice(0, 80));
       setChaveAviso(chave);
       track.pediuAvisoRota();
     } catch {
       showToast('Não consegui pedir o aviso agora. Tente de novo.', 'error');
     }
-  }, [chave, destino, push, showToast]);
+  }, [chave, destino, push, resultado, showToast]);
 
   return {
     origem, destino, setOrigem, setDestino,
     resultado, carregando, erro, linha,
+    tentarDeNovo, avisoIndisponivel: push.estado === 'carregando',
     pedirAviso, avisoPedido: !!chave && chaveAviso === chave,
   };
 }

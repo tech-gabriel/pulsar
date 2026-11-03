@@ -14,6 +14,9 @@ interface Props {
   erro: 'origemFora' | 'destinoFora' | 'rede' | null;
   avisoPedido: boolean;
   onPedirAviso: () => void;
+  /** Ainda descobrindo se o aparelho recebe push: o botão espera. */
+  avisoIndisponivel?: boolean;
+  onTentarDeNovo?: () => void;
 }
 
 const MENSAGEM_ERRO = {
@@ -28,9 +31,17 @@ const BOTAO = 'rounded-[14px] min-h-11 flex items-center justify-center gap-1.5 
  * Resultado da rota: veredito, risco hora a hora (só quando há o que esperar), os trechos e
  * a saída para o app de navegação. O traçado e os campos De/Para ficam fora daqui.
  */
-export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso }: Props) {
+export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onTentarDeNovo }: Props) {
   if (erro) {
-    return <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--text-secondary)' }}>{MENSAGEM_ERRO[erro]}</p>;
+    return (
+      <div className="mt-3">
+        <p role="alert" className="text-sm" style={{ color: 'var(--text-secondary)' }}>{MENSAGEM_ERRO[erro]}</p>
+        {erro === 'rede' && onTentarDeNovo && (
+          <button type="button" onClick={onTentarDeNovo} className={`${BOTAO} px-4 mt-2.5`}
+            style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}>Tentar de novo</button>
+        )}
+      </div>
+    );
   }
   if (carregando) {
     return (
@@ -69,7 +80,7 @@ export default function PainelRota({ resultado, origem, destino, carregando, err
 
       {esperar ? (
         <>
-          <button type="button" onClick={onPedirAviso} disabled={avisoPedido}
+          <button type="button" onClick={onPedirAviso} disabled={avisoPedido || avisoIndisponivel}
             className={`${BOTAO} w-full mt-3.5 text-white disabled:opacity-70`} style={{ ...principal, fontSize: 14 }}>
             <BellRing size={16} aria-hidden="true" />{avisoPedido ? 'Aviso pedido' : 'Me avise quando melhorar'}
           </button>

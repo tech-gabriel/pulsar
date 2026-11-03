@@ -28,3 +28,39 @@ describe('gerar-snapshot-ocorrencias: agregar', () => {
     expect(() => agregar([f('XX - NOVA SUB', '2026-01-01Z')])).toThrow(/XX - NOVA SUB/);
   });
 });
+
+// @ts-expect-error script .mjs sem tipos
+import { acumularPontos } from '../../../scripts/gerar-snapshot-ocorrencias.mjs';
+
+const pt = (id: string, dt: string, nm = 'MO - MOOCA', tipo = 'ALAGAMENTO', lon = -46.5999999, lat = -23.5500001) => ({
+  properties: { cd_identificador: id, dt_ocorrencia: dt, nm_subprefeitura: nm, dc_tipo_ocorrencia: tipo },
+  geometry: { type: 'Point', coordinates: [lon, lat] },
+});
+
+describe('gerar-snapshot-ocorrencias: acumularPontos', () => {
+  it('junta anteriores e novos sem repetir o id, e o novo vence', () => {
+    const anteriores = [{ id: '1', lat: -23.5, lon: -46.6, tipo: 'ALAGAMENTO', data: '2026-01-10', sub: 'mooca' }];
+    const r = acumularPontos(anteriores, [pt('1', '2026-01-11Z'), pt('2', '2026-02-01Z')]);
+    expect(r.pontos.map((p: { id: string }) => p.id).sort()).toEqual(['1', '2']);
+    expect(r.pontos.find((p: { id: string }) => p.id === '1').data).toBe('2026-01-11');
+  });
+
+  it('descarta o que tem mais de 12 meses antes da ocorrência mais recente', () => {
+    const anteriores = [
+      { id: 'velho', lat: -23.5, lon: -46.6, tipo: 'ALAGAMENTO', data: '2025-02-28', sub: 'mooca' },
+      { id: 'limite', lat: -23.5, lon: -46.6, tipo: 'ALAGAMENTO', data: '2025-03-01', sub: 'mooca' },
+    ];
+    const r = acumularPontos(anteriores, [pt('novo', '2026-03-01Z')]);
+    expect(r.pontos.map((p: { id: string }) => p.id).sort()).toEqual(['limite', 'novo']);
+  });
+
+  it('arredonda para 5 casas, traduz tipo e subprefeitura e ignora sigla desconhecida', () => {
+    const r = acumularPontos([], [pt('1', '2026-04-01Z', 'MO - MOOCA', 'INUNDACAO'), pt('2', '2026-04-02Z', 'XX - NADA')]);
+    expect(r.pontos).toEqual([{ id: '1', lat: -23.55, lon: -46.6, tipo: 'INUNDACAO', data: '2026-04-01', sub: 'mooca' }]);
+  });
+
+  it('o período vai da menor à maior data guardada', () => {
+    const r = acumularPontos([], [pt('1', '2026-01-04Z'), pt('2', '2026-08-30Z')]);
+    expect(r.periodo).toEqual({ de: '2026-01-04', ate: '2026-08-30' });
+  });
+});

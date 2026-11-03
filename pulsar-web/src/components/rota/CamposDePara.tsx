@@ -68,6 +68,14 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
     })),
   ];
   const mostrar = texto !== null && opcoes.length > 0;
+  // Lista nova (o geocoder respondeu depois): a marca das setas não vale mais, senão o Enter
+  // escolheria outra opção no mesmo lugar.
+  const assinatura = opcoes.map((o) => o.chave).join('|');
+  const [listaDaMarca, setListaDaMarca] = useState(assinatura);
+  if (listaDaMarca !== assinatura) {
+    setListaDaMarca(assinatura);
+    setAtivo(-1);
+  }
   const idOpcao = (i: number) => `${idLista}-${i}`;
 
   function teclar(e: KeyboardEvent<HTMLInputElement>) {

@@ -1,17 +1,17 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { SubprefeituraMapaDto } from '../../../types';
 
 // O geocoder devolve o bairro "Mooca" junto com a rua: a subprefeitura já está na lista.
+const PADRAO = [
+  { nome: 'Mooca', descricao: 'Mooca, São Paulo', tipo: 'neighbourhood', latitude: -23.55, longitude: -46.6 },
+  { nome: 'Rua da Mooca', descricao: 'Rua da Mooca, São Paulo', tipo: 'address', latitude: -23.55, longitude: -46.61 },
+];
+const busca = vi.hoisted(() => ({ resultados: [] as unknown[] }));
 vi.mock('../../../hooks/useBuscaEndereco', () => ({
-  useBuscaEndereco: () => ({
-    setTermo: vi.fn(), carregando: false, limpar: vi.fn(),
-    resultados: [
-      { nome: 'Mooca', descricao: 'Mooca, São Paulo', tipo: 'neighbourhood', latitude: -23.55, longitude: -46.6 },
-      { nome: 'Rua da Mooca', descricao: 'Rua da Mooca, São Paulo', tipo: 'address', latitude: -23.55, longitude: -46.61 },
-    ],
-  }),
+  useBuscaEndereco: () => ({ setTermo: vi.fn(), carregando: false, limpar: vi.fn(), resultados: busca.resultados }),
 }));
+beforeEach(() => { busca.resultados = PADRAO; });
 
 import CamposDePara from '../../../components/rota/CamposDePara';
 
@@ -109,6 +109,23 @@ describe('CamposDePara: teclado nas sugestões', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(campo).toHaveValue('Sé');
     expect(campo).toHaveAttribute('aria-expanded', 'false');
+    expect(onDestino).not.toHaveBeenCalled();
+  });
+});
+
+describe('CamposDePara: lista que muda depois das setas', () => {
+  it('resultados novos do geocoder desfazem a marca: o Enter não escolhe outra opção no lugar', () => {
+    const onDestino = vi.fn();
+    const props = { areas, origem: null, destino: null, onOrigem: vi.fn(), onDestino, onInverter: vi.fn(), onFechar: vi.fn() };
+    const { rerender } = render(<CamposDePara {...props} />);
+    const campo = screen.getByRole('combobox', { name: 'Para' });
+    fireEvent.change(campo, { target: { value: 'Mooca' } });
+    fireEvent.keyDown(campo, { key: 'ArrowDown' });
+    fireEvent.keyDown(campo, { key: 'ArrowDown' });
+    busca.resultados = [{ nome: 'Rua Nova', descricao: 'Rua Nova, São Paulo', tipo: 'address', latitude: -23.5, longitude: -46.6 }, ...PADRAO];
+    rerender(<CamposDePara {...props} />);
+    expect(campo).not.toHaveAttribute('aria-activedescendant');
+    fireEvent.keyDown(campo, { key: 'Enter' });
     expect(onDestino).not.toHaveBeenCalled();
   });
 });

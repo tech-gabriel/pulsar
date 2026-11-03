@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, X, MapPin, Landmark, Building2, Loader2, LocateFixed } from 'lucide-react';
+import { Search, X, MapPin, Landmark, Building2, Loader2, LocateFixed, Route } from 'lucide-react';
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
 import { useDicaLocalizacao } from '../../hooks/useDicaLocalizacao';
 import type { EnderecoBusca } from '../../types';
@@ -14,6 +14,8 @@ interface Props {
   isMobile: boolean;
   onUsarLocalizacao?: () => void;
   localizando?: boolean;
+  /** Abre o modo rota (De/Para). Sem ele o chip "Rota" não aparece. */
+  onAbrirRota?: () => void;
   /** Dentro do painel flutuante (tablet e computador): sem posição própria nem vidro. */
   embutida?: boolean;
 }
@@ -41,7 +43,7 @@ function contextoDe(r: EnderecoBusca): string {
  * Busca unificada sobreposta ao mapa (SP3): subprefeituras pelo nome primeiro, depois
  * endereços (geocoding via backend), num campo só.
  */
-export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, embutida = false }: Props) {
+export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, onAbrirRota, embutida = false }: Props) {
   const { termo, setTermo, resultados, carregando, erro, limpar } = useBuscaEndereco();
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -132,6 +134,16 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
             className="mapa-txt-suave flex items-center justify-center w-11 h-11 -my-2 transition-colors flex-shrink-0"
           >
             <X size={16} />
+          </button>
+        )}
+        {onAbrirRota && (
+          <button
+            type="button"
+            onClick={onAbrirRota}
+            className="mapa-txt flex items-center gap-1 h-8 px-2.5 rounded-full flex-shrink-0 text-xs font-semibold"
+            style={{ background: 'var(--bg-input)' }}
+          >
+            <Route size={14} aria-hidden="true" />Rota
           </button>
         )}
         {onUsarLocalizacao && (

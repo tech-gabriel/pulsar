@@ -20,6 +20,8 @@ const SP: [number, number] = [-46.6333, -23.5505]; // lon, lat
 const ESPERA_ESTILO_MS = 8000;
 const CHAVE_MAPTILER = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
 const COR_BUSCA = '#00BCFF';
+// Marinho da marca: o miolo do destino e a borda da origem na rota.
+const COR_PONTO_ROTA = '#052F4A';
 
 /** Pin da busca: o mesmo SVG de antes do MapLibre. */
 function PinBusca() {
@@ -37,7 +39,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -113,6 +115,19 @@ export default function MapaGL(props: PropsMapa) {
     }
   }, [pontoBusca, carregou]);
 
+  // Rota nova: enquadra o caminho inteiro, com folga para o painel.
+  useEffect(() => {
+    const mapa = mapRef.current;
+    if (!carregou || !mapa || !rota) return;
+    const coords = rota.features.flatMap((f) => (f.geometry.type === 'Point' ? [f.geometry.coordinates] : f.geometry.type === 'LineString' ? f.geometry.coordinates : []));
+    if (coords.length === 0) return;
+    const lons = coords.map((c) => c[0]);
+    const lats = coords.map((c) => c[1]);
+    mapa.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], {
+      maxZoom: ZOOM.sub, duration: 700, padding: paddingDoPainel(mapa.getContainer()),
+    });
+  }, [rota, carregou]);
+
   // Objeto estável: um GeoJSON novo a cada render faria o Source reprocessar o círculo no worker.
   const precisao = pontoBusca?.precisao;
   const circulo = useMemo(
@@ -175,6 +190,20 @@ export default function MapaGL(props: PropsMapa) {
         <Source id="pulsar-precisao" type="geojson" data={circulo}>
           <Layer id="pulsar-precisao-fill" type="fill" paint={{ 'fill-color': COR_BUSCA, 'fill-opacity': 0.12 }} />
           <Layer id="pulsar-precisao-linha" type="line" paint={{ 'line-color': COR_BUSCA, 'line-width': 1 }} />
+        </Source>
+      )}
+      {rota && (
+        // Abaixo dos rótulos, como as regiões: a linha colorida por trecho leva uma borda branca,
+        // para se destacar tanto do mapa claro quanto do escuro.
+        <Source id="pulsar-rota" type="geojson" data={rota}>
+          <Layer id="pulsar-rota-borda" type="line" beforeId={idPrimeiroSimbolo} filter={['==', ['geometry-type'], 'LineString']}
+            layout={{ 'line-cap': 'round', 'line-join': 'round' }} paint={{ 'line-color': '#ffffff', 'line-width': 11 }} />
+          <Layer id="pulsar-rota-linha" type="line" beforeId={idPrimeiroSimbolo} filter={['==', ['geometry-type'], 'LineString']}
+            layout={{ 'line-cap': 'round', 'line-join': 'round' }} paint={{ 'line-color': ['get', 'cor'], 'line-width': 7 }} />
+          <Layer id="pulsar-rota-origem" type="circle" filter={['==', ['get', 'papel'], 'origem']}
+            paint={{ 'circle-radius': 8, 'circle-color': '#ffffff', 'circle-stroke-color': COR_PONTO_ROTA, 'circle-stroke-width': 3.5 }} />
+          <Layer id="pulsar-rota-destino" type="circle" filter={['==', ['get', 'papel'], 'destino']}
+            paint={{ 'circle-radius': 9, 'circle-color': COR_PONTO_ROTA, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 }} />
         </Source>
       )}
       {pontoBusca && (

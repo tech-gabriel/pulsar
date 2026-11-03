@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react';
-import type { GeoJsonObject } from 'geojson';
+import type { FeatureCollection, GeoJsonObject } from 'geojson';
 import type { OcorrenciaAlagamentoDto, SubprefeituraMapaDto } from '../../types';
 import type { Camada } from '../../utils/camadas';
 import { temWebGL } from './webgl';
@@ -27,6 +27,8 @@ export interface PropsMapa {
   onMoverPonto: (lat: number, lon: number) => void;
   overlayAlagamento: boolean;
   ocorrencias: OcorrenciaAlagamentoDto[];
+  /** Traçado da rota: linhas com `properties.cor` e os pontos `origem`/`destino`. */
+  rota?: FeatureCollection | null;
 }
 
 // O MapLibre (e o worker dele) vêm num chunk próprio: a página, o painel e a busca aparecem antes.

@@ -17,7 +17,11 @@ export type NomeEvento =
   | 'ativacao_passo_pulado'
   | 'ativacao_concluida'
   | 'instalou_app'
-  | 'clicou_convite_regiao';
+  | 'clicou_convite_regiao'
+  | 'abriu_rota'
+  | 'viu_veredito_rota'
+  | 'abriu_app_rota'
+  | 'pediu_aviso_rota';
 
 function capturar(nome: NomeEvento, props?: Record<string, unknown>): void {
   if (!isAnalyticsEnabled()) return;
@@ -48,4 +52,9 @@ export const track = {
   instalouApp: (plataforma: Plataforma) => capturar('instalou_app', { plataforma }),
   // Convite das páginas públicas (cadastro ou, logado, o mapa): mede visita para cadastro.
   clicouConviteRegiao: (origem: string, regiao: string, logado: boolean) => capturar('clicou_convite_regiao', { origem, regiao, logado }),
+  // Rota com risco no caminho. Sem coordenadas: só o estado e o app escolhido.
+  abriuRota: (origem: 'chip' | 'como_chegar') => capturar('abriu_rota', { origem }),
+  viuVereditoRota: (estado: string) => capturar('viu_veredito_rota', { estado }),
+  abriuAppRota: (app: 'google' | 'waze' | 'apple') => capturar('abriu_app_rota', { app }),
+  pediuAvisoRota: () => capturar('pediu_aviso_rota'),
 };

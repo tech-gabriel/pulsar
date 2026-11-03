@@ -117,3 +117,12 @@ describe('BuscaEndereco — botão de localização', () => {
     expect(screen.getByText('Nenhuma subprefeitura ou endereço com esse nome.')).toBeInTheDocument();
   });
 });
+
+describe('BuscaUnificada: rota', () => {
+  it('o chip Rota chama onAbrirRota', () => {
+    const onAbrirRota = vi.fn();
+    render(<BuscaUnificada areas={[] as Area[]} onSelecionarArea={vi.fn()} onSelecionar={vi.fn()} isMobile={false} onAbrirRota={onAbrirRota} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Rota' }));
+    expect(onAbrirRota).toHaveBeenCalled();
+  });
+});

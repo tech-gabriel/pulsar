@@ -31,6 +31,11 @@ import { useOcorrenciasAlagamento } from '../hooks/useOcorrenciasAlagamento';
 import { buscarOcorrenciasProximas, RAIO_PROXIMAS_M } from '../api/ocorrencias';
 import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from '../types';
 import { useAlturaFluida } from '../motion/useAlturaFluida';
+import { useRota } from '../hooks/useRota';
+import CamposDePara from '../components/rota/CamposDePara';
+import PainelRota from '../components/rota/PainelRota';
+import { track } from '../analytics';
+import type { PontoRota } from '../features/rota/tipos';
 
 export default function MapaPage() {
   const { usuario } = useAuth();
@@ -84,6 +89,11 @@ export default function MapaPage() {
   const [avisoBusca, setAvisoBusca] = useState<string | null>(null);
   const [overlayAlagamento, setOverlayAlagamento] = useState(false);
   const [proximas, setProximas] = useState<OcorrenciasProximasDto | null>(null);
+  // Modo rota: o De/Para toma o lugar da busca e o resultado, o do painel/folha.
+  const [rotaAberta, setRotaAberta] = useState(false);
+  const [rotuloBusca, setRotuloBusca] = useState<string | null>(null);
+  const rota = useRota(geojson as FeatureCollection | null, subprefeituras);
+  const rotaSemPontos = rotaAberta && !(rota.origem && rota.destino);
   const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
 
 
@@ -112,6 +122,34 @@ export default function MapaPage() {
     setSearchParams(p, { replace: true });
   }
 
+  // A origem padrão é onde a pessoa está; sem localização, o campo De fica vazio e pede um lugar.
+  async function abrirRota(de: 'chip' | 'como_chegar', destino: PontoRota | null = null) {
+    track.abriuRota(de);
+    setRotaAberta(true);
+    setPainelRecolhido(false);
+    rota.setOrigem(null);
+    rota.setDestino(destino);
+    try {
+      const { lat, lon } = await detectar();
+      rota.setOrigem((atual) => atual ?? { lat, lon, rotulo: 'Minha localização' });
+    } catch {
+      /* sem localização: a pessoa escolhe o ponto de partida */
+    }
+  }
+
+  function fecharRota() {
+    setRotaAberta(false);
+    rota.setOrigem(null);
+    rota.setDestino(null);
+  }
+
+  // "Como chegar" no detalhe: o destino é o ponto buscado, se houver, senão o centro da subprefeitura.
+  function comoChegar(sub: SubprefeituraMapaDto) {
+    void abrirRota('como_chegar', pontoBusca
+      ? { lat: pontoBusca.lat, lon: pontoBusca.lon, rotulo: rotuloBusca ?? 'Ponto escolhido' }
+      : { lat: sub.latitude, lon: sub.longitude, rotulo: sub.nome });
+  }
+
   function fecharDetalhe() {
     limparDeepLink();
     setZonaEmFoco(null);
@@ -119,6 +157,7 @@ export default function MapaPage() {
     setPontoBusca(null);
     setAvisoBusca(null);
     setProximas(null);
+    setRotuloBusca(null);
   }
 
   // Núcleo compartilhado por busca e geolocalização: resolve o ponto para uma
@@ -142,6 +181,7 @@ export default function MapaPage() {
   // Pin arrastado: o ponto passa a ser exato (sem círculo nem aviso) e o mapa não voa.
   function handleMoverPonto(lat: number, lon: number) {
     selecionarPorPonto({ lat, lon, ajustado: true }, 'busca');
+    setRotuloBusca(null);
     void atualizarProximas(lat, lon);
   }
 
@@ -150,6 +190,7 @@ export default function MapaPage() {
   // carregado), abrindo o painel de detalhe. Fora dos polígonos → aviso.
   function handleSelecionarEndereco(endereco: EnderecoBusca) {
     selecionarPorPonto({ lat: endereco.latitude, lon: endereco.longitude }, 'busca');
+    setRotuloBusca(endereco.nome || endereco.descricao);
   }
 
   async function atualizarProximas(lat: number, lon: number) {
@@ -167,6 +208,7 @@ export default function MapaPage() {
     try {
       const { lat, lon, precisao } = await detectar();
       const dentro = selecionarPorPonto({ lat, lon, precisao }, 'localizacao');
+      setRotuloBusca(null);
       if (dentro && precisao > RAIO_PROXIMAS_M) {
         setAvisoBusca(`Localização aproximada (±${Math.round(precisao)} m). Arraste o pin para ajustar.`);
       }
@@ -200,7 +242,33 @@ export default function MapaPage() {
       isMobile={isMobile}
       onUsarLocalizacao={handleUsarLocalizacao}
       localizando={localizando}
+      onAbrirRota={() => void abrirRota('chip')}
       embutida={embutida}
+    />
+  );
+
+  const camposRota = (embutida: boolean) => (
+    <CamposDePara
+      areas={subprefeituras}
+      origem={rota.origem}
+      destino={rota.destino}
+      onOrigem={rota.setOrigem}
+      onDestino={rota.setDestino}
+      onInverter={() => { const o = rota.origem; rota.setOrigem(rota.destino); rota.setDestino(o); }}
+      onFechar={fecharRota}
+      embutida={embutida}
+    />
+  );
+
+  const resultadoRota = (
+    <PainelRota
+      resultado={rota.resultado}
+      origem={rota.origem}
+      destino={rota.destino}
+      carregando={rota.carregando}
+      erro={rota.erro}
+      avisoPedido={rota.avisoPedido}
+      onPedirAviso={() => void rota.pedirAviso()}
     />
   );
 
@@ -228,10 +296,11 @@ export default function MapaPage() {
           onMoverPonto={handleMoverPonto}
           overlayAlagamento={overlayAlagamento}
           ocorrencias={ocorrencias}
+          rota={rotaAberta ? rota.linha : null}
         />
 
         {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}
-        {isMobile && buscaMapa(false)}
+        {isMobile && (rotaAberta ? camposRota(false) : buscaMapa(false))}
 
         {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
         <LayerControl
@@ -308,16 +377,19 @@ export default function MapaPage() {
           <span className="w-9 h-[5px] rounded-full" style={{ background: 'color-mix(in srgb, var(--text-primary) 22%, transparent)' }} />
         </button>
 
-        {!isMobile && buscaMapa(true)}
+        {!isMobile && (rotaAberta ? camposRota(true) : buscaMapa(true))}
 
-        <div key={subSelecionada?.id ?? 'lista'} className={['painel-conteudo flex-1 min-h-0 flex flex-col', painelRecolhido ? 'lg:flex hidden' : ''].join(' ')}>
-          {subSelecionada ? (
+        <div key={rotaAberta ? 'rota' : subSelecionada?.id ?? 'lista'} className={['painel-conteudo flex-1 min-h-0 flex flex-col', painelRecolhido ? 'lg:flex hidden' : ''].join(' ')}>
+          {rotaAberta ? (
+            <div className="painel-scroll flex-1 overflow-y-auto overscroll-contain px-4 pb-4">{resultadoRota}</div>
+          ) : subSelecionada ? (
             <DetalheSubprefeitura
               key={subSelecionada.id}
               area={subSelecionada}
               onFechar={fecharDetalhe}
               isFavorito={isFavorito}
               onToggleFavorito={toggleFavorito}
+              onComoChegar={() => comoChegar(subSelecionada)}
             />
           ) : (
             <PainelLateral
@@ -341,17 +413,21 @@ export default function MapaPage() {
       <div
         ref={folhaRef}
         data-painel-mapa
-        data-aberta={painelMobileAberto || detalheNaFolha ? '' : undefined}
-        data-detalhe={detalheNaFolha ? '' : undefined}
+        data-aberta={painelMobileAberto || detalheNaFolha || rotaAberta ? '' : undefined}
+        data-detalhe={detalheNaFolha || rotaAberta ? '' : undefined}
         className="folha-mapa painel-mapa vidro-painel md:hidden fixed z-[500] flex flex-col overflow-hidden"
+        style={rotaSemPontos ? { display: 'none' } : undefined}
       >
-        {detalheNaFolha ? (
+        {rotaAberta ? (
+          <div key="rota" className="painel-conteudo flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-2 pb-4">{resultadoRota}</div>
+        ) : detalheNaFolha ? (
           <div key={detalheNaFolha.id} className="painel-conteudo flex-1 min-h-0 flex flex-col">
             <DetalheSubprefeitura
               area={detalheNaFolha}
               onFechar={fecharDetalhe}
               isFavorito={isFavorito}
               onToggleFavorito={toggleFavorito}
+              onComoChegar={() => comoChegar(detalheNaFolha)}
             />
           </div>
         ) : (

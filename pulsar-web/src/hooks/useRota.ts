@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Feature, FeatureCollection } from 'geojson';
 import { avaliarRota, cancelarAvisoRota, pedirAvisoRota } from '../api/rota';
 import { track } from '../analytics';
@@ -103,9 +103,16 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
     };
   }, [chave, temResultado]);
 
+  // Conta o veredito uma vez por caminho e estado: a reavaliação de 5 min traz um resultado novo
+  // com o mesmo estado, que não é uma visita nova.
+  const vistoRef = useRef<string | null>(null);
   useEffect(() => {
-    if (resultado) track.viuVereditoRota(resultado.estado);
-  }, [resultado]);
+    if (!resultado || !chave) return;
+    const visto = `${chave}:${resultado.estado}`;
+    if (vistoRef.current === visto) return;
+    vistoRef.current = visto;
+    track.viuVereditoRota(resultado.estado);
+  }, [chave, resultado]);
 
   const linha = useMemo<FeatureCollection | null>(() => {
     if (!corredor?.ok || !origem || !destino) return null;

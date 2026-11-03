@@ -13,6 +13,8 @@ vi.mock('../../hooks/useNotificacoesPrefs', () => ({ useNotificacoesPrefs: () =>
 const usePush = vi.hoisted(() => vi.fn());
 vi.mock('../../hooks/usePushSubscription', () => ({ usePushSubscription: usePush }));
 const showToast = vi.hoisted(() => vi.fn());
+const trackMock = vi.hoisted(() => ({ viuVereditoRota: vi.fn(), pediuAvisoRota: vi.fn() }));
+vi.mock('../../analytics', () => ({ track: trackMock }));
 vi.mock('../../contexts/ToastContext', () => ({ useToast: () => ({ showToast }) }));
 
 import { avaliarRota, cancelarAvisoRota, pedirAvisoRota } from '../../api/rota';
@@ -263,5 +265,33 @@ describe('useRota: reavaliação a cada 5 min', () => {
     await act(async () => {});
     expect(result.current.erro).toBeNull();
     expect(result.current.resultado?.estado).toBe('PodeIr');
+  });
+});
+
+describe('useRota: evento do veredito', () => {
+  it('reavaliação com o mesmo estado não conta de novo; estado novo conta', async () => {
+    const ciclos: (() => void)[] = [];
+    const real = window.setInterval.bind(window);
+    vi.spyOn(window, 'setInterval').mockImplementation(((fn: () => void, ms?: number) => {
+      if (ms !== REAVALIAR_MS) return real(fn, ms);
+      ciclos.push(fn);
+      return 0;
+    }) as typeof window.setInterval);
+    const { result } = renderHook(() => useRota(leve, subs));
+    act(() => { result.current.setOrigem(se); result.current.setDestino(mooca); });
+    await waitFor(() => expect(result.current.resultado).not.toBeNull());
+    expect(trackMock.viuVereditoRota).toHaveBeenCalledTimes(1);
+
+    act(() => ciclos.at(-1)?.());
+    await waitFor(() => expect(avaliar).toHaveBeenCalledTimes(2));
+    await act(async () => {});
+    expect(trackMock.viuVereditoRota).toHaveBeenCalledTimes(1);
+
+    avaliar.mockResolvedValueOnce(avaliacao('Esperar'));
+    act(() => ciclos.at(-1)?.());
+    await waitFor(() => expect(result.current.resultado?.estado).toBe('Esperar'));
+    expect(trackMock.viuVereditoRota).toHaveBeenCalledTimes(2);
+    expect(trackMock.viuVereditoRota).toHaveBeenLastCalledWith('Esperar');
+    vi.restoreAllMocks();
   });
 });

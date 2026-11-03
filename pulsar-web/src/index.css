@@ -2132,3 +2132,92 @@ html:not(.light) .lp-sugestoes { background: rgba(5, 47, 74, 0.96); }
     #052F4A;
   box-shadow: 0 30px 80px -40px rgba(2, 74, 112, 0.8);
 }
+
+/* ── Página pública "Pontos de alagamento em SP hoje" (A4) ─────────────────────────────────
+   Celular primeiro, uma coluna de leitura. Conteúdo em superfície sólida (o vidro é só da
+   navegação); o risco reaproveita o .det-hero do detalhe do app, na mesma cor do mapa. */
+.landing-section.ah-pagina { max-width: 600px; padding-top: 32px; display: flex; flex-direction: column; gap: 28px; }
+.ah-trilha { font-size: 14px; color: var(--text-muted); }
+.ah-trilha a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; }
+.ah-cabeca { display: grid; gap: 10px; margin-top: -12px; }
+.ah-cabeca h1 { font: 800 clamp(30px, 8vw, 40px)/1.08 var(--font-heading); letter-spacing: -0.025em; text-wrap: balance; color: var(--text-primary); }
+.ah-cabeca p { font-size: 17px; line-height: 1.5; color: var(--text-secondary); max-width: 60ch; }
+.ah-secao { display: grid; gap: 12px; }
+.ah-secao h2, .ah-convite h2 { font: 700 20px/1.25 var(--font-heading); letter-spacing: -0.01em; text-wrap: balance; color: var(--text-primary); }
+.ah-apoio { color: var(--text-secondary); margin-top: -6px; line-height: 1.5; }
+.ah-cta-cheio { width: 100%; min-height: 52px; }
+.ah-cta-cheio:disabled { opacity: .7; cursor: progress; }
+
+.ah-escolha { display: grid; gap: 12px; }
+.ah-campo {
+  display: flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 14px; border-radius: 14px;
+  background: var(--superficie); color: var(--text-muted);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+.ah-campo:focus-within { box-shadow: inset 0 0 0 2px var(--color-pulsar-500); }
+.ah-campo input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; font-size: 16px; color: var(--text-primary); }
+.ah-campo input::placeholder { color: var(--text-muted); }
+.ah-privacidade { display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--text-muted); }
+.ah-aviso { font-size: 14.5px; color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 6%, transparent); border-radius: 12px; padding: 10px 12px; }
+
+.ah-ranking { list-style: none; margin: 0; padding: 0; }
+.ah-ranking li { display: grid; gap: 6px; padding: 12px 0; }
+.ah-ranking li + li { border-top: 1px solid color-mix(in srgb, var(--text-primary) 9%, transparent); }
+.ah-ranking-linha { display: flex; justify-content: space-between; gap: 12px; font-size: 16px; }
+.ah-ranking-linha a { font-weight: 600; color: var(--text-primary); }
+.ah-ranking-linha a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ah-ranking-linha span { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.ah-barra { height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--text-primary) 7%, transparent); overflow: hidden; }
+.ah-barra span { display: block; height: 100%; border-radius: 99px; background: #3b82f6; }
+
+.ah-pilula {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; min-height: 40px;
+  border-radius: 999px; font-size: 15px; font-weight: 600; color: var(--text-primary); background: var(--superficie);
+  box-shadow: var(--superficie-sombra), inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 12%, transparent);
+}
+.ah-pilula svg:first-child { color: var(--color-pulsar-500); }
+.ah-pilula svg:last-of-type { color: var(--text-muted); }
+.ah-pilula:active { transform: scale(0.97); }
+
+.ah-risco { display: grid; gap: 8px; }
+.ah-risco-titulo { font-size: 15px; color: var(--text-secondary); }
+.ah-risco .det-hero { padding: 18px 18px; border-radius: 20px; }
+.ah-risco .det-hero-faixa { font-size: 22px; }
+.ah-risco .det-hero-frase { font-size: 15px; }
+.ah-meta { font-size: 13.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.ah-link-forte { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-primary); }
+.ah-link-forte:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ah-erro { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
+.ah-erro button { font-weight: 600; color: var(--color-pulsar-500); text-decoration: underline; text-underline-offset: 3px; }
+
+/* "Alagando agora" no formato do card da opção B (pedido do user). */
+.ah-cartao { background: var(--superficie); border-radius: 20px; padding: 16px; box-shadow: var(--superficie-sombra); }
+.ah-cge-titulo { display: flex; align-items: center; gap: 6px; font: 700 12.5px/1 var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: #dc2626; }
+html:not(.light) .ah-cge-titulo { color: #f87171; }
+.ah-cge { list-style: none; margin: 0; padding: 0; }
+.ah-cge li { display: flex; gap: 12px; margin-top: 12px; }
+.ah-cge li svg { color: #3b82f6; flex-shrink: 0; margin-top: 2px; }
+.ah-cge-via { font-weight: 600; color: var(--text-primary); }
+.ah-cge-info { font-size: 14px; color: var(--text-secondary); }
+.ah-fonte { font-size: 12.5px; color: var(--text-muted); margin-top: 12px; }
+
+.mapa-perto { height: 280px; border-radius: 18px; overflow: hidden; background: var(--superficie); box-shadow: var(--superficie-sombra); }
+.mapa-perto-voce { display: block; width: 16px; height: 16px; border-radius: 50%; background: #00BCFF; border: 2.5px solid #fff; box-shadow: 0 0 0 6px rgba(0, 188, 255, .2); }
+.ah-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--text-secondary); }
+.ah-legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.ah-legenda i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 2px var(--superficie); }
+.ah-legenda b { width: 14px; border-top: 1.5px dashed #00BCFF; display: inline-block; }
+
+.ah-convite { display: grid; gap: 8px; padding: 22px; border-radius: 22px; text-align: center; background: var(--superficie); box-shadow: var(--superficie-sombra); }
+.ah-convite > p { color: var(--text-secondary); }
+.ah-convite .ah-cta-cheio { margin-top: 8px; }
+.ah-entrar { font-size: 14px; color: var(--text-secondary); }
+.ah-entrar a { color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+
+.ah-regioes { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.ah-regioes a {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; font-size: 14.5px;
+  color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+.ah-regioes a:hover { background: color-mix(in srgb, var(--text-primary) 10%, transparent); }
+@media (prefers-reduced-motion: reduce) { .ah-pilula:active { transform: none; } }

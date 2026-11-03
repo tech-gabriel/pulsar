@@ -16,7 +16,8 @@ export type NomeEvento =
   | 'ativacao_passo_visto'
   | 'ativacao_passo_pulado'
   | 'ativacao_concluida'
-  | 'instalou_app';
+  | 'instalou_app'
+  | 'clicou_convite_regiao';
 
 function capturar(nome: NomeEvento, props?: Record<string, unknown>): void {
   if (!isAnalyticsEnabled()) return;
@@ -45,4 +46,6 @@ export const track = {
   passoPulado: (passo: Passo) => capturar('ativacao_passo_pulado', { passo }),
   ativacaoConcluida: (p: { favoritas: number; alerta: boolean; instalou: boolean }) => capturar('ativacao_concluida', p),
   instalouApp: (plataforma: Plataforma) => capturar('instalou_app', { plataforma }),
+  // Convite das páginas públicas (cadastro ou, logado, o mapa): mede visita para cadastro.
+  clicouConviteRegiao: (origem: string, regiao: string, logado: boolean) => capturar('clicou_convite_regiao', { origem, regiao, logado }),
 };

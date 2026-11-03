@@ -327,3 +327,16 @@ export interface SincronizacaoFonteDto {
   ultimoSucesso: string | null;
   novasNoUltimoSucesso: number | null;
 }
+
+/** GET /api/publico/risco-agora: risco atual de uma subprefeitura para as páginas públicas. */
+export interface RiscoAgoraPublico {
+  nome: string;
+  faixaRisco: FaixaRisco;
+  score: number | null;
+  atualizadoEmUtc: string | null;
+  perigoPrincipal: TipoPerigo | null;
+  chuva3hMm: number | null;
+  ventoKmH: number | null;
+  sensacaoTermica: number | null;
+  alagamentosCge: PontoAlagamentoCge[];
+}

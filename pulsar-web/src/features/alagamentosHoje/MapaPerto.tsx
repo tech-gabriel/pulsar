@@ -65,6 +65,8 @@ export default function MapaPerto({ pontos, centro, nomeSubprefeitura, contorno 
         cooperativeGestures
         attributionControl={{ compact: true }}
         style={{ width: '100%', height: '100%' }}
+        // A atribuição compacta nasce aberta e só recolhe no primeiro arrasto; num mapa de 280 px ela cobriria o pé.
+        onLoad={(e) => e.target.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show')}
       >
         {poligono && !centro && (
           <Source id="perto-sub" type="geojson" data={poligono}>

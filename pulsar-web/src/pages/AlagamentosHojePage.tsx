@@ -285,7 +285,7 @@ function RegiaoEscolhida({ regiao, risco, pontos, contorno, logado, onTrocar }: 
 
       <section className="ah-convite" aria-labelledby="ah-convite">
         <h2 id="ah-convite">{logado ? `Acompanhe ${comArtigo(sub)} no Pulsar` : `Receba o alerta ${sub.deNome} no celular`}</h2>
-        <p>Só quando {sub.nome} entrar em Atenção ou Alerta. Fora isso, silêncio.</p>
+        <p>Só quando {comArtigo(sub)} entrar em Atenção ou Alerta. Fora isso, silêncio.</p>
         <Link to={destino} className="landing-cta ah-cta-cheio" onClick={aoConvidar}>
           {logado ? `Ver ${comArtigo(sub)} no mapa` : 'Criar conta grátis'}
         </Link>

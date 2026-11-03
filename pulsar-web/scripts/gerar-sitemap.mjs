@@ -14,6 +14,8 @@ const institucionais = [
   { loc: '/', changefreq: 'weekly', priority: '1.0' },
   { loc: '/sobre', changefreq: 'monthly', priority: '0.7' },
   { loc: '/novidades', changefreq: 'weekly', priority: '0.6' },
+  // Página da temporada de chuva: o conteúdo ao vivo muda a toda hora, o pré-renderizado toda semana.
+  { loc: '/pontos-de-alagamento-hoje', changefreq: 'daily', priority: '0.9' },
   { loc: '/privacidade', changefreq: 'yearly', priority: '0.3' },
   { loc: '/termos', changefreq: 'yearly', priority: '0.3' },
 ];

@@ -170,6 +170,7 @@ function LinksNav({ titulo, itens }: { titulo: string; itens: { slug: string; no
             <Link to={`${PREFIXO_REGIAO}/${r.slug}`} style={linkStyle}>{r.nome}</Link>
           </li>
         ))}
+        <li><Link to="/pontos-de-alagamento-hoje" style={linkStyle}>Pontos de alagamento hoje</Link></li>
       </ul>
     </nav>
   );

@@ -7,7 +7,7 @@ import { useCountUp } from '../../hooks/useCountUp';
 import { useNotificacoesPrefs } from '../../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../../hooks/usePushSubscription';
 import { usePrevisaoSubprefeitura } from '../../hooks/usePrevisaoSubprefeitura';
-import { coresParaFaixa, labelFaixa } from '../../utils/risco';
+import { coresParaFaixa, labelFaixa, motivoDoRisco } from '../../utils/risco';
 import { fraseChuvaForte } from '../../utils/previsao';
 import { useCatalogoDicas } from '../../hooks/useCatalogoDicas';
 import { blocosDeDicas } from '../../utils/dicas';
@@ -39,11 +39,11 @@ function nivelUv(uv: number): string {
 function fraseDoRisco(area: Area, faixas: FaixaPrevisaoDto[]): string {
   const s = area.scoreAtual;
   const l = area.ultimaLeitura;
-  if (s && area.faixaRisco && area.faixaRisco !== 'BAIXO') {
-    if (s.perigoPrincipal === 'VENTO' && l) return `Por vento de ${inteiro(l.ventoKmH)} km/h`;
-    if (s.perigoPrincipal === 'CALOR' && l) return `Por calor: sensação de ${inteiro(l.sensacaoTermica)} °C`;
-    return `Por chuva: ${decimal(s.chuva3hMm ?? 0)} mm nas últimas 3h`;
-  }
+  const motivo = s && motivoDoRisco({
+    faixa: area.faixaRisco, perigoPrincipal: s.perigoPrincipal, chuva3hMm: s.chuva3hMm,
+    ventoKmH: l?.ventoKmH, sensacaoTermica: l?.sensacaoTermica,
+  });
+  if (motivo) return motivo;
   return fraseChuvaForte(faixas, Date.now())
     ?? (faixas.length > 0 ? 'Sem chuva forte nas próximas horas' : 'Nada fora do normal agora');
 }

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Navigation, Search, X } from 'lucide-react';
 import type { FaixaRisco } from '../../../types';
 import { normalizarNome } from '../../../utils/texto';
-import { emNomeDe } from '../../../data/regioes-seo';
+import { emNomeDe, getSubprefeituraPorSlug } from '../../../data/regioes-seo';
+import { lerRegiaoPendente, limparRegiaoPendente } from '../regiaoPendente';
 
 const MAX = 10;
 const COR: Record<FaixaRisco, string> = { BAIXO: '#22C55E', MODERADO: '#F59E0B', ALTO: '#EF4444' };
@@ -21,6 +22,15 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
   const titulo = useRef<HTMLHeadingElement>(null);
   useEffect(() => titulo.current?.focus(), []);
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
+  // Veio de uma página pública com a região escolhida: chega marcada (só marcada) assim que a
+  // lista estiver carregada. Ajuste durante o render, como o deep-link do MapaPage.
+  const [pendenteAplicado, setPendenteAplicado] = useState(false);
+  if (!pendenteAplicado && subprefeituras.length > 0) {
+    setPendenteAplicado(true);
+    const nome = getSubprefeituraPorSlug(lerRegiaoPendente() ?? '')?.nome;
+    const sub = nome ? subprefeituras.find((s) => normalizarNome(s.nome) === normalizarNome(nome)) : undefined;
+    if (sub) setSelecionadas([sub.id]);
+  }
   const [busca, setBusca] = useState('');
   const [gps, setGps] = useState<EstadoGps>('ocioso');
   const [detectada, setDetectada] = useState<string | null>(null);
@@ -57,6 +67,7 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
     setErro(false);
     const ok = await onContinuar(selecionadas);
     setSalvando(false);
+    if (ok) limparRegiaoPendente();
     if (!ok) setErro(true);
   }
 

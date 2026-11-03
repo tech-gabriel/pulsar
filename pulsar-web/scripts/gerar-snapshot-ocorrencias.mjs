@@ -7,7 +7,7 @@
 // o build segue com o último JSON commitado em vez de quebrar o deploy. O deploy
 // semanal agendado (.github/workflows/deploy.yml, segunda) é o que mantém
 // os números frescos. À mão: npm run snapshot:ocorrencias.
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -56,6 +56,59 @@ export function agregar(features) {
   return { periodo: { de, ate }, subprefeituras: out };
 }
 
+const arred = (n) => Math.round(n * 1e5) / 1e5;
+
+/**
+ * Pontos para a página "Pontos de alagamento em SP hoje" (public/pontos-alagamento.json).
+ * ACUMULA entre builds: a camada do GeoSampa parece zerar na virada do ano, e sem o histórico
+ * a página ficaria vazia em janeiro, no pico da chuva. Junta os anteriores aos novos sem repetir
+ * o cd_identificador (o novo vence) e guarda 12 meses contados da ocorrência mais recente.
+ */
+export function acumularPontos(anteriores, features) {
+  const porId = new Map(anteriores.map((p) => [p.id, p]));
+  for (const f of features) {
+    const data = String(f.properties?.dt_ocorrencia ?? '').slice(0, 10);
+    const sigla = String(f.properties?.nm_subprefeitura ?? '').split(' - ')[0].trim().toUpperCase();
+    const sub = SIGLA_PARA_SLUG[sigla];
+    const [lon, lat] = f.geometry?.coordinates ?? [];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || !sub || typeof lat !== 'number' || typeof lon !== 'number') continue;
+    const tipo = String(f.properties?.dc_tipo_ocorrencia ?? '').toUpperCase() === 'INUNDACAO' ? 'INUNDACAO' : 'ALAGAMENTO';
+    const id = String(f.properties?.cd_identificador ?? `${data}:${lat}:${lon}`);
+    porId.set(id, { id, lat: arred(lat), lon: arred(lon), tipo, data, sub });
+  }
+  const todos = [...porId.values()];
+  const ate = todos.reduce((m, p) => (p.data > m ? p.data : m), '');
+  const corte = ate ? `${Number(ate.slice(0, 4)) - 1}${ate.slice(4)}` : '';
+  const pontos = todos.filter((p) => p.data >= corte).sort((a, b) => a.data.localeCompare(b.data) || a.id.localeCompare(b.id));
+  const de = pontos.reduce((m, p) => (!m || p.data < m ? p.data : m), null);
+  return { periodo: { de, ate: pontos.length ? ate : null }, pontos };
+}
+
+const PONTOS_EM_PRODUCAO = 'https://app-pulsar.com.br/pontos-alagamento.json';
+
+/**
+ * Base do acúmulo: o arquivo que está no ar. O build do CI não commita o que acumulou, então
+ * partir só do arquivo do repositório perderia tudo o que foi publicado desde o último commit.
+ * Produção fora: cai no arquivo do repositório; sem nenhum dos dois, começa vazio.
+ */
+export async function lerPontosAnteriores(fetchFn, lerLocal) {
+  try {
+    const r = await fetchFn(PONTOS_EM_PRODUCAO, { signal: AbortSignal.timeout(30_000) });
+    if (r.ok) {
+      const j = await r.json();
+      if (Array.isArray(j?.pontos)) return j.pontos;
+    }
+  } catch {
+    /* produção fora: usa o local */
+  }
+  return lerLocal()?.pontos ?? [];
+}
+
+/** O GeoSampa respondendo sem nenhuma ocorrência (a camada parece zerar na virada do ano) é falha, não "zero". */
+export function exigirOcorrencias(features) {
+  if (features.length === 0) throw new Error('GeoSampa respondeu sem nenhuma ocorrência; mantendo o snapshot anterior');
+}
+
 async function main() {
   const dest = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'data', 'ocorrencias-snapshot.json');
   try {
@@ -68,9 +121,17 @@ async function main() {
       // Falha de camada aborta tudo: snapshot parcial subnotificaria em silêncio.
       features.push(...(await res.json()).features);
     }
+    exigirOcorrencias(features);
     const out = { geradoEm: new Date().toISOString().slice(0, 10), ...agregar(features) };
     writeFileSync(dest, JSON.stringify(out, null, 2) + '\n');
     console.log(`Snapshot de ocorrências: ${features.length} (${out.periodo.de} a ${out.periodo.ate})`);
+
+    // Pontos da página pública, acumulados com o arquivo anterior (servido de public/, compacto).
+    const destPontos = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'pontos-alagamento.json');
+    const anteriores = await lerPontosAnteriores(fetch, () => (existsSync(destPontos) ? JSON.parse(readFileSync(destPontos, 'utf8')) : null));
+    const pontos = { geradoEm: out.geradoEm, ...acumularPontos(anteriores, features) };
+    writeFileSync(destPontos, JSON.stringify(pontos) + '\n');
+    console.log(`Pontos de alagamento: ${pontos.pontos.length} (${pontos.periodo.de} a ${pontos.periodo.ate})`);
   } catch (err) {
     if (process.argv.includes('--manter-se-falhar') && existsSync(dest)) {
       console.warn(`AVISO: snapshot de ocorrências não atualizado, mantendo o anterior. ${err.message}`);

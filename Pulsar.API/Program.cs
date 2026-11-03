@@ -101,6 +101,17 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Risco agora das páginas públicas: cada página relê a cada 5 min. 30/min por IP dá folga
+    // para várias abas e recarregar, e segura chamada em loop (a resposta já vem de cache).
+    options.AddPolicy("publico", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 // --- JWT Authentication ---

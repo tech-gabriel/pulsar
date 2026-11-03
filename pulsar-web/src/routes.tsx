@@ -9,6 +9,7 @@ import RootLayout from './RootLayout';
 import CarregandoRota from './components/CarregandoRota';
 import LandingPage from './pages/LandingPage';
 import SobrePage from './pages/SobrePage';
+import AlagamentosHojePage from './pages/AlagamentosHojePage';
 import PrivacidadePage from './pages/PrivacidadePage';
 import TermosPage from './pages/TermosPage';
 import NovidadesPage from './pages/NovidadesPage';
@@ -48,6 +49,7 @@ export const rotasPublicas: RouteObject[] = [
   { path: 'privacidade', element: <PrivacidadePage /> },
   { path: 'termos', element: <TermosPage /> },
   { path: 'novidades', element: <NovidadesPage /> },
+  { path: 'pontos-de-alagamento-hoje', element: <AlagamentosHojePage /> },
 ];
 
 // Páginas públicas de SEO por região (prerenderizadas) — eager, sem guard.

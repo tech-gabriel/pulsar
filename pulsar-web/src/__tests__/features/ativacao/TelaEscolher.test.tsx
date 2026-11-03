@@ -50,3 +50,29 @@ describe('TelaEscolher', () => {
     expect(screen.getByRole('button', { name: 'Continuar · 0' })).toBeDisabled();
   });
 });
+
+describe('TelaEscolher com região pendente da página pública', () => {
+  it('abre com a subprefeitura marcada, não salva sozinha e limpa ao continuar', async () => {
+    localStorage.clear();
+    const { guardarRegiaoPendente, lerRegiaoPendente } = await import('../../../features/ativacao/regiaoPendente');
+    guardarRegiaoPendente('mooca');
+    const onContinuar = vi.fn().mockResolvedValue(true);
+    render(<TelaEscolher subprefeituras={subs} localizar={vi.fn()} onContinuar={onContinuar} />);
+    expect(screen.getByRole('checkbox', { name: 'Mooca' })).toBeChecked();
+    expect(onContinuar).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar · 1' }));
+    await waitFor(() => expect(onContinuar).toHaveBeenCalledWith(['s1']));
+    await waitFor(() => expect(lerRegiaoPendente()).toBeNull());
+  });
+});
+
+describe('TelaEscolher com região pendente e lista que chega depois', () => {
+  it('marca quando as subprefeituras chegam', async () => {
+    localStorage.clear();
+    const { guardarRegiaoPendente } = await import('../../../features/ativacao/regiaoPendente');
+    guardarRegiaoPendente('penha');
+    const { rerender } = render(<TelaEscolher subprefeituras={[]} localizar={vi.fn()} onContinuar={vi.fn()} />);
+    rerender(<TelaEscolher subprefeituras={subs} localizar={vi.fn()} onContinuar={vi.fn()} />);
+    expect(screen.getByRole('checkbox', { name: 'Penha' })).toBeChecked();
+  });
+});

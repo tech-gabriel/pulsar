@@ -130,3 +130,22 @@ export function resumoAlertas(
   if (areas.length === 0) return carregando ? 'Carregando o risco…' : 'Sem dados de risco agora';
   return `Tudo tranquilo em ${cidadeNome}`;
 }
+
+/**
+ * O porquê do risco, quando há risco: a mesma frase no detalhe do app e nas páginas públicas.
+ * Sem risco (ou sem dado) devolve null, e quem chama decide o que dizer.
+ */
+export function motivoDoRisco(r: {
+  faixa: FaixaRisco | null | undefined;
+  perigoPrincipal?: TipoPerigo | null;
+  chuva3hMm?: number | null;
+  ventoKmH?: number | null;
+  sensacaoTermica?: number | null;
+}): string | null {
+  if (!r.faixa || r.faixa === 'BAIXO') return null;
+  const inteiro = (v: number) => Math.round(v).toLocaleString('pt-BR');
+  if (r.perigoPrincipal === 'VENTO' && r.ventoKmH != null) return `Por vento de ${inteiro(r.ventoKmH)} km/h`;
+  if (r.perigoPrincipal === 'CALOR' && r.sensacaoTermica != null) return `Por calor: sensação de ${inteiro(r.sensacaoTermica)} °C`;
+  const mm = (r.chuva3hMm ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return `Por chuva: ${mm} mm nas últimas 3h`;
+}

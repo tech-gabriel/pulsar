@@ -28,6 +28,7 @@ const COR_PONTO_ROTA = '#052F4A';
 // que separa o traçado do mapa nos dois temas.
 const COR_HALO_ROTA = '#ffffff';
 const DESENHO_MS = 600;
+const PONTOS_ROTA = ['pulsar-rota-entrada', 'pulsar-rota-origem', 'pulsar-rota-destino'];
 // Aproxima a curva de chegada do app, cubic-bezier(.16, 1, .3, 1): sai rápido e assenta devagar.
 const chegada = (x: number) => 1 - Math.pow(1 - x, 4);
 
@@ -207,6 +208,16 @@ export default function MapaGL(props: PropsMapa) {
       mapa.off('moveend', desenhar);
     };
   }, [chaveRota, carregou, reduzido]);
+
+  // Os pontos da rota ficam acima de tudo, inclusive dos rótulos do mapa ("São Paulo" não os
+  // cobre). Entram sem beforeId, mas a troca do estilo base (tema, reserva) pode reempilhar os
+  // nomes por cima: a cada rota nova e a cada estilo novo, eles voltam ao topo.
+  const desenhoDaRota = desenho?.chave;
+  useEffect(() => {
+    const mapa = mapRef.current?.getMap();
+    if (!mapa || !desenhoDaRota) return;
+    for (const id of PONTOS_ROTA) if (mapa.getLayer(id)) mapa.moveLayer(id);
+  }, [desenhoDaRota, idPrimeiroSimbolo]);
 
   // Objeto estável: um GeoJSON novo a cada render faria o Source reprocessar o círculo no worker.
   const precisao = pontoBusca?.precisao;

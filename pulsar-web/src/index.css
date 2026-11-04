@@ -2227,13 +2227,18 @@ html:not(.light) .ah-cge-titulo { color: #f87171; }
    O ponto do veredito é a marca: núcleo, halo em dois anéis e uma onda. A cor do cartão
    transiciona quando a resposta chega (o cartão já existe no "Avaliando o caminho…"). */
 @property --c { syntax: '<color>'; inherits: true; initial-value: transparent; }
-.rota-veredito { overflow: clip; transition: --c 320ms cubic-bezier(.16, 1, .3, 1); }
+.rota-veredito { overflow: clip; transition: --c 320ms cubic-bezier(.16, 1, .3, 1); gap: 12px; padding: 12px; }
+/* Compacto: no Pode ir, título e frase cabem numa linha cada a 390 px; os outros quebram bonito. */
+.rota-veredito .det-hero-faixa { font-size: 16px; text-wrap: pretty; }
+.rota-veredito .det-hero-frase { font-size: 12.5px; text-wrap: pretty; }
+/* Rodapé do cartão: afastado da frase e num tom abaixo, para não ler como parte dela. */
+.rota-atualizado { margin-top: 8px; font-size: 11.5px; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--text-secondary) 78%, transparent); }
 /* Uma caixa do tamanho do ponto; onda, halo e núcleo empilhados dentro dela (onda por baixo). */
-.rota-ponto { position: relative; display: block; width: 44px; height: 44px; flex: 0 0 44px; }
+.rota-ponto { position: relative; display: block; width: 32px; height: 32px; flex: 0 0 32px; }
 .rota-ponto > span { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
 .rota-ponto-onda { background: var(--c); opacity: 0; }
 .rota-ponto-halo {
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 26%, transparent), 0 0 0 10px color-mix(in srgb, var(--c) 14%, transparent);
+  box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--c) 26%, transparent), 0 0 0 7px color-mix(in srgb, var(--c) 14%, transparent);
 }
 .rota-ponto-nucleo { background: var(--c); }
 /* Chegada: o núcleo entra aceso (1.1) e assenta. No laço ele acende sem salto: 1 → 1.1 → 1. */
@@ -2257,6 +2262,12 @@ html:not(.light) .ah-cge-titulo { color: #f87171; }
 /* Trechos entram em cascata curta (atraso por item no estilo, teto de 150 ms). */
 @keyframes rota-trecho { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .rota-trecho { animation: rota-trecho .24s cubic-bezier(.22, 1, .36, 1) both; }
+/* Marcador de chegada no mapa: sombra leve e nasce do ponto exato (o pé, 47 de 52 px). */
+@keyframes rota-chegada { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+.rota-chegada {
+  display: block; overflow: visible; transform-origin: 50% 90%; filter: drop-shadow(0 2px 2.2px rgba(5, 47, 74, .28));
+  animation: rota-chegada .22s cubic-bezier(.16, 1, .3, 1) both;
+}
 
 /* Botões da rota: um primário por estado; retorno de toque imediato e soltura mais lenta. */
 .rota-botao {
@@ -2268,15 +2279,18 @@ html:not(.light) .ah-cge-titulo { color: #f87171; }
 .rota-botao:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: 2px; }
 /* Mesmo primário do app (Ativar alertas no detalhe, .at-cta das boas-vindas): pulsar-600, branco e sombra azul. */
 .rota-primario {
-  min-height: 48px; font: 700 15px var(--font-heading); background: var(--color-pulsar-600); color: #fff;
+  min-height: 42px; border-radius: 12px; font: 700 14px var(--font-heading); background: var(--color-pulsar-600); color: #fff;
   box-shadow: 0 8px 22px -8px rgba(0, 132, 209, .6), inset 0 1px 0 rgba(255, 255, 255, .22);
 }
-.rota-secundario { min-height: 44px; font: 600 13px var(--font-body); background: var(--bg-input); color: var(--text-primary); }
+.rota-secundario { min-height: 36px; border-radius: 11px; font: 600 12.5px var(--font-body); background: var(--bg-input); color: var(--text-primary); }
+/* O que aparece encolheu, o toque não: uma faixa invisível leva a área a 44 px de altura. */
+.rota-primario, .rota-secundario { position: relative; }
+.rota-primario::after, .rota-secundario::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
 .rota-sutil { min-height: 44px; padding: 0 6px; font: 600 13px var(--font-body); color: var(--text-primary); }
 .rota-sutil:hover { text-decoration: underline; text-underline-offset: 3px; }
 /* "Aviso pedido": estado de sucesso, não botão apagado. */
 .rota-aviso-ok {
-  min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 14px;
+  min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 12px;
   font: 600 14px var(--font-body); background: color-mix(in srgb, var(--color-pulsar-500) 14%, transparent); color: var(--color-pulsar-300);
 }
 html.light .rota-aviso-ok { color: var(--color-pulsar-700); }
@@ -2287,5 +2301,6 @@ html.light .rota-aviso-ok { color: var(--color-pulsar-700); }
   .rota-ponto[data-pulso] .rota-ponto-halo { animation: veredito-halo .2s ease-out; }
   .rota-trecho { animation: rota-surge .2s ease-out both; animation-delay: 0s !important; }
   .rota-barra { animation: rota-surge .2s ease-out both; animation-delay: 0s !important; }
+  .rota-chegada { animation: rota-surge .2s ease-out both; }
   .rota-botao, .rota-botao:active { transform: none; }
 }

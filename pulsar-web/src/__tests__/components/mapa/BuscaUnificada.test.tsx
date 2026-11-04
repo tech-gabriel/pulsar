@@ -119,10 +119,13 @@ describe('BuscaEndereco — botão de localização', () => {
 });
 
 describe('BuscaUnificada: rota', () => {
-  it('o chip Rota chama onAbrirRota', () => {
+  it('o botão Rota é só o ícone e chama onAbrirRota', () => {
     const onAbrirRota = vi.fn();
     render(<BuscaUnificada areas={[] as Area[]} onSelecionarArea={vi.fn()} onSelecionar={vi.fn()} isMobile={false} onAbrirRota={onAbrirRota} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Rota' }));
+    const botao = screen.getByRole('button', { name: 'Rota' });
+    expect(botao).toHaveAttribute('title', 'Rota');
+    expect(botao).toHaveTextContent(/^$/);
+    fireEvent.click(botao);
     expect(onAbrirRota).toHaveBeenCalled();
   });
 });

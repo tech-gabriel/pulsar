@@ -2273,15 +2273,18 @@ html:not(.light) .ah-cge-titulo { color: #f87171; }
 .rota-botao:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: 2px; }
 /* Mesmo primário do app (Ativar alertas no detalhe, .at-cta das boas-vindas): pulsar-600, branco e sombra azul. */
 .rota-primario {
-  min-height: 48px; font: 700 15px var(--font-heading); background: var(--color-pulsar-600); color: #fff;
+  min-height: 42px; border-radius: 12px; font: 700 14px var(--font-heading); background: var(--color-pulsar-600); color: #fff;
   box-shadow: 0 8px 22px -8px rgba(0, 132, 209, .6), inset 0 1px 0 rgba(255, 255, 255, .22);
 }
-.rota-secundario { min-height: 44px; font: 600 13px var(--font-body); background: var(--bg-input); color: var(--text-primary); }
+.rota-secundario { min-height: 36px; border-radius: 11px; font: 600 12.5px var(--font-body); background: var(--bg-input); color: var(--text-primary); }
+/* O que aparece encolheu, o toque não: uma faixa invisível leva a área a 44 px de altura. */
+.rota-primario, .rota-secundario { position: relative; }
+.rota-primario::after, .rota-secundario::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
 .rota-sutil { min-height: 44px; padding: 0 6px; font: 600 13px var(--font-body); color: var(--text-primary); }
 .rota-sutil:hover { text-decoration: underline; text-underline-offset: 3px; }
 /* "Aviso pedido": estado de sucesso, não botão apagado. */
 .rota-aviso-ok {
-  min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 14px;
+  min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 12px;
   font: 600 14px var(--font-body); background: color-mix(in srgb, var(--color-pulsar-500) 14%, transparent); color: var(--color-pulsar-300);
 }
 html.light .rota-aviso-ok { color: var(--color-pulsar-700); }

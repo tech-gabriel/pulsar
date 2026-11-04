@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.28.1',
+    data: '2026-11-03',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Rota mais limpa no celular',
+        descricao: 'O botão Rota virou só o ícone, ao lado do alvo. Com a rota aberta, os controles do mapa saem da frente e o resultado ficou mais compacto. A saída aparece como o seu ponto azul, a chegada ganhou uma bandeira e o caminho virou uma linha pontilhada.',
+      },
+    ],
+  },
+  {
     versao: '1.28.0',
     data: '2026-11-03',
     itens: [

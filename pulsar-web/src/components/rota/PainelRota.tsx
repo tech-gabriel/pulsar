@@ -25,8 +25,6 @@ interface Props {
   atualizadoEm?: number | null;
 }
 
-const horaMinuto = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
 type App = 'google' | 'waze' | 'apple';
 
 const MENSAGEM_ERRO = {
@@ -107,10 +105,7 @@ export default function PainelRota({ resultado, origem, destino, carregando, err
   return (
     <div className="mt-3">
       {/* Mesmo lugar na árvore no carregando e no resultado: o cartão não desmonta, só muda. */}
-      <VereditoRota resultado={pronto ? resultado : null} />
-      {pronto && atualizadoEm && (
-        <p className="mt-1.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>Atualizado às {horaMinuto.format(atualizadoEm)}</p>
-      )}
+      <VereditoRota resultado={pronto ? resultado : null} atualizadoEm={atualizadoEm} />
       {pronto && <Resultado resultado={resultado} links={linksNavegacao(origem, destino)} app={app} onApp={lembrarApp}
         avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso} />}
     </div>

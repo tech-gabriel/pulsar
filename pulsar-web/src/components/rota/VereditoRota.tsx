@@ -9,6 +9,7 @@ const FAIXA_DO_ESTADO = { PodeIr: 'BAIXO', ComAtencao: 'MODERADO', Esperar: 'ALT
 // Chegada de veredito com dado: um pulso. Esperar e Com atenção seguem pulsando; sem leitura nunca pulsa.
 const PULSO = { PodeIr: 'chegada', ComAtencao: 'atencao', Esperar: 'esperar', SemDado: undefined } as const;
 const TROCA = { duration: 0.16, ease: 'easeOut' } as const;
+const horaMinuto = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
 /**
  * O mesmo cartão de risco do detalhe da subprefeitura (.det-hero), com a marca (onda, halo e
@@ -16,7 +17,7 @@ const TROCA = { duration: 0.16, ease: 'easeOut' } as const;
  * "Avaliando o caminho…" com o ponto cinza: quando a resposta chega, a cor transiciona (--c)
  * e o texto troca em crossfade, sem desmontar o cartão.
  */
-export default function VereditoRota({ resultado }: { resultado: RotaAvaliacao | null }) {
+export default function VereditoRota({ resultado, atualizadoEm }: { resultado: RotaAvaliacao | null; atualizadoEm?: number | null }) {
   const cores = coresParaFaixa(resultado ? FAIXA_DO_ESTADO[resultado.estado] : null);
   const texto = resultado ? textoVeredito(resultado) : null;
   const estado = resultado?.estado ?? 'carregando';
@@ -37,6 +38,8 @@ export default function VereditoRota({ resultado }: { resultado: RotaAvaliacao |
               : <span aria-hidden="true" className="skeleton-block block h-3.5 w-4/5 mt-1.5" />}
           </motion.div>
         </AnimatePresence>
+        {/* Fora do crossfade e afastado da frase: é rodapé do cartão, não parte do texto. */}
+        {resultado && atualizadoEm ? <p className="rota-atualizado">Atualizado às {horaMinuto.format(atualizadoEm)}</p> : null}
       </div>
     </div>
   );

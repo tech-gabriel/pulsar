@@ -45,6 +45,8 @@ export function deslocamentoDoPainel(p: Padding): [number, number] {
 
 // Folga em volta da rota enquadrada, para origem e destino não encostarem na borda nem nos controles.
 const FOLGA_ROTA = 40;
+// O marcador de chegada sobe uns 47 px acima do ponto: no alto a folga cresce para ele caber.
+const ALTURA_CHEGADA = 47;
 
 /**
  * Padding do enquadramento da rota. Computador e tablet largo: o painel à direita. Celular: a
@@ -61,11 +63,11 @@ export function paddingDaRota(container: HTMLElement): Padding {
     const pe = window.innerHeight - (parseFloat(cs.bottom) || 0);
     const altura = Math.max(parseFloat(cs.maxHeight) || 0, Number(folha.dataset.alturaFinal) || 0);
     const campos = document.querySelector<HTMLElement>('[data-campos-rota]')?.getBoundingClientRect();
-    const top = (campos ? Math.max(0, campos.bottom - m.top) : 0) + FOLGA_ROTA;
+    const top = (campos ? Math.max(0, campos.bottom - m.top) : 0) + FOLGA_ROTA + ALTURA_CHEGADA;
     const bottom = Math.max(0, m.bottom - (pe - altura)) + FOLGA_ROTA;
     // Tela baixa: sobra pelo menos uma faixa de 120 px para a rota (padding maior que o mapa o MapLibre recusa).
     const k = Math.min(1, Math.max(0, m.height - 120) / (top + bottom));
     return { top: top * k, bottom: bottom * k, left: FOLGA_ROTA, right: FOLGA_ROTA };
   }
-  return { top: base.top + FOLGA_ROTA, right: base.right + FOLGA_ROTA, bottom: base.bottom + FOLGA_ROTA, left: base.left + FOLGA_ROTA };
+  return { top: base.top + FOLGA_ROTA + ALTURA_CHEGADA, right: base.right + FOLGA_ROTA, bottom: base.bottom + FOLGA_ROTA, left: base.left + FOLGA_ROTA };
 }

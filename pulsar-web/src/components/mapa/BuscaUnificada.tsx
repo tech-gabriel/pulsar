@@ -14,7 +14,7 @@ interface Props {
   isMobile: boolean;
   onUsarLocalizacao?: () => void;
   localizando?: boolean;
-  /** Abre o modo rota (De/Para). Sem ele o chip "Rota" não aparece. */
+  /** Abre o modo rota (De/Para). Sem ele o botão de rota não aparece. */
   onAbrirRota?: () => void;
   /** Dentro do painel flutuante (tablet e computador): sem posição própria nem vidro. */
   embutida?: boolean;
@@ -140,10 +140,11 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
           <button
             type="button"
             onClick={onAbrirRota}
-            className="mapa-txt flex items-center gap-1 h-8 px-2.5 rounded-full flex-shrink-0 text-xs font-semibold"
-            style={{ background: 'var(--bg-input)' }}
+            aria-label="Rota"
+            title="Rota"
+            className="mapa-txt-suave flex items-center justify-center w-11 h-11 -my-2 rounded-lg flex-shrink-0 transition-colors"
           >
-            <Route size={14} aria-hidden="true" />Rota
+            <Route size={18} aria-hidden="true" />
           </button>
         )}
         {onUsarLocalizacao && (

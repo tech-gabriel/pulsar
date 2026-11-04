@@ -14,7 +14,7 @@ const linhas = (fc: FeatureCollection) => fc.features.filter((f) => f.geometry.t
 const papeis = (fc: FeatureCollection) => fc.features.map((f) => f.properties?.papel).filter(Boolean);
 
 describe('cortarRota', () => {
-  it('no começo só os pontos, sem linha nem entrada', () => {
+  it('no começo só os pontos, sem linha', () => {
     const r = cortarRota(rota, 0);
     expect(linhas(r)).toHaveLength(0);
     expect(papeis(r)).toEqual(['origem', 'destino']);
@@ -26,10 +26,10 @@ describe('cortarRota', () => {
     expect(linhas(cortarRota(rota, 0.25))).toHaveLength(1);
   });
 
-  it('ao passar a divisa marca a entrada na cor do trecho novo', () => {
+  it('ao passar a divisa desenha o trecho novo na cor dele, sem ponto de entrada', () => {
     const r = cortarRota(rota, 0.75);
-    expect(linhas(r)).toHaveLength(2);
-    expect(r.features.find((f) => f.properties?.papel === 'entrada')?.properties?.cor).toBe('vermelho');
+    expect(linhas(r).map((l) => l.properties?.cor)).toEqual(['verde', 'vermelho']);
+    expect(papeis(r)).toEqual(['origem', 'destino']);
   });
 
   it('inteira devolve os trechos originais', () => {

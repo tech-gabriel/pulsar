@@ -16,9 +16,8 @@ export function chaveGeometria(rota: FeatureCollection): string {
 }
 
 /**
- * A rota até a fração `t` do comprimento (0 a 1): os trechos cortados, um ponto onde o caminho
- * entra em cada subprefeitura já alcançada (papel `entrada`, na cor do trecho), a origem e o
- * destino (o mapa o mantém com raio 0 até a linha chegar, para ele "nascer" com transição).
+ * A rota até a fração `t` do comprimento (0 a 1): os trechos cortados, a origem e o destino
+ * (o mapa só mostra o destino quando a linha chega, para ele "nascer").
  */
 export function cortarRota(rota: FeatureCollection, t: number): FeatureCollection {
   const linhas = rota.features.filter((f): f is Feature<LineString> => f.geometry.type === 'LineString');
@@ -27,11 +26,8 @@ export function cortarRota(rota: FeatureCollection, t: number): FeatureCollectio
   const completo = t >= 1;
   const saida: Feature[] = [];
 
-  linhas.forEach((f, idx) => {
+  linhas.forEach((f) => {
     const cs = f.geometry.coordinates;
-    if (idx > 0 && (completo || resta > 0)) {
-      saida.push({ type: 'Feature', properties: { papel: 'entrada', cor: f.properties?.cor }, geometry: { type: 'Point', coordinates: cs[0] } });
-    }
     if (completo) { saida.push(f); return; }
     if (resta <= 0) return;
     const parte: Position[] = [cs[0]];

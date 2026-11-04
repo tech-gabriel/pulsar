@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowUpDown, Building2, Landmark, Loader2, MapPin } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, Building2, Flag, Landmark, Loader2, MapPin } from 'lucide-react';
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
 import { buscarAreas, type Area } from '../../features/cidade/areas';
 import type { PontoRota } from '../../features/rota/tipos';
@@ -157,10 +157,14 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
           className="mapa-txt-suave flex items-center justify-center w-11 h-11 flex-shrink-0">
           <ArrowLeft size={18} />
         </button>
-        <div aria-hidden="true" className="flex flex-col items-center gap-[3px] flex-shrink-0">
-          <i className="w-2.5 h-2.5 rounded-full border-[2.5px]" style={{ borderColor: 'var(--text-accent)' }} />
-          <i className="w-0.5 h-3.5" style={{ background: 'var(--border-glass-hover)' }} />
-          <i className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--text-primary)' }} />
+        {/* Os mesmos marcadores do mapa, em miniatura: o "você está aqui" e a chegada com bandeira. */}
+        <div aria-hidden="true" className="flex flex-col items-center gap-1.5 flex-shrink-0 w-[18px]">
+          <i data-indicador="origem" className="w-3 h-3 rounded-full border-[2.5px] border-white"
+            style={{ background: 'var(--color-pulsar-500)', boxShadow: '0 0 0 3px rgb(0 166 244 / .18)' }} />
+          <i className="w-0.5 h-[18px]" style={{ background: 'var(--border-glass-hover)' }} />
+          <i data-indicador="destino" className="w-[18px] h-[18px] rounded-full flex items-center justify-center" style={{ background: 'var(--color-pulsar-600)' }}>
+            <Flag size={10} strokeWidth={2.5} color="#fff" />
+          </i>
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-1.5 ml-1">
           <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} alvoLista={alvo} />

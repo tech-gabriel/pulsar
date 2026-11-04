@@ -29,6 +29,8 @@ export interface PropsMapa {
   ocorrencias: OcorrenciaAlagamentoDto[];
   /** Traçado da rota: linhas com `properties.cor` e os pontos `origem`/`destino`. */
   rota?: FeatureCollection | null;
+  /** Esconde o zoom (rota no celular). */
+  semZoom?: boolean;
 }
 
 // O MapLibre (e o worker dele) vêm num chunk próprio: a página, o painel e a busca aparecem antes.

@@ -2262,6 +2262,12 @@ html:not(.light) .ah-cge-titulo { color: #f87171; }
 /* Trechos entram em cascata curta (atraso por item no estilo, teto de 150 ms). */
 @keyframes rota-trecho { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .rota-trecho { animation: rota-trecho .24s cubic-bezier(.22, 1, .36, 1) both; }
+/* Marcador de chegada no mapa: sombra leve e nasce do ponto exato (o pé, 47 de 52 px). */
+@keyframes rota-chegada { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+.rota-chegada {
+  display: block; overflow: visible; transform-origin: 50% 90%; filter: drop-shadow(0 2px 2.2px rgba(5, 47, 74, .28));
+  animation: rota-chegada .22s cubic-bezier(.16, 1, .3, 1) both;
+}
 
 /* Botões da rota: um primário por estado; retorno de toque imediato e soltura mais lenta. */
 .rota-botao {
@@ -2295,5 +2301,6 @@ html.light .rota-aviso-ok { color: var(--color-pulsar-700); }
   .rota-ponto[data-pulso] .rota-ponto-halo { animation: veredito-halo .2s ease-out; }
   .rota-trecho { animation: rota-surge .2s ease-out both; animation-delay: 0s !important; }
   .rota-barra { animation: rota-surge .2s ease-out both; animation-delay: 0s !important; }
+  .rota-chegada { animation: rota-surge .2s ease-out both; }
   .rota-botao, .rota-botao:active { transform: none; }
 }

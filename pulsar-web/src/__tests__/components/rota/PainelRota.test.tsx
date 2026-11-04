@@ -241,6 +241,9 @@ describe('PainelRota: pendências da revisão', () => {
   it('mostra "Atualizado às HH:MM" no fuso do navegador', () => {
     const em = new Date(2026, 10, 3, 14, 5).getTime();
     render(<PainelRota {...base} resultado={rota('PodeIr')} erro={null} avisoPedido={false} atualizadoEm={em} />);
-    expect(screen.getByText('Atualizado às 14:05')).toBeInTheDocument();
+    // Dentro do cartão do veredito, fora da frase.
+    const linha = screen.getByText('Atualizado às 14:05');
+    expect(linha.closest('.rota-veredito')).not.toBeNull();
+    expect(linha.closest('.det-hero-frase')).toBeNull();
   });
 });

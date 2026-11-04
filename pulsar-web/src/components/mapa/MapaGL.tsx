@@ -48,7 +48,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, semZoom = false } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -256,7 +256,7 @@ export default function MapaGL(props: PropsMapa) {
         setIdPrimeiroSimbolo(primeiroSimbolo(e.target));
       }}
     >
-      <ZoomControles lado={isMobile ? 'direita' : 'esquerda'} />
+      {!semZoom && <ZoomControles lado={isMobile ? 'direita' : 'esquerda'} />}
       <AttributionControl compact position="bottom-right" />
 
       {geojson && carregou && (

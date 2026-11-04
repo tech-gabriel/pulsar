@@ -99,6 +99,7 @@ export default function MapaPage() {
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
   const rotaSemPontos = rotaAberta && !(rota.origem && rota.destino);
+  const rotaNoCelular = isMobile && rotaAberta;
   useAlturaFluida(folhaRef, !rotaSemPontos); // a folha sai e volta (AnimatePresence)
   const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
 
@@ -310,25 +311,30 @@ export default function MapaPage() {
           overlayAlagamento={overlayAlagamento}
           ocorrencias={ocorrencias}
           rota={rotaAberta ? rota.linha : null}
+          semZoom={rotaNoCelular}
         />
 
         {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}
         {isMobile && (rotaAberta ? camposRota(false) : buscaMapa(false))}
 
-        {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
-        <LayerControl
-          camadaAtiva={camadaAtiva}
-          onChange={setCamadaAtiva}
-          isMobile={isMobile}
-        />
+        {/* Na rota do celular os controles do mapa saem: a tela é do caminho (voltam ao fechar). */}
+        {!rotaNoCelular && (
+          <>
+            {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
+            <LayerControl
+              camadaAtiva={camadaAtiva}
+              onChange={setCamadaAtiva}
+              isMobile={isMobile}
+            />
 
-
-        {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
-        <OverlayAlagamentoToggle
-          ativo={overlayAlagamento}
-          onToggle={() => setOverlayAlagamento((v) => !v)}
-          isMobile={isMobile}
-        />
+            {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
+            <OverlayAlagamentoToggle
+              ativo={overlayAlagamento}
+              onToggle={() => setOverlayAlagamento((v) => !v)}
+              isMobile={isMobile}
+            />
+          </>
+        )}
 
         {/* Pilha da legenda e dos avisos (tablet: à direita, no alto; computador: à esquerda, no pé).
             No celular a pilha some (display: contents) e cada peça se posiciona sozinha. */}

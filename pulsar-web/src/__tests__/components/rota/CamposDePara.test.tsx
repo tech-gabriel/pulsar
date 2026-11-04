@@ -129,3 +129,15 @@ describe('CamposDePara: lista que muda depois das setas', () => {
     expect(onDestino).not.toHaveBeenCalled();
   });
 });
+
+describe('CamposDePara: indicadores', () => {
+  it('De e Para usam os marcadores do mapa: o ponto azul e a bandeira de chegada', () => {
+    const { container } = render(<CamposDePara areas={areas} origem={null} destino={null} onOrigem={vi.fn()} onDestino={vi.fn()}
+      onInverter={vi.fn()} onFechar={vi.fn()} />);
+    const origem = container.querySelector('[data-indicador="origem"]') as HTMLElement;
+    const destino = container.querySelector('[data-indicador="destino"]') as HTMLElement;
+    expect(origem.style.background).toBe('var(--color-pulsar-500)');
+    expect(destino.style.background).toBe('var(--color-pulsar-600)');
+    expect(destino.querySelector('.lucide-flag')).not.toBeNull();
+  });
+});

@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.28.2',
+    data: '2026-11-05',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Página de alagamentos mais clara quando algo falha',
+        descricao: 'Se a localização for bloqueada, demorar ou não responder, a página diz o que aconteceu e deixa escolher o bairro. A hora da última leitura ganha a data quando não é de hoje, o botão Tentar de novo mostra que está tentando e, se o mapa não abrir, o resto da página continua funcionando.',
+      },
+    ],
+  },
+  {
     versao: '1.28.1',
     data: '2026-11-03',
     itens: [

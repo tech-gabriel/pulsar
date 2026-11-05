@@ -33,6 +33,13 @@ export function horaCurta(iso: string): string {
   return Number.isNaN(data.getTime()) ? '' : formatadorHora.format(data);
 }
 
+/** "às 14:05" se for de hoje, "em 04 nov, 14:05" se for de outro dia (para "Atualizado ..."). */
+export function quandoAtualizado(iso: string, agora = new Date()): string {
+  const data = new Date(iso);
+  if (Number.isNaN(data.getTime())) return '';
+  return data.toDateString() === agora.toDateString() ? `às ${horaCurta(iso)}` : `em ${dataAbsoluta(iso)}`;
+}
+
 /**
  * Tempo relativo em pt-BR ("agora", "há 5 min", "há 3 h", "ontem", "há 4 dias").
  * Para itens com mais de 7 dias, cai para a data absoluta curta.

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -6,7 +6,8 @@ import { join } from 'node:path';
 import type { RiscoAgoraPublico } from '../../types';
 
 const estado = vi.hoisted(() => ({
-  risco: { dados: null as RiscoAgoraPublico[] | null, erro: false, atualizar: () => {} },
+  risco: { dados: null as RiscoAgoraPublico[] | null, erro: false, carregando: false, atualizar: () => {} },
+  mapaQuebra: false,
   usuario: null as object | null,
   falhaJson: '' as string, // trecho da URL que deve falhar
   semDados: '' as string, // trecho da URL que fica carregando
@@ -15,7 +16,12 @@ const estado = vi.hoisted(() => ({
 vi.mock('../../hooks/useSeoHead', () => ({ useSeoHead: () => {} }));
 vi.mock('../../hooks/useRiscoAgora', () => ({ useRiscoAgora: () => estado.risco }));
 vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ usuario: estado.usuario }) }));
-vi.mock('../../features/alagamentosHoje/MapaPerto', () => ({ default: () => <div data-testid="mapa-perto" /> }));
+vi.mock('../../features/alagamentosHoje/MapaPerto', () => ({
+  default: () => {
+    if (estado.mapaQuebra) throw new Error('chunk do mapa não baixou');
+    return <div data-testid="mapa-perto" />;
+  },
+}));
 
 const PUBLICO = join(__dirname, '../../../public');
 const leve = JSON.parse(readFileSync(join(PUBLICO, 'subprefeituras-leve.geojson'), 'utf8'));
@@ -47,7 +53,8 @@ function geolocalizacao(impl: (ok: PositionCallback, erro: PositionErrorCallback
 
 describe('AlagamentosHojePage', () => {
   beforeEach(() => {
-    estado.risco = { dados: [mooca()], erro: false, atualizar: () => {} };
+    estado.risco = { dados: [mooca()], erro: false, carregando: false, atualizar: () => {} };
+    estado.mapaQuebra = false;
     estado.usuario = null;
     estado.falhaJson = '';
     estado.semDados = '';
@@ -74,7 +81,7 @@ describe('AlagamentosHojePage', () => {
   });
 
   it('risco que não carregou: avisa e oferece tentar de novo, sem dizer Tranquilo', () => {
-    estado.risco = { dados: null, erro: true, atualizar: vi.fn() };
+    estado.risco = { dados: null, erro: true, carregando: false, atualizar: vi.fn() };
     abrir();
     escolherBairro('Mooca');
     expect(screen.getByText(/Não deu para carregar o risco agora/)).toBeInTheDocument();
@@ -87,7 +94,7 @@ describe('AlagamentosHojePage', () => {
     geolocalizacao((_ok, erro) => erro({ code: 1 } as GeolocationPositionError));
     abrir();
     fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
-    expect(await screen.findByText(/Sem acesso à localização/)).toBeInTheDocument();
+    expect(await screen.findByText(/localização está bloqueada/)).toBeInTheDocument();
     expect(screen.getByLabelText(/bairro/i)).toBeInTheDocument();
   });
 
@@ -114,13 +121,14 @@ describe('AlagamentosHojePage', () => {
   });
 
   it('alagamento ativo do CGE aparece com a rua; sem ponto, o card não aparece', () => {
-    estado.risco = { dados: [mooca({ alagamentosCge: [{ via: 'Av. do Estado', referencia: 'Viaduto Glicério', inicioUtc: '2026-11-02T18:52:00Z', transitavel: false }] })], erro: false, atualizar: () => {} };
+    estado.risco = { dados: [mooca({ alagamentosCge: [{ via: 'Av. do Estado', referencia: 'Viaduto Glicério', inicioUtc: '2026-11-02T18:52:00Z', transitavel: false }] })], erro: false, carregando: false, atualizar: () => {} };
     const { unmount } = abrir();
     escolherBairro('Mooca');
     const card = screen.getByRole('region', { name: 'Alagando agora' });
     expect(within(card).getByText('Av. do Estado')).toBeInTheDocument();
     unmount();
-    estado.risco = { dados: [mooca()], erro: false, atualizar: () => {} };
+    estado.risco = { dados: [mooca()], erro: false, carregando: false, atualizar: () => {} };
+    estado.mapaQuebra = false;
     abrir();
     escolherBairro('Mooca');
     expect(screen.queryByRole('region', { name: 'Alagando agora' })).not.toBeInTheDocument();
@@ -166,10 +174,68 @@ describe('AlagamentosHojePage', () => {
   });
 
   it('sem score: diz que está sem leitura, nunca Tranquilo', () => {
-    estado.risco = { dados: [mooca({ score: null, atualizadoEmUtc: null, faixaRisco: 'BAIXO' })], erro: false, atualizar: () => {} };
+    estado.risco = { dados: [mooca({ score: null, atualizadoEmUtc: null, faixaRisco: 'BAIXO' })], erro: false, carregando: false, atualizar: () => {} };
     abrir();
     escolherBairro('Mooca');
     expect(screen.getByText(/Sem leitura agora/)).toBeInTheDocument();
     expect(screen.queryByText('Tranquilo')).not.toBeInTheDocument();
+  });
+
+  it('localização sem sinal ou que demora: diz que não achou e convida a tentar de novo, não que está bloqueada', async () => {
+    geolocalizacao((_ok, erro) => erro({ code: 3 } as GeolocationPositionError));
+    abrir();
+    fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
+    expect(await screen.findByText(/Não deu para achar a sua localização agora/)).toBeInTheDocument();
+    expect(screen.queryByText(/bloqueada/)).not.toBeInTheDocument();
+  });
+
+  it('pedido de localização ignorado: sai do Procurando depois da espera', () => {
+    vi.useFakeTimers();
+    try {
+      geolocalizacao(() => {}); // o navegador nunca responde
+      abrir();
+      fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
+      expect(screen.getByRole('button', { name: /Procurando você/ })).toBeDisabled();
+      act(() => vi.advanceTimersByTime(20_000));
+      expect(screen.getByText(/A localização não respondeu/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Ver a minha região/ })).toBeEnabled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('localização que chega depois de escolher o bairro não troca a região nem mostra aviso', () => {
+    let responder: { ok: PositionCallback; erro: PositionErrorCallback } | null = null;
+    geolocalizacao((ok, erro) => { responder = { ok, erro }; });
+    abrir();
+    fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
+    escolherBairro('Mooca');
+    act(() => responder!.ok({ coords: { latitude: -23.5329, longitude: -46.7396, accuracy: 30 } } as GeolocationPosition)); // Butantã
+    expect(screen.getByRole('button', { name: /Mooca/ })).toBeInTheDocument();
+    act(() => responder!.erro({ code: 1 } as GeolocationPositionError));
+    fireEvent.click(screen.getByRole('button', { name: /trocar a região/ }));
+    expect(screen.queryByText(/bloqueada/)).not.toBeInTheDocument();
+  });
+
+  it('leitura de outro dia mostra a data, não só a hora', () => {
+    abrir();
+    escolherBairro('Mooca');
+    expect(screen.getByText(/^Atualizado em /)).toBeInTheDocument();
+  });
+
+  it('tentar de novo em andamento: o botão avisa e não aceita clique duplo', () => {
+    estado.risco = { dados: null, erro: true, carregando: true, atualizar: vi.fn() };
+    abrir();
+    escolherBairro('Mooca');
+    expect(screen.getByRole('button', { name: 'Tentando…' })).toBeDisabled();
+  });
+
+  it('mapa que não abre não derruba a página', () => {
+    estado.mapaQuebra = true;
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    abrir();
+    escolherBairro('Mooca');
+    expect(screen.getByText(/Não deu para abrir o mapa agora/)).toBeInTheDocument();
+    expect(screen.getByText(/Risco agora na Mooca/)).toBeInTheDocument();
   });
 });

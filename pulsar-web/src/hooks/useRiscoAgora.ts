@@ -13,7 +13,12 @@ export function useRiscoAgora(ativo: boolean) {
   const [dados, setDados] = useState<RiscoAgoraPublico[] | null>(null);
   const [erro, setErro] = useState(false);
   const [tentativa, setTentativa] = useState(0);
-  const atualizar = useCallback(() => setTentativa((n) => n + 1), []);
+  // Feedback do "Tentar de novo": sem ele o botão parece não fazer nada quando a rede falha de novo.
+  const [carregando, setCarregando] = useState(false);
+  const atualizar = useCallback(() => {
+    setCarregando(true);
+    setTentativa((n) => n + 1);
+  }, []);
 
   useEffect(() => {
     if (!ativo) return;
@@ -30,7 +35,8 @@ export function useRiscoAgora(ativo: boolean) {
           setErro(false);
         })
         // Mantém o que já tinha: melhor um risco de minutos atrás que nenhum.
-        .catch(() => valendo && setErro(true));
+        .catch(() => valendo && setErro(true))
+        .finally(() => valendo && setCarregando(false));
     void buscar();
     const id = window.setInterval(() => {
       if (document.visibilityState === 'visible') void buscar();
@@ -41,5 +47,5 @@ export function useRiscoAgora(ativo: boolean) {
     };
   }, [ativo, tentativa]);
 
-  return { dados, erro, atualizar };
+  return { dados, erro, carregando, atualizar };
 }

@@ -17,6 +17,7 @@ export const PALETA = {
   ambar: '#f59e0b', // amber-500  — atenção
   vermelho: '#ef4444', // red-500    — risco alto
   roxo: '#9333ea', // purple-600 — UV extremo
+  voce: '#00BCFF', // pulsar-400 — a pessoa no mapa (ponto e raio), igual ao --color-pulsar-400
 } as const;
 
 export type TomPaleta = keyof typeof PALETA;

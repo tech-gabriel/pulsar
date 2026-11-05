@@ -10,7 +10,6 @@ import { PALETA } from '../../utils/paleta';
 import { normalizarNome } from '../../utils/texto';
 import type { Ponto } from './regras';
 
-const COR_VOCE = '#00BCFF';
 
 interface Props {
   pontos: Ponto[];
@@ -75,8 +74,8 @@ export default function MapaPerto({ pontos, centro, nomeSubprefeitura, contorno 
         )}
         {raio && (
           <Source id="perto-raio" type="geojson" data={raio}>
-            <Layer id="perto-raio-fill" type="fill" paint={{ 'fill-color': COR_VOCE, 'fill-opacity': 0.08 }} />
-            <Layer id="perto-raio-linha" type="line" paint={{ 'line-color': COR_VOCE, 'line-width': 1.4, 'line-dasharray': [2, 2] }} />
+            <Layer id="perto-raio-fill" type="fill" paint={{ 'fill-color': PALETA.voce, 'fill-opacity': 0.08 }} />
+            <Layer id="perto-raio-linha" type="line" paint={{ 'line-color': PALETA.voce, 'line-width': 1.4, 'line-dasharray': [2, 2] }} />
           </Source>
         )}
         <Source id="perto-pontos" type="geojson" data={dados}>

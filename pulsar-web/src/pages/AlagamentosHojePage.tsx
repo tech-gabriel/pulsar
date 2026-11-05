@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { FeatureCollection } from 'geojson';
 import { ArrowRight, Bell, ChevronDown, Droplets, LockKeyhole, MapPin, Navigation, Search, TriangleAlert } from 'lucide-react';
@@ -10,7 +10,8 @@ import { useJsonPublico } from '../hooks/useJsonPublico';
 import { useAuth } from '../contexts/AuthContext';
 import { track } from '../analytics/events';
 import { coresParaFaixa, labelFaixa, motivoDoRisco } from '../utils/risco';
-import { horaCurta } from '../utils/data';
+import { horaCurta, quandoAtualizado } from '../utils/data';
+import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { PALETA } from '../utils/paleta';
 import { normalizarNome } from '../utils/texto';
 import {
@@ -29,7 +30,10 @@ interface Regiao {
   sub: SubprefeituraSeo;
   centro?: { lat: number; lon: number };
 }
-type EstadoLocalizacao = 'ocioso' | 'procurando' | 'negada' | 'fora' | 'semContorno';
+type EstadoLocalizacao = 'ocioso' | 'procurando' | 'negada' | 'indisponivel' | 'semResposta' | 'fora' | 'semContorno';
+
+/** Sem resposta do navegador nesse tempo, a pessoa ignorou o pedido (o timeout da API só conta depois do sim). */
+const ESPERA_LOCALIZACAO_MS = 20_000;
 
 const DISTRITOS = [...new Set(subprefeituras.flatMap((s) => s.distritos))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
@@ -77,20 +81,43 @@ export default function AlagamentosHojePage() {
     setCoords(null);
   }
 
+  // Cada pedido de localização ganha um número; resposta de pedido antigo (ou chegada depois de
+  // a pessoa escolher o bairro) é ignorada.
+  const pedidoGeo = useRef(0);
+  const esperaGeo = useRef<number | undefined>(undefined);
+  function encerrarPedido() {
+    pedidoGeo.current++;
+    window.clearTimeout(esperaGeo.current);
+  }
+
   function pedirLocalizacao() {
+    encerrarPedido();
     if (!('geolocation' in navigator)) {
-      setLocalizacao('negada');
+      setLocalizacao('indisponivel');
       return;
     }
+    const id = pedidoGeo.current;
+    const valendo = () => pedidoGeo.current === id;
     setLocalizacao('procurando');
+    esperaGeo.current = window.setTimeout(() => {
+      if (!valendo()) return;
+      encerrarPedido();
+      setCoords(null);
+      setLocalizacao('semResposta');
+    }, ESPERA_LOCALIZACAO_MS);
     navigator.geolocation.getCurrentPosition(
       (p) => {
+        if (!valendo()) return;
+        window.clearTimeout(esperaGeo.current);
         track.usouGeolocalizacao(true);
         setCoords({ lat: p.coords.latitude, lon: p.coords.longitude });
       },
-      () => {
+      (e) => {
+        if (!valendo()) return;
+        encerrarPedido();
         track.usouGeolocalizacao(false);
-        setLocalizacao('negada');
+        // 1 = a pessoa (ou o navegador) negou; 2 e 3 = sem sinal ou demorou: tentar de novo pode dar certo.
+        setLocalizacao(e.code === 1 ? 'negada' : 'indisponivel');
       },
       { timeout: 10_000, maximumAge: 60_000 },
     );
@@ -100,6 +127,8 @@ export default function AlagamentosHojePage() {
   function escolherBairro(valor: string) {
     const sub = subprefeituraDoDistrito(valor) ?? subprefeituras.find((s) => normalizarNome(s.nome) === normalizarNome(valor));
     if (sub) {
+      encerrarPedido();
+      setCoords(null);
       setRegiao({ sub });
       setLocalizacao('ocioso');
     }
@@ -179,7 +208,9 @@ function Escolha({ localizacao, bairro, onLocalizar, onDigitar, onBairro }: {
       <button type="button" className="landing-cta ah-cta-cheio" onClick={onLocalizar} disabled={localizacao === 'procurando'}>
         <Navigation size={18} aria-hidden="true" /> {localizacao === 'procurando' ? 'Procurando você…' : 'Ver a minha região'}
       </button>
-      {localizacao === 'negada' && <p className="ah-aviso" role="status">Sem acesso à localização. Escolha o bairro abaixo.</p>}
+      {localizacao === 'negada' && <p className="ah-aviso" role="status">A localização está bloqueada neste navegador. Escolha o bairro abaixo.</p>}
+      {localizacao === 'indisponivel' && <p className="ah-aviso" role="status">Não deu para achar a sua localização agora. Escolha o bairro abaixo ou tente de novo.</p>}
+      {localizacao === 'semResposta' && <p className="ah-aviso" role="status">A localização não respondeu. Escolha o bairro abaixo ou tente de novo.</p>}
       {localizacao === 'fora' && <p className="ah-aviso" role="status">Esse lugar fica fora da cidade de São Paulo. Escolha um bairro da capital.</p>}
       {localizacao === 'semContorno' && <p className="ah-aviso" role="status">Não deu para achar a sua região agora. Escolha o bairro abaixo.</p>}
       <label className="ah-campo">
@@ -210,7 +241,7 @@ function Escolha({ localizacao, bairro, onLocalizar, onDigitar, onBairro }: {
 
 function RegiaoEscolhida({ regiao, risco, pontos, pontosErro, contorno, logado, onTrocar }: {
   regiao: Regiao;
-  risco: { dados: RiscoAgoraPublico[] | null; erro: boolean; atualizar: () => void };
+  risco: { dados: RiscoAgoraPublico[] | null; erro: boolean; carregando: boolean; atualizar: () => void };
   pontos: { periodo: Periodo; pontos: Ponto[] } | null;
   pontosErro: boolean;
   contorno: FeatureCollection | null;
@@ -249,7 +280,7 @@ function RegiaoEscolhida({ regiao, risco, pontos, pontosErro, contorno, logado, 
                 </p>
               </div>
             </div>
-            <p className="ah-meta">{atual.atualizadoEmUtc ? `Atualizado às ${horaCurta(atual.atualizadoEmUtc)}` : 'Ainda sem leitura'}</p>
+            <p className="ah-meta">{atual.atualizadoEmUtc ? `Atualizado ${quandoAtualizado(atual.atualizadoEmUtc)}` : 'Ainda sem leitura'}</p>
             {!logado && (
               <Link to={destino} className="ah-link-forte" onClick={aoConvidar}>
                 <Bell size={16} aria-hidden="true" /> Avise-me quando piorar <ArrowRight size={16} aria-hidden="true" />
@@ -259,7 +290,7 @@ function RegiaoEscolhida({ regiao, risco, pontos, pontosErro, contorno, logado, 
         ) : risco.erro ? (
           <div className="ah-erro" role="status">
             <p>Não deu para carregar o risco agora.</p>
-            <button type="button" onClick={risco.atualizar}>Tentar de novo</button>
+            <button type="button" onClick={risco.atualizar} disabled={risco.carregando}>{risco.carregando ? 'Tentando…' : 'Tentar de novo'}</button>
           </div>
         ) : (
           <p className="ah-meta" role="status">Carregando o risco agora…</p>
@@ -297,13 +328,16 @@ function RegiaoEscolhida({ regiao, risco, pontos, pontosErro, contorno, logado, 
             Ocorrências da Defesa Civil {periodoLegivel(pontos.periodo)}. Mostram onde costuma alagar, não o que está alagado agora.
           </p>
         )}
-        <Suspense fallback={<div className="mapa-perto" aria-hidden="true" />}>
-          <MapaPerto pontos={perto} centro={centro} nomeSubprefeitura={sub.nome} contorno={contorno} />
-        </Suspense>
+        {/* Chunk do mapa que não baixa (deploy novo, rede caindo) ou WebGL que falha não derruba a página. */}
+        <ErrorBoundary fallback={<p className="mapa-perto ah-mapa-erro" role="status">Não deu para abrir o mapa agora. A contagem acima continua valendo.</p>}>
+          <Suspense fallback={<div className="mapa-perto" aria-hidden="true" />}>
+            <MapaPerto pontos={perto} centro={centro} nomeSubprefeitura={sub.nome} contorno={contorno} />
+          </Suspense>
+        </ErrorBoundary>
         <div className="ah-legenda">
           <span><i style={{ background: PALETA.azul }} /> Alagamento</span>
           <span><i style={{ background: PALETA.azulProfundo }} /> Inundação</span>
-          {centro && <span><i style={{ background: '#00BCFF' }} /> Você</span>}
+          {centro && <span><i style={{ background: PALETA.voce }} /> Você</span>}
           {centro && <span><b /> 2 km</span>}
         </div>
       </section>

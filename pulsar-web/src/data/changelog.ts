@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.29.0',
+    data: '2026-11-06',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Casa e trabalho na Rota',
+        descricao: 'Salve o endereço da sua casa e do seu trabalho e eles aparecem primeiro quando você toca em De ou Para na Rota. Um toque e o caminho está montado. A região de cada um entra nas suas favoritas, e você pode tirar quando quiser.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Configurações mais organizadas',
+        descricao: 'A tela de Configurações ficou em grupos, como os Ajustes do celular: conta, seus lugares, avisos, aparência e sobre. Trocar ou apagar casa e trabalho pede confirmação, e as subprefeituras que você acompanha ganharam uma tela própria.',
+      },
+    ],
+  },
+  {
     versao: '1.28.2',
     data: '2026-11-05',
     itens: [

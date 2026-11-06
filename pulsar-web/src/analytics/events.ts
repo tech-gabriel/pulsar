@@ -21,7 +21,9 @@ export type NomeEvento =
   | 'abriu_rota'
   | 'viu_veredito_rota'
   | 'abriu_app_rota'
-  | 'pediu_aviso_rota';
+  | 'pediu_aviso_rota'
+  | 'salvou_local'
+  | 'usou_local';
 
 function capturar(nome: NomeEvento, props?: Record<string, unknown>): void {
   if (!isAnalyticsEnabled()) return;
@@ -44,6 +46,8 @@ export const track = {
   ativouPush: () => capturar('ativou_push'),
   usouGeolocalizacao: (sucesso: boolean) => capturar('usou_geolocalizacao', { sucesso }),
   buscouEndereco: () => capturar('buscou_endereco'),
+  salvouLocal: (tipo: 'casa' | 'trabalho', origem: 'rota' | 'configuracoes') => capturar('salvou_local', { tipo, origem }),
+  usouLocal: (tipo: 'casa' | 'trabalho') => capturar('usou_local', { tipo }),
   viuNovidades: (versao: string) => capturar('viu_novidades', { versao }),
   clicouInstagram: (origem: string) => capturar('clicou_instagram', { origem }),
   passoVisto: (passo: Passo, ordem: number, total: number) => capturar('ativacao_passo_visto', { passo, ordem, total }),

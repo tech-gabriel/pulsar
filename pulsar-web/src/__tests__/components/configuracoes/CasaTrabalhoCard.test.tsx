@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
@@ -77,8 +78,8 @@ describe('CasaTrabalhoCard', () => {
     h.locais = { CASA: casa };
     render(<CasaTrabalhoCard />);
     fireEvent.click(screen.getByRole('button', { name: 'Trocar' }));
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Mooca' } });
-    fireEvent.click(screen.getByRole('option', { name: /Rua da Mooca/ }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Mooca' } });
+    fireEvent.click(screen.getByRole('button', { name: /Rua da Mooca/ }));
     await waitFor(() => expect(h.salvar).toHaveBeenCalledWith(
       'CASA',
       { lat: -23.55, lon: -46.61, rotulo: 'Rua da Mooca', fonte: 'endereco' },
@@ -87,12 +88,24 @@ describe('CasaTrabalhoCard', () => {
     ));
   });
 
+  it('escolhe o endereço só com o teclado (Tab até o resultado e Enter)', async () => {
+    const user = userEvent.setup();
+    render(<CasaTrabalhoCard />);
+    await user.click(screen.getAllByRole('button', { name: 'Salvar' })[0]);
+    await user.keyboard('Mooca');
+    await user.tab(); // Cancelar
+    await user.tab();
+    expect(screen.getByRole('button', { name: /Rua da Mooca/ })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(h.salvar).toHaveBeenCalledWith('CASA', expect.objectContaining({ rotulo: 'Rua da Mooca' }), 'sub-1', 'configuracoes'));
+  });
+
   it('endereço fora de SP avisa e não salva', async () => {
     h.subId = null;
     render(<CasaTrabalhoCard />);
     fireEvent.click(screen.getAllByRole('button', { name: 'Salvar' })[0]);
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Mooca' } });
-    fireEvent.click(screen.getByRole('option', { name: /Rua da Mooca/ }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Mooca' } });
+    fireEvent.click(screen.getByRole('button', { name: /Rua da Mooca/ }));
     await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Esse endereço fica fora da cidade de São Paulo.', 'error'));
     expect(h.salvar).not.toHaveBeenCalled();
   });

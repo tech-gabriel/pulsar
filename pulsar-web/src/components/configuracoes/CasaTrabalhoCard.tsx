@@ -26,8 +26,6 @@ function BuscaInline({ tipo, onEscolher, onCancelar }: { tipo: TipoLocal; onEsco
       <div className="flex items-center gap-1">
         <input
           type="text"
-          role="combobox"
-          aria-expanded={resultados.length > 0}
           aria-label={`Endereço de ${ROTULO_TIPO[tipo].toLowerCase()}`}
           placeholder={`Busque o endereço ${tipo === 'CASA' ? 'da sua casa' : 'do seu trabalho'}`}
           autoFocus
@@ -38,17 +36,17 @@ function BuscaInline({ tipo, onEscolher, onCancelar }: { tipo: TipoLocal; onEsco
         <button type="button" onClick={onCancelar} className={botao} style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Cancelar</button>
       </div>
       {resultados.length > 0 && (
-        <ul role="listbox" aria-label="Endereços" className="mt-1.5 max-h-60 overflow-y-auto rounded-xl" style={{ background: 'var(--bg-input)' }}>
+        <ul aria-label="Endereços" className="mt-1.5 max-h-60 overflow-y-auto rounded-xl" style={{ background: 'var(--bg-input)' }}>
           {resultados.map((r, i) => (
-            <li
-              key={`${r.descricao}-${i}`}
-              role="option"
-              aria-selected={false}
-              onClick={() => onEscolher({ lat: r.latitude, lon: r.longitude, rotulo: r.nome || r.descricao, fonte: 'endereco' })}
-              className="cursor-pointer px-3 py-2.5 min-h-11 truncate"
-              style={{ fontSize: 13, color: 'var(--text-primary)' }}
-            >
-              {r.nome || r.descricao}
+            <li key={`${r.descricao}-${i}`}>
+              <button
+                type="button"
+                onClick={() => onEscolher({ lat: r.latitude, lon: r.longitude, rotulo: r.nome || r.descricao, fonte: 'endereco' })}
+                className="w-full text-left px-3 py-2.5 min-h-11 truncate"
+                style={{ fontSize: 13, color: 'var(--text-primary)' }}
+              >
+                {r.nome || r.descricao}
+              </button>
             </li>
           ))}
         </ul>

@@ -159,6 +159,12 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
       cancelar();
       return;
     }
+    // Com as linhas abertas e sem sugestões, a seta para baixo entra nelas (Tab do De vai para o Para).
+    if (!mostrar && linhas && e.key === 'ArrowDown') {
+      const primeira = linhasRef.current?.querySelector<HTMLElement>('button');
+      if (primeira) { e.preventDefault(); primeira.focus(); }
+      return;
+    }
     if (!mostrar) return;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();

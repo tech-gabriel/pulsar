@@ -219,6 +219,16 @@ describe('CamposDePara: casa e trabalho', () => {
     expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
   });
 
+  it('seta para baixo no campo com as linhas abertas leva o foco para a Casa, no De e no Para', () => {
+    monta();
+    for (const nome of ['De', 'Para']) {
+      const campo = screen.getByRole('combobox', { name: nome });
+      fireEvent.focus(campo);
+      fireEvent.keyDown(campo, { key: 'ArrowDown' });
+      expect(screen.getByRole('button', { name: /^Casa/ })).toHaveFocus();
+    }
+  });
+
   it('tocarCasaPreenchida_preencheOCampo', () => {
     const { onDestino } = monta({ locais: { CASA } });
     fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));

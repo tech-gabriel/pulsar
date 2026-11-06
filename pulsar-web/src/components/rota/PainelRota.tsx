@@ -1,8 +1,10 @@
 import { useSyncExternalStore } from 'react';
-import { BellRing, Check, ExternalLink, Navigation } from 'lucide-react';
+import { BellRing, BriefcaseBusiness, Check, ExternalLink, House, Navigation } from 'lucide-react';
 import { track } from '../../analytics';
 import { linksNavegacao } from '../../features/rota/links';
+import { podeSalvar } from '../../features/locais/regras';
 import type { PontoRota, RotaAvaliacao } from '../../features/rota/tipos';
+import type { LocalSalvoDto, TipoLocal } from '../../types';
 import { coresParaFaixa, labelFaixa } from '../../utils/risco';
 import FaixaHorasRota from './FaixaHorasRota';
 import VereditoRota from './VereditoRota';
@@ -23,6 +25,9 @@ interface Props {
   onTrocar?: (ponto: 'origem' | 'destino') => void;
   /** Hora (epoch ms) da última avaliação recebida. */
   atualizadoEm?: number | null;
+  /** Casa e trabalho já salvos: o botão daquele tipo some. */
+  locais?: Partial<Record<TipoLocal, LocalSalvoDto>>;
+  onSalvarLocal?: (tipo: TipoLocal, p: PontoRota) => Promise<boolean>;
 }
 
 type App = 'google' | 'waze' | 'apple';
@@ -80,7 +85,7 @@ function useAppLembrado(): App {
  * a saída para o app de navegação. Um primário por estado: o app lembrado em Pode ir e Com
  * atenção, o aviso em Esperar e nenhum em Sem leitura. O traçado e os campos ficam fora daqui.
  */
-export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm }: Props) {
+export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm, locais = {}, onSalvarLocal }: Props) {
   const app = useAppLembrado();
 
   if (erro) {
@@ -107,15 +112,18 @@ export default function PainelRota({ resultado, origem, destino, carregando, err
       {/* Mesmo lugar na árvore no carregando e no resultado: o cartão não desmonta, só muda. */}
       <VereditoRota resultado={pronto ? resultado : null} atualizadoEm={atualizadoEm} />
       {pronto && <Resultado resultado={resultado} links={linksNavegacao(origem, destino)} app={app} onApp={lembrarApp}
-        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso} />}
+        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso}
+        salvar={onSalvarLocal && podeSalvar(destino) ? { destino, locais, onSalvar: onSalvarLocal } : undefined} />}
     </div>
   );
 }
 
-function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel, onCancelarAviso }: {
+function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel, onCancelarAviso, salvar }: {
   resultado: RotaAvaliacao; links: Record<App, string>; app: App; onApp: (a: App) => void;
   avisoPedido: boolean; onPedirAviso: () => void; avisoIndisponivel: boolean; onCancelarAviso?: () => void;
+  salvar?: { destino: PontoRota; locais: Partial<Record<TipoLocal, LocalSalvoDto>>; onSalvar: (tipo: TipoLocal, p: PontoRota) => Promise<boolean> };
 }) {
+  const faltam = salvar ? (['CASA', 'TRABALHO'] as const).filter((t) => !salvar.locais[t]) : [];
   const esperar = resultado.estado === 'Esperar';
   const comHoras = (resultado.estado === 'ComAtencao' || esperar) && resultado.horas.length > 0;
   const outros = APPS.filter((a) => a !== app);
@@ -145,6 +153,17 @@ function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, av
           </li>
         ))}
       </ul>
+
+      {salvar && faltam.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-3.5">
+          {faltam.map((t) => (
+            <button key={t} type="button" onClick={() => void salvar.onSalvar(t, salvar.destino)} className="rota-botao rota-secundario px-3 flex-1">
+              {t === 'CASA' ? <House size={16} aria-hidden="true" /> : <BriefcaseBusiness size={16} aria-hidden="true" />}
+              {t === 'CASA' ? 'Salvar como casa' : 'Salvar como trabalho'}
+            </button>
+          ))}
+        </div>
+      )}
 
       {esperar ? (
         <>

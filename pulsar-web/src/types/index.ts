@@ -215,6 +215,22 @@ export interface HistoricoDto {
 
 // ── Favoritos ─────────────────────────────────────────────────────────────────
 
+export type TipoLocal = 'CASA' | 'TRABALHO';
+
+export interface LocalSalvoDto {
+  tipo: TipoLocal;
+  latitude: number;
+  longitude: number;
+  rotulo: string;
+  subprefeituraId: string;
+  subprefeituraNome: string;
+}
+
+export interface SalvarLocalResponse {
+  local: LocalSalvoDto;
+  favorita: 'ADICIONADA' | 'JA_ERA' | 'TETO';
+}
+
 export interface FavoritoDto {
   subprefeituraId: string;
   nome: string;

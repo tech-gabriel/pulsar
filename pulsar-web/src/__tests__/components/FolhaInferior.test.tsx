@@ -47,6 +47,12 @@ describe('FolhaInferior', () => {
     expect(onFechar).toHaveBeenCalled();
   });
 
+  it('flutua em vidro denso', () => {
+    render(<Demo />);
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir' }));
+    expect(screen.getByRole('dialog')).toHaveClass('vidro-painel', 'folha-inferior');
+  });
+
   it('Tab não sai da folha', () => {
     render(<Demo />);
     fireEvent.click(screen.getByRole('button', { name: 'Abrir' }));

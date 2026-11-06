@@ -1,93 +1,35 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  Sun, Moon, Mail, LogOut, Pencil, Check, X, Eye, EyeOff,
-  Lock, Star, ChevronRight, Bell, BellRing, HelpCircle, Smartphone, Loader2, Layers,
-} from 'lucide-react';
+import { useState } from 'react';
+import { Layers, Loader2, Moon, Star, Sun } from 'lucide-react';
 import FolhaInferior from '../components/ui/FolhaInferior';
 import Header from '../components/ui/Header';
-import GlassCard from '../components/ui/GlassCard';
 import SobreCard from '../components/ui/SobreCard';
 import CartaoConfirmarEmail from '../components/auth/CartaoConfirmarEmail';
+import CasaTrabalhoCard from '../components/configuracoes/CasaTrabalhoCard';
+import ContaGrupo from '../components/configuracoes/ContaGrupo';
+import AvisosGrupo from '../components/configuracoes/AvisosGrupo';
+import { GrupoAjustes, Interruptor, LinhaAjuste, Seta } from '../components/configuracoes/GrupoAjustes';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { useTransparencia } from '../hooks/useTransparencia';
 import { useToast } from '../contexts/ToastContext';
-import { useNotificacoesPrefs, type NotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
-import { usePushSubscription } from '../hooks/usePushSubscription';
 import { useFavoritos } from '../hooks/useFavoritos';
-import { limparAtivacaoVista } from '../features/ativacao/passos';
-import { PERFIS, perfilMeta } from '../utils/perfil';
-import type { TipoPerfil } from '../types';
 
-function iniciais(nome: string): string {
-  const partes = nome.trim().split(/\s+/).filter(Boolean);
-  if (partes.length === 0) return '?';
-  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
-  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+/** "Itaquera, Mooca, Vila Mariana e mais 2". */
+function resumoNomes(nomes: string[]): string {
+  if (nomes.length === 0) return 'Nenhuma ainda';
+  if (nomes.length <= 3) return nomes.length === 1 ? nomes[0] : `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`;
+  return `${nomes.slice(0, 3).join(', ')} e mais ${nomes.length - 3}`;
 }
 
-function senhaInvalida(senha: string): string | null {
-  if (senha.length < 8) return 'A senha deve ter no mínimo 8 caracteres.';
-  if ((senha.match(/\d/g) ?? []).length < 2) return 'A senha deve conter ao menos 2 números.';
-  if (!/[^a-zA-Z0-9]/.test(senha)) return 'A senha deve conter ao menos 1 caractere especial.';
-  return null;
-}
-
-/** Cabeçalho de seção reutilizável. */
-function SecaoTitulo({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="mb-3" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-secondary)' }}>
-      {children}
-    </h2>
-  );
-}
-
-/** Linha com label/descrição + switch (estilo theme-switch). */
-function SwitchRow({ titulo, descricao, ligado, onToggle }: {
-  titulo: string; descricao: string; ligado: boolean; onToggle: () => void;
-}) {
-  return (
-    <button type="button" onClick={onToggle} aria-pressed={ligado} className="w-full flex items-center justify-between gap-3 py-2.5 text-left">
-      <span className="min-w-0">
-        <span className="block" style={{ fontSize: 14, color: 'var(--text-primary)' }}>{titulo}</span>
-        <span className="block" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{descricao}</span>
-      </span>
-      <span className={['theme-switch', ligado ? 'on' : ''].join(' ')}>
-        <span className="theme-switch-knob" />
-      </span>
-    </button>
-  );
-}
-
+/** Configurações no estilo Ajustes do iPhone: grupos sólidos, uma ideia por linha. */
 export default function ConfiguracoesPage() {
-  const { usuario, logout, atualizarPerfil, sairDeTodosOsAparelhos } = useAuth();
+  const { logout, sairDeTodosOsAparelhos } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useToast();
-  const { prefs, toggle } = useNotificacoesPrefs();
-  const push = usePushSubscription(prefs);
-  const { favoritos, toggleFavorito } = useFavoritos();
-  const navigate = useNavigate();
-  const dark = theme === 'dark';
+  const { favoritos } = useFavoritos();
   const vidro = useTransparencia();
+  const dark = theme === 'dark';
 
-  function reverBoasVindas() {
-    limparAtivacaoVista();
-    navigate('/app/boas-vindas');
-  }
-
-  const metaAtual = perfilMeta(usuario?.perfil);
-
-  // --- Estado de edição do perfil ---
-  const [editando, setEditando] = useState(false);
-  const [nome, setNome] = useState(usuario?.nome ?? '');
-  const [email, setEmail] = useState(usuario?.email ?? '');
-  const [perfil, setPerfil] = useState<TipoPerfil>(usuario?.perfil ?? 'CIDADAO');
-  const [trocarSenha, setTrocarSenha] = useState(false);
-  const [senhaAtual, setSenhaAtual] = useState('');
-  const [novaSenha, setNovaSenha] = useState('');
-  const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [salvando, setSalvando] = useState(false);
   const [folhaSairTodos, setFolhaSairTodos] = useState(false);
   const [saindoTodos, setSaindoTodos] = useState(false);
 
@@ -101,380 +43,46 @@ export default function ConfiguracoesPage() {
     }
   }
 
-  function abrirEdicao() {
-    setNome(usuario?.nome ?? '');
-    setEmail(usuario?.email ?? '');
-    setPerfil(usuario?.perfil ?? 'CIDADAO');
-    setTrocarSenha(false);
-    setSenhaAtual('');
-    setNovaSenha('');
-    setEditando(true);
-  }
-
-  async function handleSalvar(e: FormEvent) {
-    e.preventDefault();
-    if (trocarSenha) {
-      const erro = senhaInvalida(novaSenha);
-      if (erro) { showToast(erro, 'error'); return; }
-      if (!senhaAtual) { showToast('Informe a senha atual para trocá-la.', 'error'); return; }
-    }
-    setSalvando(true);
-    // E-mail novo fica pendente até o clique no link (SEC1): o toast precisa dizer isso.
-    const trocouEmail = email.trim().toLowerCase() !== (usuario?.email ?? '');
-    try {
-      await atualizarPerfil({
-        nome,
-        email,
-        perfil,
-        ...(trocarSenha ? { senhaAtual, novaSenha } : {}),
-      });
-      showToast(
-        trocouEmail
-          ? `Enviamos um link para ${email.trim()}. O e-mail da conta só muda depois que você confirmar.`
-          : 'Perfil atualizado com sucesso!',
-        'success',
-      );
-      setEditando(false);
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { mensagem?: string } } })?.response?.data?.mensagem;
-      showToast(msg ?? 'Não foi possível atualizar o perfil.', 'error');
-    } finally {
-      setSalvando(false);
-    }
-  }
-
-  const notifs: { chave: keyof NotificacoesPrefs; titulo: string; descricao: string }[] = [
-    { chave: 'alertaAlto', titulo: 'Alertas', descricao: 'Avisar quando uma subprefeitura que você acompanha entrar em Alerta' },
-    { chave: 'alertaModerado', titulo: 'Avisos de atenção', descricao: 'Avisar também quando entrar em Atenção, ou quando houver chuva forte prevista' },
-    { chave: 'resumoDiario', titulo: 'Resumo diário', descricao: 'Um resumo do clima das suas subprefeituras, uma vez por dia' },
-  ];
-
   return (
     <div style={{ background: 'var(--bg-primary)', minHeight: '100dvh' }}>
       <Header />
-      <main className="mx-auto w-full px-4" style={{ maxWidth: 640, paddingTop: 80, paddingBottom: 80 }}>
-        <h1 className="mb-5" style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 22, color: 'var(--text-primary)' }}>
+      <main className="mx-auto w-full px-4" style={{ maxWidth: 640, paddingTop: 80, paddingBottom: 120 }}>
+        <h1 className="mb-5 mx-1" style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 26, color: 'var(--text-primary)' }}>
           Configurações
         </h1>
 
-        <CartaoConfirmarEmail variante="configuracoes" className="mb-4" />
+        <CartaoConfirmarEmail variante="configuracoes" className="mb-6" />
 
-        {/* ── PERFIL ──────────────────────────────────────────────────────── */}
-        <GlassCard hover={false} padding="lg" className="mb-4">
-          <div className="flex items-center justify-between">
-            <SecaoTitulo>Perfil</SecaoTitulo>
-            {!editando && (
-              <button
-                type="button"
-                onClick={abrirEdicao}
-                className="flex items-center gap-1.5 min-h-11 hover:underline"
-                style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-accent)' }}
-              >
-                <Pencil size={14} /> Editar
-              </button>
-            )}
-          </div>
+        <ContaGrupo />
 
-          {!editando ? (
-            <>
-              {/* Visão (read-only) */}
-              <div className="flex items-center gap-4">
-                <div
-                  className="w-14 h-14 rounded-full grid place-items-center flex-shrink-0"
-                  style={{ background: `${metaAtual.cor}22`, border: `1px solid ${metaAtual.cor}55`, color: metaAtual.cor, fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: 18 }}
-                >
-                  {iniciais(usuario?.nome ?? '')}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate" style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>{usuario?.nome ?? '—'}</p>
-                  <p className="truncate flex items-center gap-1.5" style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                    <Mail size={13} /> {usuario?.email ?? '—'}
-                  </p>
-                </div>
-              </div>
-              {usuario?.emailPendente && (
-                <p className="mt-3" style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                  Enviamos um link para {usuario.emailPendente}. Até você confirmar, o e-mail da conta continua sendo {usuario.email}.
-                </p>
-              )}
-              <div className="mt-4 flex items-center gap-2">
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1"
-                  style={{ background: `${metaAtual.cor}1f`, border: `1px solid ${metaAtual.cor}44`, color: metaAtual.cor, fontSize: 12.5, fontWeight: 600 }}
-                >
-                  <metaAtual.Icon size={14} /> {metaAtual.label}
-                </span>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{metaAtual.descricao}</span>
-              </div>
-            </>
-          ) : (
-            /* Formulário de edição */
-            <form onSubmit={handleSalvar} className="flex flex-col gap-4">
-              <div>
-                <label className="block mb-1.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Nome</label>
-                <input className="input-glass" value={nome} onChange={(e) => setNome(e.target.value)} required maxLength={200} />
-              </div>
-              <div>
-                <label className="block mb-1.5" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>E-mail</label>
-                <input className="input-glass" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
+        <GrupoAjustes rotulo="Seus lugares" rodape="Casa e trabalho aparecem primeiro quando você abre a Rota. Ficam na sua conta e só você vê.">
+          <CasaTrabalhoCard />
+          <LinhaAjuste Icone={Star} titulo="Subprefeituras que acompanho" subtitulo={resumoNomes(favoritos.map((f) => f.nome))}
+            to="/app/configuracoes/subprefeituras" direita={<>{favoritos.length > 0 && favoritos.length}<Seta /></>} />
+        </GrupoAjustes>
 
-              {/* Seletor de persona */}
-              <div>
-                <label className="block mb-2" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Tipo de perfil</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {PERFIS.map((p) => {
-                    const sel = perfil === p.valor;
-                    return (
-                      <button
-                        type="button"
-                        key={p.valor}
-                        onClick={() => setPerfil(p.valor)}
-                        aria-pressed={sel}
-                        className="relative flex items-start gap-3 rounded-xl p-3 pr-9 text-left transition-all"
-                        style={{
-                          background: sel ? `${p.cor}1f` : 'var(--bg-input)',
-                          border: `1px solid ${sel ? p.cor : 'var(--border-glass)'}`,
-                          boxShadow: sel ? `0 0 0 1px ${p.cor}, 0 0 0 4px ${p.cor}26` : 'none',
-                          opacity: sel ? 1 : 0.7,
-                        }}
-                      >
-                        {/* Chip do ícone: sólido quando ativo, neutro quando inativo */}
-                        <span
-                          className="w-9 h-9 rounded-lg grid place-items-center flex-shrink-0 transition-colors"
-                          style={{
-                            background: sel ? p.cor : 'var(--bg-glass-hover)',
-                            color: sel ? '#fff' : 'var(--text-muted)',
-                          }}
-                        >
-                          <p.Icon size={18} />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block" style={{ fontSize: 13.5, fontWeight: 600, color: sel ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                            {p.label}
-                          </span>
-                          <span className="block" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{p.descricao}</span>
-                        </span>
-                        {/* Indicador radio: preenchido com check quando ativo */}
-                        <span
-                          className="absolute top-3 right-3 w-[18px] h-[18px] rounded-full grid place-items-center transition-all"
-                          style={{
-                            background: sel ? p.cor : 'transparent',
-                            border: `1.5px solid ${sel ? p.cor : 'var(--border-glass-hover)'}`,
-                          }}
-                        >
-                          {sel && <Check size={12} color="#fff" strokeWidth={3} />}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+        <AvisosGrupo />
 
-              {/* Troca de senha (opcional) */}
-              {!trocarSenha ? (
-                <button type="button" onClick={() => setTrocarSenha(true)} className="self-start flex items-center gap-1.5 hover:underline" style={{ fontSize: 13, color: 'var(--text-accent)' }}>
-                  <Lock size={14} /> Alterar senha
-                </button>
-              ) : (
-                <div className="flex flex-col gap-3 rounded-xl p-3" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-glass)' }}>
-                  <div className="flex items-center justify-between">
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Alterar senha</span>
-                    <button type="button" onClick={() => { setTrocarSenha(false); setSenhaAtual(''); setNovaSenha(''); }} className="hover:text-[var(--text-primary)]" style={{ color: 'var(--text-muted)' }} aria-label="Cancelar troca de senha">
-                      <X size={15} />
-                    </button>
-                  </div>
-                  <input className="input-glass" type={mostrarSenha ? 'text' : 'password'} placeholder="Senha atual" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} autoComplete="current-password" />
-                  <div className="relative">
-                    <input className="input-glass pr-12" type={mostrarSenha ? 'text' : 'password'} placeholder="Nova senha (8+ chars, 2 nº, 1 especial)" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} autoComplete="new-password" />
-                    <button type="button" onClick={() => setMostrarSenha((v) => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 hover:text-[var(--text-primary)]" style={{ color: 'var(--text-muted)' }} tabIndex={-1} aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}>
-                      {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-              )}
+        {/* O rótulo é fixo e o interruptor mostra se o tema escuro está ligado. */}
+        <GrupoAjustes rotulo="Aparência">
+          <LinhaAjuste Icone={dark ? Moon : Sun} titulo="Tema escuro" ligado={dark} onClick={toggleTheme} direita={<Interruptor ligado={dark} />} />
+          <LinhaAjuste Icone={Layers} titulo="Efeito de vidro"
+            ligado={vidro.ligada} onClick={vidro.alternar} direita={<Interruptor ligado={vidro.ligada} />} />
+        </GrupoAjustes>
 
-              {/* Ações */}
-              <div className="flex items-center gap-3 pt-1">
-                <button type="submit" disabled={salvando} className="btn-gradient px-5 py-2.5 min-h-[44px]" style={{ fontSize: 14 }}>
-                  {salvando ? 'Salvando…' : 'Salvar alterações'}
-                </button>
-                <button type="button" onClick={() => setEditando(false)} className="px-4 py-2.5" style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          )}
-        </GlassCard>
-
-        {/* ── APARÊNCIA ───────────────────────────────────────────────────── */}
-        <GlassCard hover={false} padding="lg" className="mb-4">
-          <SecaoTitulo>Aparência</SecaoTitulo>
-          {/* O rótulo é fixo e o switch mostra se o tema escuro está ligado. Antes
-              o rótulo trocava junto com o estado e o switch acendia no claro, o
-              que fazia o tema escuro ativo aparecer como "desligado". */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="w-full flex items-center justify-between min-h-11"
-            role="switch"
-            aria-checked={dark}
-          >
-            <span className="flex items-center gap-3">
-              {dark ? <Moon size={20} style={{ color: 'var(--text-accent)' }} /> : <Sun size={20} style={{ color: 'var(--text-accent)' }} />}
-              <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>Tema escuro</span>
-            </span>
-            <span className={['theme-switch', dark ? 'on' : ''].join(' ')}>
-              <span className="theme-switch-knob" />
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={vidro.alternar}
-            className="w-full flex items-center justify-between gap-3 min-h-11 mt-1 text-left"
-            role="switch"
-            aria-checked={vidro.ligada}
-          >
-            <span className="flex items-center gap-3 min-w-0">
-              <Layers size={20} style={{ color: 'var(--text-accent)', flexShrink: 0 }} />
-              <span className="min-w-0">
-                <span className="block" style={{ fontSize: 14, color: 'var(--text-primary)' }}>Efeito de vidro</span>
-                <span className="block" style={{ fontSize: 12, color: 'var(--text-muted)' }}>Desligado, o topo fica sólido. Ajuda na leitura e em celulares mais lentos.</span>
-              </span>
-            </span>
-            <span className={['theme-switch', vidro.ligada ? 'on' : ''].join(' ')}>
-              <span className="theme-switch-knob" />
-            </span>
-          </button>
-        </GlassCard>
-
-        {/* ── NOTIFICAÇÕES ────────────────────────────────────────────────── */}
-        <GlassCard hover={false} padding="lg" className="mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Bell size={15} style={{ color: 'var(--text-secondary)' }} />
-            <SecaoTitulo>Notificações</SecaoTitulo>
-          </div>
-          <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
-            {notifs.map((n) => (
-              <SwitchRow key={n.chave} titulo={n.titulo} descricao={n.descricao} ligado={prefs[n.chave]} onToggle={() => toggle(n.chave)} />
-            ))}
-          </div>
-
-          {/* Ativação do push neste dispositivo (Web Push) */}
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-            {push.estado === 'ativo' ? (
-              <div className="flex items-center justify-between gap-3">
-                <span className="flex items-center gap-2 min-w-0">
-                  <BellRing size={16} style={{ color: '#22c55e', flexShrink: 0 }} />
-                  <span className="min-w-0">
-                    <span className="block" style={{ fontSize: 13.5, color: 'var(--text-primary)' }}>Notificações ativas neste dispositivo</span>
-                    <span className="block" style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Você receberá os alertas das subprefeituras que acompanha.</span>
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void push.desativar()}
-                  disabled={push.ocupado}
-                  className="flex-shrink-0 px-3 py-2 rounded-lg"
-                  style={{ fontSize: 13, color: 'var(--text-secondary)', border: '1px solid var(--border-glass)' }}
-                >
-                  {push.ocupado ? '…' : 'Desativar'}
-                </button>
-              </div>
-            ) : push.estado === 'inativo' ? (
-              <button
-                type="button"
-                onClick={() => void push.ativar()}
-                disabled={push.ocupado}
-                className="btn-gradient w-full flex items-center justify-center gap-2 py-2.5 min-h-[44px]"
-                style={{ fontSize: 14 }}
-              >
-                <Smartphone size={16} />
-                {push.ocupado ? 'Ativando…' : 'Ativar notificações neste dispositivo'}
-              </button>
-            ) : push.estado === 'negado' ? (
-              <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
-                As notificações estão bloqueadas para este site. Reative a permissão nas configurações do navegador para receber alertas.
-              </p>
-            ) : push.estado === 'indisponivel' ? (
-              <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
-                Preferências salvas neste dispositivo. As notificações push não estão disponíveis aqui no momento.
-              </p>
-            ) : (
-              <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Verificando notificações…</p>
-            )}
-          </div>
-        </GlassCard>
-
-        {/* ── FAVORITOS ───────────────────────────────────────────────────── */}
-        <GlassCard hover={false} padding="lg" className="mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Star size={15} style={{ color: 'var(--text-secondary)' }} />
-            <SecaoTitulo>Suas subprefeituras</SecaoTitulo>
-          </div>
-          {favoritos.length === 0 ? (
-            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-              Escolha no mapa as subprefeituras que você acompanha.{' '}
-              <Link to="/app" className="inline-block py-1 hover:underline" style={{ color: 'var(--text-accent)' }}>Abrir o mapa</Link>
-            </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {favoritos.map((f) => (
-                <div key={f.subprefeituraId} className="regiao-card flex items-center gap-3" style={{ marginBottom: 0 }}>
-                  <Star size={15} style={{ color: 'var(--text-accent)' }} fill="currentColor" />
-                  <span className="flex-1 min-w-0 truncate" style={{ fontSize: 14, color: 'var(--text-primary)' }}>
-                    {f.nome} <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>· {f.regiaoNome}</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => toggleFavorito(f.subprefeituraId)}
-                    className="min-w-11 min-h-11 inline-flex items-center justify-center"
-                    aria-label={`Deixar de acompanhar ${f.nome}`}
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </GlassCard>
-
-        {/* ── AJUDA ───────────────────────────────────────────────────────── */}
-        <GlassCard hover={false} padding="lg" className="mb-4">
-          <button
-            type="button"
-            onClick={reverBoasVindas}
-            className="w-full flex items-center gap-3 min-h-11 text-left"
-          >
-            <HelpCircle size={18} style={{ color: 'var(--text-accent)' }} className="flex-shrink-0" />
-            <span className="flex-1" style={{ fontSize: 14, color: 'var(--text-primary)' }}>
-              Rever as boas-vindas
-            </span>
-            <ChevronRight size={16} style={{ color: 'var(--text-muted)' }} />
-          </button>
-        </GlassCard>
-
-        {/* ── SOBRE ───────────────────────────────────────────────────────── */}
         <SobreCard />
 
-        {/* ── CONTA / SAIR ────────────────────────────────────────────────── */}
-        <button
-          type="button"
-          onClick={logout}
-          className="w-full flex items-center justify-center gap-2 rounded-lg py-3 transition-colors"
-          style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444' }}
-        >
-          <LogOut size={18} />
-          <span style={{ fontWeight: 600, fontSize: 14 }}>Sair da conta</span>
+        <button type="button" onClick={logout} className="glass-card mt-6 w-full min-h-[52px] rounded-[20px]"
+          style={{ color: '#EF4444', fontWeight: 600, fontSize: 15 }}>
+          Sair da conta
         </button>
 
         {/* SEC2 (opção 1): ação rara, colada no "Sair" de sempre; a confirmação explica em uma folha. */}
         <button
           type="button"
           onClick={() => setFolhaSairTodos(true)}
-          className="block mx-auto mt-3 min-h-[44px] underline underline-offset-[3px]"
-          style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-secondary)' }}
+          className="block mx-auto mt-2 min-h-[44px] underline underline-offset-[3px]"
+          style={{ fontSize: 14, color: 'var(--text-muted)' }}
         >
           Sair de todos os aparelhos
         </button>
@@ -494,8 +102,8 @@ export default function ConfiguracoesPage() {
             type="button"
             onClick={confirmarSairDeTodos}
             disabled={saindoTodos}
-            className="mt-5 w-full min-h-[50px] rounded-xl inline-flex items-center justify-center gap-2 disabled:opacity-80"
-            style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#EF4444', fontWeight: 700, fontSize: 15 }}
+            className="botao-destrutivo mt-5 w-full min-h-[50px] rounded-[14px] inline-flex items-center justify-center gap-2 disabled:opacity-80"
+            style={{ fontWeight: 700, fontSize: 15 }}
           >
             {saindoTodos && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
             {saindoTodos ? 'Saindo…' : 'Sair de todos'}
@@ -505,7 +113,7 @@ export default function ConfiguracoesPage() {
             data-foco-inicial
             onClick={() => setFolhaSairTodos(false)}
             disabled={saindoTodos}
-            className="mt-2.5 w-full min-h-[50px] rounded-xl"
+            className="mt-1.5 w-full min-h-[50px] rounded-[14px]"
             style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: 15 }}
           >
             Cancelar

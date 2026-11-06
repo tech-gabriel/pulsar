@@ -29,4 +29,6 @@ export interface PontoRota {
   lat: number;
   lon: number;
   rotulo: string;
+  /** Só o resultado do geocoder recebe; ausente = GPS, subprefeitura ou local salvo. */
+  fonte?: 'endereco';
 }

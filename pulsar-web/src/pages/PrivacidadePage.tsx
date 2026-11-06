@@ -54,6 +54,9 @@ export default function PrivacidadePage() {
           configurações de notificação.
         </li>
         <li>
+          <strong>Casa e trabalho (opcional):</strong> o endereço e o ponto no mapa que você salvou.
+        </li>
+        <li>
           <strong>Dados técnicos:</strong> informações mínimas necessárias para autenticar sua
           sessão, manter o serviço seguro e diagnosticar problemas (por exemplo, registros de
           acesso e dados do dispositivo de notificação, quando você ativa o push).
@@ -101,6 +104,10 @@ export default function PrivacidadePage() {
           <strong>Personalizar a experiência</strong> (subprefeituras favoritas, tema) e
           <strong> enviar as notificações que você ativou:</strong> execução do contrato e,
           no caso do push, o seu consentimento.
+        </li>
+        <li>
+          <strong>Montar a Rota a partir da sua casa ou do seu trabalho:</strong> consentimento,
+          dado quando você salva. Você revoga apagando em Configurações.
         </li>
         <li>
           <strong>Enviar e-mails essenciais</strong> (como recuperação de senha): execução do
@@ -194,7 +201,8 @@ export default function PrivacidadePage() {
         Mantemos seus dados enquanto sua conta estiver ativa ou pelo tempo necessário para cumprir
         as finalidades descritas aqui e eventuais obrigações legais. Quando você pedir a
         exclusão da conta pelo e-mail de contato, removemos ou anonimizamos seus dados pessoais, salvo quando precisarmos retê-los por
-        exigência legal.
+        exigência legal. As cópias de segurança diárias guardam os dados por até 30 dias e depois são
+        apagadas.
       </p>
 
       <h2>11. Segurança</h2>

@@ -42,6 +42,13 @@ describe('PrivacidadePage casa e trabalho (F4)', () => {
     ).toBeInTheDocument();
   });
 
+  it('cita casa e trabalho nos dados, na base legal e nos backups', () => {
+    renderizar();
+    expect(screen.getByText(/o endereço e o ponto no mapa que você salvou\./)).toBeInTheDocument();
+    expect(screen.getByText(/consentimento, dado quando você salva\. Você revoga apagando em Configurações\./)).toBeInTheDocument();
+    expect(screen.getByText(/As cópias de segurança diárias guardam os dados por até 30 dias e depois são apagadas\./)).toBeInTheDocument();
+  });
+
   it('não promete botão de excluir conta e não usa travessão', () => {
     renderizar();
     expect(screen.queryByText(/revogar o consentimento e excluir sua conta/i)).not.toBeInTheDocument();

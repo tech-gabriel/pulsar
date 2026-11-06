@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { SubprefeituraMapaDto } from '../../../types';
 
@@ -224,6 +224,29 @@ describe('CamposDePara: casa e trabalho', () => {
     fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
     fireEvent.click(screen.getByRole('button', { name: /^Casa/ }));
     expect(onDestino).toHaveBeenCalledWith({ lat: -23.56, lon: -46.65, rotulo: 'Rua Augusta, 100' });
+    expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
+  });
+
+  it('Escape numa linha fecha as linhas e devolve o foco ao campo', () => {
+    monta({ locais: { CASA } });
+    const campo = screen.getByRole('combobox', { name: 'Para' });
+    act(() => campo.focus());
+    const casa = screen.getByRole('button', { name: /^Casa/ });
+    act(() => casa.focus());
+    fireEvent.keyDown(casa, { key: 'Escape' });
+    expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
+    expect(campo).toHaveFocus();
+  });
+
+  it('escolher uma linha preenchida deixa o foco no campo, sem reabrir as linhas', () => {
+    const { onDestino } = monta({ locais: { CASA } });
+    const campo = screen.getByRole('combobox', { name: 'Para' });
+    act(() => campo.focus());
+    const casa = screen.getByRole('button', { name: /^Casa/ });
+    act(() => casa.focus());
+    fireEvent.click(casa);
+    expect(onDestino).toHaveBeenCalled();
+    expect(campo).toHaveFocus();
     expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
   });
 

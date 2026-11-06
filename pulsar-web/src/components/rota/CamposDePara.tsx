@@ -64,6 +64,8 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
   const listaRef = useRef<HTMLUListElement>(null);
   const linhasRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Foco devolvido pelo próprio campo (Escape numa linha, linha escolhida): não reabre as linhas.
+  const semLinhas = useRef(false);
 
   useEffect(() => {
     function fora(e: MouseEvent) {
@@ -92,6 +94,13 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
     cancelar();
   }
 
+  // O foco estava numa linha que vai sumir: volta ao campo em vez de cair no body.
+  function voltarAoCampo() {
+    if (!linhasRef.current?.contains(document.activeElement)) return;
+    semLinhas.current = true;
+    inputRef.current?.focus();
+  }
+
   async function escolherEndereco(p: PontoRota) {
     if (!salvando) return escolher(p);
     if (await onSalvarLocal?.(salvando, p)) escolher(p);
@@ -101,6 +110,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
     const local = locais[tipo];
     if (local) {
       track.usouLocal(tipo === 'CASA' ? 'casa' : 'trabalho');
+      voltarAoCampo();
       return escolher(pontoDoLocal(local));
     }
     setSalvando(tipo);
@@ -183,6 +193,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
   const fica = (alvo: EventTarget | null) => alvo === inputRef.current || !!linhasRef.current?.contains(alvo as Node);
   const blocoLinhas = linhas && alvoLinhas && createPortal(
     <div ref={linhasRef} onMouseDown={(e) => e.preventDefault()} onBlur={(e) => { if (!fica(e.relatedTarget)) cancelar(); }}
+      onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); voltarAoCampo(); cancelar(); } }}
       className="w-full mt-1.5 pt-1" style={{ borderTop: '1px solid var(--border-glass)' }}>
       {TIPOS.map(({ tipo, Icone }) => {
         const local = locais[tipo];
@@ -222,7 +233,11 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
           placeholder={TIPOS.find((t) => t.tipo === salvando)?.busca ?? placeholder}
           aria-label={rotulo}
           autoFocus={focar}
-          onFocus={(e) => { e.currentTarget.select(); setLinhasAbertas(true); }}
+          onFocus={(e) => {
+            e.currentTarget.select();
+            if (semLinhas.current) semLinhas.current = false;
+            else setLinhasAbertas(true);
+          }}
           // Sair para outro elemento (Tab, o outro campo) fecha as linhas e cancela o modo salvando.
           onBlur={(e) => { if (e.relatedTarget && !fica(e.relatedTarget)) cancelar(); }}
           onKeyDown={teclar}

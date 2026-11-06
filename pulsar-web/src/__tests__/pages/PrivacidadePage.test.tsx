@@ -20,3 +20,31 @@ describe('PrivacidadePage', () => {
     expect(screen.getByText(/Estados Unidos/i)).toBeInTheDocument();
   });
 });
+
+describe('PrivacidadePage casa e trabalho (F4)', () => {
+  function renderizar() {
+    render(
+      <UnheadProvider head={createHead()}>
+        <ThemeProvider>
+          <MemoryRouter>
+            <PrivacidadePage />
+          </MemoryRouter>
+        </ThemeProvider>
+      </UnheadProvider>,
+    );
+  }
+
+  it('tem a seção Casa e trabalho com o que não é guardado', () => {
+    renderizar();
+    expect(screen.getByRole('heading', { name: 'Casa e trabalho' })).toBeInTheDocument();
+    expect(
+      screen.getByText(/Não guardamos horários, frequência nem os caminhos que você faz\./),
+    ).toBeInTheDocument();
+  });
+
+  it('não promete botão de excluir conta e não usa travessão', () => {
+    renderizar();
+    expect(screen.queryByText(/revogar o consentimento e excluir sua conta/i)).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('—');
+  });
+});

@@ -18,7 +18,7 @@ export default function PrivacidadePage() {
     <LandingDocShell
       titulo="Política de Privacidade"
       subtitulo="Como o Pulsar coleta, usa e protege seus dados, em linguagem direta e em conformidade com a LGPD."
-      atualizadoEm="27 de junho de 2026"
+      atualizadoEm="5 de novembro de 2026"
     >
       <h2>Resumo rápido</h2>
       <ul>
@@ -71,12 +71,23 @@ export default function PrivacidadePage() {
         </li>
       </ul>
       <p>
-        O Pulsar <strong>não</strong> coleta a sua localização em segundo plano nem faz
-        rastreamento contínuo. Quando você toca em "usar minha localização" no mapa, o
+        O Pulsar <strong>não</strong> coleta a localização do seu aparelho em segundo plano nem
+        faz rastreamento contínuo. Quando você toca em "usar minha localização" no mapa, o
         navegador pede sua permissão e usamos as coordenadas apenas naquele momento, no seu
         dispositivo, para descobrir a sua região. Não guardamos essas coordenadas nos nossos
         servidores. Os dados climáticos exibidos vêm de fontes públicas e são organizados por
-        subprefeitura.
+        subprefeitura. Os endereços de casa e trabalho, que você salva por vontade própria, são
+        outra coisa e estão explicados na seção abaixo.
+      </p>
+
+      <h2>Casa e trabalho</h2>
+      <p>
+        Se você quiser, pode salvar o endereço da sua casa e do seu trabalho para usar na Rota. É
+        opcional e nada vem preenchido. Guardamos só o endereço que você escolheu e o ponto no
+        mapa, presos à sua conta. Não guardamos horários, frequência nem os caminhos que você faz.
+        Só você vê esses endereços: nem a equipe do Pulsar consulta por eles. Você troca ou apaga
+        cada um quando quiser em Configurações, e eles também são apagados junto com a sua conta.
+        Para excluir a conta, escreva para o e-mail de contato desta página.
       </p>
 
       <h2>3. Para que usamos os dados e com qual base legal</h2>
@@ -181,8 +192,8 @@ export default function PrivacidadePage() {
       <h2>10. Por quanto tempo guardamos</h2>
       <p>
         Mantemos seus dados enquanto sua conta estiver ativa ou pelo tempo necessário para cumprir
-        as finalidades descritas aqui e eventuais obrigações legais. Ao excluir sua conta,
-        removemos ou anonimizamos seus dados pessoais, salvo quando precisarmos retê-los por
+        as finalidades descritas aqui e eventuais obrigações legais. Quando você pedir a
+        exclusão da conta pelo e-mail de contato, removemos ou anonimizamos seus dados pessoais, salvo quando precisarmos retê-los por
         exigência legal.
       </p>
 
@@ -200,7 +211,7 @@ export default function PrivacidadePage() {
         <li>Corrigir dados incompletos, inexatos ou desatualizados.</li>
         <li>Solicitar a anonimização, o bloqueio ou a eliminação de dados desnecessários.</li>
         <li>Pedir a portabilidade dos dados, nos termos da lei.</li>
-        <li>Revogar o consentimento e excluir sua conta.</li>
+        <li>Revogar o consentimento e pedir a exclusão da sua conta pelo e-mail de contato.</li>
         <li>Se opor a tratamentos baseados em legítimo interesse.</li>
       </ul>
       <p>

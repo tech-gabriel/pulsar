@@ -989,6 +989,7 @@ html.sem-transparencia .vidro-painel { background: var(--superficie) !important;
 .grupo-ajustes > * { position: relative; }
 .grupo-ajustes > * + *::before { content: ''; position: absolute; top: 0; left: 58px; right: 0; height: 1px; background: var(--border-glass); pointer-events: none; }
 .linha-ajuste { min-height: 52px; padding: 10px 14px; }
+.linha-ajuste:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: -2px; }
 :is(button, a).linha-ajuste:active { background: var(--bg-glass-hover); }
 /* Ação destrutiva das folhas: vermelho sobre vermelho translúcido (o "Sair da conta" de sempre). */
 .botao-destrutivo { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #EF4444; }

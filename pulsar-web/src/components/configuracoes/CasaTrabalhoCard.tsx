@@ -11,7 +11,7 @@ import { useJsonPublico } from '../../hooks/useJsonPublico';
 import { useFavoritos } from '../../hooks/useFavoritos';
 import { ROTULO_TIPO, subprefeituraIdDoPonto } from '../../features/locais/regras';
 import type { PontoRota } from '../../features/rota/tipos';
-import type { TipoLocal } from '../../types';
+import type { LocalSalvoDto, TipoLocal } from '../../types';
 import type { FeatureCollection } from 'geojson';
 
 const TIPOS: { tipo: TipoLocal; Icone: typeof House }[] = [
@@ -23,8 +23,8 @@ const DA = { CASA: 'da sua casa', TRABALHO: 'do seu trabalho' } as const;
 const O = { CASA: 'a casa', TRABALHO: 'o trabalho' } as const;
 
 type Folha =
-  | { tipo: TipoLocal; etapa: 'lugar' | 'apagar' }
-  | { tipo: TipoLocal; etapa: 'trocar'; ponto: PontoRota; id: string };
+  | { tipo: TipoLocal; etapa: 'lugar' | 'apagar'; local: LocalSalvoDto }
+  | { tipo: TipoLocal; etapa: 'trocar'; local: LocalSalvoDto; ponto: PontoRota; id: string };
 
 /** Busca só de endereços; escolher um devolve o ponto. */
 function BuscaInline({ tipo, onEscolher, onCancelar }: { tipo: TipoLocal; onEscolher: (p: PontoRota) => void; onCancelar: () => void }) {
@@ -111,7 +111,8 @@ export default function CasaTrabalhoCard() {
       showToast('Esse endereço fica fora da cidade de São Paulo.', 'error');
       return;
     }
-    if (locais[tipo]) return setFolha({ tipo, etapa: 'trocar', ponto: p, id });
+    const atual = locais[tipo];
+    if (atual) return setFolha({ tipo, etapa: 'trocar', local: atual, ponto: p, id });
     if (await salvar(tipo, p, id, 'configuracoes')) setEditando(null);
   }
 
@@ -126,7 +127,8 @@ export default function CasaTrabalhoCard() {
   }
 
   const f = folha ?? ultima;
-  const local = f ? locais[f.tipo] : undefined;
+  // O endereço fica guardado na folha: ao sair depois de Apagar ou Trocar, ela não esvazia nem mostra o novo.
+  const local = f?.local;
   const favorita = !!local && favoritos.some((x) => x.subprefeituraId === local.subprefeituraId);
   const cancelar = (
     <button type="button" ref={botaoCancelar} data-foco-inicial onClick={() => setFolha(null)} disabled={ocupado}
@@ -145,7 +147,7 @@ export default function CasaTrabalhoCard() {
           <div key={tipo} data-local={tipo}>
             {salvo ? (
               <LinhaAjuste Icone={Icone} titulo={titulo} subtitulo={salvo.rotulo} direita={<Seta />}
-                onClick={() => { setEditando(null); setFolha({ tipo, etapa: 'lugar' }); }} />
+                onClick={() => { setEditando(null); setFolha({ tipo, etapa: 'lugar', local: salvo }); }} />
             ) : (
               <LinhaAjuste Icone={Icone} titulo={titulo} onClick={() => setEditando(tipo)} ariaLabel={`Salvar ${titulo.toLowerCase()}`}
                 direita={<span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-accent)' }}>Salvar</span>} />
@@ -166,7 +168,7 @@ export default function CasaTrabalhoCard() {
                   className={botaoFolha} style={{ background: 'var(--bg-input)', color: 'var(--text-accent)', fontWeight: 600, fontSize: 15 }}>
                   Trocar endereço
                 </button>
-                <button type="button" onClick={() => setFolha({ tipo: f.tipo, etapa: 'apagar' })}
+                <button type="button" onClick={() => setFolha({ tipo: f.tipo, etapa: 'apagar', local: f.local })}
                   className={`${botaoFolha} botao-destrutivo mt-2`} style={{ fontWeight: 600, fontSize: 15 }}>
                   Apagar
                 </button>

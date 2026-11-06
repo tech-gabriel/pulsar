@@ -21,3 +21,9 @@ describe('folha inferior em vidro', () => {
     expect(regra).toMatch(/border-radius: 28px/);
   });
 });
+
+describe('linhas das configurações', () => {
+  it('têm foco visível dentro do grupo, que corta o contorno com overflow hidden', () => {
+    expect(css).toMatch(/\.linha-ajuste:focus-visible \{ outline: 2px solid var\(--color-pulsar-300\); outline-offset: -2px; \}/);
+  });
+});

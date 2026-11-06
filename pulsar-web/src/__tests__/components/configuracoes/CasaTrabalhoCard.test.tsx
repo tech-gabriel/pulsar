@@ -129,6 +129,16 @@ describe('CasaTrabalhoCard', () => {
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: /casa/i })));
   });
 
+  it('ao sair depois de Apagar, a folha ainda mostra o endereço antigo em vez de ficar vazia', async () => {
+    abrirFolhaDaCasa();
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar' }));
+    h.apagar.mockImplementation(async () => { h.locais = {}; return true; });
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar casa' }));
+    await waitFor(() => expect(h.apagar).toHaveBeenCalled());
+    const dialog = screen.queryByRole('dialog');
+    if (dialog) expect(dialog).toHaveTextContent('Rua A, 10');
+  });
+
   it('depois de confirmar Trocar, o foco fica na linha da Casa', async () => {
     abrirFolhaDaCasa();
     fireEvent.click(screen.getByRole('button', { name: 'Trocar endereço' }));

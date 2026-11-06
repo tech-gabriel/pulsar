@@ -247,3 +247,14 @@ describe('PainelRota: pendências da revisão', () => {
     expect(linha.closest('.det-hero-frase')).toBeNull();
   });
 });
+
+describe('PainelRota: sem salvar casa ou trabalho no resultado', () => {
+  it('destino de endereço não mostra Salvar como casa nem trabalho', () => {
+    render(<PainelRota resultado={rota('PodeIr')} origem={origem} destino={{ ...destino, fonte: 'endereco' }} carregando={false}
+      erro={null} avisoPedido={false} onPedirAviso={vi.fn()}
+      // Mesmo quem ainda passe as props antigas não vê os botões.
+      {...({ locais: {}, onSalvarLocal: vi.fn().mockResolvedValue(true) } as object)} />);
+    expect(screen.queryByRole('button', { name: /Salvar como/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Salvar como/)).not.toBeInTheDocument();
+  });
+});

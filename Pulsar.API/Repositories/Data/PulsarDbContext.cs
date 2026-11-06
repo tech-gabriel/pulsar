@@ -26,6 +26,7 @@ public class PulsarDbContext : DbContext
     public DbSet<OcorrenciaAlagamento> OcorrenciasAlagamento => Set<OcorrenciaAlagamento>();
     public DbSet<PrevisaoClimatica> PrevisoesClimaticas => Set<PrevisaoClimatica>();
     public DbSet<NotificacaoEnviada> NotificacoesEnviadas => Set<NotificacaoEnviada>();
+    public DbSet<LocalSalvo> LocaisSalvos => Set<LocalSalvo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -110,6 +111,22 @@ public class PulsarDbContext : DbContext
              .WithMany()
              .HasForeignKey(f => f.SubprefeituraId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LocalSalvo>(e =>
+        {
+            e.HasKey(l => l.Id);
+            e.HasIndex(l => new { l.UsuarioId, l.Tipo }).IsUnique();
+            e.Property(l => l.Tipo).HasConversion<int>();
+            e.Property(l => l.Rotulo).IsRequired().HasMaxLength(LocalSalvo.MaxRotulo);
+            e.HasOne(l => l.Usuario)
+             .WithMany()
+             .HasForeignKey(l => l.UsuarioId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(l => l.Subprefeitura)
+             .WithMany()
+             .HasForeignKey(l => l.SubprefeituraId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<TokenRecuperacaoSenha>(e =>

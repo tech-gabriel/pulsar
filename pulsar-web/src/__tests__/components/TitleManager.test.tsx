@@ -25,6 +25,11 @@ describe('TitleManager', () => {
     await esperarTitulo('Pulsar · Configurações');
   });
 
+  it('a tela de subprefeituras que acompanho tem título próprio', async () => {
+    renderEm('/app/configuracoes/subprefeituras');
+    await esperarTitulo('Pulsar · Subprefeituras que acompanho');
+  });
+
   it('home usa o título institucional', async () => {
     renderEm('/');
     await esperarTitulo('Pulsar: alerta de alagamento e chuva forte em São Paulo');

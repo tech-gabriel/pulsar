@@ -11,6 +11,8 @@ export interface UseFavoritosResult {
   toggleFavorito: (subprefeituraId: string) => Promise<void>;
   adicionarVarios: (ids: string[]) => Promise<boolean>;
   carregando: boolean;
+  /** Refaz o GET das favoritas (ex.: depois que o servidor adicionou uma). */
+  recarregar: () => Promise<void>;
 }
 
 /** Favoritas do app logado, vindas do FavoritosProvider (uma busca e um estado para o app todo). */
@@ -45,6 +47,16 @@ export function useFavoritosEstado(usuarioId: string | null): UseFavoritosResult
     return () => {
       cancelado = true;
     };
+  }, [usuarioId]);
+
+  const recarregar = useCallback(async () => {
+    if (!usuarioId) return;
+    try {
+      const { data } = await api.get<FavoritoDto[]>(`/usuarios/${usuarioId}/favoritos`);
+      setFavoritos(data);
+    } catch {
+      /* mantém os favoritos atuais em caso de falha */
+    }
   }, [usuarioId]);
 
   const isFavorito = useCallback(
@@ -98,7 +110,7 @@ export function useFavoritosEstado(usuarioId: string | null): UseFavoritosResult
   );
 
   return useMemo(
-    () => ({ favoritos, isFavorito, toggleFavorito, adicionarVarios, carregando }),
-    [favoritos, isFavorito, toggleFavorito, adicionarVarios, carregando]
+    () => ({ favoritos, isFavorito, toggleFavorito, adicionarVarios, carregando, recarregar }),
+    [favoritos, isFavorito, toggleFavorito, adicionarVarios, carregando, recarregar]
   );
 }

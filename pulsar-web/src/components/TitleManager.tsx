@@ -12,6 +12,7 @@ const TITULOS_EXATOS: Record<string, string> = {
   '/app/dashboard': 'Dashboard',
   '/app/noticias': 'Notícias',
   '/app/configuracoes': 'Configurações',
+  '/app/configuracoes/subprefeituras': 'Subprefeituras que acompanho',
   '/app/admin/usuarios': 'Usuários · Admin',
   '/app/admin/sugestoes': 'Sugestões · Admin',
   '/app/admin/sistema': 'Sistema · Admin',

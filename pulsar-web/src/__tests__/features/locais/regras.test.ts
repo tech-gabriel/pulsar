@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FeatureCollection } from 'geojson';
-import { subprefeituraIdDoPonto, podeSalvar, pontoDoLocal, ROTULO_TIPO } from '../../../features/locais/regras';
+import { subprefeituraIdDoPonto, pontoDoLocal, ROTULO_TIPO } from '../../../features/locais/regras';
 
 const leve = JSON.parse(readFileSync(join(__dirname, '../../../../public/subprefeituras-leve.geojson'), 'utf8')) as FeatureCollection;
 const subs = [{ id: 'm', nome: 'Mooca' }];
@@ -14,14 +14,6 @@ describe('subprefeituraIdDoPonto', () => {
   it('fora de SP e geojson nulo dão null', () => {
     expect(subprefeituraIdDoPonto({ lat: -22.9099, lon: -47.0626 }, leve, subs)).toBeNull();
     expect(subprefeituraIdDoPonto({ lat: -23.5505, lon: -46.5967 }, null, subs)).toBeNull();
-  });
-});
-
-describe('podeSalvar', () => {
-  it('só endereço do geocoder', () => {
-    expect(podeSalvar({ lat: 1, lon: 1, rotulo: 'x', fonte: 'endereco' })).toBe(true);
-    expect(podeSalvar({ lat: 1, lon: 1, rotulo: 'x' })).toBe(false);
-    expect(podeSalvar(null)).toBe(false);
   });
 });
 

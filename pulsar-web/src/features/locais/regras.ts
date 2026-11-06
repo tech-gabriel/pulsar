@@ -20,8 +20,3 @@ export function subprefeituraIdDoPonto(
 export function pontoDoLocal(l: LocalSalvoDto): PontoRota {
   return { lat: l.latitude, lon: l.longitude, rotulo: l.rotulo };
 }
-
-/** Só endereço escolhido na busca pode virar casa ou trabalho. */
-export function podeSalvar(p: PontoRota | null): boolean {
-  return p?.fonte === 'endereco';
-}

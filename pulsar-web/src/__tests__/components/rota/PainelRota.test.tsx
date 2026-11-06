@@ -248,41 +248,13 @@ describe('PainelRota: pendências da revisão', () => {
   });
 });
 
-describe('PainelRota: salvar destino como casa ou trabalho', () => {
-  const dEnd = { ...destino, fonte: 'endereco' as const };
-  const local = (tipo: 'CASA' | 'TRABALHO') => ({ tipo, rotulo: 'x', latitude: 0, longitude: 0, subprefeituraId: 'se', favoritaAutomatica: false }) as never;
-  const monta2 = (d: typeof dEnd | typeof destino, locais: Record<string, never> = {}) => {
-    const onSalvarLocal = vi.fn().mockResolvedValue(true);
-    render(<PainelRota resultado={rota('PodeIr')} origem={origem} destino={d} carregando={false} erro={null}
-      avisoPedido={false} onPedirAviso={vi.fn()} locais={locais} onSalvarLocal={onSalvarLocal} />);
-    return onSalvarLocal;
-  };
-
-  it('destinoEndereco_semLocais_mostraOsDoisBotoes', () => {
-    monta2(dEnd);
-    expect(screen.getByRole('button', { name: 'Salvar como casa' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Salvar como trabalho' })).toBeInTheDocument();
-  });
-
-  it('casaSalva_mostraSoTrabalho', () => {
-    monta2(dEnd, { CASA: local('CASA') });
-    expect(screen.queryByRole('button', { name: 'Salvar como casa' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Salvar como trabalho' })).toBeInTheDocument();
-  });
-
-  it('osDoisSalvos_semBotoes', () => {
-    monta2(dEnd, { CASA: local('CASA'), TRABALHO: local('TRABALHO') });
+describe('PainelRota: sem salvar casa ou trabalho no resultado', () => {
+  it('destino de endereço não mostra Salvar como casa nem trabalho', () => {
+    render(<PainelRota resultado={rota('PodeIr')} origem={origem} destino={{ ...destino, fonte: 'endereco' }} carregando={false}
+      erro={null} avisoPedido={false} onPedirAviso={vi.fn()}
+      // Mesmo quem ainda passe as props antigas não vê os botões.
+      {...({ locais: {}, onSalvarLocal: vi.fn().mockResolvedValue(true) } as object)} />);
     expect(screen.queryByRole('button', { name: /Salvar como/ })).not.toBeInTheDocument();
-  });
-
-  it('destinoSemFonte_semBotoes', () => {
-    monta2(destino);
-    expect(screen.queryByRole('button', { name: /Salvar como/ })).not.toBeInTheDocument();
-  });
-
-  it('clicarSalvarCasa_chamaOnSalvarLocalComODestino', () => {
-    const fn = monta2(dEnd);
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar como casa' }));
-    expect(fn).toHaveBeenCalledWith('CASA', dEnd);
+    expect(screen.queryByText(/Salvar como/)).not.toBeInTheDocument();
   });
 });

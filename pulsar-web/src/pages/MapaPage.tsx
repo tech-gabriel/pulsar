@@ -304,8 +304,6 @@ export default function MapaPage() {
         document.querySelector<HTMLInputElement>(`[data-campos-rota] input[aria-label="${ponto === 'origem' ? 'De' : 'Para'}"]`)?.focus();
       }}
       atualizadoEm={rota.atualizadoEm}
-      locais={locaisSalvos.locais}
-      onSalvarLocal={salvarLocal}
     />
   );
 

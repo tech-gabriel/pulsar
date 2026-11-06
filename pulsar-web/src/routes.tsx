@@ -97,6 +97,7 @@ export const routes: RouteObject[] = [
           { path: 'app/dashboard', lazy: async () => ({ Component: (await import('./pages/DashboardPage')).default }) },
           { path: 'app/noticias', lazy: async () => ({ Component: (await import('./pages/NoticiasPage')).default }) },
           { path: 'app/configuracoes', lazy: async () => ({ Component: (await import('./pages/ConfiguracoesPage')).default }) },
+          { path: 'app/configuracoes/subprefeituras', lazy: async () => ({ Component: (await import('./pages/SubprefeiturasAcompanhoPage')).default }) },
         ],
       },
 

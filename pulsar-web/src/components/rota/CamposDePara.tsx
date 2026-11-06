@@ -30,6 +30,8 @@ interface Props {
   /** Casa e trabalho da conta; sem onSalvarLocal as linhas não aparecem. */
   locais?: Locais;
   onSalvarLocal?: SalvarLocal;
+  /** Enquanto os locais carregam, as linhas não aparecem: tocar numa Casa ainda não carregada sobrescreveria o endereço salvo. */
+  carregandoLocais?: boolean;
 }
 
 function iconePara(tipo: string) {
@@ -41,11 +43,11 @@ function iconePara(tipo: string) {
 interface Opcao { chave: string; rotulo: string; sub?: string; Icone: typeof House; peso: string; acao: () => void }
 
 /** Um campo do De/Para: mostra o ponto escolhido e, ao digitar, sugere subprefeituras e endereços. */
-function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, alvoLista, locais, onSalvarLocal }: {
+function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, alvoLista, locais, onSalvarLocal, carregandoLocais }: {
   rotulo: string; ponto: PontoRota | null; placeholder: string; areas: Area[]; onEscolher: (p: PontoRota) => void; focar?: boolean;
   /** No painel: a lista vai para baixo da cápsula inteira (largura do painel), não para dentro da coluna. */
   alvoLista: HTMLElement | null;
-  locais: Locais; onSalvarLocal?: SalvarLocal;
+  locais: Locais; onSalvarLocal?: SalvarLocal; carregandoLocais?: boolean;
 }) {
   const { setTermo, resultados, carregando, limpar } = useBuscaEndereco();
   // null = não está editando: o campo mostra o ponto escolhido.
@@ -104,7 +106,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
   }
 
   const termo = texto?.trim() ?? '';
-  const linhas = !!onSalvarLocal && linhasAbertas && !salvando && (texto === null || termo === '' || texto === ponto?.rotulo);
+  const linhas = !!onSalvarLocal && !carregandoLocais && linhasAbertas && !salvando && (texto === null || termo === '' || texto === ponto?.rotulo);
   const subs = termo.length >= 2 && !salvando ? buscarAreas(termo, areas).slice(0, 3) : [];
   // O geocoder também devolve o bairro com o nome da subprefeitura ("Mooca"): não repete.
   const nomesSubs = new Set(subs.map((a) => normalizarNome(a.nome)));
@@ -214,7 +216,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
  * Barra De/Para do modo rota. No celular substitui a busca do topo; no tablet e no computador
  * abre o painel. Sem localização, o campo De fica vazio e pede um lugar.
  */
-export default function CamposDePara({ areas, origem, destino, onOrigem, onDestino, onInverter, onFechar, embutida = false, locais = {}, onSalvarLocal }: Props) {
+export default function CamposDePara({ areas, origem, destino, onOrigem, onDestino, onInverter, onFechar, embutida = false, locais = {}, onSalvarLocal, carregandoLocais }: Props) {
   // Painel: as sugestões ficam abaixo da cápsula; a seta, os pontos e a troca seguem alinhados aos campos.
   const [alvoLista, setAlvoLista] = useState<HTMLDivElement | null>(null);
   const alvo = embutida ? alvoLista : null;
@@ -237,9 +239,9 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-1.5 ml-1">
           <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} alvoLista={alvo}
-            locais={locais} onSalvarLocal={onSalvarLocal} />
+            locais={locais} onSalvarLocal={onSalvarLocal} carregandoLocais={carregandoLocais} />
           <Campo rotulo="Para" ponto={destino} placeholder="Para onde você vai?" areas={areas} onEscolher={onDestino} focar={!destino} alvoLista={alvo}
-            locais={locais} onSalvarLocal={onSalvarLocal} />
+            locais={locais} onSalvarLocal={onSalvarLocal} carregandoLocais={carregandoLocais} />
         </div>
         <button type="button" onClick={onInverter} aria-label="Inverter origem e destino"
           className="mapa-txt-suave flex items-center justify-center w-11 h-11 flex-shrink-0">

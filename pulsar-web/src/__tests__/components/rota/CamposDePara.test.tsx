@@ -164,6 +164,13 @@ describe('CamposDePara: casa e trabalho', () => {
     expect(opcoes[1]).toHaveTextContent('Toque para salvar');
   });
 
+  it('carregandoLocais_naoMostraAsLinhas', () => {
+    monta({ locais: {}, carregandoLocais: true });
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
+    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    expect(screen.queryByText('Toque para salvar')).not.toBeInTheDocument();
+  });
+
   it('foco_comCasa_mostraEnderecoESomeAoDigitar', () => {
     monta({ locais: { CASA } });
     const campo = screen.getByRole('combobox', { name: 'Para' });

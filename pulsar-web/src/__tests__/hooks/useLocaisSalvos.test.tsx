@@ -62,6 +62,21 @@ describe('useLocaisSalvos', () => {
     expect(showToast).toHaveBeenCalledWith('Fora de SP.', 'error');
   });
 
+  it('dois salvar sem esperar o primeiro fazem um PUT só', async () => {
+    m.put.mockResolvedValue({ data: { local: casa, favorita: 'JA_EXISTIA' } });
+    const { result } = renderHook(() => useLocaisSalvos('u1'));
+    await waitFor(() => expect(result.current.carregando).toBe(false));
+    let r: boolean[] = [];
+    await act(async () => {
+      r = await Promise.all([
+        result.current.salvar('CASA', ponto, 'm', 'rota'),
+        result.current.salvar('CASA', ponto, 'm', 'rota'),
+      ]);
+    });
+    expect(m.put).toHaveBeenCalledTimes(1);
+    expect(r).toEqual([true, false]);
+  });
+
   it('apagar remove do estado', async () => {
     m.delete.mockResolvedValue({ data: {} });
     const { result } = renderHook(() => useLocaisSalvos('u1'));

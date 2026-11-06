@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../api/client';
 import type { LocalSalvoDto, SalvarLocalResponse, TipoLocal } from '../types';
 import type { PontoRota } from '../features/rota/tipos';
@@ -18,6 +18,7 @@ export function useLocaisSalvos(usuarioId: string | null) {
   const [carregando, setCarregando] = useState(usuarioId !== null);
   const { showToast } = useToast();
   const { recarregar } = useFavoritos();
+  const salvando = useRef(false);
 
   useEffect(() => {
     if (!usuarioId) return;
@@ -40,7 +41,8 @@ export function useLocaisSalvos(usuarioId: string | null) {
 
   const salvar = useCallback(
     async (tipo: TipoLocal, p: PontoRota, subprefeituraId: string, origem: Origem) => {
-      if (!usuarioId) return false;
+      if (!usuarioId || salvando.current) return false;
+      salvando.current = true;
       try {
         const { data } = await api.put<SalvarLocalResponse>(`/usuarios/${usuarioId}/locais/${slug(tipo)}`, {
           latitude: p.lat,
@@ -61,6 +63,8 @@ export function useLocaisSalvos(usuarioId: string | null) {
       } catch (err) {
         showToast(mensagemDaApi(err) ?? 'Não foi possível salvar agora.', 'error');
         return false;
+      } finally {
+        salvando.current = false;
       }
     },
     [usuarioId, recarregar, showToast],

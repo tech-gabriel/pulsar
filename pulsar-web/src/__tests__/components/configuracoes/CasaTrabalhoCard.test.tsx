@@ -9,14 +9,16 @@ const h = vi.hoisted(() => ({
   apagar: vi.fn(),
   toast: vi.fn(),
   subId: 'sub-1' as string | null,
+  dados: {} as object | null,
+  subs: [{ id: 's' }] as unknown[],
 }));
 vi.mock('../../../contexts/AuthContext', () => ({ useAuth: () => ({ usuario: { id: 'u1' } }) }));
 vi.mock('../../../contexts/ToastContext', () => ({ useToast: () => ({ showToast: h.toast }) }));
 vi.mock('../../../hooks/useLocaisSalvos', () => ({
   useLocaisSalvos: () => ({ locais: h.locais, carregando: h.carregando, salvar: h.salvar, apagar: h.apagar }),
 }));
-vi.mock('../../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => ({ subprefeituras: [] }) }));
-vi.mock('../../../hooks/useJsonPublico', () => ({ useJsonPublico: () => ({ dados: null, erro: false }) }));
+vi.mock('../../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => ({ subprefeituras: h.subs }) }));
+vi.mock('../../../hooks/useJsonPublico', () => ({ useJsonPublico: () => ({ dados: h.dados, erro: false }) }));
 vi.mock('../../../features/locais/regras', async (orig) => ({
   ...(await orig<object>()),
   subprefeituraIdDoPonto: () => h.subId,
@@ -34,7 +36,7 @@ const casa = { tipo: 'CASA', rotulo: 'Rua A, 10', latitude: -23.5, longitude: -4
 
 describe('CasaTrabalhoCard', () => {
   beforeEach(() => {
-    h.locais = {}; h.carregando = false; h.subId = 'sub-1';
+    h.locais = {}; h.carregando = false; h.subId = 'sub-1'; h.dados = {}; h.subs = [{ id: 's' }];
     h.salvar.mockReset().mockResolvedValue(true);
     h.apagar.mockReset().mockResolvedValue(true);
     h.toast.mockReset();
@@ -107,6 +109,17 @@ describe('CasaTrabalhoCard', () => {
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Mooca' } });
     fireEvent.click(screen.getByRole('button', { name: /Rua da Mooca/ }));
     await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Esse endereço fica fora da cidade de São Paulo.', 'error'));
+    expect(h.salvar).not.toHaveBeenCalled();
+  });
+
+  it('contorno ainda não carregou: avisa que está carregando e não salva', async () => {
+    h.dados = null;
+    render(<CasaTrabalhoCard />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Salvar' })[0]);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Mooca' } });
+    fireEvent.click(screen.getByRole('button', { name: /Rua da Mooca/ }));
+    await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Ainda carregando o mapa das regiões. Tente de novo em instantes.', 'info'));
+    expect(h.toast).not.toHaveBeenCalledWith(expect.stringContaining('fora da cidade'), 'error');
     expect(h.salvar).not.toHaveBeenCalled();
   });
 });

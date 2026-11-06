@@ -66,6 +66,10 @@ export default function CasaTrabalhoCard() {
   const [apagando, setApagando] = useState<TipoLocal | null>(null);
 
   async function escolher(tipo: TipoLocal, p: PontoRota) {
+    if (!contorno.dados || subprefeituras.length === 0) {
+      showToast('Ainda carregando o mapa das regiões. Tente de novo em instantes.', 'info');
+      return;
+    }
     const id = subprefeituraIdDoPonto(p, contorno.dados, subprefeituras);
     if (!id) {
       showToast('Esse endereço fica fora da cidade de São Paulo.', 'error');

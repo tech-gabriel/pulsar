@@ -258,6 +258,10 @@ export default function MapaPage() {
 
   // Casa ou trabalho salvos direto da rota: só endereço dentro da cidade.
   async function salvarLocal(tipo: TipoLocal, p: PontoRota) {
+    if (!contornoLeve.dados || subprefeituras.length === 0) {
+      showToast('Ainda carregando o mapa das regiões. Tente de novo em instantes.', 'info');
+      return false;
+    }
     const id = subprefeituraIdDoPonto(p, contornoLeve.dados, subprefeituras);
     if (!id) {
       showToast('Esse endereço fica fora da cidade de São Paulo.', 'error');
@@ -278,6 +282,7 @@ export default function MapaPage() {
       embutida={embutida}
       locais={locaisSalvos.locais}
       onSalvarLocal={salvarLocal}
+      carregandoLocais={locaisSalvos.carregando}
     />
   );
 

@@ -15,6 +15,7 @@ vi.mock('../../contexts/AuthContext', () => ({
   }),
 }));
 vi.mock('../../components/ui/Header', () => ({ default: () => null }));
+vi.mock('../../components/configuracoes/CasaTrabalhoCard', () => ({ default: () => null }));
 vi.mock('../../components/ui/SobreCard', () => ({ default: () => null }));
 vi.mock('../../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'dark', toggleTheme: vi.fn() }) }));
 vi.mock('../../hooks/useIsMobile', () => ({ useIsMobile: () => true }));

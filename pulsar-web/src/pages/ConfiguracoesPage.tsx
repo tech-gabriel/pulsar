@@ -7,6 +7,7 @@ import {
 import FolhaInferior from '../components/ui/FolhaInferior';
 import Header from '../components/ui/Header';
 import GlassCard from '../components/ui/GlassCard';
+import CasaTrabalhoCard from '../components/configuracoes/CasaTrabalhoCard';
 import SobreCard from '../components/ui/SobreCard';
 import CartaoConfirmarEmail from '../components/auth/CartaoConfirmarEmail';
 import { useAuth } from '../contexts/AuthContext';
@@ -438,6 +439,12 @@ export default function ConfiguracoesPage() {
               ))}
             </div>
           )}
+        </GlassCard>
+
+        {/* ── CASA E TRABALHO ─────────────────────────────────────────────── */}
+        <GlassCard hover={false} padding="lg" className="mb-4">
+          <SecaoTitulo>Casa e trabalho</SecaoTitulo>
+          <CasaTrabalhoCard />
         </GlassCard>
 
         {/* ── AJUDA ───────────────────────────────────────────────────────── */}

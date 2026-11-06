@@ -92,6 +92,14 @@ export default function CasaTrabalhoCard() {
   const botaoCancelar = useRef<HTMLButtonElement>(null);
   const etapa = folha?.etapa;
   useEffect(() => { if (etapa) botaoCancelar.current?.focus(); }, [etapa]);
+  // Trocou ou apagou: quem abriu a folha pode ter sumido (o resultado da busca), então o foco vai para a
+  // linha daquele lugar. Roda depois do effect da folha, que tenta devolver o foco a quem a abriu.
+  const focarLinha = useRef<TipoLocal | null>(null);
+  useEffect(() => {
+    if (!focarLinha.current || folha) return;
+    document.querySelector<HTMLElement>(`[data-local="${focarLinha.current}"] .linha-ajuste`)?.focus();
+    focarLinha.current = null;
+  }, [folha]);
 
   async function escolher(tipo: TipoLocal, p: PontoRota) {
     if (!contorno.dados || subprefeituras.length === 0) {
@@ -114,7 +122,7 @@ export default function CasaTrabalhoCard() {
       ? await salvar(folha.tipo, folha.ponto, folha.id, 'configuracoes')
       : await apagar(folha.tipo);
     setOcupado(false);
-    if (ok) { setFolha(null); setEditando(null); }
+    if (ok) { focarLinha.current = folha.tipo; setFolha(null); setEditando(null); }
   }
 
   const f = folha ?? ultima;
@@ -134,7 +142,7 @@ export default function CasaTrabalhoCard() {
         const titulo = ROTULO_TIPO[tipo];
         if (carregando) return <LinhaAjuste key={tipo} Icone={Icone} titulo={titulo} subtitulo="Carregando…" />;
         return (
-          <div key={tipo}>
+          <div key={tipo} data-local={tipo}>
             {salvo ? (
               <LinhaAjuste Icone={Icone} titulo={titulo} subtitulo={salvo.rotulo} direita={<Seta />}
                 onClick={() => { setEditando(null); setFolha({ tipo, etapa: 'lugar' }); }} />

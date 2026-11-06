@@ -120,6 +120,25 @@ describe('CasaTrabalhoCard', () => {
     await waitFor(() => expect(linha).toHaveFocus());
   });
 
+  it('depois de confirmar Apagar, o foco fica na linha da Casa', async () => {
+    abrirFolhaDaCasa();
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar' }));
+    h.locais = {}; // o hook real tira a casa ao apagar
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar casa' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: /casa/i })));
+  });
+
+  it('depois de confirmar Trocar, o foco fica na linha da Casa', async () => {
+    abrirFolhaDaCasa();
+    fireEvent.click(screen.getByRole('button', { name: 'Trocar endereço' }));
+    escolherNaBusca();
+    await screen.findByRole('dialog', { name: /^Trocar a casa/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Trocar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: /^Casa/ })));
+  });
+
   it('Trocar: escolher o endereço pede confirmação e só salva depois de "Trocar"', async () => {
     abrirFolhaDaCasa();
     fireEvent.click(screen.getByRole('button', { name: 'Trocar endereço' }));

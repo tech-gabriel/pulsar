@@ -39,6 +39,9 @@ import CamposDePara from '../components/rota/CamposDePara';
 import PainelRota from '../components/rota/PainelRota';
 import { track } from '../analytics';
 import type { PontoRota } from '../features/rota/tipos';
+import type { TipoLocal } from '../types';
+import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
+import { subprefeituraIdDoPonto } from '../features/locais/regras';
 
 export default function MapaPage() {
   const { usuario } = useAuth();
@@ -98,6 +101,7 @@ export default function MapaPage() {
   // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
+  const locaisSalvos = useLocaisSalvos(usuario?.id ?? null);
   const rotaSemPontos = rotaAberta && !(rota.origem && rota.destino);
   const rotaNoCelular = isMobile && rotaAberta;
   useAlturaFluida(folhaRef, !rotaSemPontos); // a folha sai e volta (AnimatePresence)
@@ -252,6 +256,16 @@ export default function MapaPage() {
     />
   );
 
+  // Casa ou trabalho salvos direto da rota: só endereço dentro da cidade.
+  async function salvarLocal(tipo: TipoLocal, p: PontoRota) {
+    const id = subprefeituraIdDoPonto(p, contornoLeve.dados, subprefeituras);
+    if (!id) {
+      showToast('Esse endereço fica fora da cidade de São Paulo.', 'error');
+      return false;
+    }
+    return locaisSalvos.salvar(tipo, p, id, 'rota');
+  }
+
   const camposRota = (embutida: boolean) => (
     <CamposDePara
       areas={subprefeituras}
@@ -262,6 +276,8 @@ export default function MapaPage() {
       onInverter={() => { const o = rota.origem; rota.setOrigem(rota.destino); rota.setDestino(o); }}
       onFechar={fecharRota}
       embutida={embutida}
+      locais={locaisSalvos.locais}
+      onSalvarLocal={salvarLocal}
     />
   );
 

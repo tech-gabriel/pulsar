@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { SubprefeituraMapaDto } from '../../../types';
 
@@ -139,5 +139,111 @@ describe('CamposDePara: indicadores', () => {
     expect(origem.style.background).toBe('var(--color-pulsar-500)');
     expect(destino.style.background).toBe('var(--color-pulsar-600)');
     expect(destino.querySelector('.lucide-flag')).not.toBeNull();
+  });
+});
+
+describe('CamposDePara: casa e trabalho', () => {
+  const CASA = { tipo: 'CASA' as const, latitude: -23.56, longitude: -46.65, rotulo: 'Rua Augusta, 100', subprefeituraId: 's1', subprefeituraNome: 'Sé' };
+  const monta = (extra: Partial<React.ComponentProps<typeof CamposDePara>> = {}) => {
+    const props = {
+      areas, origem: null, destino: { lat: -23.5, lon: -46.6, rotulo: 'Sé' }, onOrigem: vi.fn(), onDestino: vi.fn(),
+      onInverter: vi.fn(), onFechar: vi.fn(), locais: {}, onSalvarLocal: vi.fn().mockResolvedValue(true), ...extra,
+    };
+    render(<CamposDePara {...props} />);
+    return props;
+  };
+
+  it('foco_semLocais_mostraCasaETrabalhoComToqueParaSalvar', () => {
+    monta();
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
+    const opcoes = screen.getAllByRole('option');
+    expect(opcoes).toHaveLength(2);
+    expect(opcoes[0]).toHaveTextContent('Casa');
+    expect(opcoes[0]).toHaveTextContent('Toque para salvar');
+    expect(opcoes[1]).toHaveTextContent('Trabalho');
+    expect(opcoes[1]).toHaveTextContent('Toque para salvar');
+  });
+
+  it('foco_comCasa_mostraEnderecoESomeAoDigitar', () => {
+    monta({ locais: { CASA } });
+    const campo = screen.getByRole('combobox', { name: 'Para' });
+    fireEvent.focus(campo);
+    expect(screen.getByRole('option', { name: /Casa/ })).toHaveTextContent('Rua Augusta, 100');
+    fireEvent.change(campo, { target: { value: 'a' } });
+    expect(screen.queryByRole('option', { name: /Casa/ })).not.toBeInTheDocument();
+  });
+
+  it('foco_noDeComMinhaLocalizacao_mostraAsLinhas', () => {
+    monta({ origem: { lat: -23.5, lon: -46.6, rotulo: 'Minha localização' } });
+    fireEvent.focus(screen.getByRole('combobox', { name: 'De' }));
+    expect(screen.getByRole('option', { name: /Casa/ })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Trabalho/ })).toBeInTheDocument();
+  });
+
+  it('as setas andam pelas linhas', () => {
+    monta();
+    const campo = screen.getByRole('combobox', { name: 'Para' });
+    fireEvent.focus(campo);
+    fireEvent.keyDown(campo, { key: 'ArrowDown' });
+    expect(campo).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: /Casa/ }).id);
+  });
+
+  it('tocarCasaPreenchida_preencheOCampo', () => {
+    const { onDestino } = monta({ locais: { CASA } });
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
+    fireEvent.click(screen.getByRole('option', { name: /Casa/ }));
+    expect(onDestino).toHaveBeenCalledWith({ lat: -23.56, lon: -46.65, rotulo: 'Rua Augusta, 100' });
+  });
+
+  it('tocarCasaVazia_buscaSoEnderecos_eSalva', async () => {
+    const { onDestino, onSalvarLocal } = monta();
+    const campo = screen.getByRole('combobox', { name: 'Para' });
+    fireEvent.focus(campo);
+    fireEvent.click(screen.getByRole('option', { name: /Casa/ }));
+    expect(campo).toHaveAttribute('placeholder', 'Busque o endereço da sua casa');
+    fireEvent.change(campo, { target: { value: 'Mooca' } });
+    // Só endereços: a subprefeitura Mooca não aparece (o bairro do geocoder, sim, é endereço).
+    expect(screen.queryByRole('option', { name: /Casa/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('option')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('option', { name: 'Rua da Mooca' }));
+    const esperado = { lat: -23.55, lon: -46.61, rotulo: 'Rua da Mooca', fonte: 'endereco' };
+    expect(onSalvarLocal).toHaveBeenCalledWith('CASA', esperado);
+    await waitFor(() => expect(onDestino).toHaveBeenCalledWith(esperado));
+  });
+
+  it('salvar que falha não preenche o campo', async () => {
+    const { onDestino, onSalvarLocal } = monta({ onSalvarLocal: vi.fn().mockResolvedValue(false) });
+    const campo = screen.getByRole('combobox', { name: 'Para' });
+    fireEvent.focus(campo);
+    fireEvent.click(screen.getByRole('option', { name: /Trabalho/ }));
+    expect(campo).toHaveAttribute('placeholder', 'Busque o endereço do seu trabalho');
+    fireEvent.change(campo, { target: { value: 'Mooca' } });
+    fireEvent.click(screen.getByRole('option', { name: 'Rua da Mooca' }));
+    await waitFor(() => expect(onSalvarLocal).toHaveBeenCalled());
+    expect(onDestino).not.toHaveBeenCalled();
+  });
+
+  it('Escape cancela o modo salvando', () => {
+    monta();
+    const campo = screen.getByRole('combobox', { name: 'Para' });
+    fireEvent.focus(campo);
+    fireEvent.click(screen.getByRole('option', { name: /Casa/ }));
+    fireEvent.keyDown(campo, { key: 'Escape' });
+    expect(campo).toHaveAttribute('placeholder', 'Para onde você vai?');
+    expect(campo).toHaveValue('Sé');
+  });
+
+  it('escolherEnderecoNormal_marcaFonteEndereco', () => {
+    const { onDestino } = monta();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Para' }), { target: { value: 'Mooca' } });
+    fireEvent.click(screen.getByRole('option', { name: 'Rua da Mooca' }));
+    expect(onDestino).toHaveBeenCalledWith({ lat: -23.55, lon: -46.61, rotulo: 'Rua da Mooca', fonte: 'endereco' });
+  });
+
+  it('escolherSubprefeitura_semFonte', () => {
+    const { onDestino } = monta();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Para' }), { target: { value: 'Mooca' } });
+    fireEvent.click(screen.getByRole('option', { name: 'Mooca' }));
+    expect(onDestino).toHaveBeenCalledWith({ lat: -23.55, lon: -46.6, rotulo: 'Mooca' });
   });
 });

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 
@@ -11,9 +11,12 @@ const h = vi.hoisted(() => ({
   subId: 'sub-1' as string | null,
   dados: {} as object | null,
   subs: [{ id: 's' }] as unknown[],
+  favoritos: [{ subprefeituraId: 's', nome: 'Mooca' }] as unknown[],
 }));
 vi.mock('../../../contexts/AuthContext', () => ({ useAuth: () => ({ usuario: { id: 'u1' } }) }));
 vi.mock('../../../contexts/ToastContext', () => ({ useToast: () => ({ showToast: h.toast }) }));
+vi.mock('../../../hooks/useIsMobile', () => ({ useIsMobile: () => true }));
+vi.mock('../../../hooks/useFavoritos', () => ({ useFavoritos: () => ({ favoritos: h.favoritos }) }));
 vi.mock('../../../hooks/useLocaisSalvos', () => ({
   useLocaisSalvos: () => ({ locais: h.locais, carregando: h.carregando, salvar: h.salvar, apagar: h.apagar }),
 }));
@@ -32,68 +35,125 @@ vi.mock('../../../hooks/useBuscaEndereco', () => ({
 
 import CasaTrabalhoCard from '../../../components/configuracoes/CasaTrabalhoCard';
 
-const casa = { tipo: 'CASA', rotulo: 'Rua A, 10', latitude: -23.5, longitude: -46.6, subprefeituraId: 's' };
+const casa = { tipo: 'CASA', rotulo: 'Rua A, 10', latitude: -23.5, longitude: -46.6, subprefeituraId: 's', subprefeituraNome: 'Mooca' };
+const novo = { lat: -23.55, lon: -46.61, rotulo: 'Rua da Mooca', fonte: 'endereco' };
+
+const escolherNaBusca = () => {
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Mooca' } });
+  fireEvent.click(screen.getByRole('button', { name: /Rua da Mooca/ }));
+};
+
+const abrirFolhaDaCasa = () => {
+  h.locais = { CASA: casa };
+  render(<CasaTrabalhoCard />);
+  fireEvent.click(screen.getByRole('button', { name: /^Casa/ }));
+  return screen.getByRole('dialog', { name: 'Casa' });
+};
 
 describe('CasaTrabalhoCard', () => {
   beforeEach(() => {
     h.locais = {}; h.carregando = false; h.subId = 'sub-1'; h.dados = {}; h.subs = [{ id: 's' }];
+    h.favoritos = [{ subprefeituraId: 's', nome: 'Mooca' }];
     h.salvar.mockReset().mockResolvedValue(true);
     h.apagar.mockReset().mockResolvedValue(true);
     h.toast.mockReset();
   });
 
-  it('sem locais mostra "Não salvo" e "Salvar" para os dois tipos', () => {
+  it('sem locais: as duas linhas oferecem "Salvar" e nenhuma tem subtítulo', () => {
     render(<CasaTrabalhoCard />);
-    expect(screen.getAllByText('Não salvo')).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: 'Salvar' })).toHaveLength(2);
-    expect(screen.queryByRole('button', { name: 'Apagar' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Salvar casa' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Salvar trabalho' })).toBeInTheDocument();
+    expect(screen.queryByText('Não salvo')).toBeNull();
   });
 
-  it('carregando não oferece Salvar nem "Não salvo"', () => {
+  it('carregando não oferece ação nenhuma', () => {
     h.carregando = true;
     render(<CasaTrabalhoCard />);
-    expect(screen.queryByText('Não salvo')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Salvar' })).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getAllByText('Carregando…')).toHaveLength(2);
   });
 
-  it('com casa mostra o rótulo, Trocar e Apagar', () => {
-    h.locais = { CASA: casa };
-    render(<CasaTrabalhoCard />);
-    expect(screen.getByText('Rua A, 10')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Trocar' })).toBeInTheDocument();
+  it('com casa: a linha mostra o endereço e abre a folha com Trocar e Apagar', () => {
+    const folha = abrirFolhaDaCasa();
+    expect(folha).toHaveTextContent('Rua A, 10');
+    expect(screen.getByRole('button', { name: 'Trocar endereço' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Apagar' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
   });
 
-  it('Apagar pede confirmação na linha e só então apaga', async () => {
-    h.locais = { CASA: casa };
-    render(<CasaTrabalhoCard />);
+  it('Apagar pede confirmação e só então apaga', async () => {
+    abrirFolhaDaCasa();
     fireEvent.click(screen.getByRole('button', { name: 'Apagar' }));
+    const conf = screen.getByRole('dialog', { name: 'Apagar o endereço da sua casa?' });
+    expect(conf).toHaveTextContent('Rua A, 10 sai da sua conta. Mooca continua nas suas favoritas.');
     expect(h.apagar).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
-    expect(screen.getByRole('button', { name: 'Apagar' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Apagar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Apagar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar casa' }));
     await waitFor(() => expect(h.apagar).toHaveBeenCalledWith('CASA'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('Trocar, digitar e escolher o endereço salva com origem configuracoes', async () => {
+  it('a confirmação de apagar não promete a favorita que a pessoa já tirou', () => {
+    h.favoritos = [];
+    abrirFolhaDaCasa();
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Rua A, 10 sai da sua conta.');
+    expect(screen.getByRole('dialog')).not.toHaveTextContent('favoritas');
+  });
+
+  it('Cancelar na confirmação não apaga', async () => {
+    abrirFolhaDaCasa();
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(h.apagar).not.toHaveBeenCalled();
+  });
+
+  it('a confirmação foca o Cancelar e, ao fechar, o foco volta para a linha da Casa', async () => {
     h.locais = { CASA: casa };
     render(<CasaTrabalhoCard />);
+    const linha = screen.getByRole('button', { name: /^Casa/ });
+    linha.focus();
+    fireEvent.click(linha);
+    fireEvent.click(screen.getByRole('button', { name: 'Apagar' }));
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() => expect(linha).toHaveFocus());
+  });
+
+  it('Trocar: escolher o endereço pede confirmação e só salva depois de "Trocar"', async () => {
+    abrirFolhaDaCasa();
+    fireEvent.click(screen.getByRole('button', { name: 'Trocar endereço' }));
+    escolherNaBusca();
+    const conf = await screen.findByRole('dialog', { name: 'Trocar a casa para Rua da Mooca?' });
+    expect(conf).toHaveTextContent('O endereço atual, Rua A, 10, deixa de ser usado na Rota.');
+    expect(h.salvar).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Trocar' }));
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Mooca' } });
-    fireEvent.click(screen.getByRole('button', { name: /Rua da Mooca/ }));
-    await waitFor(() => expect(h.salvar).toHaveBeenCalledWith(
-      'CASA',
-      { lat: -23.55, lon: -46.61, rotulo: 'Rua da Mooca', fonte: 'endereco' },
-      'sub-1',
-      'configuracoes',
-    ));
+    await waitFor(() => expect(h.salvar).toHaveBeenCalledWith('CASA', novo, 'sub-1', 'configuracoes'));
+  });
+
+  it('Cancelar na confirmação de trocar não salva', async () => {
+    abrirFolhaDaCasa();
+    fireEvent.click(screen.getByRole('button', { name: 'Trocar endereço' }));
+    escolherNaBusca();
+    const conf = await screen.findByRole('dialog', { name: /^Trocar a casa/ });
+    fireEvent.click(within(conf).getByRole('button', { name: 'Cancelar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(h.salvar).not.toHaveBeenCalled();
+  });
+
+  it('Trabalho vazio: "Salvar" abre a busca direto e salva sem confirmação', async () => {
+    render(<CasaTrabalhoCard />);
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar trabalho' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    escolherNaBusca();
+    await waitFor(() => expect(h.salvar).toHaveBeenCalledWith('TRABALHO', novo, 'sub-1', 'configuracoes'));
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('escolhe o endereço só com o teclado (Tab até o resultado e Enter)', async () => {
     const user = userEvent.setup();
     render(<CasaTrabalhoCard />);
-    await user.click(screen.getAllByRole('button', { name: 'Salvar' })[0]);
+    await user.click(screen.getByRole('button', { name: 'Salvar casa' }));
     await user.keyboard('Mooca');
     await user.tab(); // Cancelar
     await user.tab();
@@ -105,9 +165,8 @@ describe('CasaTrabalhoCard', () => {
   it('endereço fora de SP avisa e não salva', async () => {
     h.subId = null;
     render(<CasaTrabalhoCard />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Salvar' })[0]);
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Mooca' } });
-    fireEvent.click(screen.getByRole('button', { name: /Rua da Mooca/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar casa' }));
+    escolherNaBusca();
     await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Esse endereço fica fora da cidade de São Paulo.', 'error'));
     expect(h.salvar).not.toHaveBeenCalled();
   });
@@ -115,9 +174,8 @@ describe('CasaTrabalhoCard', () => {
   it('contorno ainda não carregou: avisa que está carregando e não salva', async () => {
     h.dados = null;
     render(<CasaTrabalhoCard />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Salvar' })[0]);
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Mooca' } });
-    fireEvent.click(screen.getByRole('button', { name: /Rua da Mooca/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar casa' }));
+    escolherNaBusca();
     await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Ainda carregando o mapa das regiões. Tente de novo em instantes.', 'info'));
     expect(h.toast).not.toHaveBeenCalledWith(expect.stringContaining('fora da cidade'), 'error');
     expect(h.salvar).not.toHaveBeenCalled();

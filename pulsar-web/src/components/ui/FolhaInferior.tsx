@@ -19,7 +19,8 @@ interface Props {
 }
 
 /**
- * Folha que sobe de baixo no celular e vira caixa central no desktop (SEC2). Modal: foco preso dentro,
+ * Folha de vidro denso (.folha-inferior no index.css) que sobe de baixo no celular, flutuando a 8 px
+ * das bordas, e vira caixa central no desktop (SEC2). Modal: foco preso dentro,
  * foco inicial no elemento com `data-foco-inicial` (a ação segura), Esc e toque no fundo fecham, e o foco
  * volta para quem abriu.
  */
@@ -61,7 +62,7 @@ export default function FolhaInferior({ aberta, onFechar, tituloId, children }: 
             data-testid="folha-fundo"
             aria-hidden="true"
             className="absolute inset-0"
-            style={{ background: 'rgba(0, 0, 0, 0.45)' }}
+            style={{ background: 'rgba(0, 0, 0, 0.3)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -73,20 +74,14 @@ export default function FolhaInferior({ aberta, onFechar, tituloId, children }: 
             role="dialog"
             aria-modal="true"
             aria-labelledby={tituloId}
-            className="relative w-full md:w-[420px] px-5 pt-2.5 md:pt-6 md:pb-6 rounded-t-[22px] md:rounded-2xl"
-            style={{
-              background: 'var(--bg-primary)',
-              border: '1px solid var(--border-glass)',
-              boxShadow: '0 -12px 40px rgba(0, 0, 0, 0.35)',
-              paddingBottom: mobile ? 'max(28px, env(safe-area-inset-bottom))' : undefined,
-            }}
+            className="folha-inferior vidro-painel"
             initial={mobile ? { y: '100%' } : { opacity: 0, scale: 0.96 }}
             animate={mobile ? { y: 0 } : { opacity: 1, scale: 1 }}
             exit={mobile ? { y: '100%' } : { opacity: 0, scale: 0.96 }}
             transition={MOLA}
           >
             {mobile && (
-              <div aria-hidden="true" className="mx-auto mb-4 h-[5px] w-10 rounded-full" style={{ background: 'var(--border-glass-hover)' }} />
+              <div aria-hidden="true" className="mx-auto mb-3.5 h-[5px] w-9 rounded-full" style={{ background: 'var(--border-glass-hover)' }} />
             )}
             {children}
           </motion.div>

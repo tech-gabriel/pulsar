@@ -40,13 +40,16 @@ function iconePara(tipo: string) {
   return Building2;
 }
 
-interface Opcao { chave: string; rotulo: string; sub?: string; Icone: typeof House; peso: string; acao: () => void }
+interface Opcao { chave: string; rotulo: string; Icone: typeof House; peso: string; acao: () => void }
 
 /** Um campo do De/Para: mostra o ponto escolhido e, ao digitar, sugere subprefeituras e endereços. */
-function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, alvoLista, locais, onSalvarLocal, carregandoLocais }: {
+function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, alvoLista, alvoLinhas, onLinhas, locais, onSalvarLocal, carregandoLocais }: {
   rotulo: string; ponto: PontoRota | null; placeholder: string; areas: Area[]; onEscolher: (p: PontoRota) => void; focar?: boolean;
   /** No painel: a lista vai para baixo da cápsula inteira (largura do painel), não para dentro da coluna. */
   alvoLista: HTMLElement | null;
+  /** Casa e Trabalho vão para dentro da cápsula, abaixo dos campos; onLinhas avisa quem está com elas abertas. */
+  alvoLinhas: HTMLElement | null;
+  onLinhas: (f: (aberto: string | null) => string | null) => void;
   locais: Locais; onSalvarLocal?: SalvarLocal; carregandoLocais?: boolean;
 }) {
   const { setTermo, resultados, carregando, limpar } = useBuscaEndereco();
@@ -59,12 +62,13 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
   const idLista = useId();
   const ref = useRef<HTMLDivElement>(null);
   const listaRef = useRef<HTMLUListElement>(null);
+  const linhasRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function fora(e: MouseEvent) {
       const alvo = e.target as Node;
-      if (ref.current && !ref.current.contains(alvo) && !listaRef.current?.contains(alvo)) {
+      if (ref.current && !ref.current.contains(alvo) && !listaRef.current?.contains(alvo) && !linhasRef.current?.contains(alvo)) {
         setTexto(null);
         setLinhasAbertas(false);
         setSalvando(null);
@@ -107,27 +111,27 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
 
   const termo = texto?.trim() ?? '';
   const linhas = !!onSalvarLocal && !carregandoLocais && linhasAbertas && !salvando && (texto === null || termo === '' || texto === ponto?.rotulo);
+  // A cápsula ganha o vidro denso enquanto as linhas deste campo estão abertas.
+  useEffect(() => {
+    onLinhas((aberto) => (linhas ? rotulo : aberto === rotulo ? null : aberto));
+  }, [linhas, rotulo, onLinhas]);
   const subs = termo.length >= 2 && !salvando ? buscarAreas(termo, areas).slice(0, 3) : [];
   // O geocoder também devolve o bairro com o nome da subprefeitura ("Mooca"): não repete.
   const nomesSubs = new Set(subs.map((a) => normalizarNome(a.nome)));
   const enderecos = resultados.filter((r) => !nomesSubs.has(normalizarNome(r.nome || r.descricao)));
 
-  // No foco, Casa e Trabalho; ao digitar, subprefeituras e depois endereços. Uma lista só, para as setas andarem por todas.
-  const opcoes: Opcao[] = linhas
-    ? TIPOS.map(({ tipo, Icone }) => ({
-        chave: `local-${tipo}`, rotulo: ROTULO_TIPO[tipo], sub: locais[tipo]?.rotulo, Icone, peso: 'font-semibold', acao: () => tocarLinha(tipo),
-      }))
-    : [
-        ...subs.map((a) => ({
-          chave: `sub-${a.id}`, rotulo: a.nome, Icone: Building2, peso: 'font-semibold',
-          acao: () => escolher({ lat: a.latitude, lon: a.longitude, rotulo: a.nome }),
-        })),
-        ...enderecos.map((r, i) => {
-          const p: PontoRota = { lat: r.latitude, lon: r.longitude, rotulo: r.nome || r.descricao, fonte: 'endereco' };
-          return { chave: `end-${r.descricao}-${i}`, rotulo: p.rotulo, Icone: iconePara(r.tipo), peso: 'font-medium', acao: () => void escolherEndereco(p) };
-        }),
-      ];
-  const mostrar = (linhas || texto !== null) && opcoes.length > 0;
+  // Ao digitar, subprefeituras e depois endereços. Uma lista só, para as setas andarem por todas.
+  const opcoes: Opcao[] = [
+    ...subs.map((a) => ({
+      chave: `sub-${a.id}`, rotulo: a.nome, Icone: Building2, peso: 'font-semibold',
+      acao: () => escolher({ lat: a.latitude, lon: a.longitude, rotulo: a.nome }),
+    })),
+    ...enderecos.map((r, i) => {
+      const p: PontoRota = { lat: r.latitude, lon: r.longitude, rotulo: r.nome || r.descricao, fonte: 'endereco' };
+      return { chave: `end-${r.descricao}-${i}`, rotulo: p.rotulo, Icone: iconePara(r.tipo), peso: 'font-medium', acao: () => void escolherEndereco(p) };
+    }),
+  ];
+  const mostrar = texto !== null && opcoes.length > 0;
   // Lista nova (o geocoder respondeu depois): a marca das setas não vale mais, senão o Enter
   // escolheria outra opção no mesmo lugar.
   const assinatura = opcoes.map((o) => o.chave).join('|');
@@ -164,23 +168,43 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
     // mousedown sem padrão: tocar numa linha não tira o foco do campo (o modo salvando segue digitável).
     <ul ref={listaRef} id={idLista} role="listbox" aria-label={`Sugestões para ${rotulo}`} onMouseDown={(e) => e.preventDefault()}
       className={['superficie rounded-2xl mt-1.5 max-h-60 overflow-y-auto', alvoLista ? '' : 'absolute left-0 right-0 z-10'].join(' ')}>
-      {opcoes.map(({ chave, rotulo: nome, sub, Icone, peso, acao }, i) => (
+      {opcoes.map(({ chave, rotulo: nome, Icone, peso, acao }, i) => (
         <li key={chave} id={idOpcao(i)} role="option" aria-selected={i === ativo} onClick={acao}
-          className={`mapa-item flex w-full items-center gap-2 px-3 py-2.5 text-left cursor-pointer ${linhas ? 'min-h-[52px]' : 'min-h-11'}`}>
+          className="mapa-item flex w-full min-h-11 items-center gap-2 px-3 py-2.5 text-left cursor-pointer">
           <Icone size={15} className="flex-shrink-0" style={{ color: 'var(--text-accent)' }} aria-hidden="true" />
-          {linhas ? (
-            <span className="flex flex-col min-w-0">
-              <span className={`mapa-txt truncate text-xs ${peso}`}>{nome}</span>
-              {sub
-                ? <span className="mapa-txt-suave truncate text-xs">{sub}</span>
-                : <span className="truncate text-xs font-medium" style={{ color: 'var(--text-accent)' }}>Toque para salvar</span>}
-            </span>
-          ) : (
-            <span className={`mapa-txt truncate text-xs ${peso}`}>{nome}</span>
-          )}
+          <span className={`mapa-txt truncate text-xs ${peso}`}>{nome}</span>
         </li>
       ))}
     </ul>
+  );
+
+  // Casa e Trabalho: botões de verdade (Tab e Enter) dentro da cápsula. Ir do campo para elas
+  // (ou de uma para a outra) não fecha; sair para qualquer outro lugar, sim.
+  const fica = (alvo: EventTarget | null) => alvo === inputRef.current || !!linhasRef.current?.contains(alvo as Node);
+  const blocoLinhas = linhas && alvoLinhas && createPortal(
+    <div ref={linhasRef} onMouseDown={(e) => e.preventDefault()} onBlur={(e) => { if (!fica(e.relatedTarget)) cancelar(); }}
+      className="w-full mt-1.5 pt-1" style={{ borderTop: '1px solid var(--border-glass)' }}>
+      {TIPOS.map(({ tipo, Icone }) => {
+        const local = locais[tipo];
+        return (
+          <button key={tipo} type="button" onClick={() => tocarLinha(tipo)}
+            aria-label={`${ROTULO_TIPO[tipo]}, ${local?.rotulo ?? 'toque para salvar'}`}
+            className="mapa-item flex w-full min-h-14 items-center gap-3 px-3 py-2 text-left rounded-xl">
+            <span aria-hidden="true" className="grid place-items-center w-[34px] h-[34px] rounded-full flex-shrink-0"
+              style={{ background: 'var(--bg-input)', color: 'var(--text-accent)' }}>
+              <Icone size={18} />
+            </span>
+            <span className="flex flex-col gap-0.5 min-w-0">
+              <span className="mapa-txt truncate text-[15px] font-semibold">{ROTULO_TIPO[tipo]}</span>
+              {local
+                ? <span className="mapa-txt-suave truncate text-[13px]">{local.rotulo}</span>
+                : <span className="truncate text-[13px] font-medium" style={{ color: 'var(--text-accent)' }}>Toque para salvar</span>}
+            </span>
+          </button>
+        );
+      })}
+    </div>,
+    alvoLinhas,
   );
 
   return (
@@ -200,7 +224,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
           autoFocus={focar}
           onFocus={(e) => { e.currentTarget.select(); setLinhasAbertas(true); }}
           // Sair para outro elemento (Tab, o outro campo) fecha as linhas e cancela o modo salvando.
-          onBlur={(e) => { if (e.relatedTarget) cancelar(); }}
+          onBlur={(e) => { if (e.relatedTarget && !fica(e.relatedTarget)) cancelar(); }}
           onKeyDown={teclar}
           onChange={(e) => { setTexto(e.target.value); setTermo(e.target.value); setAtivo(-1); }}
           className="mapa-input flex-1 min-w-0 h-11 px-2.5 bg-transparent text-sm outline-none"
@@ -208,6 +232,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
         {carregando && <Loader2 size={15} className="mapa-txt-suave animate-spin mr-2.5 flex-shrink-0" aria-hidden="true" />}
       </div>
       {alvoLista ? lista && createPortal(lista, alvoLista) : lista}
+      {blocoLinhas}
     </div>
   );
 }
@@ -220,10 +245,14 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
   // Painel: as sugestões ficam abaixo da cápsula; a seta, os pontos e a troca seguem alinhados aos campos.
   const [alvoLista, setAlvoLista] = useState<HTMLDivElement | null>(null);
   const alvo = embutida ? alvoLista : null;
+  // Casa e Trabalho entram num espaço da própria cápsula; qual campo está com elas abertas.
+  const [alvoLinhas, setAlvoLinhas] = useState<HTMLDivElement | null>(null);
+  const [linhasDe, setLinhasDe] = useState<string | null>(null);
   return (
     <div data-campos-rota className={embutida ? 'busca-embutida relative z-[5] flex-shrink-0 px-3 pt-3'
       : 'absolute top-[calc(var(--topo-app)+0.5rem)] left-3 right-3 z-[1100]'}>
-      <div className="mapa-controle flex items-center gap-1 px-1 py-2">
+      {/* Com as linhas abertas no celular, o vidro fica denso para o texto ler bem sobre o mapa (no painel ele já é). */}
+      <div className={`mapa-controle flex flex-wrap items-center gap-1 px-1 py-2${linhasDe && !embutida ? ' vidro-painel' : ''}`}>
         <button type="button" onClick={onFechar} aria-label="Fechar a rota"
           className="mapa-txt-suave flex items-center justify-center w-11 h-11 flex-shrink-0">
           <ArrowLeft size={18} />
@@ -239,10 +268,12 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-1.5 ml-1">
           <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} alvoLista={alvo}
-            locais={locais} onSalvarLocal={onSalvarLocal} carregandoLocais={carregandoLocais} />
+            alvoLinhas={alvoLinhas} onLinhas={setLinhasDe} locais={locais} onSalvarLocal={onSalvarLocal} carregandoLocais={carregandoLocais} />
           <Campo rotulo="Para" ponto={destino} placeholder="Para onde você vai?" areas={areas} onEscolher={onDestino} focar={!destino} alvoLista={alvo}
-            locais={locais} onSalvarLocal={onSalvarLocal} carregandoLocais={carregandoLocais} />
+            alvoLinhas={alvoLinhas} onLinhas={setLinhasDe} locais={locais} onSalvarLocal={onSalvarLocal} carregandoLocais={carregandoLocais} />
         </div>
+        {/* Logo depois dos campos na ordem do Tab, mas desenhado na linha de baixo, na largura toda. */}
+        <div ref={setAlvoLinhas} className="basis-full order-1 empty:hidden" />
         <button type="button" onClick={onInverter} aria-label="Inverter origem e destino"
           className="mapa-txt-suave flex items-center justify-center w-11 h-11 flex-shrink-0">
           <ArrowUpDown size={18} />

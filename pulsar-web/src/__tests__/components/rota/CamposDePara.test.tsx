@@ -153,21 +153,42 @@ describe('CamposDePara: casa e trabalho', () => {
     return props;
   };
 
+  const capsula = () => document.querySelector('[data-campos-rota] .mapa-controle') as HTMLElement;
+
   it('foco_semLocais_mostraCasaETrabalhoComToqueParaSalvar', () => {
     monta();
     fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
-    const opcoes = screen.getAllByRole('option');
-    expect(opcoes).toHaveLength(2);
-    expect(opcoes[0]).toHaveTextContent('Casa');
-    expect(opcoes[0]).toHaveTextContent('Toque para salvar');
-    expect(opcoes[1]).toHaveTextContent('Trabalho');
-    expect(opcoes[1]).toHaveTextContent('Toque para salvar');
+    const casa = screen.getByRole('button', { name: 'Casa, toque para salvar' });
+    const trabalho = screen.getByRole('button', { name: 'Trabalho, toque para salvar' });
+    expect(casa).toHaveTextContent('Toque para salvar');
+    expect(trabalho).toHaveTextContent('Toque para salvar');
+    // Dentro da cápsula, fora do listbox.
+    expect(casa.closest('.mapa-controle')).not.toBeNull();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+  });
+
+  it('linhasAbertas_capsulaGanhaVidroPainel_fechadasNao', () => {
+    monta();
+    expect(capsula()).not.toHaveClass('vidro-painel');
+    const campo = screen.getByRole('combobox', { name: 'Para' });
+    fireEvent.focus(campo);
+    expect(capsula()).toHaveClass('vidro-painel');
+    fireEvent.change(campo, { target: { value: 'a' } });
+    expect(capsula()).not.toHaveClass('vidro-painel');
+  });
+
+  it('no painel as linhas aparecem sem vidro próprio', () => {
+    monta({ embutida: true });
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
+    expect(screen.getByRole('button', { name: /^Casa/ })).toBeInTheDocument();
+    expect(capsula()).not.toHaveClass('vidro-painel');
   });
 
   it('carregandoLocais_naoMostraAsLinhas', () => {
     monta({ locais: {}, carregandoLocais: true });
     fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
-    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
     expect(screen.queryByText('Toque para salvar')).not.toBeInTheDocument();
   });
 
@@ -175,42 +196,46 @@ describe('CamposDePara: casa e trabalho', () => {
     monta({ locais: { CASA } });
     const campo = screen.getByRole('combobox', { name: 'Para' });
     fireEvent.focus(campo);
-    expect(screen.getByRole('option', { name: /Casa/ })).toHaveTextContent('Rua Augusta, 100');
+    expect(screen.getByRole('button', { name: 'Casa, Rua Augusta, 100' })).toHaveTextContent('Rua Augusta, 100');
     fireEvent.change(campo, { target: { value: 'a' } });
-    expect(screen.queryByRole('option', { name: /Casa/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
   });
 
   it('foco_noDeComMinhaLocalizacao_mostraAsLinhas', () => {
     monta({ origem: { lat: -23.5, lon: -46.6, rotulo: 'Minha localização' } });
     fireEvent.focus(screen.getByRole('combobox', { name: 'De' }));
-    expect(screen.getByRole('option', { name: /Casa/ })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /Trabalho/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Casa/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Trabalho/ })).toBeInTheDocument();
   });
 
-  it('as setas andam pelas linhas', () => {
+  it('Tab do campo para a linha não fecha as linhas, e sair delas fecha', () => {
     monta();
     const campo = screen.getByRole('combobox', { name: 'Para' });
     fireEvent.focus(campo);
-    fireEvent.keyDown(campo, { key: 'ArrowDown' });
-    expect(campo).toHaveAttribute('aria-activedescendant', screen.getByRole('option', { name: /Casa/ }).id);
+    const casa = screen.getByRole('button', { name: /^Casa/ });
+    fireEvent.blur(campo, { relatedTarget: casa });
+    expect(screen.getByRole('button', { name: /^Casa/ })).toBeInTheDocument();
+    fireEvent.blur(casa, { relatedTarget: screen.getByRole('button', { name: 'Inverter origem e destino' }) });
+    expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
   });
 
   it('tocarCasaPreenchida_preencheOCampo', () => {
     const { onDestino } = monta({ locais: { CASA } });
     fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
-    fireEvent.click(screen.getByRole('option', { name: /Casa/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Casa/ }));
     expect(onDestino).toHaveBeenCalledWith({ lat: -23.56, lon: -46.65, rotulo: 'Rua Augusta, 100' });
+    expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
   });
 
   it('tocarCasaVazia_buscaSoEnderecos_eSalva', async () => {
     const { onDestino, onSalvarLocal } = monta();
     const campo = screen.getByRole('combobox', { name: 'Para' });
     fireEvent.focus(campo);
-    fireEvent.click(screen.getByRole('option', { name: /Casa/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Casa/ }));
     expect(campo).toHaveAttribute('placeholder', 'Busque o endereço da sua casa');
     fireEvent.change(campo, { target: { value: 'Mooca' } });
     // Só endereços: a subprefeitura Mooca não aparece (o bairro do geocoder, sim, é endereço).
-    expect(screen.queryByRole('option', { name: /Casa/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
     expect(screen.getAllByRole('option')).toHaveLength(2);
     fireEvent.click(screen.getByRole('option', { name: 'Rua da Mooca' }));
     const esperado = { lat: -23.55, lon: -46.61, rotulo: 'Rua da Mooca', fonte: 'endereco' };
@@ -222,7 +247,7 @@ describe('CamposDePara: casa e trabalho', () => {
     const { onDestino, onSalvarLocal } = monta({ onSalvarLocal: vi.fn().mockResolvedValue(false) });
     const campo = screen.getByRole('combobox', { name: 'Para' });
     fireEvent.focus(campo);
-    fireEvent.click(screen.getByRole('option', { name: /Trabalho/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Trabalho/ }));
     expect(campo).toHaveAttribute('placeholder', 'Busque o endereço do seu trabalho');
     fireEvent.change(campo, { target: { value: 'Mooca' } });
     fireEvent.click(screen.getByRole('option', { name: 'Rua da Mooca' }));
@@ -234,7 +259,7 @@ describe('CamposDePara: casa e trabalho', () => {
     monta();
     const campo = screen.getByRole('combobox', { name: 'Para' });
     fireEvent.focus(campo);
-    fireEvent.click(screen.getByRole('option', { name: /Casa/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Casa/ }));
     fireEvent.keyDown(campo, { key: 'Escape' });
     expect(campo).toHaveAttribute('placeholder', 'Para onde você vai?');
     expect(campo).toHaveValue('Sé');

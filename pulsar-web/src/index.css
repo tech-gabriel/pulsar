@@ -310,7 +310,12 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 /* Casa e trabalho no mapa (F4b): ponto na vista ampla, etiqueta de perto. A área de toque tem
    44 px mesmo com o ponto de 24 px; o pé da etiqueta é o ponto exato salvo. */
 .lugar-marcador { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; background: none; border: 0; padding: 0; cursor: pointer; }
-.lugar-marcador[data-modo="etiqueta"] { justify-content: flex-end; min-height: 0; }
+/* De perto, a etiqueta abre para o lado oposto ao círculo da região (F4b-P1): pé no ponto exato,
+   haste horizontal e a pílula. "direita" = pílula à direita do ponto. */
+.lugar-marcador[data-modo="etiqueta"] { flex-direction: row-reverse; justify-content: flex-start; min-height: 0; }
+.lugar-marcador[data-modo="etiqueta"][data-lado="esquerda"] { flex-direction: row; }
+.lugar-marcador[data-modo="etiqueta"] .lugar-haste { height: 2px; } /* largura vem do componente */
+.lugar-marcador[data-modo="etiqueta"] .lugar-pe { margin-top: 0; }
 .lugar-marcador:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: 2px; border-radius: 999px; }
 .lugar-ponto { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--color-pulsar-600); color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
 .lugar-etiqueta { display: flex; align-items: center; gap: 6px; padding: 6px 11px 6px 8px; border-radius: 999px; font: 600 13px/1 var(--font-body); white-space: nowrap; }

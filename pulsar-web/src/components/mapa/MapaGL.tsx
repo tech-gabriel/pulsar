@@ -381,7 +381,7 @@ export default function MapaGL(props: PropsMapa) {
         </Marker>
       )}
       {carregou && overlayAlagamento && ocorrencias.length > 0 && <OcorrenciasLayer ocorrencias={ocorrencias} />}
-      {carregou && lugares && lugares.length > 0 && onTocarLugar && <MarcadoresLugares lugares={lugares} onTocar={onTocarLugar} emAlerta={lugaresEmAlerta} />}
+      {carregou && lugares && lugares.length > 0 && onTocarLugar && <MarcadoresLugares lugares={lugares} onTocar={onTocarLugar} emAlerta={lugaresEmAlerta} areas={subprefeituras} />}
     </Map>
   );
 }

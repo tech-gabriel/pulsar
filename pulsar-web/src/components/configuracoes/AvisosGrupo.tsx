@@ -6,7 +6,7 @@ import { usePushSubscription, type EstadoPush } from '../../hooks/usePushSubscri
 const PREFS: { chave: keyof NotificacoesPrefs; Icone: LucideIcon; titulo: string; descricao: string }[] = [
   { chave: 'alertaAlto', Icone: TriangleAlert, titulo: 'Alertas', descricao: 'Quando entrar em Alerta' },
   { chave: 'alertaModerado', Icone: CloudRain, titulo: 'Avisos de atenção', descricao: 'Atenção ou chuva forte prevista' },
-  { chave: 'chuvaLocais', Icone: House, titulo: 'Chuva em casa e no trabalho', descricao: 'Quando começar a chover perto' },
+  { chave: 'chuvaLocais', Icone: House, titulo: 'Chuva em casa e no trabalho', descricao: 'Quando começar a chover na região deles' },
   { chave: 'resumoDiario', Icone: CalendarDays, titulo: 'Resumo diário', descricao: 'Uma vez por dia' },
 ];
 

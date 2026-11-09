@@ -27,8 +27,8 @@ describe('estado do lugar', () => {
   });
 
   it('alagamento da região', () => {
-    expect(fraseAlagamento([], 'Butantã')).toBe('Nenhum alagamento agora em Butantã');
-    expect(fraseAlagamento(undefined, 'Butantã')).toBe('Nenhum alagamento agora em Butantã');
+    expect(fraseAlagamento([], 'Butantã')).toBe('Nenhum alagamento agora no Butantã');
+    expect(fraseAlagamento(undefined, 'Butantã')).toBe('Nenhum alagamento agora no Butantã');
     expect(fraseAlagamento([ponto('Rua X')], 'Butantã')).toBe('Alagamento agora: Rua X');
     expect(fraseAlagamento([ponto('Rua X'), ponto('Av. Y'), ponto('Rua Z')], 'Butantã')).toBe('Alagamento agora: Rua X e mais 2');
   });

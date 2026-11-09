@@ -36,6 +36,10 @@ export interface PropsMapa {
   onTocarLugar?: (tipo: TipoLocal) => void;
   /** Lugar aberto agora: o mapa aproxima nele a cada toque novo (o contador muda a cada toque). */
   lugarEmFoco?: { local: LocalSalvoDto; toque: number } | null;
+  /** Muda a cada "fechar" da folha do lugar: o mapa volta ao enquadramento de antes. */
+  voltarDoLugar?: number;
+  /** Lugares com alagamento ativo na região: o marcador ganha o anel de alerta. */
+  lugaresEmAlerta?: TipoLocal[];
 }
 
 // O MapLibre (e o worker dele) vêm num chunk próprio: a página, o painel e a busca aparecem antes.

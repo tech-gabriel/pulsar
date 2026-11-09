@@ -113,7 +113,7 @@ describe('Configurações em grupos', () => {
     abrir();
     const linha = screen.getByRole('switch', { name: /Chuva em casa e no trabalho/ });
     expect(linha).toHaveAttribute('aria-checked', 'true');
-    expect(linha).toHaveTextContent('Quando começar a chover perto');
+    expect(linha).toHaveTextContent('Quando começar a chover na região deles');
     fireEvent.click(linha);
     expect(h.toggle).toHaveBeenCalledWith('chuvaLocais');
   });

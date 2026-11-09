@@ -59,7 +59,7 @@ export default function ConfiguracoesPage() {
 
         <ContaGrupo />
 
-        <GrupoAjustes rotulo="Seus lugares" rodape="Casa e trabalho aparecem primeiro quando você abre a Rota. Ficam na sua conta e só você vê.">
+        <GrupoAjustes rotulo="Seus lugares" rodape="Casa e trabalho aparecem no mapa e primeiro na Rota, e você recebe aviso quando começa a chover na região deles. Ficam na sua conta e só você vê.">
           <CasaTrabalhoCard />
           <LinhaAjuste Icone={Star} titulo="Subprefeituras que acompanho" subtitulo={resumoNomes(favoritos.map((f) => f.nome))}
             to="/app/configuracoes/subprefeituras" direita={<>{favoritos.length > 0 && favoritos.length}<Seta /></>} />

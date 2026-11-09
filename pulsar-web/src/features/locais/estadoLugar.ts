@@ -3,6 +3,7 @@ import type { Area } from '../cidade/areas';
 import { motivoDoRisco } from '../../utils/risco';
 import { fraseChuvaForte } from '../../utils/previsao';
 import { ZOOM } from '../../components/mapa/zoom';
+import { emNomeDe } from '../../data/regioes-seo';
 
 /** Na vista ampla, ponto; de perto (a partir do zoom em que os nomes aparecem), etiqueta. */
 export function modoDoMarcador(zoom: number): 'ponto' | 'etiqueta' {
@@ -25,7 +26,7 @@ export function fraseChuvaAgora(mmH: number | null | undefined, temLeitura: bool
 
 /** O CGE não publica coordenada: o alagamento é da região, nunca "a X metros". */
 export function fraseAlagamento(pontos: PontoAlagamentoCge[] | undefined, regiao: string): string {
-  if (!pontos || pontos.length === 0) return `Nenhum alagamento agora em ${regiao}`;
+  if (!pontos || pontos.length === 0) return `Nenhum alagamento agora ${emNomeDe(regiao)}`;
   const resto = pontos.length - 1;
   return `Alagamento agora: ${pontos[0].via}${resto > 0 ? ` e mais ${resto}` : ''}`;
 }

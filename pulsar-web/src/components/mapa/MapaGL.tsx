@@ -20,8 +20,11 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import type { PropsMapa } from './MapaBase';
 import MarcadoresLugares from './MarcadoresLugares';
 
-/** Zoom ao tocar na casa ou no trabalho: perto o bastante para ver a chuva em volta (F4b). */
-const ZOOM_LUGAR = 14;
+/**
+ * Zoom ao tocar na casa ou no trabalho (F4b): meio nível antes do da subprefeitura, para caber o
+ * círculo de risco da região em volta. Arredonda para 12, então a etiqueta continua no lugar do ponto.
+ */
+const ZOOM_LUGAR = ZOOM.sub - 0.5;
 
 const SP: [number, number] = [-46.6333, -23.5505]; // lon, lat
 const ESPERA_ESTILO_MS = 8000;
@@ -71,7 +74,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, semZoom = false, lugares, onTocarLugar, lugarEmFoco } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -79,6 +82,7 @@ export default function MapaGL(props: PropsMapa) {
   const [reserva, setReserva] = useState(false);
   const [carregou, setCarregou] = useState(false);
   const [idPrimeiroSimbolo, setIdPrimeiroSimbolo] = useState<string | undefined>();
+  const reduzido = !!useReducedMotion();
   const estilo = reserva ? (CHAVE_MAPTILER ? urlReservaMapTiler(theme, CHAVE_MAPTILER) : null) : estiloOfm;
 
   // Estilo base do tema; se o OpenFreeMap falhar, a reserva do MapTiler vale até sair do mapa.
@@ -104,7 +108,7 @@ export default function MapaGL(props: PropsMapa) {
   function voar(lonLat: [number, number], zoom: number, duracaoMs: number) {
     const mapa = mapRef.current;
     if (!mapa) return;
-    mapa.flyTo({ center: lonLat, zoom, duration: duracaoMs, offset: deslocamentoDoPainel(paddingDoPainel(mapa.getContainer())) });
+    mapa.flyTo({ center: lonLat, zoom, duration: reduzido ? 0 : duracaoMs, offset: deslocamentoDoPainel(paddingDoPainel(mapa.getContainer())) });
   }
 
   // Seleção vinda de clique no mapa: o próprio clique já voou para a subprefeitura.
@@ -147,11 +151,28 @@ export default function MapaGL(props: PropsMapa) {
     }
   }, [pontoBusca, carregou]);
 
-  // Tocar na casa ou no trabalho: aproxima no ponto (zoom 14), acima da folha.
+  // Fechar a folha do lugar devolve o mapa ao enquadramento de antes do primeiro toque.
+  // Declarado antes do efeito do toque: os dois rodam no mesmo commit e este lê a vista guardada.
+  const vistaAntesDoLugar = useRef<{ centro: [number, number]; zoom: number } | null>(null);
+  useEffect(() => {
+    const vista = vistaAntesDoLugar.current;
+    if (!voltarDoLugar || !vista) return;
+    vistaAntesDoLugar.current = null;
+    voar(vista.centro, vista.zoom, 600);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só o fechar volta
+  }, [voltarDoLugar]);
+
+  // Tocar na casa ou no trabalho: aproxima no ponto, acima da folha.
   // Pelo contador e não pelo objeto: tocar de novo volta a aproximar, e salvar o lugar de novo não voa.
   const toqueLugar = lugarEmFoco?.toque;
   useEffect(() => {
-    if (!carregou || !lugarEmFoco) return;
+    const mapa = mapRef.current;
+    if (!lugarEmFoco) {
+      vistaAntesDoLugar.current = null; // fechou por outro caminho (região, rota): nada a desfazer
+      return;
+    }
+    if (!carregou || !mapa) return;
+    vistaAntesDoLugar.current ??= { centro: mapa.getCenter().toArray() as [number, number], zoom: mapa.getZoom() };
     voar([lugarEmFoco.local.longitude, lugarEmFoco.local.latitude], ZOOM_LUGAR, 800);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- só um toque novo voa
   }, [toqueLugar, carregou]);
@@ -167,7 +188,6 @@ export default function MapaGL(props: PropsMapa) {
   const rotaRef = useRef(rota);
   const progresso = useRef(1);
   const chaveRota = rota ? chaveGeometria(rota) : null;
-  const reduzido = !!useReducedMotion();
   // Na saída e na chegada o número da subprefeitura cobriria o ponto da rota: some no modo rota.
   const ocultos = useMemo(
     () => new Set((rota?.features ?? []).map((f) => f.properties?.subId as string | undefined).filter((id): id is string => !!id)),
@@ -361,7 +381,7 @@ export default function MapaGL(props: PropsMapa) {
         </Marker>
       )}
       {carregou && overlayAlagamento && ocorrencias.length > 0 && <OcorrenciasLayer ocorrencias={ocorrencias} />}
-      {carregou && lugares && lugares.length > 0 && onTocarLugar && <MarcadoresLugares lugares={lugares} onTocar={onTocarLugar} />}
+      {carregou && lugares && lugares.length > 0 && onTocarLugar && <MarcadoresLugares lugares={lugares} onTocar={onTocarLugar} emAlerta={lugaresEmAlerta} />}
     </Map>
   );
 }

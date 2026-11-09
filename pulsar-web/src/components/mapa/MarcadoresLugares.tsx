@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Marker, useMap } from 'react-map-gl/maplibre';
-import { BriefcaseBusiness, House } from 'lucide-react';
+import { BriefcaseBusiness, House, TriangleAlert } from 'lucide-react';
 import type { LocalSalvoDto, TipoLocal } from '../../types';
 import { ROTULO_TIPO } from '../../features/locais/regras';
 import { modoDoMarcador } from '../../features/locais/estadoLugar';
@@ -8,6 +8,8 @@ import { modoDoMarcador } from '../../features/locais/estadoLugar';
 interface Props {
   lugares: LocalSalvoDto[];
   onTocar: (tipo: TipoLocal) => void;
+  /** Com alagamento ativo na região: anel de alerta antes de qualquer toque. */
+  emAlerta?: TipoLocal[];
 }
 
 /**
@@ -15,7 +17,7 @@ interface Props {
  * círculos de score; de perto, a etiqueta com o nome, presa ao ponto exato por uma haste.
  * Só o mapa do app desenha isto: o card de compartilhar recebe outros dados.
  */
-export default function MarcadoresLugares({ lugares, onTocar }: Props) {
+export default function MarcadoresLugares({ lugares, onTocar, emAlerta = [] }: Props) {
   const { current: mapRef } = useMap();
   const [zoom, setZoom] = useState(() => mapRef?.getZoom() ?? 0);
 
@@ -36,19 +38,23 @@ export default function MarcadoresLugares({ lugares, onTocar }: Props) {
       {lugares.map((l) => {
         const Icone = l.tipo === 'CASA' ? House : BriefcaseBusiness;
         const nome = ROTULO_TIPO[l.tipo];
+        const alerta = emAlerta.includes(l.tipo);
         return (
           <Marker key={l.tipo} longitude={l.longitude} latitude={l.latitude} anchor={modo === 'ponto' ? 'center' : 'bottom'}
             // Acima dos círculos de score (que são Markers sem ponteiro).
             style={{ zIndex: 2 }}>
-            <button type="button" aria-label={nome} className="lugar-marcador" data-modo={modo}
+            <button type="button" className="lugar-marcador" data-modo={modo} data-lugar={l.tipo}
+              data-alerta={alerta ? '' : undefined}
+              aria-label={`${nome}, ${l.rotulo}.${alerta ? ' Alagamento na região.' : ''} Ver chuva e risco`}
               onClick={(e) => { e.stopPropagation(); onTocar(l.tipo); }}>
               {modo === 'ponto' ? (
-                <span className="lugar-ponto"><Icone size={12} strokeWidth={2.5} aria-hidden="true" /></span>
+                <span className="lugar-ponto"><Icone size={12} strokeWidth={2.5} aria-hidden="true" />{alerta && <SeloAlerta />}</span>
               ) : (
                 <>
                   <span className="lugar-etiqueta superficie">
                     <span className="lugar-etiqueta-icone"><Icone size={13} strokeWidth={2.5} aria-hidden="true" /></span>
                     {nome}
+                    {alerta && <SeloAlerta />}
                   </span>
                   <span aria-hidden="true" className="lugar-haste" />
                   <span aria-hidden="true" className="lugar-pe" />
@@ -61,3 +67,8 @@ export default function MarcadoresLugares({ lugares, onTocar }: Props) {
     </>
   );
 }
+
+/** Alagamento na região: o anel é cor, o selo é forma (risco nunca só pela cor). */
+const SeloAlerta = () => (
+  <span aria-hidden="true" className="lugar-selo-alerta"><TriangleAlert size={9} strokeWidth={3} /></span>
+);

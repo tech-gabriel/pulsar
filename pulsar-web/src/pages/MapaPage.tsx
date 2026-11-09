@@ -83,6 +83,8 @@ export default function MapaPage() {
   const [lugarAberto, setLugarAberto] = useState<TipoLocal | null>(null);
   // Cada toque (ou abertura pelo aviso) conta: o mapa volta a aproximar mesmo no mesmo lugar.
   const [toqueLugar, setToqueLugar] = useState(0);
+  // Cada "fechar" da folha do lugar: o mapa volta ao enquadramento de antes do toque.
+  const [voltarDoLugar, setVoltarDoLugar] = useState(0);
   // Ajuste de estado durante o render (padrão do React p/ derivar de dados que chegam depois).
   if (slugParam !== slugAplicado && (subprefeituras.length > 0 || !slugParam)) {
     setSlugAplicado(slugParam);
@@ -120,6 +122,13 @@ export default function MapaPage() {
   const lugaresNoMapa = useMemo(
     () => Object.values(locaisSalvos.locais).filter((l): l is LocalSalvoDto => !!l),
     [locaisSalvos.locais],
+  );
+  // Alagamento ativo na região da casa ou do trabalho: o marcador avisa antes do toque.
+  const lugaresEmAlerta = useMemo(
+    () => lugaresNoMapa
+      .filter((l) => (subprefeituras.find((s) => s.id === l.subprefeituraId)?.alagamentosCge?.length ?? 0) > 0)
+      .map((l) => l.tipo),
+    [lugaresNoMapa, subprefeituras],
   );
   // Deep link do aviso de chuva (/app?lugar=casa): aplica quando os locais chegam, mesmo padrão
   // do ?regiao= (ajuste de estado no render); o efeito abaixo tira o parâmetro da URL.
@@ -314,6 +323,7 @@ export default function MapaPage() {
       localizando={localizando}
       onAbrirRota={() => void abrirRota('chip')}
       embutida={embutida}
+      semDica={!!localAberto}
     />
   );
 
@@ -336,7 +346,11 @@ export default function MapaPage() {
       key={localAberto.tipo}
       local={localAberto}
       area={subprefeituras.find((s) => s.id === localAberto.subprefeituraId)}
-      onFechar={() => setLugarAberto(null)}
+      carregando={carregando}
+      onFechar={() => {
+        setLugarAberto(null);
+        setVoltarDoLugar((n) => n + 1);
+      }}
       onVerRegiao={() => {
         const area = subprefeituras.find((s) => s.id === localAberto.subprefeituraId);
         setLugarAberto(null);
@@ -412,6 +426,8 @@ export default function MapaPage() {
           lugares={rotaAberta ? undefined : lugaresNoMapa}
           onTocarLugar={abrirLugar}
           lugarEmFoco={lugarEmFoco}
+          voltarDoLugar={voltarDoLugar}
+          lugaresEmAlerta={lugaresEmAlerta}
         />
 
         {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}

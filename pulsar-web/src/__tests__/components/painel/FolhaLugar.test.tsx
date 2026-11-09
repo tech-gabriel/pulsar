@@ -24,15 +24,15 @@ describe('FolhaLugar', () => {
     expect(screen.getByRole('heading', { name: 'Casa' })).toBeInTheDocument();
     expect(screen.getByText('Rua Alvarenga, 1020')).toBeInTheDocument();
     expect(screen.getByText('Sem chuva agora')).toBeInTheDocument();
-    expect(screen.getByText(/Risco tranquilo/)).toBeInTheDocument();
-    expect(screen.getByText('Nenhum alagamento agora em Butantã')).toBeInTheDocument();
-    expect(screen.getByText('Chuva e risco valem para Butantã, a região da sua casa.')).toBeInTheDocument();
+    expect(screen.getByText(/Tudo tranquilo/)).toBeInTheDocument();
+    expect(screen.getByText('Nenhum alagamento agora no Butantã')).toBeInTheDocument();
+    expect(screen.getByText('Chuva e risco são do Butantã, a região da sua casa.')).toBeInTheDocument();
   });
 
   it('trabalho fala do seu trabalho', () => {
     render(<FolhaLugar local={trabalho} area={area} {...handlers()} />);
     expect(screen.getByRole('heading', { name: 'Trabalho' })).toBeInTheDocument();
-    expect(screen.getByText('Chuva e risco valem para Butantã, a região do seu trabalho.')).toBeInTheDocument();
+    expect(screen.getByText('Chuva e risco são do Butantã, a região do seu trabalho.')).toBeInTheDocument();
   });
 
   it('região sem leitura nem score não quebra', () => {
@@ -51,5 +51,29 @@ describe('FolhaLugar', () => {
     expect(h.onVerRegiao).toHaveBeenCalled();
     expect(h.onRota).toHaveBeenCalled();
     expect(h.onFechar).toHaveBeenCalled();
+  });
+
+  it('abre com o foco no título e fecha com Esc', () => {
+    const h = handlers();
+    render(<FolhaLugar local={casa} area={area} {...h} />);
+    expect(screen.getByRole('dialog', { name: 'Casa' })).toBeInTheDocument();
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Casa' }));
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(h.onFechar).toHaveBeenCalledTimes(1);
+  });
+
+  it('alagamento ativo sobe para o topo, antes da chuva', () => {
+    const alagada = { ...area, alagamentosCge: [{ via: 'Av. Eliseu de Almeida' }] } as SubprefeituraMapaDto;
+    render(<FolhaLugar local={casa} area={alagada} {...handlers()} />);
+    const alerta = screen.getByText(/Alagamento agora: Av. Eliseu de Almeida/);
+    const chuva = screen.getByText('Sem chuva agora');
+    expect(alerta.compareDocumentPosition(chuva) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText(/Nenhum alagamento/)).toBeNull();
+  });
+
+  it('enquanto as áreas carregam, mostra o esqueleto e não "Sem leitura"', () => {
+    render(<FolhaLugar local={casa} area={undefined} carregando {...handlers()} />);
+    expect(screen.getByRole('status', { name: 'Carregando a leitura' })).toBeInTheDocument();
+    expect(screen.queryByText('Sem leitura agora')).toBeNull();
   });
 });

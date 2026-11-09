@@ -67,7 +67,7 @@ public class MotorNotificacoes : IMotorNotificacoes
         if (destinatarios.Count > 0)
         {
             var pendencias = await GerarPendenciasAsync(
-                destinatarios.SelectMany(d => d.Favoritas).ToHashSet(), agora, ct);
+                destinatarios.SelectMany(d => d.Favoritas.Concat(d.LocaisOuVazio.Keys)).ToHashSet(), agora, ct);
 
             // Lista pela metade decide errado: o gatilho que não chegou a rodar pode ser o de
             // risco alto, e a pendência menor sairia por AUSÊNCIA da maior. Nada foi enviado
@@ -106,32 +106,42 @@ public class MotorNotificacoes : IMotorNotificacoes
         return enviadosTotal;
     }
 
-    /// <summary>Pessoas com favoritas ativas E algum aparelho com preferência ligada.</summary>
+    /// <summary>
+    /// Pessoas com favoritas ativas OU casa/trabalho salvos (F4b), E algum aparelho com
+    /// preferência ligada.
+    /// </summary>
     private async Task<List<DestinatarioPush>> MontarDestinatariosAsync(DateTime agora, CancellationToken ct)
     {
         var favoritas = await _db.UsuarioSubprefeituras
             .Where(f => f.Subprefeitura.Ativa)
             .Select(f => new { f.UsuarioId, f.SubprefeituraId, Fuso = f.Subprefeitura.Regiao.FusoHorario })
             .ToListAsync(ct);
-        if (favoritas.Count == 0) return [];
+        var locais = await _db.LocaisSalvos
+            .Where(l => l.Subprefeitura.Ativa)
+            .Select(l => new { l.UsuarioId, l.SubprefeituraId, l.Tipo, Fuso = l.Subprefeitura.Regiao.FusoHorario })
+            .ToListAsync(ct);
+        if (favoritas.Count == 0 && locais.Count == 0) return [];
 
-        var usuarios = favoritas.Select(f => f.UsuarioId).Distinct().ToList();
+        var usuarios = favoritas.Select(f => f.UsuarioId).Concat(locais.Select(l => l.UsuarioId)).Distinct().ToList();
         var aparelhos = await _db.AssinaturasPush.Where(a => usuarios.Contains(a.UsuarioId)).ToListAsync(ct);
         var recentes = await _livroCaixa.ObterRecentesAsync(usuarios, LimiaresNotificacao.JanelaTetoDiarioHoras);
 
         var lista = new List<DestinatarioPush>();
-        foreach (var g in favoritas.GroupBy(f => f.UsuarioId))
+        foreach (var usuarioId in usuarios)
         {
+            var dela = favoritas.Where(f => f.UsuarioId == usuarioId).ToList();
+            var lugares = locais.Where(l => l.UsuarioId == usuarioId).ToList();
             var criterios = aparelhos
-                .Where(a => a.UsuarioId == g.Key)
+                .Where(a => a.UsuarioId == usuarioId)
                 .SelectMany(a => Enum.GetValues<CriterioOptIn>().Where(c => WebPushNotificationService.OptouPeloCriterio(a, c)))
                 .ToHashSet();
             // Sem aparelho com preferência ligada não há o que decidir, nem o que gravar.
             if (criterios.Count == 0) continue;
 
-            // ponytail: fuso da pessoa = fuso da zona da primeira favorita; hoje tudo é SP.
-            // Com a segunda cidade, decidir entre fuso do aparelho ou teto por fuso.
-            var idFuso = g.First().Fuso;
+            // ponytail: fuso da pessoa = fuso da zona da primeira favorita (ou do primeiro lugar,
+            // sem favorita); hoje tudo é SP. Com a segunda cidade, decidir entre fuso do aparelho
+            // ou teto por fuso.
+            var idFuso = dela.Count > 0 ? dela[0].Fuso : lugares[0].Fuso;
             TimeZoneInfo fuso;
             try
             {
@@ -141,18 +151,20 @@ public class MotorNotificacoes : IMotorNotificacoes
             {
                 _logger.LogError(ex,
                     "Fuso horário inválido ({Fuso}) para o usuário {UsuarioId}: ele não recebe " +
-                    "notificação enquanto o valor não for corrigido.", idFuso, g.Key);
+                    "notificação enquanto o valor não for corrigido.", idFuso, usuarioId);
                 continue;
             }
 
             lista.Add(new DestinatarioPush(
-                g.Key,
-                g.Select(f => f.SubprefeituraId).ToHashSet(),
+                usuarioId,
+                dela.Select(f => f.SubprefeituraId).ToHashSet(),
                 criterios,
-                recentes.Where(r => r.UsuarioId == g.Key)
+                recentes.Where(r => r.UsuarioId == usuarioId)
                         .Select(r => new EnvioAnterior(r.SubprefeituraId, r.Gatilho, r.Chave, r.EnvioId, r.EnviadoEm))
                         .ToList(),
-                fuso));
+                fuso,
+                lugares.GroupBy(l => l.SubprefeituraId)
+                       .ToDictionary(x => x.Key, x => (IReadOnlySet<Pulsar.API.Domain.Enums.TipoLocal>)x.Select(l => l.Tipo).ToHashSet())));
         }
         return lista;
     }
@@ -232,6 +244,12 @@ public class MotorNotificacoes : IMotorNotificacoes
             .Where(l => l.SubprefeituraId == sub.Id)
             .OrderByDescending(l => l.Timestamp)
             .FirstOrDefaultAsync(ct);
+        // Base do "começou a chover": a janela do episódio mais um ciclo de folga.
+        var desdeRecentes = agora.AddMinutes(-(LimiaresNotificacao.JanelaChuvaComecouMinutos + 15));
+        var recentes = await _db.LeiturasClimaticas
+            .Where(l => l.SubprefeituraId == sub.Id && l.Timestamp >= desdeRecentes)
+            .OrderBy(l => l.Timestamp)
+            .ToListAsync(ct);
 
         return new ContextoGatilho
         {
@@ -243,6 +261,7 @@ public class MotorNotificacoes : IMotorNotificacoes
             ScoreAnterior = scores.ElementAtOrDefault(1),
             PontosCgeAtivos = pontosCge,
             ChuvaReferencia = chuvaReferencia,
+            LeiturasRecentes = recentes,
         };
     }
 

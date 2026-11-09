@@ -1,4 +1,4 @@
-import { BellRing, CalendarDays, CloudRain, Smartphone, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { BellRing, CalendarDays, CloudRain, House, Smartphone, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { GrupoAjustes, Interruptor, LinhaAjuste } from './GrupoAjustes';
 import { useNotificacoesPrefs, type NotificacoesPrefs } from '../../hooks/useNotificacoesPrefs';
 import { usePushSubscription, type EstadoPush } from '../../hooks/usePushSubscription';
@@ -6,6 +6,7 @@ import { usePushSubscription, type EstadoPush } from '../../hooks/usePushSubscri
 const PREFS: { chave: keyof NotificacoesPrefs; Icone: LucideIcon; titulo: string; descricao: string }[] = [
   { chave: 'alertaAlto', Icone: TriangleAlert, titulo: 'Alertas', descricao: 'Quando entrar em Alerta' },
   { chave: 'alertaModerado', Icone: CloudRain, titulo: 'Avisos de atenção', descricao: 'Atenção ou chuva forte prevista' },
+  { chave: 'chuvaLocais', Icone: House, titulo: 'Chuva em casa e no trabalho', descricao: 'Quando começar a chover perto' },
   { chave: 'resumoDiario', Icone: CalendarDays, titulo: 'Resumo diário', descricao: 'Uma vez por dia' },
 ];
 
@@ -17,8 +18,11 @@ const ESTADO: Record<EstadoPush, string> = {
   indisponivel: 'Indisponíveis aqui',
 };
 
-/** Grupo "Avisos": o push neste aparelho (Web Push) e as preferências do que avisar. */
-export default function AvisosGrupo() {
+/**
+ * Grupo "Avisos": o push neste aparelho (Web Push) e as preferências do que avisar. A chuva em
+ * casa e no trabalho só aparece para quem salvou um dos dois (F4b).
+ */
+export default function AvisosGrupo({ temLugares }: { temLugares: boolean }) {
   const { prefs, toggle } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
 
@@ -44,7 +48,7 @@ export default function AvisosGrupo() {
     <GrupoAjustes rotulo="Avisos" rodape={rodape}>
       <LinhaAjuste Icone={push.estado === 'ativo' ? BellRing : Smartphone} titulo="Avisos neste aparelho"
         subtitulo={ESTADO[push.estado]} direita={acao} />
-      {PREFS.map((n) => (
+      {PREFS.filter((n) => temLugares || n.chave !== 'chuvaLocais').map((n) => (
         <LinhaAjuste key={n.chave} Icone={n.Icone} titulo={n.titulo} subtitulo={n.descricao}
           ligado={prefs[n.chave]} onClick={() => toggle(n.chave)} direita={<Interruptor ligado={prefs[n.chave]} />} />
       ))}

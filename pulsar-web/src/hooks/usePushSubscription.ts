@@ -86,6 +86,7 @@ export function usePushSubscription(prefs: NotificacoesPrefs, ligado = true) {
       alertaModerado: p.alertaModerado,
       alertaAlto: p.alertaAlto,
       resumoDiario: p.resumoDiario,
+      chuvaLocais: p.chuvaLocais,
     });
     prefsSincronizadasRef.current = JSON.stringify(p);
   }, []);

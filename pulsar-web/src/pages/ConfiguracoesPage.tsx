@@ -13,6 +13,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useTransparencia } from '../hooks/useTransparencia';
 import { useToast } from '../contexts/ToastContext';
 import { useFavoritos } from '../hooks/useFavoritos';
+import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
 
 /** "Itaquera, Mooca, Vila Mariana e mais 2". */
 function resumoNomes(nomes: string[]): string {
@@ -23,10 +24,13 @@ function resumoNomes(nomes: string[]): string {
 
 /** Configurações no estilo Ajustes do iPhone: grupos sólidos, uma ideia por linha. */
 export default function ConfiguracoesPage() {
-  const { logout, sairDeTodosOsAparelhos } = useAuth();
+  const { usuario, logout, sairDeTodosOsAparelhos } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useToast();
   const { favoritos } = useFavoritos();
+  // ponytail: o CasaTrabalhoCard faz o próprio GET; a linha de chuva em casa só aparece depois de
+  // recarregar quando a pessoa salva o primeiro lugar ali. Subir o estado para cá se incomodar.
+  const { locais } = useLocaisSalvos(usuario?.id ?? null);
   const vidro = useTransparencia();
   const dark = theme === 'dark';
 
@@ -61,7 +65,7 @@ export default function ConfiguracoesPage() {
             to="/app/configuracoes/subprefeituras" direita={<>{favoritos.length > 0 && favoritos.length}<Seta /></>} />
         </GrupoAjustes>
 
-        <AvisosGrupo />
+        <AvisosGrupo temLugares={Object.values(locais).some(Boolean)} />
 
         {/* O rótulo é fixo e o interruptor mostra se o tema escuro está ligado. */}
         <GrupoAjustes rotulo="Aparência">

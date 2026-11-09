@@ -1,7 +1,7 @@
 import { useState, useCallback, type ReactNode } from 'react';
 import api, { URL_SESSAO_ENCERRADA } from '../api/client';
 import { irPara } from '../utils/navegacao';
-import { track } from '../analytics';
+import { resetAnalytics, track, type MotivoSaida } from '../analytics';
 import type {
   AtualizarPerfilRequestDto,
   CadastroRequestDto,
@@ -80,6 +80,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     irPara(URL_SESSAO_ENCERRADA);
   }, []);
 
+  // C1: o evento sai antes, enquanto a sessão existe; o reload completo zera todo o estado em memória.
+  const excluirConta = useCallback(async (confirmacao: string, motivo?: MotivoSaida) => {
+    track.excluiuConta(motivo);
+    await api.delete('/usuarios/me', { data: { confirmacao } });
+    resetAnalytics();
+    localStorage.removeItem('pulsar_token');
+    localStorage.removeItem('pulsar_usuario');
+    irPara('/?conta=excluida');
+  }, []);
+
   const logout = useCallback(() => {
     api.post('/auth/logout').catch(() => {});
     localStorage.removeItem('pulsar_token');
@@ -100,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         recarregarUsuario,
         reenviarConfirmacao,
         sairDeTodosOsAparelhos,
+        excluirConta,
         logout,
         estaAutenticado: !!token,
       }}

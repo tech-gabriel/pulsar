@@ -5,6 +5,7 @@ import type {
   LoginRequestDto,
   UsuarioDto,
 } from '../types';
+import type { MotivoSaida } from '../analytics';
 
 export interface AuthContextValue {
   usuario: UsuarioDto | null;
@@ -16,6 +17,8 @@ export interface AuthContextValue {
   recarregarUsuario: () => Promise<void>;
   reenviarConfirmacao: () => Promise<void>;
   sairDeTodosOsAparelhos: () => Promise<void>;
+  /** C1: exclui a conta; no sucesso recarrega a landing com o aviso. Erro relança e mantém a sessão. */
+  excluirConta: (confirmacao: string, motivo?: MotivoSaida) => Promise<void>;
   logout: () => void;
   estaAutenticado: boolean;
 }

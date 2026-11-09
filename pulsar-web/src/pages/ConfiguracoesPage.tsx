@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Layers, Loader2, Moon, Star, Sun } from 'lucide-react';
 import FolhaInferior from '../components/ui/FolhaInferior';
 import Header from '../components/ui/Header';
@@ -90,6 +91,14 @@ export default function ConfiguracoesPage() {
         >
           Sair de todos os aparelhos
         </button>
+
+        {/* C1 (opção C): ação rara e destrutiva no fim da página, longe do perfil; a página explica antes de excluir. */}
+        <GrupoAjustes rodape="Apaga sua conta e tudo que está salvo nela.">
+          <Link to="/app/configuracoes/excluir-conta" className="linha-ajuste flex w-full items-center gap-3 text-left">
+            <span className="flex-1" style={{ fontSize: 15, color: '#EF4444' }}>Excluir conta</span>
+            <Seta />
+          </Link>
+        </GrupoAjustes>
 
         <FolhaInferior
           aberta={folhaSairTodos}

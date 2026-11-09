@@ -61,6 +61,30 @@ public class UsuariosController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Exclui a conta da sessão e tudo que está salvo nela (C1). Confirmação: a palavra "excluir".</summary>
+    [HttpDelete("me")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ExcluirConta([FromBody] ExcluirContaRequestDto request)
+    {
+        if (IdDoToken() is not Guid id)
+            return Unauthorized();
+        try
+        {
+            await _authService.ExcluirContaAsync(id, request.Confirmacao);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+    }
+
     /// <summary>Atualiza o perfil do usuário (nome, e-mail, persona e, opcionalmente, senha).</summary>
     [HttpPut("{usuarioId:guid}")]
     [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]

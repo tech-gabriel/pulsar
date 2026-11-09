@@ -7,14 +7,14 @@ import { useCountUp } from '../../hooks/useCountUp';
 import { useNotificacoesPrefs } from '../../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../../hooks/usePushSubscription';
 import { usePrevisaoSubprefeitura } from '../../hooks/usePrevisaoSubprefeitura';
-import { coresParaFaixa, labelFaixa, motivoDoRisco } from '../../utils/risco';
-import { fraseChuvaForte } from '../../utils/previsao';
+import { coresParaFaixa, labelFaixa } from '../../utils/risco';
+import { fraseDoRisco } from '../../features/locais/estadoLugar';
 import { useCatalogoDicas } from '../../hooks/useCatalogoDicas';
 import { blocosDeDicas } from '../../utils/dicas';
 import { DURACAO, EASE_SUAVE, containerStagger, itemStagger } from '../../motion/presets';
 import { CIDADE_ATUAL, idDaArea } from '../../features/cidade/cidade';
 import type { Area } from '../../features/cidade/areas';
-import type { FaixaPrevisaoDto, FaixaRisco, TipoPerigo } from '../../types';
+import type { FaixaRisco, TipoPerigo } from '../../types';
 import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
@@ -32,21 +32,6 @@ function nivelUv(uv: number): string {
   return 'extremo';
 }
 
-/**
- * A frase embaixo da faixa: com risco, o porquê; sem risco, o que vem pela frente.
- * Lê o relógio aqui dentro, e não no corpo do componente, pela regra de pureza do React Compiler.
- */
-function fraseDoRisco(area: Area, faixas: FaixaPrevisaoDto[]): string {
-  const s = area.scoreAtual;
-  const l = area.ultimaLeitura;
-  const motivo = s && motivoDoRisco({
-    faixa: area.faixaRisco, perigoPrincipal: s.perigoPrincipal, chuva3hMm: s.chuva3hMm,
-    ventoKmH: l?.ventoKmH, sensacaoTermica: l?.sensacaoTermica,
-  });
-  if (motivo) return motivo;
-  return fraseChuvaForte(faixas, Date.now())
-    ?? (faixas.length > 0 ? 'Sem chuva forte nas próximas horas' : 'Nada fora do normal agora');
-}
 
 /** Bloco de uma medida. Nomeado pelo que mede; o risco, quando existe, vem numa linha à parte. */
 function Bloco({ Icon, titulo, valor, unidade, sub, risco, inteiroLargura = false }: {

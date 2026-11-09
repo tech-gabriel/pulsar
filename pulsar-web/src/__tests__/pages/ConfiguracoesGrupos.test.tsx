@@ -6,6 +6,7 @@ const h = vi.hoisted(() => ({
   toggle: vi.fn(), ativar: vi.fn(), desativar: vi.fn(), toggleTheme: vi.fn(),
   estado: 'inativo' as string,
   favoritos: [] as { subprefeituraId: string; nome: string }[],
+  locais: {} as Record<string, unknown>,
 }));
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
@@ -21,11 +22,12 @@ vi.mock('../../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'light', togg
 vi.mock('../../hooks/useIsMobile', () => ({ useIsMobile: () => true }));
 vi.mock('../../contexts/ToastContext', () => ({ useToast: () => ({ showToast: vi.fn() }) }));
 vi.mock('../../hooks/useNotificacoesPrefs', () => ({
-  useNotificacoesPrefs: () => ({ prefs: { alertaAlto: true, alertaModerado: false, resumoDiario: false }, toggle: h.toggle }),
+  useNotificacoesPrefs: () => ({ prefs: { alertaAlto: true, alertaModerado: false, resumoDiario: false, chuvaLocais: true }, toggle: h.toggle }),
 }));
 vi.mock('../../hooks/usePushSubscription', () => ({
   usePushSubscription: () => ({ estado: h.estado, ocupado: false, ativar: h.ativar, desativar: h.desativar }),
 }));
+vi.mock('../../hooks/useLocaisSalvos', () => ({ useLocaisSalvos: () => ({ locais: h.locais, carregando: false, salvar: vi.fn(), apagar: vi.fn() }) }));
 vi.mock('../../hooks/useFavoritos', () => ({ useFavoritos: () => ({ favoritos: h.favoritos, toggleFavorito: vi.fn() }) }));
 
 import ConfiguracoesPage from '../../pages/ConfiguracoesPage';
@@ -35,7 +37,7 @@ const fav = (nome: string) => ({ subprefeituraId: nome, nome });
 
 describe('Configurações em grupos', () => {
   beforeEach(() => {
-    h.estado = 'inativo'; h.favoritos = [];
+    h.estado = 'inativo'; h.favoritos = []; h.locais = {};
     [h.toggle, h.ativar, h.desativar, h.toggleTheme].forEach((f) => f.mockReset());
   });
 
@@ -104,6 +106,21 @@ describe('Configurações em grupos', () => {
     h.favoritos = ['Mooca', 'Sé'].map(fav);
     abrir();
     expect(screen.getByRole('link', { name: /Subprefeituras/ })).toHaveTextContent('Mooca e Sé');
+  });
+
+  it('com casa salva, mostra o aviso de chuva em casa e no trabalho, ligado', () => {
+    h.locais = { CASA: { tipo: 'CASA', latitude: -23.5, longitude: -46.6, rotulo: 'Rua X', subprefeituraId: 's', subprefeituraNome: 'Butantã' } };
+    abrir();
+    const linha = screen.getByRole('switch', { name: /Chuva em casa e no trabalho/ });
+    expect(linha).toHaveAttribute('aria-checked', 'true');
+    expect(linha).toHaveTextContent('Quando começar a chover na região deles');
+    fireEvent.click(linha);
+    expect(h.toggle).toHaveBeenCalledWith('chuvaLocais');
+  });
+
+  it('sem casa nem trabalho, o aviso de chuva em casa não aparece', () => {
+    abrir();
+    expect(screen.queryByText('Chuva em casa e no trabalho')).toBeNull();
   });
 
   it('a lista de subprefeituras saiu da página principal', () => {

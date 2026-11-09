@@ -71,7 +71,8 @@ public class NotificacoesController : ControllerBase
                 Auth = request.Auth,
                 AlertaModerado = request.AlertaModerado,
                 AlertaAlto = request.AlertaAlto,
-                ResumoDiario = request.ResumoDiario
+                ResumoDiario = request.ResumoDiario,
+                ChuvaLocais = request.ChuvaLocais
             });
         }
         else
@@ -82,6 +83,7 @@ public class NotificacoesController : ControllerBase
             existente.AlertaModerado = request.AlertaModerado;
             existente.AlertaAlto = request.AlertaAlto;
             existente.ResumoDiario = request.ResumoDiario;
+            existente.ChuvaLocais = request.ChuvaLocais;
             await _assinaturaRepo.AtualizarAsync(existente);
         }
 

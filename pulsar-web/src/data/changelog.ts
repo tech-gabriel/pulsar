@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.30.0',
+    data: '2026-11-09',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Casa e trabalho no mapa',
+        descricao: 'Quem salvou casa ou trabalho passa a vê-los no mapa. Toque no ponto e aparece como está a região agora: se está chovendo, o risco e se há alagamento perto, com atalho para ver a região ou montar a rota até lá. Só você vê, e eles não entram na imagem de compartilhar.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Aviso quando começa a chover em casa ou no trabalho',
+        descricao: 'Quando a chuva chega na região da sua casa ou do seu trabalho, o Pulsar avisa no celular. O aviso vem ligado e dá para desligar em Configurações, no grupo Avisos.',
+      },
+    ],
+  },
+  {
     versao: '1.29.0',
     data: '2026-11-06',
     itens: [

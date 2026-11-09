@@ -38,6 +38,12 @@ public class ContextoGatilho
     /// </summary>
     public IReadOnlyDictionary<DateTime, double>? ChuvaReferencia { get; init; }
 
+    /// <summary>
+    /// Leituras da última hora e pouco, em ordem crescente, incluindo a atual. Base do
+    /// "começou a chover" (precisa ver uma leitura seca antes da chuva).
+    /// </summary>
+    public IReadOnlyList<LeituraClimatica> LeiturasRecentes { get; init; } = [];
+
     public Subprefeitura Subprefeitura => Estado.Subprefeitura;
 
     /// <summary>O estado, se tiver score. Mantém o nome usado pelos gatilhos.</summary>

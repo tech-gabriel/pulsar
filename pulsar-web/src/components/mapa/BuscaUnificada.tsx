@@ -18,6 +18,8 @@ interface Props {
   onAbrirRota?: () => void;
   /** Dentro do painel flutuante (tablet e computador): sem posição própria nem vidro. */
   embutida?: boolean;
+  /** Esconde a dica do alvo por ora (outra folha disputa a atenção), sem dispensá-la. */
+  semDica?: boolean;
 }
 
 const MIN_CHARS = 3;
@@ -43,11 +45,13 @@ function contextoDe(r: EnderecoBusca): string {
  * Busca unificada sobreposta ao mapa (SP3): subprefeituras pelo nome primeiro, depois
  * endereços (geocoding via backend), num campo só.
  */
-export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, onAbrirRota, embutida = false }: Props) {
+export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, onAbrirRota, embutida = false, semDica = false }: Props) {
   const { termo, setTermo, resultados, carregando, erro, limpar } = useBuscaEndereco();
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { mostrarDica, dispensar } = useDicaLocalizacao();
+  const dicaLocalizacao = useDicaLocalizacao();
+  const mostrarDica = dicaLocalizacao.mostrarDica && !semDica;
+  const { dispensar } = dicaLocalizacao;
 
   // Fecha o dropdown ao clicar fora do componente.
   useEffect(() => {

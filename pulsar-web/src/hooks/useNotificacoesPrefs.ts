@@ -7,6 +7,8 @@ export interface NotificacoesPrefs {
   alertaAlto: boolean;
   /** Receber um resumo diário das condições. */
   resumoDiario: boolean;
+  /** Avisar quando começar a chover na região da casa ou do trabalho (F4b). */
+  chuvaLocais: boolean;
 }
 
 const STORAGE_KEY = 'pulsar-notif-prefs';
@@ -15,6 +17,7 @@ const PADRAO: NotificacoesPrefs = {
   alertaModerado: false,
   alertaAlto: true,
   resumoDiario: false,
+  chuvaLocais: true,
 };
 
 function ler(): NotificacoesPrefs {

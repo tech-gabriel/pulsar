@@ -18,7 +18,7 @@ const mockedApi = api as unknown as {
   delete: ReturnType<typeof vi.fn>;
 };
 
-const prefs: NotificacoesPrefs = { alertaModerado: false, alertaAlto: true, resumoDiario: false };
+const prefs: NotificacoesPrefs = { alertaModerado: false, alertaAlto: true, resumoDiario: false, chuvaLocais: true };
 
 const getSubscription = vi.fn();
 const subscribe = vi.fn();
@@ -93,6 +93,7 @@ describe('usePushSubscription', () => {
       p256dh: 'CHAVE_P256',
       auth: 'CHAVE_AUTH',
       alertaAlto: true,
+      chuvaLocais: true,
     }));
     expect(result.current.estado).toBe('ativo');
   });

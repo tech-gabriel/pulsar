@@ -31,6 +31,9 @@ public class AssinaturaPush
     /// <summary>Receber um resumo diário das condições.</summary>
     public bool ResumoDiario { get; set; }
 
+    /// <summary>Avisar quando começar a chover na região da casa ou do trabalho (F4b). Ligado por padrão.</summary>
+    public bool ChuvaLocais { get; set; } = true;
+
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
 }

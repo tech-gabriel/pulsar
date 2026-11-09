@@ -27,4 +27,5 @@ public record NotificacaoPendente(
     TimeSpan? Cooldown = null,
     Guid SubprefeituraId = default,
     string Local = "",
-    TipoPerigo? Perigo = null);
+    TipoPerigo? Perigo = null,
+    string? Intensidade = null);

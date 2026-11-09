@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { GeoJsonObject, FeatureCollection } from 'geojson';
@@ -8,6 +8,7 @@ import LayerControl from '../components/mapa/LayerControl';
 import MapLegend from '../components/mapa/MapLegend';
 import PainelLateral from '../components/painel/PainelLateral';
 import DetalheSubprefeitura from '../components/painel/DetalheSubprefeitura';
+import FolhaLugar from '../components/painel/FolhaLugar';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import Header from '../components/ui/Header';
 import type { Camada } from '../utils/camadas';
@@ -39,9 +40,12 @@ import CamposDePara from '../components/rota/CamposDePara';
 import PainelRota from '../components/rota/PainelRota';
 import { track } from '../analytics';
 import type { PontoRota } from '../features/rota/tipos';
-import type { TipoLocal } from '../types';
+import type { LocalSalvoDto, TipoLocal } from '../types';
 import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
-import { subprefeituraIdDoPonto } from '../features/locais/regras';
+import { pontoDoLocal, subprefeituraIdDoPonto } from '../features/locais/regras';
+
+/** ?lugar= do aviso de chuva: "casa" | "trabalho"; outro valor não abre nada. */
+const tipoDoParam = (v: string | null): TipoLocal | null => (v === 'casa' ? 'CASA' : v === 'trabalho' ? 'TRABALHO' : null);
 
 export default function MapaPage() {
   const { usuario } = useAuth();
@@ -74,13 +78,23 @@ export default function MapaPage() {
   const [slugAplicado, setSlugAplicado] = useState<string | null>(null);
   const [zonaEmFoco, setZonaEmFoco] = useState<string | null>(null);
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
+  // Casa ou trabalho aberto no mapa (F4b): a folha do lugar toma o lugar do detalhe. Declarado
+  // aqui porque o ?regiao= abaixo precisa fechá-lo (alerta tocado com a casa aberta).
+  const [lugarAberto, setLugarAberto] = useState<TipoLocal | null>(null);
+  // Cada toque (ou abertura pelo aviso) conta: o mapa volta a aproximar mesmo no mesmo lugar.
+  const [toqueLugar, setToqueLugar] = useState(0);
+  // Cada "fechar" da folha do lugar: o mapa volta ao enquadramento de antes do toque.
+  const [voltarDoLugar, setVoltarDoLugar] = useState(0);
   // Ajuste de estado durante o render (padrão do React p/ derivar de dados que chegam depois).
   if (slugParam !== slugAplicado && (subprefeituras.length > 0 || !slugParam)) {
     setSlugAplicado(slugParam);
     const alvo = slugParam ? resolverDeepLink(slugParam) : undefined;
     const sub = alvo?.nomeSub ? subprefeituras.find((s) => s.nome === alvo.nomeSub) ?? null : null;
     setZonaEmFoco(alvo && !alvo.nomeSub ? alvo.nomeRegiao : null);
-    if (sub) setSubSelecionada(sub);
+    if (sub) {
+      setLugarAberto(null);
+      setSubSelecionada(sub);
+    }
   }
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
   // Tablet: o cartão do pé recolhe até só a busca, para devolver o mapa.
@@ -102,6 +116,38 @@ export default function MapaPage() {
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
   const locaisSalvos = useLocaisSalvos(usuario?.id ?? null);
+  const localAberto = lugarAberto ? locaisSalvos.locais[lugarAberto] ?? null : null;
+  const lugarEmFoco = useMemo(() => (localAberto ? { local: localAberto, toque: toqueLugar } : null), [localAberto, toqueLugar]);
+  const lugarNaFolha = isMobile && !!localAberto;
+  const lugaresNoMapa = useMemo(
+    () => Object.values(locaisSalvos.locais).filter((l): l is LocalSalvoDto => !!l),
+    [locaisSalvos.locais],
+  );
+  // Alagamento ativo na região da casa ou do trabalho: o marcador avisa antes do toque.
+  const lugaresEmAlerta = useMemo(
+    () => lugaresNoMapa
+      .filter((l) => (subprefeituras.find((s) => s.id === l.subprefeituraId)?.alagamentosCge?.length ?? 0) > 0)
+      .map((l) => l.tipo),
+    [lugaresNoMapa, subprefeituras],
+  );
+  // Deep link do aviso de chuva (/app?lugar=casa): aplica quando os locais chegam, mesmo padrão
+  // do ?regiao= (ajuste de estado no render); o efeito abaixo tira o parâmetro da URL.
+  const lugarParam = searchParams.get('lugar');
+  const [lugarAplicado, setLugarAplicado] = useState<string | null>(null);
+  if (!lugarParam && lugarAplicado) setLugarAplicado(null);
+  if (lugarParam && lugarParam !== lugarAplicado && !locaisSalvos.carregando) {
+    setLugarAplicado(lugarParam);
+    const tipo = tipoDoParam(lugarParam);
+    if (tipo && locaisSalvos.locais[tipo]) {
+      // O mesmo que abrirLugar faz, sem o evento (o efeito conta como 'aviso').
+      setSubSelecionada(null);
+      setZonaEmFoco(null);
+      setPainelRecolhido(false);
+      setPainelMobileAberto(false);
+      setToqueLugar((n) => n + 1);
+      setLugarAberto(tipo);
+    }
+  }
   const rotaSemPontos = rotaAberta && !(rota.origem && rota.destino);
   const rotaNoCelular = isMobile && rotaAberta;
   useAlturaFluida(folhaRef, !rotaSemPontos); // a folha sai e volta (AnimatePresence)
@@ -133,9 +179,32 @@ export default function MapaPage() {
     setSearchParams(p, { replace: true });
   }
 
+  // O ?lugar= já foi aplicado (aberto ou descartado): conta o evento e sai da URL.
+  useEffect(() => {
+    if (!lugarParam || lugarAplicado !== lugarParam) return;
+    // Conta pelo que o link pediu e só se ele existe (não pelo lugar que já estava aberto).
+    const tipo = tipoDoParam(lugarParam);
+    if (tipo && locaisSalvos.locais[tipo]) track.abriuLugar(tipo === 'CASA' ? 'casa' : 'trabalho', 'aviso');
+    const p = new URLSearchParams(searchParams);
+    p.delete('lugar');
+    setSearchParams(p, { replace: true });
+  }, [lugarParam, lugarAplicado, locaisSalvos.locais, searchParams, setSearchParams]);
+
+  function abrirLugar(tipo: TipoLocal) {
+    limparDeepLink();
+    track.abriuLugar(tipo === 'CASA' ? 'casa' : 'trabalho', 'mapa');
+    setSubSelecionada(null);
+    setZonaEmFoco(null);
+    setPainelRecolhido(false);
+    if (isMobile) setPainelMobileAberto(false);
+    setToqueLugar((n) => n + 1);
+    setLugarAberto(tipo);
+  }
+
   // A origem padrão é onde a pessoa está; sem localização, o campo De fica vazio e pede um lugar.
   async function abrirRota(de: 'chip' | 'como_chegar', destino: PontoRota | null = null) {
     track.abriuRota(de);
+    setLugarAberto(null);
     setRotaAberta(true);
     setPainelRecolhido(false);
     rota.setOrigem(null);
@@ -237,6 +306,7 @@ export default function MapaPage() {
   // polígono (highlight + centralização).
   function handleSelecionarSub(sub: SubprefeituraMapaDto) {
     limparDeepLink();
+    setLugarAberto(null);
     setSubSelecionada(sub);
     setPainelRecolhido(false);
     setZonaEmFoco(null);
@@ -253,6 +323,7 @@ export default function MapaPage() {
       localizando={localizando}
       onAbrirRota={() => void abrirRota('chip')}
       embutida={embutida}
+      semDica={!!localAberto}
     />
   );
 
@@ -269,6 +340,25 @@ export default function MapaPage() {
     }
     return locaisSalvos.salvar(tipo, p, id, 'rota');
   }
+
+  const folhaLugar = localAberto && (
+    <FolhaLugar
+      key={localAberto.tipo}
+      local={localAberto}
+      area={subprefeituras.find((s) => s.id === localAberto.subprefeituraId)}
+      carregando={carregando}
+      onFechar={() => {
+        setLugarAberto(null);
+        setVoltarDoLugar((n) => n + 1);
+      }}
+      onVerRegiao={() => {
+        const area = subprefeituras.find((s) => s.id === localAberto.subprefeituraId);
+        setLugarAberto(null);
+        if (area) handleSelecionarSub(area);
+      }}
+      onRota={() => void abrirRota('como_chegar', pontoDoLocal(localAberto))}
+    />
+  );
 
   const camposRota = (embutida: boolean) => (
     <CamposDePara
@@ -333,6 +423,11 @@ export default function MapaPage() {
           ocorrencias={ocorrencias}
           rota={rotaAberta ? rota.linha : null}
           semZoom={rotaNoCelular}
+          lugares={rotaAberta ? undefined : lugaresNoMapa}
+          onTocarLugar={abrirLugar}
+          lugarEmFoco={lugarEmFoco}
+          voltarDoLugar={voltarDoLugar}
+          lugaresEmAlerta={lugaresEmAlerta}
         />
 
         {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}
@@ -403,7 +498,7 @@ export default function MapaPage() {
         data-painel-mapa
         className={[
           'painel-flutuante painel-mapa vidro-painel vidro-surge hidden md:flex flex-col',
-          subSelecionada && !painelRecolhido ? 'com-detalhe' : '',
+          (subSelecionada || localAberto) && !painelRecolhido ? 'com-detalhe' : '',
         ].join(' ')}
       >
         {/* Alça do tablet: recolhe o cartão até só a busca. */}
@@ -419,9 +514,11 @@ export default function MapaPage() {
 
         {!isMobile && (rotaAberta ? camposRota(true) : buscaMapa(true))}
 
-        <div key={rotaAberta ? 'rota' : subSelecionada?.id ?? 'lista'} className={['painel-conteudo flex-1 min-h-0 flex flex-col', painelRecolhido ? 'lg:flex hidden' : ''].join(' ')}>
+        <div key={rotaAberta ? 'rota' : localAberto ? `lugar-${localAberto.tipo}` : subSelecionada?.id ?? 'lista'} className={['painel-conteudo flex-1 min-h-0 flex flex-col', painelRecolhido ? 'lg:flex hidden' : ''].join(' ')}>
           {rotaAberta ? (
             <div className="painel-scroll flex-1 overflow-y-auto overscroll-contain px-4 pb-4">{resultadoRota}</div>
+          ) : !isMobile && folhaLugar ? (
+            folhaLugar
           ) : subSelecionada ? (
             <DetalheSubprefeitura
               key={subSelecionada.id}
@@ -458,8 +555,8 @@ export default function MapaPage() {
         key="folha"
         ref={folhaRef}
         data-painel-mapa
-        data-aberta={painelMobileAberto || detalheNaFolha || rotaAberta ? '' : undefined}
-        data-detalhe={detalheNaFolha || rotaAberta ? '' : undefined}
+        data-aberta={painelMobileAberto || detalheNaFolha || lugarNaFolha || rotaAberta ? '' : undefined}
+        data-detalhe={detalheNaFolha || lugarNaFolha || rotaAberta ? '' : undefined}
         className="folha-mapa painel-mapa vidro-painel md:hidden fixed z-[500] flex flex-col overflow-hidden"
         initial={menosMovimento ? { opacity: 0 } : { y: 'calc(100% + 16px)' }}
         animate={menosMovimento
@@ -471,6 +568,8 @@ export default function MapaPage() {
       >
         {rotaAberta ? (
           <div key="rota" className="painel-conteudo flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-2 pb-4">{resultadoRota}</div>
+        ) : lugarNaFolha ? (
+          <div key={`lugar-${localAberto?.tipo}`} className="painel-conteudo flex-1 min-h-0 flex flex-col">{folhaLugar}</div>
         ) : detalheNaFolha ? (
           <div key={detalheNaFolha.id} className="painel-conteudo flex-1 min-h-0 flex flex-col">
             <DetalheSubprefeitura

@@ -8,5 +8,7 @@ public enum CriterioOptIn
 {
     RiscoAlto,
     RiscoModerado,
-    ResumoDiario
+    ResumoDiario,
+    /// <summary>Começou a chover na região da casa ou do trabalho (F4b).</summary>
+    ChuvaLocais
 }

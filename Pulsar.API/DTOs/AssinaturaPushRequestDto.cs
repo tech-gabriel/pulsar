@@ -30,6 +30,8 @@ public class AssinaturaPushRequestDto : IValidatableObject
     public bool AlertaModerado { get; set; }
     public bool AlertaAlto { get; set; } = true;
     public bool ResumoDiario { get; set; }
+    /// <summary>Padrão true: o app antigo em cache não manda o campo e o aviso tem que ficar ligado.</summary>
+    public bool ChuvaLocais { get; set; } = true;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

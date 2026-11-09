@@ -326,4 +326,81 @@ public class MotorNotificacoesTests
 
         (await motor.AvaliarEDispararAsync()).Should().Be(1);
     }
+
+    // ── Começou a chover na casa (F4b): ponta a ponta com o gatilho real ──
+
+    /// <summary>Leituras seca → seca → chuva em Mooca, terminando agora.</summary>
+    private static async Task ChuvaComecandoEmMoocaAsync(PulsarDbContext ctx)
+    {
+        var agora = DateTime.UtcNow;
+        foreach (var (min, mm) in new[] { (30, 0.0), (15, 0.0), (0, 2.0) })
+            ctx.LeiturasClimaticas.Add(new LeituraClimatica { SubprefeituraId = Mooca, ChuvaMmH = mm, Timestamp = agora.AddMinutes(-min), CriadoEm = agora });
+        await ctx.SaveChangesAsync();
+    }
+
+    private static async Task CasaEmAsync(PulsarDbContext ctx, Guid usuario, Guid sub)
+    {
+        ctx.LocaisSalvos.Add(new LocalSalvo
+        {
+            UsuarioId = usuario, Tipo = Pulsar.API.Domain.Enums.TipoLocal.CASA, Latitude = -23.55, Longitude = -46.6,
+            Rotulo = "Rua X, 1", SubprefeituraId = sub, CriadoEm = DateTime.UtcNow, AtualizadoEm = DateTime.UtcNow,
+        });
+        await ctx.SaveChangesAsync();
+    }
+
+    private MotorNotificacoes MotorComChuvaComecou(PulsarDbContext ctx)
+    {
+        var motor = NovoMotor(ctx); // configura push e previsão
+        var openMeteo = new Mock<Pulsar.API.External.Interfaces.IChuvaReferenciaClient>();
+        openMeteo.Setup(c => c.ObterHorariaAsync(It.IsAny<IReadOnlyList<(double, double)>>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync((IReadOnlyList<(double Lat, double Lon)> pontos, CancellationToken _) =>
+                     pontos.Select(_ => (IReadOnlyDictionary<DateTime, double>)Enumerable.Range(-3, 7)
+                         .ToDictionary(h => DateTime.UtcNow.Date.AddHours(DateTime.UtcNow.Hour + h), _ => 0.5)).ToList());
+        return new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object, openMeteo.Object,
+            _pushMock.Object, [new GatilhoChuvaComecou()], _logger);
+    }
+
+    [Fact]
+    public async Task ChuvaComecou_CasaForaDasFavoritas_Recebe()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var pessoa = await PessoaComAparelhoAsync(ctx, true); // nenhuma favorita
+        await CasaEmAsync(ctx, pessoa, Mooca);
+        await ChuvaComecandoEmMoocaAsync(ctx);
+
+        (await MotorComChuvaComecou(ctx).AvaliarEDispararAsync()).Should().Be(1);
+
+        _pushMock.Verify(p => p.NotificarUsuarioAsync(pessoa, CriterioOptIn.ChuvaLocais,
+            It.Is<PushPayload>(x => x.Titulo == "Começou a chover perto da sua casa" && x.Url == "/app?lugar=casa"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChuvaComecou_SoFavorita_NaoRecebe()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        await PessoaComAparelhoAsync(ctx, true, Mooca);
+        await ChuvaComecandoEmMoocaAsync(ctx);
+
+        (await MotorComChuvaComecou(ctx).AvaliarEDispararAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ChuvaComecou_PreferenciaDesligada_NaoRecebe()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var pessoa = await PessoaComAparelhoAsync(ctx, true);
+        await CasaEmAsync(ctx, pessoa, Mooca);
+        (await ctx.AssinaturasPush.SingleAsync(a => a.UsuarioId == pessoa)).ChuvaLocais = false;
+        await ctx.SaveChangesAsync();
+        await ChuvaComecandoEmMoocaAsync(ctx);
+
+        (await MotorComChuvaComecou(ctx).AvaliarEDispararAsync()).Should().Be(0);
+    }
 }

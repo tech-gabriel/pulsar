@@ -149,6 +149,9 @@ namespace Pulsar.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("ChuvaLocais")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 

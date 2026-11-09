@@ -307,6 +307,26 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 .pulsar-score-circle.selecionado {
   border-color: rgba(255, 255, 255, 0.95);
 }
+/* Casa e trabalho no mapa (F4b): ponto na vista ampla, etiqueta de perto. A área de toque tem
+   44 px mesmo com o ponto de 24 px; o pé da etiqueta é o ponto exato salvo. */
+.lugar-marcador { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; background: none; border: 0; padding: 0; cursor: pointer; }
+.lugar-marcador[data-modo="etiqueta"] { justify-content: flex-end; min-height: 0; }
+.lugar-marcador:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: 2px; border-radius: 999px; }
+.lugar-ponto { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--color-pulsar-600); color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
+.lugar-etiqueta { display: flex; align-items: center; gap: 6px; padding: 6px 11px 6px 8px; border-radius: 999px; font: 600 13px/1 var(--font-body); white-space: nowrap; }
+/* Alagamento na região: anel e selo, visíveis antes de qualquer toque. */
+.lugar-ponto, .lugar-etiqueta { position: relative; }
+.lugar-marcador[data-alerta] .lugar-ponto,
+.lugar-marcador[data-alerta] .lugar-etiqueta { box-shadow: 0 0 0 3px var(--cor-alerta), 0 1px 4px rgba(0, 0, 0, 0.35); }
+.lugar-selo-alerta { position: absolute; top: -7px; right: -7px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 999px; background: var(--cor-alerta); color: #fff; border: 1.5px solid #fff; }
+.lugar-etiqueta-icone { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--color-pulsar-600); color: #fff; }
+.lugar-haste { width: 2px; height: 8px; background: var(--color-pulsar-600); }
+.lugar-pe { width: 9px; height: 9px; margin-top: -1px; border-radius: 999px; background: var(--color-pulsar-600); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); }
+@media (prefers-reduced-motion: no-preference) {
+  .lugar-ponto, .lugar-etiqueta { animation: lugar-entra 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+}
+@keyframes lugar-entra { from { opacity: 0; transform: scale(0.85); } }
+
 /* Nome da subprefeitura abaixo do círculo (ETAPA 2.1) */
 .pulsar-sub-nome {
   margin-top: 2px;

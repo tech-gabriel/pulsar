@@ -32,6 +32,7 @@ public class NotificacoesDependencyInjectionTests : IClassFixture<PulsarWebAppli
         gatilhos.Should().ContainSingle(g => g is GatilhoScoreAlto);
         gatilhos.Should().ContainSingle(g => g is GatilhoChuvaPrevista);
         gatilhos.Should().ContainSingle(g => g is GatilhoBriefingDiario);
+        gatilhos.Should().ContainSingle(g => g is GatilhoChuvaComecou);
     }
 
     [Fact]

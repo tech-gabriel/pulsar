@@ -49,6 +49,14 @@ describe('PrivacidadePage casa e trabalho (F4)', () => {
     expect(screen.getByText(/As cópias de segurança diárias guardam os dados por até 30 dias e depois são apagadas\./)).toBeInTheDocument();
   });
 
+  it('explica o uso no mapa e no aviso de chuva (F4b)', () => {
+    renderizar();
+    expect(screen.getByText(/aparecem no seu mapa, só para você/)).toBeInTheDocument();
+    expect(screen.getByText(/nunca entram na imagem de compartilhar/)).toBeInTheDocument();
+    expect(screen.getByText(/avisar quando começar a chover na região de cada um/)).toBeInTheDocument();
+    expect(screen.getByText(/Avisar quando começar a chover perto da sua casa ou do seu trabalho:/)).toBeInTheDocument();
+  });
+
   it('não promete botão de excluir conta e não usa travessão', () => {
     renderizar();
     expect(screen.queryByText(/revogar o consentimento e excluir sua conta/i)).not.toBeInTheDocument();

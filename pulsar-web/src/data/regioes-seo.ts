@@ -247,6 +247,11 @@ export function emNomeDe(nome: string): string {
   return getSubprefeituraPorSlug(slugify(nome))?.emNome ?? `em ${nome}`;
 }
 
+/** "da Mooca", "do Butantã", "de Itaquera" pelo nome de exibição. */
+export function deNomeDe(nome: string): string {
+  return getSubprefeituraPorSlug(slugify(nome))?.deNome ?? `de ${nome}`;
+}
+
 /**
  * Resolve o ?regiao=<slug> do deep-link: zona -> foca a região; subprefeitura ->
  * foca a região dela e seleciona a subprefeitura. Slug desconhecido -> undefined.

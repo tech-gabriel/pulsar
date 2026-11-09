@@ -87,7 +87,9 @@ export default function PrivacidadePage() {
       <p>
         Se você quiser, pode salvar o endereço da sua casa e do seu trabalho para usar na Rota. É
         opcional e nada vem preenchido. Guardamos só o endereço que você escolheu e o ponto no
-        mapa, presos à sua conta. Não guardamos horários, frequência nem os caminhos que você faz.
+        mapa, presos à sua conta. Os dois aparecem no seu mapa, só para você, e nunca entram na
+        imagem de compartilhar. Usamos a subprefeitura de cada um para avisar quando começar a
+        chover na região de cada um, e você desliga esse aviso em Configurações. Não guardamos horários, frequência nem os caminhos que você faz.
         Só você vê esses endereços: nem a equipe do Pulsar consulta por eles. Você troca ou apaga
         cada um quando quiser em Configurações, e eles também são apagados junto com a sua conta.
         Para excluir a conta, escreva para o e-mail de contato desta página.
@@ -108,6 +110,11 @@ export default function PrivacidadePage() {
         <li>
           <strong>Montar a Rota a partir da sua casa ou do seu trabalho:</strong> consentimento,
           dado quando você salva. Você revoga apagando em Configurações.
+        </li>
+        <li>
+          <strong>Avisar quando começar a chover perto da sua casa ou do seu trabalho:</strong>{' '}
+          consentimento, dado quando você salva o endereço e ativa os avisos no aparelho. Você
+          desliga em Configurações, em Avisos.
         </li>
         <li>
           <strong>Enviar e-mails essenciais</strong> (como recuperação de senha): execução do

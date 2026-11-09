@@ -24,7 +24,8 @@ export type NomeEvento =
   | 'pediu_aviso_rota'
   | 'salvou_local'
   | 'abriu_lugar'
-  | 'usou_local';
+  | 'usou_local'
+  | 'excluiu_conta';
 
 function capturar(nome: NomeEvento, props?: Record<string, unknown>): void {
   if (!isAnalyticsEnabled()) return;
@@ -36,6 +37,9 @@ export function capturarPageview(path: string): void {
   if (!isAnalyticsEnabled()) return;
   posthog.capture('$pageview', { path });
 }
+
+/** Motivo opcional da página de excluir conta (C1). */
+export type MotivoSaida = 'nao_uso' | 'avisos_demais' | 'sai_de_sp' | 'outro';
 
 export const track = {
   visitouLanding: (path: string) => capturar('visitou_landing', { path }),
@@ -49,6 +53,7 @@ export const track = {
   buscouEndereco: () => capturar('buscou_endereco'),
   salvouLocal: (tipo: 'casa' | 'trabalho', origem: 'rota' | 'configuracoes') => capturar('salvou_local', { tipo, origem }),
   usouLocal: (tipo: 'casa' | 'trabalho') => capturar('usou_local', { tipo }),
+  excluiuConta: (motivo?: MotivoSaida) => capturar('excluiu_conta', motivo ? { motivo } : undefined),
   abriuLugar: (tipo: 'casa' | 'trabalho', origem: 'mapa' | 'aviso') => capturar('abriu_lugar', { tipo, origem }),
   viuNovidades: (versao: string) => capturar('viu_novidades', { versao }),
   clicouInstagram: (origem: string) => capturar('clicou_instagram', { origem }),

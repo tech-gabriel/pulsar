@@ -50,6 +50,14 @@ describe('LandingPage / RotaLanding', () => {
     expect(screen.queryByText('MAPA_APP')).not.toBeInTheDocument();
   });
 
+  it('quem acabou de excluir a conta vê o aviso e o parâmetro sai da URL', async () => {
+    const router = createMemoryRouter(routes, { initialEntries: ['/?conta=excluida'] });
+    render(<UnheadProvider head={createHead()}><RouterProvider router={router} /></UnheadProvider>);
+
+    expect(await screen.findByText('Sua conta foi excluída.')).toBeInTheDocument();
+    await vi.waitFor(() => expect(router.state.location.search).toBe(''));
+  });
+
   it('usuário autenticado é redirecionado de / para /app', async () => {
     authState.estaAutenticado = true;
     renderApp('/');

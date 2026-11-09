@@ -93,6 +93,12 @@ describe('Configurações em grupos', () => {
     expect(h.toggleTheme).toHaveBeenCalled();
   });
 
+  it('excluir conta fica no fim e leva à página dela', () => {
+    abrir();
+    expect(screen.getByRole('link', { name: 'Excluir conta' })).toHaveAttribute('href', '/app/configuracoes/excluir-conta');
+    expect(screen.getByText('Apaga sua conta e tudo que está salvo nela.')).toBeInTheDocument();
+  });
+
   it('subprefeituras: resume os nomes e leva à tela delas', () => {
     h.favoritos = ['Itaquera', 'Mooca', 'Vila Mariana', 'Pinheiros', 'Sé'].map(fav);
     abrir();

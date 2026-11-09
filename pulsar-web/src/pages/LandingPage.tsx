@@ -1,4 +1,6 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 import LandingNav from '../components/landing/LandingNav';
 import LandingBusca from '../components/landing/LandingBusca';
 import LandingBento from '../components/landing/LandingBento';
@@ -17,6 +19,18 @@ import { gsap, ScrollTrigger, useGSAP, COM_MOVIMENTO } from '../motion/gsap';
  */
 export default function LandingPage() {
   const raiz = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
+  const [params, setParams] = useSearchParams();
+  const avisou = useRef(false);
+
+  // C1: quem acabou de excluir a conta chega aqui com ?conta=excluida. Effect (não render) por causa
+  // do SSG; o parâmetro sai da URL para o aviso não voltar num F5.
+  useEffect(() => {
+    if (params.get('conta') !== 'excluida' || avisou.current) return;
+    avisou.current = true;
+    showToast('Sua conta foi excluída.', 'success');
+    setParams({}, { replace: true });
+  }, [params, setParams, showToast]);
 
   // Um único reveal para a página: todo `[data-revelar]` sobe e aparece ao entrar na
   // tela, em lote, uma vez só. Fica tudo abaixo da dobra, então nada pisca na hidratação.

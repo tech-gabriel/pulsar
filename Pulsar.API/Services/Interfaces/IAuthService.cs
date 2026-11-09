@@ -12,4 +12,7 @@ public interface IAuthService
 
     /// <summary>Encerra todas as sessões da conta, inclusive a atual (SEC2).</summary>
     Task SairDeTodosAsync(Guid usuarioId);
+
+    /// <summary>A própria pessoa exclui a conta, confirmando com a palavra "excluir" (C1).</summary>
+    Task ExcluirContaAsync(Guid usuarioId, string confirmacao);
 }

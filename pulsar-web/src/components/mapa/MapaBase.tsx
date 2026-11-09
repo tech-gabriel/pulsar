@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react';
 import type { FeatureCollection, GeoJsonObject } from 'geojson';
-import type { OcorrenciaAlagamentoDto, SubprefeituraMapaDto } from '../../types';
+import type { LocalSalvoDto, OcorrenciaAlagamentoDto, SubprefeituraMapaDto, TipoLocal } from '../../types';
 import type { Camada } from '../../utils/camadas';
 import { temWebGL } from './webgl';
 import { estiloBaseCompartilhado, URL_OPENFREEMAP } from './estiloBase';
@@ -31,6 +31,11 @@ export interface PropsMapa {
   rota?: FeatureCollection | null;
   /** Esconde o zoom (rota no celular). */
   semZoom?: boolean;
+  /** Casa e trabalho da conta (F4b). Vazio ou ausente: nada é desenhado. */
+  lugares?: LocalSalvoDto[];
+  onTocarLugar?: (tipo: TipoLocal) => void;
+  /** Lugar aberto agora: o mapa aproxima nele. */
+  lugarEmFoco?: LocalSalvoDto | null;
 }
 
 // O MapLibre (e o worker dele) vêm num chunk próprio: a página, o painel e a busca aparecem antes.

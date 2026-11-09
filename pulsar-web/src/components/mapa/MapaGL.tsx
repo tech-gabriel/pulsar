@@ -18,6 +18,10 @@ import { normalizarNome } from '../../utils/texto';
 import { useTheme } from '../../hooks/useTheme';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import type { PropsMapa } from './MapaBase';
+import MarcadoresLugares from './MarcadoresLugares';
+
+/** Zoom ao tocar na casa ou no trabalho: perto o bastante para ver a chuva em volta (F4b). */
+const ZOOM_LUGAR = 14;
 
 const SP: [number, number] = [-46.6333, -23.5505]; // lon, lat
 const ESPERA_ESTILO_MS = 8000;
@@ -67,7 +71,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, semZoom = false } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, semZoom = false, lugares, onTocarLugar, lugarEmFoco } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -142,6 +146,12 @@ export default function MapaGL(props: PropsMapa) {
       voar([pontoBusca.lon, pontoBusca.lat], ZOOM.busca, 800);
     }
   }, [pontoBusca, carregou]);
+
+  // Tocar na casa ou no trabalho: aproxima no ponto (zoom 14), acima da folha.
+  useEffect(() => {
+    if (!carregou || !lugarEmFoco) return;
+    voar([lugarEmFoco.longitude, lugarEmFoco.latitude], ZOOM_LUGAR, 800);
+  }, [lugarEmFoco, carregou]);
 
   // Traçado da rota. A linha se desenha da origem ao destino depois do enquadramento, cortando a
   // geometria quadro a quadro (o MapLibre não tem line-trim); o destino "nasce" no fim. Cor nova
@@ -348,6 +358,7 @@ export default function MapaGL(props: PropsMapa) {
         </Marker>
       )}
       {carregou && overlayAlagamento && ocorrencias.length > 0 && <OcorrenciasLayer ocorrencias={ocorrencias} />}
+      {carregou && lugares && lugares.length > 0 && onTocarLugar && <MarcadoresLugares lugares={lugares} onTocar={onTocarLugar} />}
     </Map>
   );
 }

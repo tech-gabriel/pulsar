@@ -122,6 +122,7 @@ public class WebPushNotificationService : IPushNotificationService
         CriterioOptIn.RiscoAlto => assinatura.AlertaAlto,
         CriterioOptIn.RiscoModerado => assinatura.AlertaModerado,
         CriterioOptIn.ResumoDiario => assinatura.ResumoDiario,
+        CriterioOptIn.ChuvaLocais => assinatura.ChuvaLocais,
         _ => throw new ArgumentOutOfRangeException(
             nameof(criterio), criterio, "Critério de opt-in sem mapeamento para coluna de preferência.")
     };

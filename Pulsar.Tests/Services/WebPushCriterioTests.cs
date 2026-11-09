@@ -47,6 +47,32 @@ public class WebPushCriterioTests
     }
 
     [Fact]
+    public void ChuvaLocais_LeAColunaNova()
+    {
+        var ligada = Assinatura(alto: false, moderado: false, resumo: false);
+        ligada.ChuvaLocais = true;
+        WebPushNotificationService.OptouPeloCriterio(ligada, CriterioOptIn.ChuvaLocais).Should().BeTrue();
+
+        var desligada = Assinatura(alto: true, moderado: true, resumo: true);
+        desligada.ChuvaLocais = false;
+        WebPushNotificationService.OptouPeloCriterio(desligada, CriterioOptIn.ChuvaLocais).Should().BeFalse();
+    }
+
+    [Fact]
+    public void RequestSemChuvaLocais_FicaLigado()
+    {
+        // Aparelho com o app antigo em cache não manda o campo: o aviso tem que ficar ligado.
+        var dto = System.Text.Json.JsonSerializer.Deserialize<Pulsar.API.DTOs.AssinaturaPushRequestDto>(
+            "{\"endpoint\":\"x\",\"p256dh\":\"y\",\"auth\":\"z\",\"alertaAlto\":true}",
+            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))!;
+        dto.ChuvaLocais.Should().BeTrue();
+    }
+
+    [Fact]
+    public void AssinaturaNova_NasceComChuvaLocaisLigada()
+        => new AssinaturaPush().ChuvaLocais.Should().BeTrue();
+
+    [Fact]
     public void CriterioSemMapeamento_Estoura()
     {
         // Critério sem braço no switch precisa falhar alto. Devolver false faria o envio

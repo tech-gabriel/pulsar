@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.30.1',
+    data: '2026-11-09',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Casa e trabalho não cobrem mais o risco da região',
+        descricao: 'De perto, o nome da casa ou do trabalho agora abre para o lado e deixa à vista o número de risco da região. O ponto também passou a marcar o endereço exato que você salvou.',
+      },
+    ],
+  },
+  {
     versao: '1.30.0',
     data: '2026-11-09',
     itens: [

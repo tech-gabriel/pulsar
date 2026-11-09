@@ -84,6 +84,14 @@ public class GatilhoChuvaComecouTests
     public async Task ColetorParado_SemLeituraSecaRecente_NaoAvisa()
         => (await Avaliar(Contexto(Referencia(0.3), Leitura(90, 0), Leitura(0, 2.0)))).Should().BeEmpty();
 
+    [Fact]
+    public async Task LeituraAtualVelha_NaoAvisa()
+    {
+        // OWM fora há 40 min, o motor seguiu rodando: "chovendo agora" seria de 40 min atrás.
+        var ctx = Contexto(Referencia(0.3), Leitura(70, 0), Leitura(55, 0), Leitura(40, 2.0));
+        (await Avaliar(ctx)).Should().BeEmpty();
+    }
+
     [Theory]
     [InlineData(0.49, null)]
     [InlineData(0.5, "fraca")]

@@ -157,6 +157,8 @@ public static class LimiaresNotificacao
     public const double ChuvaComecouMmH = 0.5;
     /// <summary>Até quanto tempo depois da última leitura seca o episódio ainda é "começou".</summary>
     public const int JanelaChuvaComecouMinutos = 60;
+    /// <summary>Leitura mais velha que isto não vira "chovendo agora" (um ciclo de 15 min e folga).</summary>
+    public const int IdadeMaximaLeituraAgoraMinutos = 20;
     /// <summary>O Open-Meteo precisa prever ao menos isto em alguma hora da janela (decisão do user).</summary>
     public const double ConfirmacaoChuvaAgoraMm = 0.1;
     public const int FolgaChuvaAgoraHoras = 2;

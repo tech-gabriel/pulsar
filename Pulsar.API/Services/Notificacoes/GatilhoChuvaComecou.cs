@@ -33,7 +33,9 @@ public class GatilhoChuvaComecou : IGatilhoNotificacao
     {
         var atual = ctx.Estado.Leitura;
         var intensidade = atual is null ? null : Intensidade(atual.ChuvaMmH);
-        if (atual is null || intensidade is null || !Confirmada(ctx.ChuvaReferencia, atual.Timestamp))
+        // Leitura velha (coleta parada, motor rodando) não é "agora".
+        var velha = atual is not null && atual.Timestamp < ctx.AgoraUtc.AddMinutes(-LimiaresNotificacao.IdadeMaximaLeituraAgoraMinutos);
+        if (atual is null || velha || intensidade is null || !Confirmada(ctx.ChuvaReferencia, atual.Timestamp))
             return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([]);
 
         var desde = atual.Timestamp.AddMinutes(-LimiaresNotificacao.JanelaChuvaComecouMinutos);

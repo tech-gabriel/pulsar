@@ -199,6 +199,21 @@ public class AvisoRotaServiceTests
     }
 
     [Fact]
+    public async Task AvaliarEDisparar_AparelhoSoComChuvaLocais_Recebe()
+    {
+        // F4b: a preferência nova vem ligada; um aparelho com só ela ligada também conta.
+        using var conn = Abrir();
+        using var ctx = NovoContexto(conn);
+        var svc = Novo(ctx, EstadoRota.PodeIr);
+        var usuario = Guid.NewGuid();
+        _push.Setup(p => p.NotificarUsuarioAsync(usuario, It.IsAny<CriterioOptIn>(), It.IsAny<PushPayload>(), It.IsAny<CancellationToken>())).ReturnsAsync(0);
+        _push.Setup(p => p.NotificarUsuarioAsync(usuario, CriterioOptIn.ChuvaLocais, It.IsAny<PushPayload>(), It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        await Pedir(ctx, svc, usuario, [Mooca], "Mooca");
+
+        (await svc.AvaliarEDispararAsync(Agora.AddMinutes(15))).Should().Be(1);
+    }
+
+    [Fact]
     public async Task AvaliarEDisparar_NenhumAparelhoRecebe_MantemOPedido()
     {
         using var conn = Abrir();

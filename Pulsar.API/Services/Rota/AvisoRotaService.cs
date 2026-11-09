@@ -71,7 +71,7 @@ public class AvisoRotaService : IAvisoRotaService
                 // até um chegar a pelo menos um aparelho.
                 var payload = new PushPayload($"O caminho até {pedido.Destino} melhorou", corpo, "/app", "rota");
                 var recebeu = false;
-                foreach (var criterio in new[] { CriterioOptIn.RiscoAlto, CriterioOptIn.RiscoModerado, CriterioOptIn.ResumoDiario })
+                foreach (var criterio in Enum.GetValues<CriterioOptIn>())
                 {
                     if (await _push.NotificarUsuarioAsync(pedido.UsuarioId, criterio, payload, ct) > 0)
                     {

@@ -80,10 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     irPara(URL_SESSAO_ENCERRADA);
   }, []);
 
-  // C1: o evento sai antes, enquanto a sessão existe; o reload completo zera todo o estado em memória.
+  // C1: o evento só sai com a exclusão feita (falha não conta) e antes do reset do PostHog;
+  // o reload completo zera todo o estado em memória.
   const excluirConta = useCallback(async (confirmacao: string, motivo?: MotivoSaida) => {
-    track.excluiuConta(motivo);
     await api.delete('/usuarios/me', { data: { confirmacao } });
+    track.excluiuConta(motivo);
     resetAnalytics();
     localStorage.removeItem('pulsar_token');
     localStorage.removeItem('pulsar_usuario');

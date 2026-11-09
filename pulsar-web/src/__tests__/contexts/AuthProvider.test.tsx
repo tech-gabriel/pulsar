@@ -168,6 +168,7 @@ describe('AuthProvider excluir conta (C1)', () => {
     await act(async () => { await expect(result.current.excluirConta('excluir')).rejects.toThrow(); });
 
     expect(localStorage.getItem('pulsar_token')).toBe('jwt');
+    expect(h.track.excluiuConta).not.toHaveBeenCalled();
     expect(h.reset).not.toHaveBeenCalled();
     expect(nav.irPara).not.toHaveBeenCalled();
   });

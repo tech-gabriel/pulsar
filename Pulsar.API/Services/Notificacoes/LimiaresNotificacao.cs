@@ -147,8 +147,23 @@ public static class LimiaresNotificacao
     public const int PrioridadePerigoCge = 0;
     public const int PrioridadeScoreAlto = 1;
     public const int PrioridadeChuvaPrevista = 2;
-    public const int PrioridadeBriefing = 3;
-    public const int PrioridadeAtencao = 4;
+    // A chuva já começou na casa: mais imediata que o resumo, menos que o alerta (F4b).
+    public const int PrioridadeChuvaComecou = 3;
+    public const int PrioridadeBriefing = 4;
+    public const int PrioridadeAtencao = 5;
+
+    // ── Começou a chover na casa ou no trabalho (F4b) ──
+    /// <summary>Abaixo disso a leitura é garoa: não conta como chuva começando.</summary>
+    public const double ChuvaComecouMmH = 0.5;
+    /// <summary>Até quanto tempo depois da última leitura seca o episódio ainda é "começou".</summary>
+    public const int JanelaChuvaComecouMinutos = 60;
+    /// <summary>O Open-Meteo precisa prever ao menos isto em alguma hora da janela (decisão do user).</summary>
+    public const double ConfirmacaoChuvaAgoraMm = 0.1;
+    public const int FolgaChuvaAgoraHoras = 2;
+    public const int CooldownChuvaComecouHoras = 3;
+    /// <summary>Faixas de intensidade em mm/h: fraca abaixo de moderada, forte a partir de forte.</summary>
+    public const double ChuvaModeradaMmH = 2.5;
+    public const double ChuvaForteMmH = 10.0;
 
     /// <summary>
     /// Depois de um Alerta de um perigo, quanto tempo a Atenção DO MESMO PERIGO fica calada

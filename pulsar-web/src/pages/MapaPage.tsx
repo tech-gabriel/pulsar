@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { GeoJsonObject, FeatureCollection } from 'geojson';
@@ -8,6 +8,7 @@ import LayerControl from '../components/mapa/LayerControl';
 import MapLegend from '../components/mapa/MapLegend';
 import PainelLateral from '../components/painel/PainelLateral';
 import DetalheSubprefeitura from '../components/painel/DetalheSubprefeitura';
+import FolhaLugar from '../components/painel/FolhaLugar';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import Header from '../components/ui/Header';
 import type { Camada } from '../utils/camadas';
@@ -39,9 +40,9 @@ import CamposDePara from '../components/rota/CamposDePara';
 import PainelRota from '../components/rota/PainelRota';
 import { track } from '../analytics';
 import type { PontoRota } from '../features/rota/tipos';
-import type { TipoLocal } from '../types';
+import type { LocalSalvoDto, TipoLocal } from '../types';
 import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
-import { subprefeituraIdDoPonto } from '../features/locais/regras';
+import { pontoDoLocal, subprefeituraIdDoPonto } from '../features/locais/regras';
 
 export default function MapaPage() {
   const { usuario } = useAuth();
@@ -102,6 +103,27 @@ export default function MapaPage() {
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
   const locaisSalvos = useLocaisSalvos(usuario?.id ?? null);
+  // Casa ou trabalho aberto no mapa (F4b): a folha do lugar toma o lugar do detalhe.
+  const [lugarAberto, setLugarAberto] = useState<TipoLocal | null>(null);
+  const localAberto = lugarAberto ? locaisSalvos.locais[lugarAberto] ?? null : null;
+  const lugarNaFolha = isMobile && !!localAberto;
+  const lugaresNoMapa = useMemo(
+    () => Object.values(locaisSalvos.locais).filter((l): l is LocalSalvoDto => !!l),
+    [locaisSalvos.locais],
+  );
+  // Deep link do aviso de chuva (/app?lugar=casa): aplica quando os locais chegam, mesmo padrão
+  // do ?regiao= (ajuste de estado no render); o efeito abaixo tira o parâmetro da URL.
+  const lugarParam = searchParams.get('lugar');
+  const [lugarAplicado, setLugarAplicado] = useState<string | null>(null);
+  if (!lugarParam && lugarAplicado) setLugarAplicado(null);
+  if (lugarParam && lugarParam !== lugarAplicado && !locaisSalvos.carregando) {
+    setLugarAplicado(lugarParam);
+    const tipo: TipoLocal | null = lugarParam === 'casa' ? 'CASA' : lugarParam === 'trabalho' ? 'TRABALHO' : null;
+    if (tipo && locaisSalvos.locais[tipo]) {
+      setSubSelecionada(null);
+      setLugarAberto(tipo);
+    }
+  }
   const rotaSemPontos = rotaAberta && !(rota.origem && rota.destino);
   const rotaNoCelular = isMobile && rotaAberta;
   useAlturaFluida(folhaRef, !rotaSemPontos); // a folha sai e volta (AnimatePresence)
@@ -133,9 +155,29 @@ export default function MapaPage() {
     setSearchParams(p, { replace: true });
   }
 
+  // O ?lugar= já foi aplicado (aberto ou descartado): conta o evento e sai da URL.
+  useEffect(() => {
+    if (!lugarParam || lugarAplicado !== lugarParam) return;
+    if (lugarAberto) track.abriuLugar(lugarAberto === 'CASA' ? 'casa' : 'trabalho', 'aviso');
+    const p = new URLSearchParams(searchParams);
+    p.delete('lugar');
+    setSearchParams(p, { replace: true });
+  }, [lugarParam, lugarAplicado, lugarAberto, searchParams, setSearchParams]);
+
+  function abrirLugar(tipo: TipoLocal) {
+    limparDeepLink();
+    track.abriuLugar(tipo === 'CASA' ? 'casa' : 'trabalho', 'mapa');
+    setSubSelecionada(null);
+    setZonaEmFoco(null);
+    setPainelRecolhido(false);
+    if (isMobile) setPainelMobileAberto(false);
+    setLugarAberto(tipo);
+  }
+
   // A origem padrão é onde a pessoa está; sem localização, o campo De fica vazio e pede um lugar.
   async function abrirRota(de: 'chip' | 'como_chegar', destino: PontoRota | null = null) {
     track.abriuRota(de);
+    setLugarAberto(null);
     setRotaAberta(true);
     setPainelRecolhido(false);
     rota.setOrigem(null);
@@ -237,6 +279,7 @@ export default function MapaPage() {
   // polígono (highlight + centralização).
   function handleSelecionarSub(sub: SubprefeituraMapaDto) {
     limparDeepLink();
+    setLugarAberto(null);
     setSubSelecionada(sub);
     setPainelRecolhido(false);
     setZonaEmFoco(null);
@@ -269,6 +312,21 @@ export default function MapaPage() {
     }
     return locaisSalvos.salvar(tipo, p, id, 'rota');
   }
+
+  const folhaLugar = localAberto && (
+    <FolhaLugar
+      key={localAberto.tipo}
+      local={localAberto}
+      area={subprefeituras.find((s) => s.id === localAberto.subprefeituraId)}
+      onFechar={() => setLugarAberto(null)}
+      onVerRegiao={() => {
+        const area = subprefeituras.find((s) => s.id === localAberto.subprefeituraId);
+        setLugarAberto(null);
+        if (area) handleSelecionarSub(area);
+      }}
+      onRota={() => void abrirRota('como_chegar', pontoDoLocal(localAberto))}
+    />
+  );
 
   const camposRota = (embutida: boolean) => (
     <CamposDePara
@@ -333,6 +391,9 @@ export default function MapaPage() {
           ocorrencias={ocorrencias}
           rota={rotaAberta ? rota.linha : null}
           semZoom={rotaNoCelular}
+          lugares={rotaAberta ? undefined : lugaresNoMapa}
+          onTocarLugar={abrirLugar}
+          lugarEmFoco={localAberto}
         />
 
         {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}
@@ -403,7 +464,7 @@ export default function MapaPage() {
         data-painel-mapa
         className={[
           'painel-flutuante painel-mapa vidro-painel vidro-surge hidden md:flex flex-col',
-          subSelecionada && !painelRecolhido ? 'com-detalhe' : '',
+          (subSelecionada || localAberto) && !painelRecolhido ? 'com-detalhe' : '',
         ].join(' ')}
       >
         {/* Alça do tablet: recolhe o cartão até só a busca. */}
@@ -419,9 +480,11 @@ export default function MapaPage() {
 
         {!isMobile && (rotaAberta ? camposRota(true) : buscaMapa(true))}
 
-        <div key={rotaAberta ? 'rota' : subSelecionada?.id ?? 'lista'} className={['painel-conteudo flex-1 min-h-0 flex flex-col', painelRecolhido ? 'lg:flex hidden' : ''].join(' ')}>
+        <div key={rotaAberta ? 'rota' : localAberto ? `lugar-${localAberto.tipo}` : subSelecionada?.id ?? 'lista'} className={['painel-conteudo flex-1 min-h-0 flex flex-col', painelRecolhido ? 'lg:flex hidden' : ''].join(' ')}>
           {rotaAberta ? (
             <div className="painel-scroll flex-1 overflow-y-auto overscroll-contain px-4 pb-4">{resultadoRota}</div>
+          ) : !isMobile && folhaLugar ? (
+            folhaLugar
           ) : subSelecionada ? (
             <DetalheSubprefeitura
               key={subSelecionada.id}
@@ -458,8 +521,8 @@ export default function MapaPage() {
         key="folha"
         ref={folhaRef}
         data-painel-mapa
-        data-aberta={painelMobileAberto || detalheNaFolha || rotaAberta ? '' : undefined}
-        data-detalhe={detalheNaFolha || rotaAberta ? '' : undefined}
+        data-aberta={painelMobileAberto || detalheNaFolha || lugarNaFolha || rotaAberta ? '' : undefined}
+        data-detalhe={detalheNaFolha || lugarNaFolha || rotaAberta ? '' : undefined}
         className="folha-mapa painel-mapa vidro-painel md:hidden fixed z-[500] flex flex-col overflow-hidden"
         initial={menosMovimento ? { opacity: 0 } : { y: 'calc(100% + 16px)' }}
         animate={menosMovimento
@@ -471,6 +534,8 @@ export default function MapaPage() {
       >
         {rotaAberta ? (
           <div key="rota" className="painel-conteudo flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-2 pb-4">{resultadoRota}</div>
+        ) : lugarNaFolha ? (
+          <div key={`lugar-${localAberto?.tipo}`} className="painel-conteudo flex-1 min-h-0 flex flex-col">{folhaLugar}</div>
         ) : detalheNaFolha ? (
           <div key={detalheNaFolha.id} className="painel-conteudo flex-1 min-h-0 flex flex-col">
             <DetalheSubprefeitura

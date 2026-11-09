@@ -23,6 +23,7 @@ export type NomeEvento =
   | 'abriu_app_rota'
   | 'pediu_aviso_rota'
   | 'salvou_local'
+  | 'abriu_lugar'
   | 'usou_local';
 
 function capturar(nome: NomeEvento, props?: Record<string, unknown>): void {
@@ -48,6 +49,7 @@ export const track = {
   buscouEndereco: () => capturar('buscou_endereco'),
   salvouLocal: (tipo: 'casa' | 'trabalho', origem: 'rota' | 'configuracoes') => capturar('salvou_local', { tipo, origem }),
   usouLocal: (tipo: 'casa' | 'trabalho') => capturar('usou_local', { tipo }),
+  abriuLugar: (tipo: 'casa' | 'trabalho', origem: 'mapa' | 'aviso') => capturar('abriu_lugar', { tipo, origem }),
   viuNovidades: (versao: string) => capturar('viu_novidades', { versao }),
   clicouInstagram: (origem: string) => capturar('clicou_instagram', { origem }),
   passoVisto: (passo: Passo, ordem: number, total: number) => capturar('ativacao_passo_visto', { passo, ordem, total }),

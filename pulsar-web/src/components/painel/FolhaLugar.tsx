@@ -34,7 +34,7 @@ export default function FolhaLugar({ local, area, onFechar, onVerRegiao, onRota 
 
   return (
     <section aria-labelledby={tituloId} className="flex flex-col gap-2.5 px-4 pt-2 pb-4">
-      <span aria-hidden="true" className="w-9 h-[5px] rounded-full mx-auto flex-shrink-0"
+      <span aria-hidden="true" className="md:hidden w-9 h-[5px] rounded-full mx-auto flex-shrink-0"
         style={{ background: 'color-mix(in srgb, var(--text-primary) 22%, transparent)' }} />
 
       <header className="flex items-center gap-2.5">

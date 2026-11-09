@@ -57,9 +57,11 @@ describe('PrivacidadePage casa e trabalho (F4)', () => {
     expect(screen.getByText(/Avisar quando começar a chover perto da sua casa ou do seu trabalho:/)).toBeInTheDocument();
   });
 
-  it('não promete botão de excluir conta e não usa travessão', () => {
+  it('aponta a exclusão para Configurações, avisa do PostHog e não usa travessão', () => {
     renderizar();
-    expect(screen.queryByText(/revogar o consentimento e excluir sua conta/i)).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/exclus\S* da (sua )?conta pelo e-mail/i);
+    expect(screen.getByText(/excluir sua conta em Configurações > Excluir conta/)).toBeInTheDocument();
+    expect(screen.getByText(/Excluir a conta no app não apaga o que já foi para o\s+PostHog/)).toBeInTheDocument();
     expect(document.body.textContent).not.toContain('—');
   });
 });

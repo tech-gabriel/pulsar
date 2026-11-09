@@ -34,8 +34,8 @@ export interface PropsMapa {
   /** Casa e trabalho da conta (F4b). Vazio ou ausente: nada é desenhado. */
   lugares?: LocalSalvoDto[];
   onTocarLugar?: (tipo: TipoLocal) => void;
-  /** Lugar aberto agora: o mapa aproxima nele. */
-  lugarEmFoco?: LocalSalvoDto | null;
+  /** Lugar aberto agora: o mapa aproxima nele a cada toque novo (o contador muda a cada toque). */
+  lugarEmFoco?: { local: LocalSalvoDto; toque: number } | null;
 }
 
 // O MapLibre (e o worker dele) vêm num chunk próprio: a página, o painel e a busca aparecem antes.

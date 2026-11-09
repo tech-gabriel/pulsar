@@ -80,7 +80,8 @@ export default function FolhaLugar({ local, area, onFechar, onVerRegiao, onRota 
           <span aria-hidden="true" className="grid place-items-center w-5 flex-shrink-0" style={alagado ? undefined : { color: 'var(--text-secondary)' }}>
             <Droplets size={17} />
           </span>
-          {fraseAlagamento(area?.alagamentosCge, regiao)}
+          {/* Sem dado da região não se afirma "nenhum alagamento". */}
+          {area ? fraseAlagamento(area.alagamentosCge, regiao) : 'Sem leitura agora'}
         </li>
       </ul>
 

@@ -44,6 +44,9 @@ import type { LocalSalvoDto, TipoLocal } from '../types';
 import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
 import { pontoDoLocal, subprefeituraIdDoPonto } from '../features/locais/regras';
 
+/** ?lugar= do aviso de chuva: "casa" | "trabalho"; outro valor não abre nada. */
+const tipoDoParam = (v: string | null): TipoLocal | null => (v === 'casa' ? 'CASA' : v === 'trabalho' ? 'TRABALHO' : null);
+
 export default function MapaPage() {
   const { usuario } = useAuth();
   const { subprefeituras, carregando, erro, recarregar, ultimaAtualizacao } = useSubprefeituras();
@@ -75,13 +78,21 @@ export default function MapaPage() {
   const [slugAplicado, setSlugAplicado] = useState<string | null>(null);
   const [zonaEmFoco, setZonaEmFoco] = useState<string | null>(null);
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
+  // Casa ou trabalho aberto no mapa (F4b): a folha do lugar toma o lugar do detalhe. Declarado
+  // aqui porque o ?regiao= abaixo precisa fechá-lo (alerta tocado com a casa aberta).
+  const [lugarAberto, setLugarAberto] = useState<TipoLocal | null>(null);
+  // Cada toque (ou abertura pelo aviso) conta: o mapa volta a aproximar mesmo no mesmo lugar.
+  const [toqueLugar, setToqueLugar] = useState(0);
   // Ajuste de estado durante o render (padrão do React p/ derivar de dados que chegam depois).
   if (slugParam !== slugAplicado && (subprefeituras.length > 0 || !slugParam)) {
     setSlugAplicado(slugParam);
     const alvo = slugParam ? resolverDeepLink(slugParam) : undefined;
     const sub = alvo?.nomeSub ? subprefeituras.find((s) => s.nome === alvo.nomeSub) ?? null : null;
     setZonaEmFoco(alvo && !alvo.nomeSub ? alvo.nomeRegiao : null);
-    if (sub) setSubSelecionada(sub);
+    if (sub) {
+      setLugarAberto(null);
+      setSubSelecionada(sub);
+    }
   }
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
   // Tablet: o cartão do pé recolhe até só a busca, para devolver o mapa.
@@ -103,9 +114,8 @@ export default function MapaPage() {
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
   const locaisSalvos = useLocaisSalvos(usuario?.id ?? null);
-  // Casa ou trabalho aberto no mapa (F4b): a folha do lugar toma o lugar do detalhe.
-  const [lugarAberto, setLugarAberto] = useState<TipoLocal | null>(null);
   const localAberto = lugarAberto ? locaisSalvos.locais[lugarAberto] ?? null : null;
+  const lugarEmFoco = useMemo(() => (localAberto ? { local: localAberto, toque: toqueLugar } : null), [localAberto, toqueLugar]);
   const lugarNaFolha = isMobile && !!localAberto;
   const lugaresNoMapa = useMemo(
     () => Object.values(locaisSalvos.locais).filter((l): l is LocalSalvoDto => !!l),
@@ -118,9 +128,14 @@ export default function MapaPage() {
   if (!lugarParam && lugarAplicado) setLugarAplicado(null);
   if (lugarParam && lugarParam !== lugarAplicado && !locaisSalvos.carregando) {
     setLugarAplicado(lugarParam);
-    const tipo: TipoLocal | null = lugarParam === 'casa' ? 'CASA' : lugarParam === 'trabalho' ? 'TRABALHO' : null;
+    const tipo = tipoDoParam(lugarParam);
     if (tipo && locaisSalvos.locais[tipo]) {
+      // O mesmo que abrirLugar faz, sem o evento (o efeito conta como 'aviso').
       setSubSelecionada(null);
+      setZonaEmFoco(null);
+      setPainelRecolhido(false);
+      setPainelMobileAberto(false);
+      setToqueLugar((n) => n + 1);
       setLugarAberto(tipo);
     }
   }
@@ -158,11 +173,13 @@ export default function MapaPage() {
   // O ?lugar= já foi aplicado (aberto ou descartado): conta o evento e sai da URL.
   useEffect(() => {
     if (!lugarParam || lugarAplicado !== lugarParam) return;
-    if (lugarAberto) track.abriuLugar(lugarAberto === 'CASA' ? 'casa' : 'trabalho', 'aviso');
+    // Conta pelo que o link pediu e só se ele existe (não pelo lugar que já estava aberto).
+    const tipo = tipoDoParam(lugarParam);
+    if (tipo && locaisSalvos.locais[tipo]) track.abriuLugar(tipo === 'CASA' ? 'casa' : 'trabalho', 'aviso');
     const p = new URLSearchParams(searchParams);
     p.delete('lugar');
     setSearchParams(p, { replace: true });
-  }, [lugarParam, lugarAplicado, lugarAberto, searchParams, setSearchParams]);
+  }, [lugarParam, lugarAplicado, locaisSalvos.locais, searchParams, setSearchParams]);
 
   function abrirLugar(tipo: TipoLocal) {
     limparDeepLink();
@@ -171,6 +188,7 @@ export default function MapaPage() {
     setZonaEmFoco(null);
     setPainelRecolhido(false);
     if (isMobile) setPainelMobileAberto(false);
+    setToqueLugar((n) => n + 1);
     setLugarAberto(tipo);
   }
 
@@ -393,7 +411,7 @@ export default function MapaPage() {
           semZoom={rotaNoCelular}
           lugares={rotaAberta ? undefined : lugaresNoMapa}
           onTocarLugar={abrirLugar}
-          lugarEmFoco={localAberto}
+          lugarEmFoco={lugarEmFoco}
         />
 
         {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}

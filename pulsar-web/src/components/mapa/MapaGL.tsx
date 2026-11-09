@@ -148,10 +148,13 @@ export default function MapaGL(props: PropsMapa) {
   }, [pontoBusca, carregou]);
 
   // Tocar na casa ou no trabalho: aproxima no ponto (zoom 14), acima da folha.
+  // Pelo contador e não pelo objeto: tocar de novo volta a aproximar, e salvar o lugar de novo não voa.
+  const toqueLugar = lugarEmFoco?.toque;
   useEffect(() => {
     if (!carregou || !lugarEmFoco) return;
-    voar([lugarEmFoco.longitude, lugarEmFoco.latitude], ZOOM_LUGAR, 800);
-  }, [lugarEmFoco, carregou]);
+    voar([lugarEmFoco.local.longitude, lugarEmFoco.local.latitude], ZOOM_LUGAR, 800);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só um toque novo voa
+  }, [toqueLugar, carregou]);
 
   // Traçado da rota. A linha se desenha da origem ao destino depois do enquadramento, cortando a
   // geometria quadro a quadro (o MapLibre não tem line-trim); o destino "nasce" no fim. Cor nova

@@ -37,7 +37,9 @@ describe('FolhaLugar', () => {
 
   it('região sem leitura nem score não quebra', () => {
     render(<FolhaLugar local={casa} area={undefined} {...handlers()} />);
-    expect(screen.getAllByText('Sem leitura agora').length).toBeGreaterThan(0);
+    // Sem dado não se afirma "nenhum alagamento": as três linhas dizem que não há leitura.
+    expect(screen.getAllByText('Sem leitura agora')).toHaveLength(3);
+    expect(screen.queryByText(/Nenhum alagamento/)).toBeNull();
   });
 
   it('botões chamam quem os usa', () => {

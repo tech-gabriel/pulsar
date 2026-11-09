@@ -18,13 +18,13 @@ export default function PrivacidadePage() {
     <LandingDocShell
       titulo="Política de Privacidade"
       subtitulo="Como o Pulsar coleta, usa e protege seus dados, em linguagem direta e em conformidade com a LGPD."
-      atualizadoEm="5 de novembro de 2026"
+      atualizadoEm="9 de novembro de 2026"
     >
       <h2>Resumo rápido</h2>
       <ul>
         <li>Coletamos o mínimo: dados de conta, suas preferências e dados técnicos para o serviço funcionar.</li>
         <li>Não vendemos seus dados pessoais.</li>
-        <li>Você controla as notificações e pode pedir a exclusão da sua conta a qualquer momento.</li>
+        <li>Você controla as notificações e pode excluir sua conta a qualquer momento, em Configurações.</li>
         <li>No futuro, o Pulsar poderá exibir anúncios e oferecer um plano premium. Quando isso acontecer, esta política será atualizada antes de qualquer mudança.</li>
       </ul>
       <p>
@@ -92,7 +92,7 @@ export default function PrivacidadePage() {
         chover na região de cada um, e você desliga esse aviso em Configurações. Não guardamos horários, frequência nem os caminhos que você faz.
         Só você vê esses endereços: nem a equipe do Pulsar consulta por eles. Você troca ou apaga
         cada um quando quiser em Configurações, e eles também são apagados junto com a sua conta.
-        Para excluir a conta, escreva para o e-mail de contato desta página.
+        Para excluir a conta, use Configurações &gt; Excluir conta.
       </p>
 
       <h2>3. Para que usamos os dados e com qual base legal</h2>
@@ -195,7 +195,8 @@ export default function PrivacidadePage() {
         ações como visitas, cadastro, favoritar uma região e ativar alertas. Para reconhecer você
         entre sessões, enviamos seu identificador de conta junto com nome e e-mail ao PostHog.
         Esse serviço processa os dados em servidores nos Estados Unidos, o que envolve
-        transferência internacional de dados.
+        transferência internacional de dados. Excluir a conta no app não apaga o que já foi para o
+        PostHog: para isso, escreva para o e-mail de contato desta página.
       </p>
       <p>
         A finalidade é medir uso e retenção para melhorar o app. A base legal é o legítimo
@@ -206,9 +207,9 @@ export default function PrivacidadePage() {
       <h2>10. Por quanto tempo guardamos</h2>
       <p>
         Mantemos seus dados enquanto sua conta estiver ativa ou pelo tempo necessário para cumprir
-        as finalidades descritas aqui e eventuais obrigações legais. Quando você pedir a
-        exclusão da conta pelo e-mail de contato, removemos ou anonimizamos seus dados pessoais, salvo quando precisarmos retê-los por
-        exigência legal. As cópias de segurança diárias guardam os dados por até 30 dias e depois são
+        as finalidades descritas aqui e eventuais obrigações legais. Quando você exclui a conta em
+        Configurações, ela e tudo que está salvo nela são apagados na hora, salvo o que precisarmos
+        reter por exigência legal. As cópias de segurança diárias guardam os dados por até 30 dias e depois são
         apagadas.
       </p>
 
@@ -226,7 +227,7 @@ export default function PrivacidadePage() {
         <li>Corrigir dados incompletos, inexatos ou desatualizados.</li>
         <li>Solicitar a anonimização, o bloqueio ou a eliminação de dados desnecessários.</li>
         <li>Pedir a portabilidade dos dados, nos termos da lei.</li>
-        <li>Revogar o consentimento e pedir a exclusão da sua conta pelo e-mail de contato.</li>
+        <li>Revogar o consentimento e excluir sua conta em Configurações &gt; Excluir conta.</li>
         <li>Se opor a tratamentos baseados em legítimo interesse.</li>
       </ul>
       <p>

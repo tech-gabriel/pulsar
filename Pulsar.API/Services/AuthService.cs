@@ -19,19 +19,65 @@ public class AuthService : IAuthService
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IConfiguration _configuration;
     private readonly IEmailVerificacaoService _emailVerificacao;
+    private readonly IEmailSender _emailSender;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         IUsuarioRepository usuarioRepository,
         IConfiguration configuration,
         IEmailVerificacaoService emailVerificacao,
+        IEmailSender emailSender,
         ILogger<AuthService> logger)
     {
         _usuarioRepository = usuarioRepository;
         _configuration = configuration;
         _emailVerificacao = emailVerificacao;
+        _emailSender = emailSender;
         _logger = logger;
     }
+
+    /// <summary>Palavra que a pessoa digita para confirmar (C1). Vale para conta Google também, que não tem senha conhecida.</summary>
+    public const string PalavraExclusao = "excluir";
+
+    public async Task ExcluirContaAsync(Guid usuarioId, string confirmacao)
+    {
+        if (!string.Equals(confirmacao?.Trim(), PalavraExclusao, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException($"Digite {PalavraExclusao} para confirmar.");
+
+        var usuario = await _usuarioRepository.ObterPorIdAsync(usuarioId)
+            ?? throw new KeyNotFoundException("Usuário não encontrado.");
+
+        // O admin é quem dá suporte; sem ele ninguém administra a produção.
+        if (usuario.Role == RoleAcesso.ADMIN)
+            throw new InvalidOperationException("Contas de administrador não podem ser excluídas por aqui.");
+
+        var (email, nome) = (usuario.Email, usuario.Nome);
+
+        // Favoritos, lugares, avisos de rota, push, notificações enviadas e tokens caem por FK CASCADE.
+        await _usuarioRepository.RemoverAsync(usuario);
+        await _usuarioRepository.SalvarAsync();
+
+        // A conta já saiu: e-mail fora do ar não pode fazer a pessoa achar que nada aconteceu.
+        try
+        {
+            await _emailSender.EnviarAsync(email, "Sua conta no Pulsar foi excluída", MontarEmailContaExcluida(nome));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Conta {UsuarioId} excluída, mas o e-mail de confirmação falhou.", usuarioId);
+        }
+    }
+
+    public static string MontarEmailContaExcluida(string nome) => $$"""
+        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; color: #1e293b;">
+          <h1 style="color: #0ea5e9; font-size: 22px;">Pulsar</h1>
+          <p>Olá, {{System.Net.WebUtility.HtmlEncode(nome)}}!</p>
+          <p>Sua conta no Pulsar foi excluída, junto com seus lugares, regiões acompanhadas e avisos.</p>
+          <p style="font-size: 13px; color: #64748b;">Se não foi você, responda este e-mail.</p>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+          <p style="font-size: 12px; color: #94a3b8;">Pulsar. O mapa vivo da sua segurança.</p>
+        </div>
+        """;
 
     public async Task<LoginResponseDto> CadastrarAsync(CadastroRequestDto request)
     {

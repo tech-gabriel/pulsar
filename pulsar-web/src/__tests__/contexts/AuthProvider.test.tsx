@@ -3,12 +3,14 @@ import { renderHook, act } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 const h = vi.hoisted(() => ({
-  track: { login: vi.fn(), cadastrou: vi.fn() },
+  track: { login: vi.fn(), cadastrou: vi.fn(), excluiuConta: vi.fn() },
+  del: vi.fn(),
+  reset: vi.fn(),
   post: vi.fn(),
   get: vi.fn(),
 }));
-vi.mock('../../analytics', () => ({ track: h.track }));
-vi.mock('../../api/client', () => ({ default: { post: h.post, get: h.get }, URL_SESSAO_ENCERRADA: '/login?sessao=encerrada' }));
+vi.mock('../../analytics', () => ({ track: h.track, resetAnalytics: h.reset }));
+vi.mock('../../api/client', () => ({ default: { post: h.post, get: h.get, delete: h.del }, URL_SESSAO_ENCERRADA: '/login?sessao=encerrada' }));
 const nav = vi.hoisted(() => ({ irPara: vi.fn() }));
 vi.mock('../../utils/navegacao', () => nav);
 
@@ -124,6 +126,50 @@ describe('AuthProvider sair de todos os aparelhos (SEC2)', () => {
     await act(async () => { await expect(result.current.sairDeTodosOsAparelhos()).rejects.toThrow(); });
 
     expect(localStorage.getItem('pulsar_token')).toBe('jwt');
+    expect(nav.irPara).not.toHaveBeenCalled();
+  });
+});
+
+describe('AuthProvider excluir conta (C1)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    h.post.mockReset();
+    h.del.mockReset();
+    h.reset.mockReset();
+    h.track.excluiuConta.mockReset();
+    nav.irPara.mockReset();
+  });
+
+  async function logado() {
+    h.post.mockResolvedValue({ data: respostaLogin });
+    const r = renderHook(() => useAuth(), { wrapper });
+    await act(async () => { await r.result.current.login({ email: 'a', senha: 'b' }); });
+    return r.result;
+  }
+
+  it('manda a palavra, registra o motivo, limpa a sessão e vai à landing com o aviso', async () => {
+    const result = await logado();
+    h.del.mockResolvedValue({ status: 204 });
+
+    await act(async () => { await result.current.excluirConta('excluir', 'avisos_demais'); });
+
+    expect(h.track.excluiuConta).toHaveBeenCalledWith('avisos_demais');
+    expect(h.del).toHaveBeenCalledWith('/usuarios/me', { data: { confirmacao: 'excluir' } });
+    expect(h.reset).toHaveBeenCalled();
+    expect(localStorage.getItem('pulsar_token')).toBeNull();
+    expect(localStorage.getItem('pulsar_usuario')).toBeNull();
+    expect(nav.irPara).toHaveBeenCalledWith('/?conta=excluida');
+  });
+
+  it('falha relança e mantém a sessão', async () => {
+    const result = await logado();
+    h.del.mockRejectedValue(new Error('rede'));
+
+    await act(async () => { await expect(result.current.excluirConta('excluir')).rejects.toThrow(); });
+
+    expect(localStorage.getItem('pulsar_token')).toBe('jwt');
+    expect(h.track.excluiuConta).not.toHaveBeenCalled();
+    expect(h.reset).not.toHaveBeenCalled();
     expect(nav.irPara).not.toHaveBeenCalled();
   });
 });

@@ -25,6 +25,7 @@ public class AuthServiceVerificacaoTests
             ["Admin:Emails:0"] = "admin@x.com",
         }).Build(),
         _verificacao.Object,
+        new Mock<IEmailSender>().Object,
         NullLogger<AuthService>.Instance);
 
     [Fact]

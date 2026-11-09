@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.31.0',
+    data: '2026-11-09',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Excluir a conta pelo app',
+        descricao: 'Em Configurações, no fim da página, agora dá para excluir a sua conta sozinho. Antes a página mostra tudo que vai junto, e você confirma digitando excluir. A exclusão é na hora e chega um e-mail confirmando.',
+      },
+    ],
+  },
+  {
     versao: '1.30.1',
     data: '2026-11-09',
     itens: [

@@ -14,7 +14,13 @@ public record DestinatarioPush(
     IReadOnlySet<Guid> Favoritas,
     IReadOnlySet<CriterioOptIn> Criterios,
     IReadOnlyList<EnvioAnterior> Recentes,
-    TimeZoneInfo Fuso);
+    TimeZoneInfo Fuso,
+    IReadOnlyDictionary<Guid, IReadOnlySet<TipoLocal>>? Locais = null)
+{
+    /// <summary>Subprefeitura → casa e/ou trabalho salvos nela (F4b). Vazio para quem não salvou.</summary>
+    public IReadOnlyDictionary<Guid, IReadOnlySet<TipoLocal>> LocaisOuVazio { get; } =
+        Locais ?? new Dictionary<Guid, IReadOnlySet<TipoLocal>>();
+}
 
 /// <summary>O push que sai para a pessoa neste ciclo e os eventos que ele cobre.</summary>
 public record EnvioConsolidado(Guid UsuarioId, CriterioOptIn Criterio, PushPayload Payload, IReadOnlyList<NotificacaoPendente> Incluidas);
@@ -32,7 +38,11 @@ public static class Consolidador
         // O dedup entra ANTES da escolha: uma pendência que a pessoa já recebeu não pode
         // ocupar a vaga de uma que ela não recebeu (mesma regra do motor antigo).
         var candidatas = pendencias
-            .Where(p => d.Favoritas.Contains(p.SubprefeituraId))
+            // O "começou a chover" é da casa e do trabalho, não das favoritas (a casa pode ter
+            // ficado fora delas pelo teto de 10).
+            .Where(p => p.Gatilho == ChuvaComecou
+                ? d.LocaisOuVazio.ContainsKey(p.SubprefeituraId)
+                : d.Favoritas.Contains(p.SubprefeituraId))
             .Where(p => d.Criterios.Contains(p.Criterio))
             .Where(p => !JaCoberta(d.Recentes, p, agoraUtc))
             .Where(p => !SilenciadaPorAlerta(d.Recentes, p, agoraUtc))
@@ -50,7 +60,43 @@ public static class Consolidador
         // Mesmo gatilho E mesmo critério: o aparelho filtra por um critério só, então um
         // grupo misto chegaria a quem não optou por parte dele.
         var grupo = candidatas.Where(p => p.Gatilho == lider.Gatilho && p.Criterio == lider.Criterio).ToList();
-        return new EnvioConsolidado(d.UsuarioId, lider.Criterio, MontarPayload(grupo), grupo);
+        var payload = lider.Gatilho == ChuvaComecou ? PayloadChuvaComecou(grupo, d) : MontarPayload(grupo);
+        return new EnvioConsolidado(d.UsuarioId, lider.Criterio, payload, grupo);
+    }
+
+    private const string ChuvaComecou = "chuva-comecou";
+
+    /// <summary>
+    /// Texto por pessoa: "perto da sua casa", "do seu trabalho" ou dos dois; uma ou duas regiões
+    /// (casa primeiro). Toque abre o mapa na casa, ou no trabalho se só ele está no aviso.
+    /// </summary>
+    private static PushPayload PayloadChuvaComecou(IReadOnlyList<NotificacaoPendente> grupo, DestinatarioPush d)
+    {
+        IReadOnlySet<TipoLocal> TiposDe(NotificacaoPendente p) =>
+            d.LocaisOuVazio.TryGetValue(p.SubprefeituraId, out var t) ? t : new HashSet<TipoLocal>();
+
+        var tipos = grupo.SelectMany(TiposDe).ToHashSet();
+        var casa = tipos.Contains(TipoLocal.CASA);
+        var titulo = (casa, tipos.Contains(TipoLocal.TRABALHO)) switch
+        {
+            (true, true) => "Começou a chover perto da sua casa e do trabalho",
+            (true, false) => "Começou a chover perto da sua casa",
+            _ => "Começou a chover perto do seu trabalho",
+        };
+
+        var regioes = grupo
+            .OrderBy(p => TiposDe(p).Contains(TipoLocal.CASA) ? 0 : 1)
+            .Take(2)
+            .Select(p => (Em: NomesSubprefeitura.ComPreposicao(p.Local), p.Intensidade))
+            .ToList();
+        var corpo = regioes.Count == 1
+            ? $"Chuva {regioes[0].Intensidade} {regioes[0].Em} agora."
+            : regioes[0].Intensidade == regioes[1].Intensidade
+                ? $"Chuva {regioes[0].Intensidade} {regioes[0].Em} e {regioes[1].Em} agora."
+                : $"Chuva {regioes[0].Intensidade} {regioes[0].Em} e {regioes[1].Intensidade} {regioes[1].Em} agora.";
+
+        return new PushPayload(titulo, corpo + " Toque para ver como está por lá.",
+            Url: casa ? "/app?lugar=casa" : "/app?lugar=trabalho", Tag: ChuvaComecou);
     }
 
     /// <summary>Sem Cooldown vale a chave exata; com Cooldown, a janela deslizante do gatilho NA subprefeitura.</summary>
@@ -88,7 +134,9 @@ public static class Consolidador
 
         return p.Gatilho switch
         {
-            "chuva-prevista" => houvePerigo || naJanela.Any(r => r.Gatilho == "score-alto"
+            // O "começou a chover" cala pelo mesmo motivo: depois do alerta a pessoa já sabe.
+            // A chuva prevista não cala ele, porque ele confirma que a chuva chegou.
+            "chuva-prevista" or ChuvaComecou => houvePerigo || naJanela.Any(r => r.Gatilho == "score-alto"
                 && (PerigoDaChaveDeAlerta(r.Chave) is not { } perigo || perigo == TipoPerigo.ALAGAMENTO)),
             "score-alto" => p.Perigo == TipoPerigo.ALAGAMENTO && houvePerigo,
             _ => false,

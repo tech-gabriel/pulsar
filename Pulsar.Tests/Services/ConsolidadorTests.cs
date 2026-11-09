@@ -355,4 +355,127 @@ public class ConsolidadorTests
 
         envio!.Payload.Titulo.Should().Be("Alagamento em Mooca e Penha agora");
     }
+
+    // ── Começou a chover na casa ou no trabalho (F4b) ──
+
+    private static readonly Guid Butanta = Guid.NewGuid(), Se = Guid.NewGuid();
+
+    private static NotificacaoPendente Chuva(Guid sub, string local, string intensidade = "fraca")
+        => new("chuva-comecou", $"chuva-comecou:{sub}:x", CriterioOptIn.ChuvaLocais,
+               new PushPayload("reserva", "reserva", "/app", "chuva-comecou"),
+               LimiaresNotificacao.PrioridadeChuvaComecou, TimeSpan.FromHours(3), sub, local, Intensidade: intensidade);
+
+    private static DestinatarioPush ComLugares(Dictionary<Guid, TipoLocal[]> locais, Guid[]? favoritas = null, params EnvioAnterior[] recentes)
+        => new(Guid.NewGuid(), (favoritas ?? []).ToHashSet(),
+               new HashSet<CriterioOptIn> { CriterioOptIn.RiscoAlto, CriterioOptIn.ChuvaLocais },
+               recentes, Sp,
+               locais.ToDictionary(k => k.Key, v => (IReadOnlySet<TipoLocal>)v.Value.ToHashSet()));
+
+    private static EnvioAnterior Antes(Guid sub, string gatilho, TimeSpan haQuanto, string? chave = null)
+        => new(sub, gatilho, chave ?? $"{gatilho}:{sub}", Guid.NewGuid(), Agora - haQuanto);
+
+    [Fact]
+    public void ChuvaComecou_SoQuemTemLugarNaSub()
+    {
+        // Favorita sem lugar: não recebe.
+        Consolidador.Consolidar(ComLugares([], favoritas: [Butanta]), [Chuva(Butanta, "Butantã")], Agora).Should().BeNull();
+        // Casa fora das favoritas: recebe.
+        Consolidador.Consolidar(ComLugares(new() { [Butanta] = [TipoLocal.CASA] }), [Chuva(Butanta, "Butantã")], Agora)
+            .Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ChuvaComecou_TituloCasa()
+    {
+        var envio = Consolidador.Consolidar(ComLugares(new() { [Butanta] = [TipoLocal.CASA] }), [Chuva(Butanta, "Butantã")], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Começou a chover perto da sua casa");
+        envio.Payload.Corpo.Should().Be("Chuva fraca no Butantã agora. Toque para ver como está por lá.");
+        envio.Payload.Url.Should().Be("/app?lugar=casa");
+        envio.Payload.Tag.Should().Be("chuva-comecou");
+    }
+
+    [Fact]
+    public void ChuvaComecou_TituloTrabalho()
+    {
+        var envio = Consolidador.Consolidar(ComLugares(new() { [Se] = [TipoLocal.TRABALHO] }), [Chuva(Se, "Sé", "forte")], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Começou a chover perto do seu trabalho");
+        envio.Payload.Corpo.Should().Be("Chuva forte na Sé agora. Toque para ver como está por lá.");
+        envio.Payload.Url.Should().Be("/app?lugar=trabalho");
+    }
+
+    [Fact]
+    public void ChuvaComecou_TituloCasaETrabalhoMesmaSub()
+    {
+        var envio = Consolidador.Consolidar(ComLugares(new() { [Butanta] = [TipoLocal.CASA, TipoLocal.TRABALHO] }),
+            [Chuva(Butanta, "Butantã")], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Começou a chover perto da sua casa e do trabalho");
+        envio.Payload.Corpo.Should().Be("Chuva fraca no Butantã agora. Toque para ver como está por lá.");
+        envio.Payload.Url.Should().Be("/app?lugar=casa");
+    }
+
+    [Fact]
+    public void ChuvaComecou_DuasRegioes_IntensidadesDiferentes()
+    {
+        var envio = Consolidador.Consolidar(
+            ComLugares(new() { [Butanta] = [TipoLocal.CASA], [Se] = [TipoLocal.TRABALHO] }),
+            [Chuva(Se, "Sé", "forte"), Chuva(Butanta, "Butantã", "fraca")], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Começou a chover perto da sua casa e do trabalho");
+        envio.Payload.Corpo.Should().Be("Chuva fraca no Butantã e forte na Sé agora. Toque para ver como está por lá.");
+        envio.Payload.Url.Should().Be("/app?lugar=casa");
+    }
+
+    [Fact]
+    public void ChuvaComecou_DuasRegioes_MesmaIntensidade()
+    {
+        var envio = Consolidador.Consolidar(
+            ComLugares(new() { [Butanta] = [TipoLocal.CASA], [Se] = [TipoLocal.TRABALHO] }),
+            [Chuva(Butanta, "Butantã"), Chuva(Se, "Sé")], Agora)!;
+
+        envio.Payload.Corpo.Should().Be("Chuva fraca no Butantã e na Sé agora. Toque para ver como está por lá.");
+    }
+
+    [Fact]
+    public void ChuvaComecou_CaladaDepoisDeCge()
+    {
+        var casa = new Dictionary<Guid, TipoLocal[]> { [Butanta] = [TipoLocal.CASA] };
+        Consolidador.Consolidar(ComLugares(casa, recentes: Antes(Butanta, "alagamento-cge", TimeSpan.FromHours(2))),
+            [Chuva(Butanta, "Butantã")], Agora).Should().BeNull();
+        Consolidador.Consolidar(ComLugares(casa, recentes: Antes(Butanta, "alagamento-cge", TimeSpan.FromHours(4))),
+            [Chuva(Butanta, "Butantã")], Agora).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ChuvaComecou_CaladaDepoisDeScoreAltoDeAlagamento()
+        => Consolidador.Consolidar(
+            ComLugares(new() { [Butanta] = [TipoLocal.CASA] },
+                recentes: Antes(Butanta, "score-alto", TimeSpan.FromHours(1), $"score:{Butanta}:ALAGAMENTO:x")),
+            [Chuva(Butanta, "Butantã")], Agora).Should().BeNull();
+
+    [Fact]
+    public void ChuvaComecou_NaoCaladaPorChuvaPrevista()
+        => Consolidador.Consolidar(
+            ComLugares(new() { [Butanta] = [TipoLocal.CASA] }, recentes: Antes(Butanta, "chuva-prevista", TimeSpan.FromHours(1))),
+            [Chuva(Butanta, "Butantã")], Agora).Should().NotBeNull();
+
+    [Fact]
+    public void ChuvaComecou_Cooldown3h()
+    {
+        var casa = new Dictionary<Guid, TipoLocal[]> { [Butanta] = [TipoLocal.CASA] };
+        Consolidador.Consolidar(ComLugares(casa, recentes: Antes(Butanta, "chuva-comecou", TimeSpan.FromMinutes(179))),
+            [Chuva(Butanta, "Butantã")], Agora).Should().BeNull();
+        Consolidador.Consolidar(ComLugares(casa, recentes: Antes(Butanta, "chuva-comecou", TimeSpan.FromMinutes(181))),
+            [Chuva(Butanta, "Butantã")], Agora).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ChuvaComecou_ContaNoTeto()
+    {
+        var hoje = Enumerable.Range(1, 3).Select(i => Antes(Lapa, "chuva-prevista", TimeSpan.FromMinutes(i * 10), $"c{i}")).ToArray();
+        Consolidador.Consolidar(ComLugares(new() { [Butanta] = [TipoLocal.CASA] }, recentes: hoje),
+            [Chuva(Butanta, "Butantã")], Agora).Should().BeNull();
+    }
 }

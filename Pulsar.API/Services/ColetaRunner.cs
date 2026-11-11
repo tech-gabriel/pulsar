@@ -22,6 +22,7 @@ public class ColetaRunner : IColetaRunner
     private readonly IAgregadoDiarioService _agregadoService;
     private readonly IPrevisaoService _previsaoService;
     private readonly IAlagamentoCgeService _cgeService;
+    private readonly IEstacaoCgeService _estacoesCge;
     private readonly IMotorNotificacoes _motor;
     private readonly IAvisoRotaService _avisoRota;
     private readonly PulsarDbContext _db;
@@ -33,6 +34,7 @@ public class ColetaRunner : IColetaRunner
         IAgregadoDiarioService agregadoService,
         IPrevisaoService previsaoService,
         IAlagamentoCgeService cgeService,
+        IEstacaoCgeService estacoesCge,
         IMotorNotificacoes motor,
         IAvisoRotaService avisoRota,
         PulsarDbContext db,
@@ -43,6 +45,7 @@ public class ColetaRunner : IColetaRunner
         _agregadoService = agregadoService;
         _previsaoService = previsaoService;
         _cgeService = cgeService;
+        _estacoesCge = estacoesCge;
         _motor = motor;
         _avisoRota = avisoRota;
         _db = db;
@@ -64,6 +67,17 @@ public class ColetaRunner : IColetaRunner
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Falha ao ler os alagamentos do CGE-SP.");
+        }
+
+        // Chuva medida dos postos do CGE. Também antes do motor, que lê do banco. try/catch
+        // próprio: sem os postos o ciclo segue como sempre, só sem a prova medida nos avisos.
+        try
+        {
+            await _estacoesCge.ColetarAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao ler as estações do CGE-SP.");
         }
 
         var subprefeituras = await _db.Subprefeituras.Where(s => s.Ativa).ToListAsync(ct);

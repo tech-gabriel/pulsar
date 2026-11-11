@@ -39,6 +39,7 @@ public class ColetaRunnerAgregadoTests
             agregado.Object,
             Mock.Of<IPrevisaoService>(),
             Mock.Of<IAlagamentoCgeService>(),
+            Mock.Of<IEstacaoCgeService>(),
             Mock.Of<IMotorNotificacoes>(),
             Mock.Of<IAvisoRotaService>(),
             ctx,

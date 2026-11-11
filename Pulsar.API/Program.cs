@@ -261,6 +261,7 @@ builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionServi
 builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
 builder.Services.AddScoped<IAlagamentoCgeService, AlagamentoCgeService>();
+builder.Services.AddScoped<IEstacaoCgeService, EstacaoCgeService>();
 builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
 builder.Services.AddScoped<IRotaService, Pulsar.API.Services.Rota.RotaService>();
 builder.Services.AddScoped<IAvisoRotaService, Pulsar.API.Services.Rota.AvisoRotaService>();

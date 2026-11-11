@@ -77,7 +77,14 @@ public class CemadenClient : ICemadenClient
             if (string.IsNullOrEmpty(token))
                 throw new HttpRequestException("Login no CEMADEN não devolveu token.");
 
-            var segundos = json.RootElement.TryGetProperty("timeToExp", out var e) && e.TryGetDouble(out var s) ? s : 0;
+            // O SGAA manda timeToExp como texto ("13200"). Ilegível vira zero: o token vale só
+            // para esta chamada e a próxima pede outro, o que é lento mas correto.
+            var segundos = json.RootElement.TryGetProperty("timeToExp", out var e) ? e.ValueKind switch
+            {
+                JsonValueKind.Number when e.TryGetDouble(out var n) => n,
+                JsonValueKind.String when double.TryParse(e.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var n) => n,
+                _ => 0,
+            } : 0;
             _token = token;
             _tokenVence = DateTime.UtcNow.AddSeconds(segundos) - FolgaDoToken;
             return token;

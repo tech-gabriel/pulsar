@@ -86,6 +86,36 @@ public class CemadenClientTests
         rede.UltimaUrlDeDados.Should().EndWith("pcds-acum/acumulados-recentes?codibge=3550308");
     }
 
+    /// <summary>O SGAA real manda timeToExp como texto (visto ao vivo em 2026-11-11), não como número.</summary>
+    [Theory]
+    [InlineData("\"13200\"")]
+    [InlineData("13200.5")]
+    public async Task ObterAcumulados_TimeToExpComoTextoOuDecimal_GuardaOToken(string timeToExp)
+    {
+        var rede = new RedeFalsa { TimeToExpJson = timeToExp };
+        var client = Cliente(rede);
+
+        await client.ObterAcumuladosAsync("3550308");
+        await client.ObterAcumuladosAsync("3550308");
+
+        rede.PedidosDeToken.Should().Be(1);
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("\"daqui a pouco\"")]
+    [InlineData("0")]
+    public async Task ObterAcumulados_TimeToExpIlegivel_FuncionaPedindoTokenACadaChamada(string timeToExp)
+    {
+        var rede = new RedeFalsa { TimeToExpJson = timeToExp };
+        var client = Cliente(rede);
+
+        (await client.ObterAcumuladosAsync("3550308")).Should().HaveCount(3);
+        await client.ObterAcumuladosAsync("3550308");
+
+        rede.PedidosDeToken.Should().Be(2);
+    }
+
     [Fact]
     public async Task ObterAcumulados_401_RenovaETentaDeNovoUmaVez()
     {
@@ -150,6 +180,7 @@ public class CemadenClientTests
     {
         public int Respostas401 { get; set; }
         public bool LoginRecusado { get; set; }
+        public string TimeToExpJson { get; set; } = "13200";
         public int PedidosDeToken { get; private set; }
         public int PedidosDeDados { get; private set; }
         public string? UltimoTokenEnviado { get; private set; }
@@ -164,7 +195,7 @@ public class CemadenClientTests
                 corpo.Should().Contain(Email).And.Contain("\"password\"");
                 return LoginRecusado
                     ? new HttpResponseMessage(HttpStatusCode.Unauthorized) { Content = new StringContent($"usuario {Email} invalido") }
-                    : Json($$"""{"token": "tok-{{PedidosDeToken}}", "timeToExp": 13200}""");
+                    : Json($$"""{"token": "tok-{{PedidosDeToken}}", "timeToExp": {{TimeToExpJson}}}""");
             }
 
             PedidosDeDados++;

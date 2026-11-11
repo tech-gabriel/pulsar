@@ -478,4 +478,84 @@ public class ConsolidadorTests
         Consolidador.Consolidar(ComLugares(new() { [Butanta] = [TipoLocal.CASA] }, recentes: hoje),
             [Chuva(Butanta, "Butantã")], Agora).Should().BeNull();
     }
+
+    // ── Chuva forte medida por perto (AS7) ──
+
+    private static NotificacaoPendente MedidaPerto(Guid sub, string local, string onde = "Butantã", double mm = 18.0)
+        => new("chuva-medida-perto", $"chuva-medida-perto:{sub}:x", CriterioOptIn.ChuvaLocais,
+               new PushPayload("reserva", "reserva", "/app", "chuva-medida-perto"),
+               LimiaresNotificacao.PrioridadeChuvaMedidaPerto, TimeSpan.FromHours(3), sub, local,
+               MedidoMm30: mm, LocalMedicao: onde);
+
+    [Fact]
+    public void ChuvaMedidaPerto_VaiParaQuemTemCasaLaENaoParaQuemSoFavoritou()
+    {
+        Consolidador.Consolidar(ComLugares([], favoritas: [Se]), [MedidaPerto(Se, "Sé")], Agora).Should().BeNull();
+        Consolidador.Consolidar(ComLugares(new() { [Se] = [TipoLocal.CASA] }), [MedidaPerto(Se, "Sé")], Agora)
+            .Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ChuvaMedidaPerto_CaladaDepoisDePerigoDoCge()
+    {
+        var d = ComLugares(new() { [Se] = [TipoLocal.CASA] }, null, Antes(Se, "alagamento-cge", TimeSpan.FromHours(1)));
+
+        Consolidador.Consolidar(d, [MedidaPerto(Se, "Sé")], Agora).Should().BeNull();
+    }
+
+    [Fact]
+    public void ChuvaMedidaPertoEChuvaComecouNoMesmoCiclo_SaiSoAMedidaPerto()
+    {
+        var d = ComLugares(new() { [Se] = [TipoLocal.CASA] });
+
+        var envio = Consolidador.Consolidar(d, [Chuva(Se, "Sé"), MedidaPerto(Se, "Sé")], Agora)!;
+
+        envio.Incluidas.Should().ContainSingle().Which.Gatilho.Should().Be("chuva-medida-perto");
+    }
+
+    [Fact]
+    public void ChuvaMedidaPerto_TextoTrazLocalVolumeECasa()
+    {
+        var envio = Consolidador.Consolidar(ComLugares(new() { [Se] = [TipoLocal.CASA] }), [MedidaPerto(Se, "Sé")], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Chove forte no Butantã agora");
+        envio.Payload.Corpo.Should().Be("O CGE mediu 18 mm em 30 minutos. Fica perto da sua casa. Toque para ver no mapa.");
+        envio.Payload.Url.Should().Be("/app?lugar=casa");
+        envio.Payload.Tag.Should().Be("chuva-medida-perto");
+    }
+
+    [Fact]
+    public void ChuvaMedidaPerto_TrabalhoComVolumeQuebrado()
+    {
+        var envio = Consolidador.Consolidar(ComLugares(new() { [Se] = [TipoLocal.TRABALHO] }),
+            [MedidaPerto(Se, "Sé", "Mooca", 12.4)], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Chove forte na Mooca agora");
+        envio.Payload.Corpo.Should().Be("O CGE mediu 12,4 mm em 30 minutos. Fica perto do seu trabalho. Toque para ver no mapa.");
+        envio.Payload.Url.Should().Be("/app?lugar=trabalho");
+    }
+
+    [Fact]
+    public void ChuvaMedidaPerto_CasaETrabalhoComMedicoesDiferentes_FalaSoDaCasa()
+    {
+        var d = ComLugares(new() { [Se] = [TipoLocal.CASA], [Butanta] = [TipoLocal.TRABALHO] });
+
+        var envio = Consolidador.Consolidar(d,
+            [MedidaPerto(Butanta, "Butantã", "Lapa", 30.0), MedidaPerto(Se, "Sé", "Mooca", 12.0)], Agora)!;
+
+        // Um push, um fato: o posto perto da casa. Dizer "perto da casa e do trabalho" de um
+        // posto que só fica perto de um dos dois seria afirmar o que não foi medido.
+        envio.Payload.Titulo.Should().Be("Chove forte na Mooca agora");
+        envio.Payload.Corpo.Should().Be("O CGE mediu 12 mm em 30 minutos. Fica perto da sua casa. Toque para ver no mapa.");
+    }
+
+    [Fact]
+    public void ChuvaComecou_ComMedicao_TextoTrazOVolume()
+    {
+        var comMedida = Chuva(Butanta, "Butantã") with { MedidoMm30 = 2.4 };
+
+        var envio = Consolidador.Consolidar(ComLugares(new() { [Butanta] = [TipoLocal.CASA] }), [comMedida], Agora)!;
+
+        envio.Payload.Corpo.Should().Be("Chuva fraca no Butantã agora. O CGE mediu 2,4 mm em 30 minutos. Toque para ver como está por lá.");
+    }
 }

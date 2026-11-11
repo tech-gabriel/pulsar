@@ -11,9 +11,11 @@ namespace Pulsar.API.Services.Notificacoes;
 /// fora), o ciclo seguinte ainda tenta; a chave leva o início do episódio e o cooldown de 3 h
 /// segura a garoa que para e volta.
 ///
-/// O Open-Meteo confirma: alguma hora entre 2 h antes e 2 h depois com pelo menos 0,1 mm.
-/// Sem ele, não avisa (errar para o silêncio). Decisão do user: perde pancada localizada que o
-/// Open-Meteo não previu em troca de não tocar o celular por chuva inventada (backlog PV2).
+/// Precisa de confirmação de uma segunda fonte, e há duas: o Open-Meteo (alguma hora entre 2 h
+/// antes e 2 h depois com pelo menos 0,1 mm) ou o posto PRÓPRIO do CGE-SP medindo chuva na última
+/// meia hora (AS7). O posto cobre a pancada localizada que o Open-Meteo não previu (backlog PV2).
+/// Posto de vizinho não confirma: chuva medida em outro bairro não prova chuva aqui. Sem nenhuma
+/// das duas, não avisa (errar para o silêncio).
 ///
 /// O texto ("perto da sua casa") é montado por pessoa no Consolidador; o payload daqui é reserva.
 /// </summary>
@@ -35,7 +37,10 @@ public class GatilhoChuvaComecou : IGatilhoNotificacao
         var intensidade = atual is null ? null : Intensidade(atual.ChuvaMmH);
         // Leitura velha (coleta parada, motor rodando) não é "agora".
         var velha = atual is not null && atual.Timestamp < ctx.AgoraUtc.AddMinutes(-LimiaresNotificacao.IdadeMaximaLeituraAgoraMinutos);
-        if (atual is null || velha || intensidade is null || !Confirmada(ctx.ChuvaReferencia, atual.Timestamp))
+        var medidoAqui = ctx.ChuvaMedida is { Vizinho: false, Mm30: > 0 } m ? m.Mm30 : null;
+        var confirmada = atual is not null && (Confirmada(ctx.ChuvaReferencia, atual.Timestamp)
+            || medidoAqui >= LimiaresNotificacao.ChuvaMedidaConfirmaMm30);
+        if (atual is null || velha || intensidade is null || !confirmada)
             return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([]);
 
         var desde = atual.Timestamp.AddMinutes(-LimiaresNotificacao.JanelaChuvaComecouMinutos);
@@ -65,7 +70,8 @@ public class GatilhoChuvaComecou : IGatilhoNotificacao
             Cooldown: TimeSpan.FromHours(LimiaresNotificacao.CooldownChuvaComecouHoras),
             SubprefeituraId: sub.Id,
             Local: sub.Nome,
-            Intensidade: intensidade);
+            Intensidade: intensidade,
+            MedidoMm30: medidoAqui);
 
         return Task.FromResult<IReadOnlyList<NotificacaoPendente>>([pendencia]);
     }

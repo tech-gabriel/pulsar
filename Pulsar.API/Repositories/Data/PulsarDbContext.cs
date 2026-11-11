@@ -16,6 +16,7 @@ public class PulsarDbContext : DbContext
     public DbSet<AgregadoDiario> AgregadosDiarios => Set<AgregadoDiario>();
     public DbSet<AgregadoHorario> AgregadosHorarios => Set<AgregadoHorario>();
     public DbSet<PontoAlagamentoCge> PontosAlagamentoCge => Set<PontoAlagamentoCge>();
+    public DbSet<LeituraEstacaoCge> LeiturasEstacaoCge => Set<LeituraEstacaoCge>();
     public DbSet<ExecucaoSincronizacao> ExecucoesSincronizacao => Set<ExecucaoSincronizacao>();
     public DbSet<PedidoAvisoRota> PedidosAvisoRota => Set<PedidoAvisoRota>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
@@ -198,6 +199,19 @@ public class PulsarDbContext : DbContext
              .WithMany()
              .HasForeignKey(a => a.SubprefeituraId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LeituraEstacaoCge>(e =>
+        {
+            e.HasKey(l => l.Id);
+            // A leitura de sempre: as últimas duas horas de cada posto.
+            e.HasIndex(l => new { l.Posto, l.ColetadoEm });
+            e.Property(l => l.VentoDirecao).HasMaxLength(8);
+            // Sem navegação: posto de fora da capital não tem subprefeitura.
+            e.HasOne<Subprefeitura>()
+             .WithMany()
+             .HasForeignKey(l => l.SubprefeituraId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<PontoAlagamentoCge>(e =>

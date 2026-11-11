@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Pulsar.API.Domain.Entities;
+using Pulsar.API.Services.Interfaces;
 using Pulsar.API.Services.Notificacoes;
 using Pulsar.API.Services.Push;
 
@@ -43,7 +44,7 @@ public class GatilhoChuvaComecouTests
         p[0].Chave.Should().Be($"chuva-comecou:{Sub.Id}:202611091800");
         p[0].Criterio.Should().Be(CriterioOptIn.ChuvaLocais);
         p[0].Cooldown.Should().Be(TimeSpan.FromHours(3));
-        p[0].Prioridade.Should().Be(3, "abaixo da chuva prevista (2), acima do briefing");
+        p[0].Prioridade.Should().Be(4, "abaixo da chuva medida por perto (3), acima do briefing");
         p[0].SubprefeituraId.Should().Be(Sub.Id);
         p[0].Local.Should().Be("Butantã");
         p[0].Payload.Tag.Should().Be("chuva-comecou");
@@ -101,4 +102,51 @@ public class GatilhoChuvaComecouTests
     [InlineData(10, "forte")]
     public void Intensidade_Faixas(double mmH, string? esperado)
         => GatilhoChuvaComecou.Intensidade(mmH).Should().Be(esperado);
+
+    // ── Posto do CGE como confirmação alternativa (AS7) ──
+
+    private static ContextoGatilho ComMedida(ContextoGatilho ctx, double? mm30, bool vizinho = false)
+        => new()
+        {
+            Estado = ctx.Estado, Fuso = ctx.Fuso, Previsao = ctx.Previsao, AgoraUtc = ctx.AgoraUtc,
+            LeiturasRecentes = ctx.LeiturasRecentes, ChuvaReferencia = ctx.ChuvaReferencia,
+            ChuvaMedida = new ChuvaMedidaRegiao(Sub.Id, 1000842, "Butantã", vizinho, mm30, mm30, null, 5.0, Agora),
+        };
+
+    [Fact]
+    public async Task OpenMeteoNaoConfirmaMasPostoProprioMediu_Avisa()
+    {
+        var p = await Avaliar(ComMedida(Contexto(null, Leitura(30, 0), Leitura(15, 0), Leitura(0, 1.2)), 2.0));
+
+        p.Should().HaveCount(1);
+        p[0].MedidoMm30.Should().Be(2.0);
+    }
+
+    [Fact]
+    public async Task OpenMeteoNaoConfirmaEMedicaoEDeVizinho_NaoAvisa()
+        => (await Avaliar(ComMedida(Contexto(null, Leitura(30, 0), Leitura(15, 0), Leitura(0, 1.2)), 2.0, vizinho: true)))
+            .Should().BeEmpty();
+
+    [Fact]
+    public async Task OpenMeteoNaoConfirmaEPostoMediuQuaseNada_NaoAvisa()
+        => (await Avaliar(ComMedida(Contexto(null, Leitura(30, 0), Leitura(15, 0), Leitura(0, 1.2)), 0.2)))
+            .Should().BeEmpty();
+
+    [Fact]
+    public async Task OpenMeteoConfirmaSemMedicao_ContinuaComoAntes()
+    {
+        var p = await Avaliar(Contexto(Referencia(0.3), Leitura(30, 0), Leitura(15, 0), Leitura(0, 1.2)));
+
+        p.Should().HaveCount(1);
+        p[0].MedidoMm30.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task OpenMeteoConfirmaEPostoMediuZero_NaoLevaMedicao()
+    {
+        var p = await Avaliar(ComMedida(Contexto(Referencia(0.3), Leitura(30, 0), Leitura(15, 0), Leitura(0, 1.2)), 0.0));
+
+        p.Should().HaveCount(1);
+        p[0].MedidoMm30.Should().BeNull("dizer que o CGE mediu 0 mm contradiz o próprio aviso");
+    }
 }

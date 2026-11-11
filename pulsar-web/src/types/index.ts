@@ -166,6 +166,20 @@ export interface SubprefeituraDto {
   ultimaLeitura: LeituraDto | null;
   /** Pontos de alagamento ativos agora segundo o CGE-SP. Opcional: o snapshot do SSG não traz. */
   alagamentosCge?: PontoAlagamentoCge[];
+  /** Chuva medida por posto do CGE-SP. Null ou ausente: a região só tem chuva estimada agora. */
+  chuvaMedida?: ChuvaMedida | null;
+}
+
+/** Chuva medida por um posto do CGE-SP. Janela null = não dá para afirmar, o que é diferente de zero. */
+export interface ChuvaMedida {
+  mm15: number | null;
+  mm60: number | null;
+  acumuladoPeriodoMm: number;
+  posto: string;
+  /** O posto é de outra subprefeitura (a região não tem posto próprio com leitura). */
+  vizinho: boolean;
+  /** ISO UTC da nossa coleta; exibir pelo fuso do navegador. */
+  coletadoEm: string;
 }
 
 /** Ponto de alagamento ativo publicado pelo CGE-SP. */

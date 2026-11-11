@@ -22,10 +22,15 @@ public class SubprefeiturasController : ControllerBase
     private readonly ISubprefeituraRepository _subprefeituraRepository;
     private readonly IPrevisaoService _previsaoService;
     private readonly IPontoAlagamentoCgeRepository _pontosCge;
+    private readonly IEstacaoCgeService _estacoesCge;
+    private readonly ILogger<SubprefeiturasController> _logger;
 
     public SubprefeiturasController(
-        ISubprefeituraRepository subprefeituraRepository, IPrevisaoService previsaoService, IPontoAlagamentoCgeRepository pontosCge)
+        ISubprefeituraRepository subprefeituraRepository, IPrevisaoService previsaoService, IPontoAlagamentoCgeRepository pontosCge,
+        IEstacaoCgeService estacoesCge, ILogger<SubprefeiturasController> logger)
     {
+        _estacoesCge = estacoesCge;
+        _logger = logger;
         _subprefeituraRepository = subprefeituraRepository;
         _previsaoService = previsaoService;
         _pontosCge = pontosCge;
@@ -40,16 +45,35 @@ public class SubprefeiturasController : ControllerBase
         // Mesma validade que o aviso de Perigo usa: o mapa não mostra ponto que o push não mandaria.
         var pontos = (await _pontosCge.ObterAtivosAsync(DateTime.UtcNow - LimiaresNotificacao.ValidadePontoCge))
             .ToLookup(p => p.SubprefeituraId);
+        var medidas = await ObterChuvaMedidaAsync();
         var dtos = subs
             .Select(s =>
             {
                 var dto = SubprefeituraDto.Preencher(new SubprefeituraResumoDto { Zona = s.Regiao?.Nome ?? string.Empty }, s);
                 dto.AlagamentosCge = [.. pontos[s.Id].Select(PontoAlagamentoCgeDto.De)];
+                dto.ChuvaMedida = medidas.TryGetValue(s.Id, out var medida) ? ChuvaMedidaDto.De(medida) : null;
                 return dto;
             })
             .OrderByDescending(d => d.ScoreAtual?.Valor ?? -1)
             .ThenBy(d => d.Nome, StringComparer.Ordinal);
         return Ok(dtos);
+    }
+
+    /// <summary>
+    /// Chuva medida é enfeite da lista, não a lista: se a leitura dos postos falhar, o mapa
+    /// abre igual, só com tudo em "estimado".
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, ChuvaMedidaRegiao>> ObterChuvaMedidaAsync()
+    {
+        try
+        {
+            return await _estacoesCge.ObterPorSubprefeituraAsync(DateTime.UtcNow, HttpContext.RequestAborted);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Falha ao ler a chuva medida do CGE-SP para a lista de subprefeituras.");
+            return new Dictionary<Guid, ChuvaMedidaRegiao>();
+        }
     }
 
     /// <summary>

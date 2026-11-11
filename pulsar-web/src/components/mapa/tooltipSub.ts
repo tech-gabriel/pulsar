@@ -57,8 +57,13 @@ export function tooltipSubprefeituraHtml(
   const linhaCge = pontosCge === 0 ? '' : `<div class="pt-cge pt-ALTO">${
     pontosCge === 1 ? 'Alagamento agora' : `${pontosCge} pontos de alagamento agora`
   }, segundo o CGE</div>`;
+  // Com leitura do CGE a chuva da prévia é a medida, e diz que é; sem ela, a do modelo.
+  const mm15 = sub.chuvaMedida?.mm15;
+  const chuva = mm15 == null
+    ? `${num(l?.chuvaMmH ?? 0, 1)} mm/h`
+    : `${num(mm15, 1)} mm em 15 min <em class="pt-medido">medido</em>`;
   const linha = l
-    ? `<div class="pt-linha"><span>${ICONE.temperatura}${num(l.temperaturaC, 1)} °C</span><span>${ICONE.chuva}${num(l.chuvaMmH, 1)} mm/h</span><span>${ICONE.vento}${num(l.ventoKmH, 0)} km/h</span></div>`
+    ? `<div class="pt-linha"><span>${ICONE.temperatura}${num(l.temperaturaC, 1)} °C</span><span${mm15 == null ? '' : ' class="pt-chuva-medida"'}>${ICONE.chuva}${chuva}</span><span>${ICONE.vento}${num(l.ventoKmH, 0)} km/h</span></div>`
     : '<div class="pt-vazio">Sem leitura recente</div>';
 
   return `<div class="pt">

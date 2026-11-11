@@ -147,10 +147,13 @@ public static class LimiaresNotificacao
     public const int PrioridadePerigoCge = 0;
     public const int PrioridadeScoreAlto = 1;
     public const int PrioridadeChuvaPrevista = 2;
+    // Chuva forte MEDIDA num posto ao lado (AS7): é fato, então vence o "começou a chover",
+    // que parte de leitura de modelo. Fica abaixo do Vai chover só pela ordem histórica dos níveis.
+    public const int PrioridadeChuvaMedidaPerto = 3;
     // A chuva já começou na casa: mais imediata que o resumo, menos que o alerta (F4b).
-    public const int PrioridadeChuvaComecou = 3;
-    public const int PrioridadeBriefing = 4;
-    public const int PrioridadeAtencao = 5;
+    public const int PrioridadeChuvaComecou = 4;
+    public const int PrioridadeBriefing = 5;
+    public const int PrioridadeAtencao = 6;
 
     // ── Começou a chover na casa ou no trabalho (F4b) ──
     /// <summary>Abaixo disso a leitura é garoa: não conta como chuva começando.</summary>
@@ -166,6 +169,19 @@ public static class LimiaresNotificacao
     /// <summary>Faixas de intensidade em mm/h: fraca abaixo de moderada, forte a partir de forte.</summary>
     public const double ChuvaModeradaMmH = 2.5;
     public const double ChuvaForteMmH = 10.0;
+
+    // ── Chuva medida pelos postos do CGE-SP (AS7) ──
+    // Os quatro são PONTO DE PARTIDA CALIBRÁVEL: recalibrar com a série de LeiturasEstacaoCge.
+    /// <summary>
+    /// Chuva em 30 min no posto próprio que vale como confirmação do "começou a chover" no lugar
+    /// do Open-Meteo. Duas basculadas de pluviômetro: uma só pode ser orvalho ou ruído.
+    /// </summary>
+    public const double ChuvaMedidaConfirmaMm30 = 0.4;
+    /// <summary>Chuva em 30 min que conta como forte no posto vizinho (20 mm/h sustentados).</summary>
+    public const double ChuvaForteMedidaMm30 = 10.0;
+    /// <summary>Até que distância (entre centros de subprefeitura) um posto é "perto".</summary>
+    public const double RaioChuvaPertoKm = 8.0;
+    public const int CooldownChuvaMedidaPertoHoras = 3;
 
     /// <summary>
     /// Depois de um Alerta de um perigo, quanto tempo a Atenção DO MESMO PERIGO fica calada

@@ -91,7 +91,7 @@ public class GatilhoBriefingDiarioTests
         // Literal e não a constante: comparar a constante consigo mesma passaria mesmo se
         // ela virasse 1, invertendo a ordem de que a Task 10 depende (score alto ganha de
         // chuva prevista, que ganha do briefing).
-        pendencias[0].Prioridade.Should().Be(4, "o briefing é o que mais cede espaço");
+        pendencias[0].Prioridade.Should().Be(5, "o briefing é o que mais cede espaço");
 
         pendencias[0].Cooldown.Should().BeNull("o dedup do briefing é por chave do dia local");
 

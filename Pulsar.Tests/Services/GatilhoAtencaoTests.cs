@@ -38,7 +38,7 @@ public class GatilhoAtencaoTests
         p.Should().ContainSingle();
         p[0].Gatilho.Should().Be("atencao");
         p[0].Criterio.Should().Be(CriterioOptIn.RiscoModerado);
-        p[0].Prioridade.Should().Be(5, "Atenção é o aviso menos urgente e menor número ganha");
+        p[0].Prioridade.Should().Be(6, "Atenção é o aviso menos urgente e menor número ganha");
         p[0].Cooldown.Should().BeNull("dedup pela chave do dia");
         p[0].Perigo.Should().Be(TipoPerigo.ALAGAMENTO);
         p[0].Chave.Should().Be($"atencao:{c.Subprefeitura.Id}:ALAGAMENTO:2026-10-07");

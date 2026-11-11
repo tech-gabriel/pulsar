@@ -278,6 +278,7 @@ builder.Services.AddScoped<ILocaisSalvosService, LocaisSalvosService>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAlagamentoCge>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoScoreAlto>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaPrevista>();
+builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaMedidaPerto>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaComecou>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoBriefingDiario>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAtencao>();

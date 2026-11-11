@@ -17,6 +17,9 @@ namespace Pulsar.API.Services.Notificacoes;
 /// da pessoa e usa o nome no texto de várias subprefeituras.
 ///
 /// Perigo diz de qual perigo é o evento; o consolidador usa no silêncio da Atenção.
+///
+/// MedidoMm30 e LocalMedicao carregam a chuva medida por posto do CGE-SP (AS7): quanto choveu em
+/// 30 minutos e em que subprefeitura fica o posto. O consolidador monta o texto com eles.
 /// </summary>
 public record NotificacaoPendente(
     string Gatilho,
@@ -28,4 +31,6 @@ public record NotificacaoPendente(
     Guid SubprefeituraId = default,
     string Local = "",
     TipoPerigo? Perigo = null,
-    string? Intensidade = null);
+    string? Intensidade = null,
+    double? MedidoMm30 = null,
+    string? LocalMedicao = null);

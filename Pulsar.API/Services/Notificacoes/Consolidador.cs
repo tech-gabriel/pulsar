@@ -38,9 +38,9 @@ public static class Consolidador
         // O dedup entra ANTES da escolha: uma pendência que a pessoa já recebeu não pode
         // ocupar a vaga de uma que ela não recebeu (mesma regra do motor antigo).
         var candidatas = pendencias
-            // O "começou a chover" é da casa e do trabalho, não das favoritas (a casa pode ter
-            // ficado fora delas pelo teto de 10).
-            .Where(p => p.Gatilho == ChuvaComecou
+            // O "começou a chover" e a chuva medida por perto são da casa e do trabalho, não das
+            // favoritas (a casa pode ter ficado fora delas pelo teto de 10).
+            .Where(p => p.Gatilho is ChuvaComecou or ChuvaMedidaPerto
                 ? d.LocaisOuVazio.ContainsKey(p.SubprefeituraId)
                 : d.Favoritas.Contains(p.SubprefeituraId))
             .Where(p => d.Criterios.Contains(p.Criterio))
@@ -60,11 +60,43 @@ public static class Consolidador
         // Mesmo gatilho E mesmo critério: o aparelho filtra por um critério só, então um
         // grupo misto chegaria a quem não optou por parte dele.
         var grupo = candidatas.Where(p => p.Gatilho == lider.Gatilho && p.Criterio == lider.Criterio).ToList();
-        var payload = lider.Gatilho == ChuvaComecou ? PayloadChuvaComecou(grupo, d) : MontarPayload(grupo);
+        var payload = lider.Gatilho switch
+        {
+            ChuvaComecou => PayloadChuvaComecou(grupo, d),
+            ChuvaMedidaPerto => PayloadChuvaMedidaPerto(grupo, d),
+            _ => MontarPayload(grupo),
+        };
         return new EnvioConsolidado(d.UsuarioId, lider.Criterio, payload, grupo);
     }
 
     private const string ChuvaComecou = "chuva-comecou";
+    private const string ChuvaMedidaPerto = "chuva-medida-perto";
+
+    private static IReadOnlySet<TipoLocal> TiposDe(NotificacaoPendente p, DestinatarioPush d) =>
+        d.LocaisOuVazio.TryGetValue(p.SubprefeituraId, out var t) ? t : new HashSet<TipoLocal>();
+
+    /// <summary>
+    /// Um push, um fato medido: o do posto perto da casa (ou do trabalho, sem casa no aviso). O
+    /// "perto da sua casa e do trabalho" só sai quando os dois lugares apontam para o MESMO posto;
+    /// juntar postos diferentes numa frase afirmaria proximidade que não existe.
+    /// </summary>
+    private static PushPayload PayloadChuvaMedidaPerto(IReadOnlyList<NotificacaoPendente> grupo, DestinatarioPush d)
+    {
+        var lider = grupo.OrderBy(p => TiposDe(p, d).Contains(TipoLocal.CASA) ? 0 : 1).First();
+        var tipos = grupo.Where(p => p.LocalMedicao == lider.LocalMedicao).SelectMany(p => TiposDe(p, d)).ToHashSet();
+        var casa = tipos.Contains(TipoLocal.CASA);
+        var perto = (casa, tipos.Contains(TipoLocal.TRABALHO)) switch
+        {
+            (true, true) => "da sua casa e do trabalho",
+            (true, false) => "da sua casa",
+            _ => "do seu trabalho",
+        };
+
+        return new PushPayload(
+            GatilhoChuvaMedidaPerto.Titulo(lider.LocalMedicao ?? lider.Local),
+            $"{GatilhoChuvaMedidaPerto.Fato(lider.MedidoMm30 ?? 0)} Fica perto {perto}. Toque para ver no mapa.",
+            Url: casa ? "/app?lugar=casa" : "/app?lugar=trabalho", Tag: ChuvaMedidaPerto);
+    }
 
     /// <summary>
     /// Texto por pessoa: "perto da sua casa", "do seu trabalho" ou dos dois; uma ou duas regiões
@@ -72,10 +104,7 @@ public static class Consolidador
     /// </summary>
     private static PushPayload PayloadChuvaComecou(IReadOnlyList<NotificacaoPendente> grupo, DestinatarioPush d)
     {
-        IReadOnlySet<TipoLocal> TiposDe(NotificacaoPendente p) =>
-            d.LocaisOuVazio.TryGetValue(p.SubprefeituraId, out var t) ? t : new HashSet<TipoLocal>();
-
-        var tipos = grupo.SelectMany(TiposDe).ToHashSet();
+        var tipos = grupo.SelectMany(p => TiposDe(p, d)).ToHashSet();
         var casa = tipos.Contains(TipoLocal.CASA);
         var titulo = (casa, tipos.Contains(TipoLocal.TRABALHO)) switch
         {
@@ -85,15 +114,19 @@ public static class Consolidador
         };
 
         var regioes = grupo
-            .OrderBy(p => TiposDe(p).Contains(TipoLocal.CASA) ? 0 : 1)
+            .OrderBy(p => TiposDe(p, d).Contains(TipoLocal.CASA) ? 0 : 1)
             .Take(2)
-            .Select(p => (Em: NomesSubprefeitura.ComPreposicao(p.Local), p.Intensidade))
+            .Select(p => (Em: NomesSubprefeitura.ComPreposicao(p.Local), p.Intensidade, p.MedidoMm30))
             .ToList();
         var corpo = regioes.Count == 1
             ? $"Chuva {regioes[0].Intensidade} {regioes[0].Em} agora."
             : regioes[0].Intensidade == regioes[1].Intensidade
                 ? $"Chuva {regioes[0].Intensidade} {regioes[0].Em} e {regioes[1].Em} agora."
                 : $"Chuva {regioes[0].Intensidade} {regioes[0].Em} e {regioes[1].Intensidade} {regioes[1].Em} agora.";
+
+        // O volume medido só entra com uma região: com duas, a frase não diz de qual é o número.
+        if (regioes.Count == 1 && regioes[0].MedidoMm30 is { } mm)
+            corpo += $" {GatilhoChuvaMedidaPerto.Fato(mm)}";
 
         return new PushPayload(titulo, corpo + " Toque para ver como está por lá.",
             Url: casa ? "/app?lugar=casa" : "/app?lugar=trabalho", Tag: ChuvaComecou);
@@ -136,7 +169,7 @@ public static class Consolidador
         {
             // O "começou a chover" cala pelo mesmo motivo: depois do alerta a pessoa já sabe.
             // A chuva prevista não cala ele, porque ele confirma que a chuva chegou.
-            "chuva-prevista" or ChuvaComecou => houvePerigo || naJanela.Any(r => r.Gatilho == "score-alto"
+            "chuva-prevista" or ChuvaComecou or ChuvaMedidaPerto => houvePerigo || naJanela.Any(r => r.Gatilho == "score-alto"
                 && (PerigoDaChaveDeAlerta(r.Chave) is not { } perigo || perigo == TipoPerigo.ALAGAMENTO)),
             "score-alto" => p.Perigo == TipoPerigo.ALAGAMENTO && houvePerigo,
             _ => false,

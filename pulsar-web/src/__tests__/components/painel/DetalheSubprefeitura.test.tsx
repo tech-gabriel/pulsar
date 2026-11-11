@@ -55,7 +55,7 @@ describe('DetalheSubprefeitura', () => {
     renderiza();
     expect(screen.getByText('Por chuva: 22,0 mm nas últimas 3h')).toBeInTheDocument();
     // A chuva não se chama "Alagamento": isso leria como rua alagada.
-    expect(screen.getByText('Chuva acumulada')).toBeInTheDocument();
+    expect(screen.getByText('Chuva estimada')).toBeInTheDocument();
     expect(screen.queryByText(/^Alagamento$/)).not.toBeInTheDocument();
     // Vento aparece uma vez só (antes saía no perigo e de novo nas condições).
     expect(screen.getAllByText('10')).toHaveLength(1);
@@ -91,5 +91,49 @@ describe('DetalheSubprefeitura: como chegar', () => {
   it('sem onComoChegar o botão não existe', () => {
     renderiza();
     expect(screen.queryByRole('button', { name: /Como chegar/ })).not.toBeInTheDocument();
+  });
+
+  describe('chuva medida pelo CGE (AS7)', () => {
+    const medida = { mm15: 2.4, mm60: 12.4, acumuladoPeriodoMm: 30, posto: 'Lapa', vizinho: false, coletadoEm: '2026-11-11T03:45:00Z' };
+    const com = (m: Partial<typeof medida> | { mm15: null; mm60: number | null }) =>
+      renderiza({ area: { ...itaquera, chuvaMedida: { ...medida, ...m } } as Area });
+
+    it('mostra a chuva medida e a fonte quando há posto próprio; o bloco do modelo se chama estimada', () => {
+      com({});
+      expect(screen.getByText('Chuva medida')).toBeInTheDocument();
+      expect(screen.getByText('2,4 mm em 15 min · 12,4 mm em 1 h')).toBeInTheDocument();
+      expect(screen.getByText('CGE · posto Lapa')).toBeInTheDocument();
+      expect(screen.getByText('Chuva estimada')).toBeInTheDocument();
+    });
+
+    it('diz que a medição é de perto quando o posto é de outra região', () => {
+      com({ vizinho: true });
+      expect(screen.getByText('Chuva medida perto')).toBeInTheDocument();
+      expect(screen.getByText('CGE · posto Lapa')).toBeInTheDocument();
+    });
+
+    it('sem chuva medida, só o bloco estimado com o número do modelo', () => {
+      renderiza();
+      expect(screen.queryByText(/Chuva medida/)).not.toBeInTheDocument();
+      expect(screen.getByText('Chuva estimada')).toBeInTheDocument();
+      expect(screen.getByText('22,0')).toBeInTheDocument();
+    });
+
+    it('posto que marca zero vira uma frase, não um número', () => {
+      com({ mm15: 0, mm60: 0 });
+      expect(screen.getByText('Sem chuva na última hora')).toBeInTheDocument();
+      expect(screen.queryByText(/0,0 mm em 15 min/)).not.toBeInTheDocument();
+    });
+
+    it('sem a leitura de uma hora atrás, fala só dos 15 minutos', () => {
+      com({ mm60: null as unknown as number });
+      expect(screen.getByText('2,4 mm em 15 min')).toBeInTheDocument();
+    });
+
+    it('sem janela nenhuma não mostra o bloco nem "null mm"', () => {
+      com({ mm15: null, mm60: null });
+      expect(screen.queryByText(/Chuva medida/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/null/)).not.toBeInTheDocument();
+    });
   });
 });

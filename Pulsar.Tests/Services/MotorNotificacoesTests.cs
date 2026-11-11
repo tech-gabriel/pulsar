@@ -6,6 +6,7 @@ using Moq;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Data;
+using Pulsar.API.Services;
 using Pulsar.API.Services.Interfaces;
 using Pulsar.API.Services.Notificacoes;
 using Pulsar.API.Services.Push;
@@ -125,7 +126,7 @@ public class MotorNotificacoesTests
         _previsaoMock.Setup(p => p.ObterFaixasSubprefeituraAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                      .ReturnsAsync(Array.Empty<FaixaPrevisaoDto>());
         return new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object, Mock.Of<Pulsar.API.External.Interfaces.IChuvaReferenciaClient>(),
-            _pushMock.Object, gatilhos, _logger);
+            Mock.Of<IEstacaoCgeService>(), _pushMock.Object, gatilhos, _logger);
     }
 
     [Fact]
@@ -322,7 +323,7 @@ public class MotorNotificacoesTests
                   .ThrowsAsync(new HttpRequestException("fora do ar"));
         NovoMotor(ctx);
         var motor = new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object, referencia.Object,
-            _pushMock.Object, [new GatilhoPorSub("score-alto")], _logger);
+            Mock.Of<IEstacaoCgeService>(), _pushMock.Object, [new GatilhoPorSub("score-alto")], _logger);
 
         (await motor.AvaliarEDispararAsync()).Should().Be(1);
     }
@@ -357,7 +358,7 @@ public class MotorNotificacoesTests
                      pontos.Select(_ => (IReadOnlyDictionary<DateTime, double>)Enumerable.Range(-3, 7)
                          .ToDictionary(h => DateTime.UtcNow.Date.AddHours(DateTime.UtcNow.Hour + h), _ => 0.5)).ToList());
         return new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object, openMeteo.Object,
-            _pushMock.Object, [new GatilhoChuvaComecou()], _logger);
+            Mock.Of<IEstacaoCgeService>(), _pushMock.Object, [new GatilhoChuvaComecou()], _logger);
     }
 
     [Fact]
@@ -402,5 +403,72 @@ public class MotorNotificacoesTests
         await ChuvaComecandoEmMoocaAsync(ctx);
 
         (await MotorComChuvaComecou(ctx).AvaliarEDispararAsync()).Should().Be(0);
+    }
+
+    // ── Chuva forte medida por perto (AS7): ponta a ponta com o gatilho e o serviço reais ──
+
+    private const int PostoSe = 503;
+
+    private MotorNotificacoes MotorComChuvaMedida(PulsarDbContext ctx, IEstacaoCgeService? estacoes = null, params IGatilhoNotificacao[] gatilhos)
+    {
+        NovoMotor(ctx); // configura push e previsão
+        return new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object,
+            Mock.Of<Pulsar.API.External.Interfaces.IChuvaReferenciaClient>(),
+            estacoes ?? new EstacaoCgeService(ctx, Mock.Of<Pulsar.API.External.Interfaces.ICgeEstacaoClient>(),
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<EstacaoCgeService>.Instance),
+            _pushMock.Object, gatilhos.Length > 0 ? gatilhos : [new GatilhoChuvaMedidaPerto()], _logger);
+    }
+
+    /// <summary>O posto da Sé (vizinha da Mooca) acumulando 18 mm na última meia hora.</summary>
+    private static async Task ChuvaForteNaSeAsync(PulsarDbContext ctx)
+    {
+        var agora = DateTime.UtcNow;
+        foreach (var (min, mm, temp) in new[] { (30, 1.0, 20.0), (15, 9.0, 19.8), (0, 19.0, 19.5) })
+            ctx.LeiturasEstacaoCge.Add(new LeituraEstacaoCge { Posto = PostoSe, ColetadoEm = agora.AddMinutes(-min), ChuvaPeriodoMm = mm, TemperaturaC = temp });
+        await ctx.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task ChuvaMedidaPerto_ChoveForteNaSubprefeituraVizinha_QuemTemCasaRecebeOFato()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var pessoa = await PessoaComAparelhoAsync(ctx, true);
+        await CasaEmAsync(ctx, pessoa, Mooca);
+        await ChuvaForteNaSeAsync(ctx);
+
+        (await MotorComChuvaMedida(ctx).AvaliarEDispararAsync()).Should().Be(1);
+
+        _pushMock.Verify(p => p.NotificarUsuarioAsync(pessoa, CriterioOptIn.ChuvaLocais,
+            It.Is<PushPayload>(x => x.Titulo == "Chove forte na Sé agora"
+                && x.Corpo == "O CGE mediu 18 mm em 30 minutos. Fica perto da sua casa. Toque para ver no mapa."),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChuvaMedidaPerto_SemLeituraDePosto_NinguemRecebe()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var pessoa = await PessoaComAparelhoAsync(ctx, true);
+        await CasaEmAsync(ctx, pessoa, Mooca);
+
+        (await MotorComChuvaMedida(ctx).AvaliarEDispararAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task EstacoesDoCgeFalham_OsOutrosGatilhosSeguemNormais()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        await PessoaComAparelhoAsync(ctx, true, Mooca);
+        var estacoes = new Mock<IEstacaoCgeService>();
+        estacoes.Setup(e => e.ObterPorSubprefeituraAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("banco"));
+
+        (await MotorComChuvaMedida(ctx, estacoes.Object, new GatilhoPorSub("score-alto")).AvaliarEDispararAsync()).Should().Be(1);
     }
 }

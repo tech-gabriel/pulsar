@@ -19,6 +19,7 @@ import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
 import AlagamentosCge from './AlagamentosCge';
+import ChuvaMedidaCge from './ChuvaMedidaCge';
 
 const decimal = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const inteiro = (v: number) => Math.round(v).toLocaleString('pt-BR');
@@ -125,8 +126,9 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             </div>
           </motion.div>
 
-          {/* Dado oficial de alagamento vem antes de tudo que é estimativa. */}
+          {/* Dado oficial (chuva medida e alagamento) vem antes de tudo que é estimativa. */}
           <motion.div variants={itemStagger}>
+            <ChuvaMedidaCge medida={area.chuvaMedida} />
             <AlagamentosCge pontos={area.alagamentosCge} />
           </motion.div>
 
@@ -137,7 +139,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
 
           <motion.div variants={itemStagger} className="det-tiles">
             {s && (
-              <Bloco Icon={CloudRain} titulo="Chuva acumulada" valor={decimal(s.chuva3hMm ?? 0)} unidade="mm"
+              <Bloco Icon={CloudRain} titulo="Chuva estimada" valor={decimal(s.chuva3hMm ?? 0)} unidade="mm"
                 sub={`em 3h · 48h: ${decimal(s.chuva48hMm ?? 0)} mm`}
                 risco={c ? { nome: 'alagamento', faixa: c.alagamento.faixa } : undefined} />
             )}

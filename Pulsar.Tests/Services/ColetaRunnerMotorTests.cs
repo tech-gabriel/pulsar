@@ -25,13 +25,15 @@ public class ColetaRunnerMotorTests
     }
 
     private static ColetaRunner NovoRunner(
-        PulsarDbContext ctx, IMotorNotificacoes motor, IPrevisaoService? previsao = null)
+        PulsarDbContext ctx, IMotorNotificacoes motor, IPrevisaoService? previsao = null,
+        IEstacaoCgeService? estacoes = null)
         => new(
             Mock.Of<IClimateService>(),
             Mock.Of<IScoreService>(),
             Mock.Of<IAgregadoDiarioService>(),
             previsao ?? Mock.Of<IPrevisaoService>(),
             Mock.Of<IAlagamentoCgeService>(),
+            estacoes ?? Mock.Of<IEstacaoCgeService>(),
             motor,
             Mock.Of<IAvisoRotaService>(),
             ctx,
@@ -131,5 +133,37 @@ public class ColetaRunnerMotorTests
         await runner.ExecutarCicloAsync(cts.Token);
 
         motor.Verify(m => m.AvaliarEDispararAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecutarCiclo_ColetaAsEstacoesDoCgeAntesDoMotor()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var ordem = new List<string>();
+        var estacoes = new Mock<IEstacaoCgeService>();
+        estacoes.Setup(e => e.ColetarAsync(It.IsAny<CancellationToken>())).Callback(() => ordem.Add("estacoes")).Returns(Task.CompletedTask);
+        var motor = new Mock<IMotorNotificacoes>();
+        motor.Setup(m => m.AvaliarEDispararAsync(It.IsAny<CancellationToken>())).Callback(() => ordem.Add("motor")).ReturnsAsync(0);
+
+        await NovoRunner(ctx, motor.Object, estacoes: estacoes.Object).ExecutarCicloAsync();
+
+        ordem.Should().Equal("estacoes", "motor");
+    }
+
+    [Fact]
+    public async Task ExecutarCiclo_FalhaNasEstacoesDoCge_NaoImpedeOMotor()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var estacoes = new Mock<IEstacaoCgeService>();
+        estacoes.Setup(e => e.ColetarAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("CGE fora"));
+        var motor = new Mock<IMotorNotificacoes>();
+
+        await NovoRunner(ctx, motor.Object, estacoes: estacoes.Object).ExecutarCicloAsync();
+
+        motor.Verify(m => m.AvaliarEDispararAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

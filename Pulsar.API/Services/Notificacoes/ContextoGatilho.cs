@@ -1,5 +1,6 @@
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.DTOs;
+using Pulsar.API.Services.Interfaces;
 
 namespace Pulsar.API.Services.Notificacoes;
 
@@ -8,6 +9,9 @@ public record EstadoSubprefeitura(
     Subprefeitura Subprefeitura,
     ScorePerigo? Score,
     LeituraClimatica? Leitura);
+
+/// <summary>Chuva medida no posto PRÓPRIO de outra subprefeitura, a <paramref name="DistanciaKm"/> desta.</summary>
+public record MedicaoPerto(string NomeSubprefeitura, double DistanciaKm, ChuvaMedidaRegiao Medida);
 
 /// <summary>
 /// Tudo que os gatilhos podem ler, montado UMA VEZ por subprefeitura pelo motor. Gatilho não
@@ -43,6 +47,18 @@ public class ContextoGatilho
     /// "começou a chover" (precisa ver uma leitura seca antes da chuva).
     /// </summary>
     public IReadOnlyList<LeituraClimatica> LeiturasRecentes { get; init; } = [];
+
+    /// <summary>
+    /// Chuva medida por posto do CGE-SP que vale para esta subprefeitura (posto próprio ou vizinho,
+    /// ver Vizinho). Null quando não há dado medido válido agora, ou o serviço falhou.
+    /// </summary>
+    public ChuvaMedidaRegiao? ChuvaMedida { get; init; }
+
+    /// <summary>
+    /// Medições de posto próprio das OUTRAS subprefeituras a até RaioChuvaPertoKm, da mais perto
+    /// para a mais longe. Base do aviso de chuva forte medida por perto.
+    /// </summary>
+    public IReadOnlyList<MedicaoPerto> ChuvaMedidaPerto { get; init; } = [];
 
     public Subprefeitura Subprefeitura => Estado.Subprefeitura;
 

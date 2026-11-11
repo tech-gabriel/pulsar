@@ -269,6 +269,58 @@ namespace Pulsar.API.Migrations
                     b.ToTable("LeiturasClimaticas");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.LeituraEstacaoCge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("ChuvaPeriodoAnteriorMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ChuvaPeriodoMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("ColetadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Posto")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("PressaoHpa")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("RajadaKmH")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid?>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("TemperaturaC")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("UmidadePct")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("VentoDirecao")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<double?>("VentoKmH")
+                        .HasColumnType("double precision");
+
+                    b.Property<TimeOnly?>("Zeramento")
+                        .HasColumnType("time without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubprefeituraId");
+
+                    b.HasIndex("Posto", "ColetadoEm");
+
+                    b.ToTable("LeiturasEstacaoCge");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.LocalSalvo", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1517,6 +1569,14 @@ namespace Pulsar.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Subprefeitura");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.LeituraEstacaoCge", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", null)
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.LocalSalvo", b =>

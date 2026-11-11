@@ -28,6 +28,7 @@ public class MotorNotificacoes : IMotorNotificacoes
     private readonly INotificacaoEnviadaRepository _livroCaixa;
     private readonly IPrevisaoService _previsaoService;
     private readonly IChuvaReferenciaClient _chuvaReferencia;
+    private readonly IEstacaoCgeService _estacoesCge;
     private readonly IPushNotificationService _push;
     private readonly IEnumerable<IGatilhoNotificacao> _gatilhos;
     private readonly ILogger<MotorNotificacoes> _logger;
@@ -37,6 +38,7 @@ public class MotorNotificacoes : IMotorNotificacoes
         INotificacaoEnviadaRepository livroCaixa,
         IPrevisaoService previsaoService,
         IChuvaReferenciaClient chuvaReferencia,
+        IEstacaoCgeService estacoesCge,
         IPushNotificationService push,
         IEnumerable<IGatilhoNotificacao> gatilhos,
         ILogger<MotorNotificacoes> logger)
@@ -45,6 +47,7 @@ public class MotorNotificacoes : IMotorNotificacoes
         _livroCaixa = livroCaixa;
         _previsaoService = previsaoService;
         _chuvaReferencia = chuvaReferencia;
+        _estacoesCge = estacoesCge;
         _push = push;
         _gatilhos = gatilhos;
         _logger = logger;
@@ -185,6 +188,10 @@ public class MotorNotificacoes : IMotorNotificacoes
             .ToListAsync(ct))
             .ToLookup(p => p.SubprefeituraId);
         var referencia = await ObterChuvaReferenciaAsync(subs, ct);
+        var medidas = await ObterChuvaMedidaAsync(agora, ct);
+        // As vizinhas saem de TODAS as subprefeituras ativas, não só das acompanhadas: o posto
+        // ao lado da casa de alguém pode ficar numa região que ninguém segue.
+        IReadOnlyList<Subprefeitura> todas = medidas.Count == 0 ? [] : await _db.Subprefeituras.Where(s => s.Ativa).ToListAsync(ct);
 
         var pendencias = new List<NotificacaoPendente>();
         foreach (var sub in subs)
@@ -194,7 +201,8 @@ public class MotorNotificacoes : IMotorNotificacoes
             ContextoGatilho ctx;
             try
             {
-                ctx = await MontarContextoAsync(sub, agora, [.. pontosCge[sub.Id]], referencia?.GetValueOrDefault(sub.Id), ct);
+                ctx = await MontarContextoAsync(sub, agora, [.. pontosCge[sub.Id]], referencia?.GetValueOrDefault(sub.Id),
+                    medidas.GetValueOrDefault(sub.Id), MedicoesPerto(sub, todas, medidas), ct);
             }
             catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
             {
@@ -231,7 +239,8 @@ public class MotorNotificacoes : IMotorNotificacoes
 
     private async Task<ContextoGatilho> MontarContextoAsync(
         Subprefeitura sub, DateTime agora, IReadOnlyList<PontoAlagamentoCge> pontosCge,
-        IReadOnlyDictionary<DateTime, double>? chuvaReferencia, CancellationToken ct)
+        IReadOnlyDictionary<DateTime, double>? chuvaReferencia,
+        ChuvaMedidaRegiao? chuvaMedida, IReadOnlyList<MedicaoPerto> chuvaMedidaPerto, CancellationToken ct)
     {
         // Os dois últimos: o atual e o do ciclo anterior, para o "2 ciclos seguidos".
         var scores = await _db.ScoresPerigo
@@ -262,6 +271,8 @@ public class MotorNotificacoes : IMotorNotificacoes
             PontosCgeAtivos = pontosCge,
             ChuvaReferencia = chuvaReferencia,
             LeiturasRecentes = recentes,
+            ChuvaMedida = chuvaMedida,
+            ChuvaMedidaPerto = chuvaMedidaPerto,
         };
     }
 
@@ -285,6 +296,33 @@ public class MotorNotificacoes : IMotorNotificacoes
             return null;
         }
     }
+
+    /// <summary>
+    /// Chuva medida pelos postos do CGE-SP, uma chamada por ciclo. Vazio se o serviço falhar: os
+    /// gatilhos entendem como "sem dado medido" e se comportam como antes dos postos existirem.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, ChuvaMedidaRegiao>> ObterChuvaMedidaAsync(DateTime agora, CancellationToken ct)
+    {
+        try
+        {
+            return await _estacoesCge.ObterPorSubprefeituraAsync(agora, ct) ?? new Dictionary<Guid, ChuvaMedidaRegiao>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Chuva medida do CGE-SP indisponível: os avisos seguem sem a prova medida neste ciclo.");
+            return new Dictionary<Guid, ChuvaMedidaRegiao>();
+        }
+    }
+
+    /// <summary>Medições de posto PRÓPRIO das outras subprefeituras a até RaioChuvaPertoKm, da mais perto para a mais longe.</summary>
+    private static IReadOnlyList<MedicaoPerto> MedicoesPerto(
+        Subprefeitura sub, IReadOnlyList<Subprefeitura> todas, IReadOnlyDictionary<Guid, ChuvaMedidaRegiao> medidas)
+        => [.. todas
+            .Where(o => o.Id != sub.Id && medidas.TryGetValue(o.Id, out var m) && !m.Vizinho)
+            .Select(o => new MedicaoPerto(o.Nome,
+                GeoDistancia.HaversineMetros(sub.Latitude, sub.Longitude, o.Latitude, o.Longitude) / 1000, medidas[o.Id]))
+            .Where(m => m.DistanciaKm <= LimiaresNotificacao.RaioChuvaPertoKm)
+            .OrderBy(m => m.DistanciaKm)];
 
     /// <summary>Etapa 2 + envio + registro. Devolve quantos aparelhos receberam.</summary>
     private async Task<int> EnviarAsync(

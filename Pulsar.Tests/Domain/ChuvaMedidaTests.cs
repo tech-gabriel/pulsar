@@ -19,6 +19,19 @@ public class ChuvaMedidaTests
         ChuvaMedida.MmNaJanela(leituras, Agora, 15).Should().Be(4.0);
     }
 
+    [Theory]
+    [InlineData(4)]
+    [InlineData(7)]
+    [InlineData(14)]
+    public void MmNaJanela_ConsultaEntreUmCicloEOutro_MedeAPartirDaUltimaLeitura(int idadeDaUltima)
+    {
+        // É o caso do app: a pessoa abre o detalhe alguns minutos depois da coleta.
+        LeituraPosto[] leituras = [L(idadeDaUltima + 30, 2.0), L(idadeDaUltima + 15, 5.0), L(idadeDaUltima, 9.0)];
+
+        ChuvaMedida.MmNaJanela(leituras, Agora, 15).Should().Be(4.0);
+        ChuvaMedida.MmNaJanela(leituras, Agora, 30).Should().Be(7.0);
+    }
+
     [Fact]
     public void MmNaJanela_ZeramentoNoMeio_ContaSoOQueChoveuDepois()
     {

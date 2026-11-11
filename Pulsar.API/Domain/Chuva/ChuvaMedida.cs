@@ -31,7 +31,10 @@ public static class ChuvaMedida
         if (emOrdem.Count == 0 || Parado(emOrdem)) return null;
         if (emOrdem[^1].ColetadoEm < agoraUtc.AddMinutes(-IdadeMaximaMinutos)) return null;
 
-        var inicio = agoraUtc.AddMinutes(-minutos);
+        // A janela termina na última leitura, não no relógio de quem pergunta: o app consulta
+        // entre um ciclo e outro, e ancorada no relógio a própria última leitura cairia na folga
+        // da base. `agoraUtc` só decide, acima, se a leitura ainda vale como "agora".
+        var inicio = emOrdem[^1].ColetadoEm.AddMinutes(-minutos);
         var tolerancia = TimeSpan.FromMinutes(ToleranciaBaseMinutos);
         var iBase = -1;
         for (var i = emOrdem.Count - 1; i >= 0; i--)

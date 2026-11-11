@@ -256,4 +256,47 @@ public class SubprefeiturasControllerTests : IClassFixture<PulsarWebApplicationF
         pontosLapa[0].GetProperty("referencia").GetString().Should().Be("Pte Attilio Fontana");
         Da(butanta).GetProperty("alagamentosCge").GetArrayLength().Should().Be(0);
     }
+
+    [Fact]
+    public async Task Lista_TrazAChuvaMedidaDoPostoDoCge_ENullOndeNaoHaDadoMedido()
+    {
+        var token = await TokenUsuarioComumAsync();
+        Guid lapa, casaVerde, parelheiros;
+        DateTime agora;
+        using (var escopo = _factory.Services.CreateScope())
+        {
+            var db = escopo.ServiceProvider.GetRequiredService<PulsarDbContext>();
+            lapa = (await db.Subprefeituras.SingleAsync(s => s.Nome == "Lapa")).Id;
+            casaVerde = (await db.Subprefeituras.SingleAsync(s => s.Nome == "Casa Verde-Limão-Cachoeirinha")).Id;
+            parelheiros = (await db.Subprefeituras.SingleAsync(s => s.Nome == "Parelheiros")).Id;
+            agora = DateTime.UtcNow;
+            // Posto 1000848 = Lapa. Acumulado 5,0 → 9,0 em 15 minutos.
+            db.LeiturasEstacaoCge.AddRange(
+                new LeituraEstacaoCge { Posto = 1000848, ColetadoEm = agora.AddMinutes(-15), ChuvaPeriodoMm = 5.0, TemperaturaC = 20.0 },
+                new LeituraEstacaoCge { Posto = 1000848, ColetadoEm = agora, ChuvaPeriodoMm = 9.0, TemperaturaC = 19.8 });
+            await db.SaveChangesAsync();
+        }
+
+        var resposta = await GetComTokenAsync("/api/subprefeituras", token);
+
+        // JSON cru: o front lê exatamente estes nomes.
+        using var doc = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        JsonElement Da(Guid id) => doc.RootElement.EnumerateArray().Single(e => e.GetProperty("id").GetGuid() == id);
+
+        var medida = Da(lapa).GetProperty("chuvaMedida");
+        medida.GetProperty("mm15").GetDouble().Should().Be(4.0);
+        medida.GetProperty("mm60").ValueKind.Should().Be(JsonValueKind.Null, "não há leitura de uma hora atrás");
+        medida.GetProperty("acumuladoPeriodoMm").GetDouble().Should().Be(9.0);
+        medida.GetProperty("posto").GetString().Should().Be("Lapa");
+        medida.GetProperty("vizinho").GetBoolean().Should().BeFalse();
+        medida.GetProperty("coletadoEm").GetDateTime().Should().BeCloseTo(agora, TimeSpan.FromSeconds(1));
+        medida.GetProperty("coletadoEm").GetString().Should().EndWith("Z", "o front converte pelo fuso do navegador");
+
+        // Sem posto próprio, ao lado da Lapa: vem o dado dela, marcado como vizinho.
+        Da(casaVerde).GetProperty("chuvaMedida").GetProperty("vizinho").GetBoolean().Should().BeTrue();
+        Da(casaVerde).GetProperty("chuvaMedida").GetProperty("posto").GetString().Should().Be("Lapa");
+
+        // Longe de qualquer posto com leitura: sem dado medido, o app mostra "estimado".
+        Da(parelheiros).GetProperty("chuvaMedida").ValueKind.Should().Be(JsonValueKind.Null);
+    }
 }

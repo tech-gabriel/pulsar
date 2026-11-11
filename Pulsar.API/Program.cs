@@ -243,6 +243,7 @@ builder.Services.AddScoped<IForecastClient, OpenWeatherMapForecastClient>();
 builder.Services.AddScoped<IChuvaReferenciaClient, OpenMeteoClient>();
 builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
 builder.Services.AddScoped<ICgeAlagamentoClient, CgeAlagamentoClient>();
+builder.Services.AddScoped<ICgeEstacaoClient, CgeEstacaoClient>();
 builder.Services.AddScoped<IGeoSampaClient, GeoSampaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IGeocodingClient, MapTilerGeocodingClient>();

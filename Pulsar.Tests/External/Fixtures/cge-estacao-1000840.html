@@ -1,0 +1,232 @@
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Esta&ccedil;&atilde;o Meteorol&oacute;gica - CGE</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/yui/3.4.1/node-menunav/assets/skins/sam/node-menunav.css" rel="stylesheet" type="text/css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/yui/3.4.1/widget-base/assets/skins/sam/widget-base.css" rel="stylesheet" type="text/css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/yui/3.4.1/tabview/assets/skins/sam/tabview.css" rel="stylesheet" type="text/css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/yui/3.4.1/yui/yui-min.js"></script><script src="js/estacao.js"></script>
+<style>
+		/*estacao.css*/
+			
+			#estacoesMeteorologicas{
+				   	margin-left:auto; 
+			        margin-right:auto;
+			        width:650px;
+			        border:0;
+			        clear:both;
+			}
+			
+			#estacoesMeteorologicas,#estacoesMeteorologicas td,h1 {
+			        font-family: Verdana, Arial, Helvetica;
+			        font-size:10px;
+			        color:#636363;
+			}
+			#estacoesMeteorologicas h2 {
+			        font-family: Arial, Helvetica;
+			        font-size:16px;
+			        color:#007594;
+			        padding:0;
+			        margin:0;
+			}
+			#estacoesMeteorologicas hr {
+				border :0;
+				background-color:#cccccc;
+				height:1px;
+				margin:30px 0 30px 0;
+			}
+			#frm-historico{
+					width:640px;
+					height:600px;
+					padding:0;
+					border:0;
+					margin:20px 0px 0px 0px;
+					text-align:center;
+					clear:both;
+			}
+			#frm-grafico {
+			        margin-top:30px;
+			        margin-right:auto;
+			        margin-left:auto;
+			        margin-bottom:10px;
+			        width:458px;
+			        height:260px;
+			        border:1px solid #cccccc;
+			        text-align:center;
+			        padding:0;
+			        background-color:#eeeeee;
+			}
+			#instrumentos{	
+					margin-bottom:30px;
+			}
+			#instrumentos table{
+				    margin-right:auto;
+				    margin-left:auto;	    
+			}
+			#historico{
+					margin-top:30px;
+			}
+			.titulo_graficos {
+			        color:#0B4B72;
+			        font-weight:bold;
+			        align:center;
+			}
+			
+			.campo_simples {
+			        border:1px solid #e7e7e7;
+			        font-family: Verdana, Arial, Helvetica;
+			        font-size:10px;
+			        color:#636363;
+			}
+			
+			.subtitulos_paginas {
+			        font-weight:bold;
+			}
+			 
+			.tb-ln-vertical {
+			        border-right:1px solid #cccccc;
+			}
+			#estacoesMeteorologicas th {
+			        text-decoration:none;
+			        font-family: Arial, Helvetica;
+			        font-size:12px;
+			        color:#007594;
+			}
+			#legenda h1 {
+				font-size:14px;
+				line-height:18px;
+				text-align:left;
+				font-weight:normal;
+				font-family: Arial, Helvetica;
+			}
+			#legenda h1 strong {	
+				font-weight:bold;
+			}
+		</style>
+</head>
+<body>
+<div id="estacoesMeteorologicas">
+<div id="instrumentos">
+<table>
+<tr>
+<th>Chuva (Por Per&iacute;odo*)</th><th>Temperatura</th><th>Umidade</th><th>Vento</th><th>Press&atilde;o</th>
+</tr>
+<tr>
+<td class="tb-ln-vertical">
+<table width="105" border="0" cellpadding="2" cellspacing="2" class="dados_estacoes">
+<tr>
+<td width="43" align="left" nowrap><strong>Per. Atual:</strong></td><td width="48" align="left" nowrap>0.0 mm</td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>Per. Anterior:</strong></td><td align="left" nowrap>0.0 mm</td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>Zeramento:</strong></td><td align="left" nowrap>10:00:00</td>
+</tr>
+</table>
+</td><td class="tb-ln-vertical selecionado">
+<table width="92" border="0" cellpadding="2" cellspacing="2" class="dados_estacoes">
+<tr>
+<td width="48" align="left" nowrap><strong>Atual:</strong></td><td width="43" align="left" nowrap><span class="tempmedio">17.1 &deg;C</span></td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>M&atilde;xima:</strong></td><td align="left" nowrap><span class="tempquente">20.2 &deg;C</span></td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>M&iacute;nima:</strong></td><td align="left" nowrap><span class="tempmedio">12.1 &deg;C</span></td>
+</tr>
+</table>
+</td><td class="tb-ln-vertical">
+<table width="92" border="0" cellpadding="2" cellspacing="2" class="dados_estacoes">
+<tr>
+<td width="48" align="left" nowrap><strong>Atual:</strong></td><td width="43" align="left" nowrap>99.7%</td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>M&atilde;xima:</strong></td><td align="left" nowrap>100.0%</td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>M&iacute;nima:</strong></td><td align="left" nowrap>74.7%</td>
+</tr>
+</table>
+</td><td class="tb-ln-vertical">
+<table width="126" border="0" cellpadding="2" cellspacing="2" class="dados_estacoes">
+<tr>
+<td width="66" align="left" nowrap><strong>Dire&ccedil;&atilde;o:</strong></td><td width="46" align="left" nowrap>NNE</td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>Velocidade:</strong></td><td align="left" nowrap>10.8 km/h</td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>Rajada:</strong></td><td align="left" nowrap>21.7 km/h</td>
+</tr>
+</table>
+</td><td>
+<table width="106" border="0" cellpadding="2" cellspacing="2" class="dados_estacoes">
+<tr>
+<td width="48" align="left" nowrap><strong>Atual:</strong></td><td width="44" align="left" nowrap>932.9 hPa</td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>M&atilde;xima:</strong></td><td align="left" nowrap>934.4 hPa</td>
+</tr>
+<tr>
+<td align="left" nowrap><strong>M&iacute;nima:</strong></td><td align="left" nowrap>929.9 hPa</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+<div class="yui3-skin-sam">
+<div id="abas-grafico" class="yui3-tabview-content">
+<ul>
+<li>
+<a href="#Chuva">Chuva</a>
+</li>
+<li>
+<a href="Temperatura">Temperatura</a>
+</li>
+<li>
+<a href="Umidade">Umidade</a>
+</li>
+<li>
+<a href="Vento">Vento</a>
+</li>
+<li>
+<a href="Press%C3%A3o">Press&atilde;o</a>
+</li>
+</ul>
+<div>
+<div id="Chuva">
+<img src="/cgesp/cge_grf.jsp?POSTO=1000840&amp;INSTRUM=0&amp;WIDTH=640&amp;HEIGHT=250"></div>
+<div id="Temperatura">
+<img src="/cgesp/cge_grf.jsp?POSTO=1000840&amp;INSTRUM=5&amp;WIDTH=640&amp;HEIGHT=250"></div>
+<div id="Umidade">
+<img src="/cgesp/cge_grf.jsp?POSTO=1000840&amp;INSTRUM=6&amp;WIDTH=640&amp;HEIGHT=250"></div>
+<div id="Vento">
+<img src="/cgesp/cge_grf.jsp?POSTO=1000840&amp;INSTRUM=3&amp;WIDTH=640&amp;HEIGHT=250"></div>
+<div id="Press&atilde;o">
+<img src="/cgesp/cge_grf.jsp?POSTO=1000840&amp;INSTRUM=17&amp;WIDTH=640&amp;HEIGHT=250"></div>
+</div>
+</div>
+</div>
+<div id="historico">
+<h2>Hist&oacute;rico das &uacute;ltimas 24h</h2>
+<iframe id="frm-historico" name="frm-historico" src="/processo_cge.jsp?WHICHCHANNEL=1000840"></iframe>
+</div>
+<div id="legenda">
+<h1>
+<strong>(*) Obs.: </strong>A medi&ccedil;&atilde;o de chuva nas esta&ccedil;&otilde;es meteorol&oacute;gicas &eacute; feita por per&iacute;odo. <br>
+				O <strong>per&iacute;odo anterior</strong>, refere-se ao intervalo entre o hor&atilde;rio de zeramento do dia anterior,
+				at&eacute; o hor&atilde;rio de zeramento do dia atual.<br>
+				O <strong>per&iacute;odo atual</strong> considera a chuva ocorrida ap&oacute;s &uacute;ltimo hor&atilde;rio de zeramento.
+				</h1>
+</div>
+</div>
+<script type="text/javascript">
+	YUI().use('tabview', function(Y) {
+	    var tabview = new Y.TabView({srcNode:'#abas-grafico'});
+	    tabview.render();
+	});
+</script>
+</body>
+</html>

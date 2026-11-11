@@ -17,6 +17,8 @@ public class PulsarDbContext : DbContext
     public DbSet<AgregadoHorario> AgregadosHorarios => Set<AgregadoHorario>();
     public DbSet<PontoAlagamentoCge> PontosAlagamentoCge => Set<PontoAlagamentoCge>();
     public DbSet<LeituraEstacaoCge> LeiturasEstacaoCge => Set<LeituraEstacaoCge>();
+    public DbSet<EstacaoCemaden> EstacoesCemaden => Set<EstacaoCemaden>();
+    public DbSet<LeituraEstacaoCemaden> LeiturasEstacaoCemaden => Set<LeituraEstacaoCemaden>();
     public DbSet<ExecucaoSincronizacao> ExecucoesSincronizacao => Set<ExecucaoSincronizacao>();
     public DbSet<PedidoAvisoRota> PedidosAvisoRota => Set<PedidoAvisoRota>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
@@ -199,6 +201,24 @@ public class PulsarDbContext : DbContext
              .WithMany()
              .HasForeignKey(a => a.SubprefeituraId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EstacaoCemaden>(e =>
+        {
+            e.HasKey(x => x.CodEstacao);
+            e.Property(x => x.CodEstacao).HasMaxLength(20);
+            e.Property(x => x.CodIbge).HasMaxLength(7);
+            e.Property(x => x.Nome).HasMaxLength(120);
+            e.HasIndex(x => x.CodIbge);
+        });
+
+        modelBuilder.Entity<LeituraEstacaoCemaden>(e =>
+        {
+            e.HasKey(l => l.Id);
+            e.Property(l => l.CodEstacao).HasMaxLength(20);
+            // Único: a mesma resposta do CEMADEN servida duas vezes não vira duas linhas.
+            // Sem FK para o cadastro: a leitura pode chegar antes dele.
+            e.HasIndex(l => new { l.CodEstacao, l.DataHora }).IsUnique();
         });
 
         modelBuilder.Entity<LeituraEstacaoCge>(e =>

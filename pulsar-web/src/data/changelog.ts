@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.32.0',
+    data: '2026-11-11',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Chuva medida na sua região',
+        descricao: 'O detalhe de cada região agora mostra a chuva medida pelos postos do CGE-SP nos últimos 15 minutos e na última hora, com o nome do posto e o horário da leitura. Onde não há posto, vale o mais próximo, e o app avisa que a medição é de perto. A chuva calculada por modelo continua lá, com o nome de chuva estimada.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Aviso quando chove forte perto de você',
+        descricao: 'Quando um posto do CGE mede chuva forte perto da sua casa ou do seu trabalho, o Pulsar avisa no celular e diz quanto choveu. Vale para quem já recebe os avisos de chuva em casa e no trabalho, em Configurações, no grupo Avisos.',
+      },
+    ],
+  },
+  {
     versao: '1.31.0',
     data: '2026-11-09',
     itens: [

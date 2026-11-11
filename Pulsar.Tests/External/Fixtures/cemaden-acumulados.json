@@ -1,0 +1,5 @@
+[
+ {"acc120hr": 21.46, "acc12hr": 0, "acc1hr": 0, "acc24hr": 0, "acc3hr": 0, "acc48hr": 0, "acc6hr": 0, "acc72hr": 0.4, "acc96hr": 13.98, "codestacao": "355030802A", "codibge": 3550308, "datahora": "2026-11-11T20:13:53.108939", "id_estacao": 3635},
+ {"acc120hr": 21.54, "acc12hr": 3.2, "acc1hr": 1.4, "acc24hr": 5.6, "acc3hr": 2.8, "acc48hr": 7, "acc6hr": 3, "acc72hr": 8, "acc96hr": 11.69, "codestacao": "355030846A", "codibge": 3550308, "datahora": "2026-11-11T20:13:53.109285", "id_estacao": 3666},
+ {"acc120hr": 0, "acc12hr": null, "acc1hr": null, "acc24hr": null, "acc3hr": null, "acc48hr": null, "acc6hr": null, "acc72hr": 0, "acc96hr": 0, "codestacao": "355030851A", "codibge": 3550308, "datahora": "2026-11-11T20:13:53.109296", "id_estacao": 3668}
+]

@@ -12,7 +12,7 @@ using Pulsar.API.Repositories.Data;
 namespace Pulsar.API.Migrations
 {
     [DbContext(typeof(PulsarDbContext))]
-    [Migration("20261111203842_AdicionarEstacoesCemaden")]
+    [Migration("20261111204251_AdicionarEstacoesCemaden")]
     partial class AdicionarEstacoesCemaden
     {
         /// <inheritdoc />
@@ -189,13 +189,13 @@ namespace Pulsar.API.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<DateTime>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("CodIbge")
                         .IsRequired()
                         .HasMaxLength(7)
                         .HasColumnType("character varying(7)");
+
+                    b.Property<DateTime>("ConferidoEm")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<double>("Latitude")
                         .HasColumnType("double precision");

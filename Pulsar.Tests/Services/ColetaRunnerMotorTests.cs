@@ -26,7 +26,7 @@ public class ColetaRunnerMotorTests
 
     private static ColetaRunner NovoRunner(
         PulsarDbContext ctx, IMotorNotificacoes motor, IPrevisaoService? previsao = null,
-        IEstacaoCgeService? estacoes = null)
+        IEstacaoCgeService? estacoes = null, ICemadenService? cemaden = null)
         => new(
             Mock.Of<IClimateService>(),
             Mock.Of<IScoreService>(),
@@ -34,6 +34,7 @@ public class ColetaRunnerMotorTests
             previsao ?? Mock.Of<IPrevisaoService>(),
             Mock.Of<IAlagamentoCgeService>(),
             estacoes ?? Mock.Of<IEstacaoCgeService>(),
+            cemaden ?? Mock.Of<ICemadenService>(),
             motor,
             Mock.Of<IAvisoRotaService>(),
             ctx,
@@ -164,6 +165,22 @@ public class ColetaRunnerMotorTests
 
         await NovoRunner(ctx, motor.Object, estacoes: estacoes.Object).ExecutarCicloAsync();
 
+        motor.Verify(m => m.AvaliarEDispararAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecutarCiclo_ColetaOCemadenEFalhaDeleNaoImpedeOMotor()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var cemaden = new Mock<ICemadenService>();
+        cemaden.Setup(c => c.ColetarAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("CEMADEN fora"));
+        var motor = new Mock<IMotorNotificacoes>();
+
+        await NovoRunner(ctx, motor.Object, cemaden: cemaden.Object).ExecutarCicloAsync();
+
+        cemaden.Verify(c => c.ColetarAsync(It.IsAny<CancellationToken>()), Times.Once);
         motor.Verify(m => m.AvaliarEDispararAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

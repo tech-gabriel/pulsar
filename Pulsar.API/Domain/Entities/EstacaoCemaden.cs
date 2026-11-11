@@ -15,5 +15,10 @@ public class EstacaoCemaden
     public string Nome { get; set; } = string.Empty;
     public double Latitude { get; set; }
     public double Longitude { get; set; }
-    public DateTime AtualizadoEm { get; set; }
+
+    /// <summary>
+    /// Última vez que o cadastro foi conferido no CEMADEN, em UTC. Não se chama AtualizadoEm de
+    /// propósito: esse nome o PulsarDbContext carimba sozinho, e só quando a linha muda.
+    /// </summary>
+    public DateTime ConferidoEm { get; set; }
 }

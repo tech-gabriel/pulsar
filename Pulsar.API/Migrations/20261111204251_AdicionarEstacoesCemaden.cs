@@ -20,7 +20,7 @@ namespace Pulsar.API.Migrations
                     Nome = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
                     Latitude = table.Column<double>(type: "double precision", nullable: false),
                     Longitude = table.Column<double>(type: "double precision", nullable: false),
-                    AtualizadoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    ConferidoEm = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

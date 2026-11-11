@@ -23,6 +23,7 @@ public class ColetaRunner : IColetaRunner
     private readonly IPrevisaoService _previsaoService;
     private readonly IAlagamentoCgeService _cgeService;
     private readonly IEstacaoCgeService _estacoesCge;
+    private readonly ICemadenService _cemaden;
     private readonly IMotorNotificacoes _motor;
     private readonly IAvisoRotaService _avisoRota;
     private readonly PulsarDbContext _db;
@@ -35,6 +36,7 @@ public class ColetaRunner : IColetaRunner
         IPrevisaoService previsaoService,
         IAlagamentoCgeService cgeService,
         IEstacaoCgeService estacoesCge,
+        ICemadenService cemaden,
         IMotorNotificacoes motor,
         IAvisoRotaService avisoRota,
         PulsarDbContext db,
@@ -46,6 +48,7 @@ public class ColetaRunner : IColetaRunner
         _previsaoService = previsaoService;
         _cgeService = cgeService;
         _estacoesCge = estacoesCge;
+        _cemaden = cemaden;
         _motor = motor;
         _avisoRota = avisoRota;
         _db = db;
@@ -78,6 +81,17 @@ public class ColetaRunner : IColetaRunner
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Falha ao ler as estações do CGE-SP.");
+        }
+
+        // Chuva acumulada das estações do CEMADEN: reserva do CGE e a chuva de 24 h da tela. O
+        // serviço já engole falha de rede; o try/catch é para o ciclo não depender disso.
+        try
+        {
+            await _cemaden.ColetarAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao ler as estações do CEMADEN.");
         }
 
         var subprefeituras = await _db.Subprefeituras.Where(s => s.Ativa).ToListAsync(ct);

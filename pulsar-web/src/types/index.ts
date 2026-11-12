@@ -168,18 +168,33 @@ export interface SubprefeituraDto {
   alagamentosCge?: PontoAlagamentoCge[];
   /** Chuva medida por posto do CGE-SP. Null ou ausente: a região só tem chuva estimada agora. */
   chuvaMedida?: ChuvaMedida | null;
+  /** Chuva das últimas 24 horas numa estação do CEMADEN perto. O CGE-SP não publica esse número. */
+  chuva24h?: Chuva24h | null;
 }
 
-/** Chuva medida por um posto do CGE-SP. Janela null = não dá para afirmar, o que é diferente de zero. */
+/**
+ * Chuva medida por pluviômetro. O posto do CGE-SP fala na frente; a estação do CEMADEN só entra
+ * quando o CGE não tem dado. Janela null = não dá para afirmar, o que é diferente de zero.
+ */
 export interface ChuvaMedida {
+  fonte: 'cge' | 'cemaden';
+  /** Sempre null no CEMADEN: a menor janela dele é de 1 hora. */
   mm15: number | null;
   mm60: number | null;
-  acumuladoPeriodoMm: number;
+  acumuladoPeriodoMm: number | null;
+  /** Nome do posto do CGE-SP ou da estação do CEMADEN. */
   posto: string;
   /** O posto é de outra subprefeitura (a região não tem posto próprio com leitura). */
   vizinho: boolean;
-  /** ISO UTC da nossa coleta; exibir pelo fuso do navegador. */
+  /** ISO UTC. No CGE é a nossa coleta; no CEMADEN, o instante da consulta lá. Nenhum é a hora em que choveu. */
   coletadoEm: string;
+}
+
+export interface Chuva24h {
+  mm: number;
+  estacao: string;
+  /** ISO UTC do instante da consulta no CEMADEN. */
+  medidoEm: string;
 }
 
 /** Ponto de alagamento ativo publicado pelo CGE-SP. */

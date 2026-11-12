@@ -77,7 +77,7 @@ describe('tooltipSubprefeituraHtml', () => {
     expect(html).not.toContain('por vento');
   });
 
-  const medida = { mm15: 2.4, mm60: 5.8, acumuladoPeriodoMm: 9, posto: 'Sé', vizinho: false, coletadoEm: '2026-11-11T03:45:00Z' };
+  const medida = { fonte: 'cge' as const, mm15: 2.4, mm60: 5.8, acumuladoPeriodoMm: 9, posto: 'Sé', vizinho: false, coletadoEm: '2026-11-11T03:45:00Z' };
   it('com leitura do CGE, a chuva da prévia é a medida, dita como medida', () => {
     const html = tooltipSubprefeituraHtml({ ...sub, chuvaMedida: medida }, 'X');
     expect(html).toContain('2,4 mm em 15 min');

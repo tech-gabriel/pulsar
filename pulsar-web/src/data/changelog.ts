@@ -25,6 +25,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.33.0',
+    data: '2026-11-11',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Mais pluviômetros medindo a chuva',
+        descricao: 'O Pulsar passou a ler também os pluviômetros do CEMADEN, a rede nacional de monitoramento. Quando o posto do CGE-SP fica sem dado, a medição da estação do CEMADEN mais próxima entra no lugar. E agora dá para ver quanto choveu nas últimas 24 horas.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Chuva medida em uma frase',
+        descricao: 'No detalhe de cada região, a chuva medida virou uma frase direta, como "Chove agora: 2,4 mm em 15 min" ou "Sem chuva agora". Toque nela para ver os números dos últimos 15 minutos, da última hora e das 24 horas, e quem mediu cada um.',
+      },
+    ],
+  },
+  {
     versao: '1.32.0',
     data: '2026-11-11',
     itens: [

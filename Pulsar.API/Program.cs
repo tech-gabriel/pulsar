@@ -185,6 +185,18 @@ builder.Services.AddHttpClient("cgesp", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
 });
 
+// CEMADEN: o login (SGAA) e os dados (PED) ficam em servidores diferentes.
+builder.Services.AddHttpClient("cemaden-token", client =>
+{
+    client.BaseAddress = new Uri("https://sgaa.cemaden.gov.br/SGAA/rest/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddHttpClient("cemaden-ped", client =>
+{
+    client.BaseAddress = new Uri("https://sws.cemaden.gov.br/PED/rest/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
 builder.Services.AddHttpClient("maptiler", client =>
 {
     client.BaseAddress = new Uri("https://api.maptiler.com/geocoding/");
@@ -244,6 +256,8 @@ builder.Services.AddScoped<IChuvaReferenciaClient, OpenMeteoClient>();
 builder.Services.AddScoped<INoticiaClient, CgespNoticiaClient>();
 builder.Services.AddScoped<ICgeAlagamentoClient, CgeAlagamentoClient>();
 builder.Services.AddScoped<ICgeEstacaoClient, CgeEstacaoClient>();
+// Singleton: guarda o token do CEMADEN (cerca de 4 h) entre os ciclos.
+builder.Services.AddSingleton<ICemadenClient, CemadenClient>();
 builder.Services.AddScoped<IGeoSampaClient, GeoSampaClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IGeocodingClient, MapTilerGeocodingClient>();
@@ -262,6 +276,7 @@ builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
 builder.Services.AddScoped<IAlagamentoCgeService, AlagamentoCgeService>();
 builder.Services.AddScoped<IEstacaoCgeService, EstacaoCgeService>();
+builder.Services.AddScoped<ICemadenService, CemadenService>();
 builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
 builder.Services.AddScoped<IRotaService, Pulsar.API.Services.Rota.RotaService>();
 builder.Services.AddScoped<IAvisoRotaService, Pulsar.API.Services.Rota.AvisoRotaService>();

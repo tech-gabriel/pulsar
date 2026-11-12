@@ -180,6 +180,38 @@ namespace Pulsar.API.Migrations
                     b.ToTable("AssinaturasPush");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.EstacaoCemaden", b =>
+                {
+                    b.Property<string>("CodEstacao")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("CodIbge")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<DateTime>("ConferidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("CodEstacao");
+
+                    b.HasIndex("CodIbge");
+
+                    b.ToTable("EstacoesCemaden");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.ExecucaoSincronizacao", b =>
                 {
                     b.Property<Guid>("Id")
@@ -267,6 +299,58 @@ namespace Pulsar.API.Migrations
                     b.HasIndex("SubprefeituraId", "Timestamp");
 
                     b.ToTable("LeiturasClimaticas");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.LeituraEstacaoCemaden", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("Acc120h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Acc12h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Acc1h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Acc24h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Acc3h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Acc48h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Acc6h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Acc72h")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Acc96h")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("CodEstacao")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("ColetadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataHora")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodEstacao", "DataHora")
+                        .IsUnique();
+
+                    b.ToTable("LeiturasEstacaoCemaden");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.LeituraEstacaoCge", b =>

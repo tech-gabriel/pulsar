@@ -17,8 +17,11 @@ public class SubprefeituraDto
     /// <summary>Pontos de alagamento ativos agora segundo o CGE-SP. Vazio quando não há (ou o CGE está fora).</summary>
     public IReadOnlyList<PontoAlagamentoCgeDto> AlagamentosCge { get; set; } = [];
 
-    /// <summary>Chuva medida por posto do CGE-SP. Null quando a região só tem chuva estimada agora.</summary>
+    /// <summary>Chuva medida por posto do CGE-SP ou, na falta dele, por estação do CEMADEN. Null quando a região só tem chuva estimada agora.</summary>
     public ChuvaMedidaDto? ChuvaMedida { get; set; }
+
+    /// <summary>Chuva das últimas 24 horas medida pelo CEMADEN. Null sem estação com dado por perto.</summary>
+    public Chuva24hDto? Chuva24h { get; set; }
 
     /// <summary>Preenche os campos comuns a partir da entidade (último score e última leitura).</summary>
     public static T Preencher<T>(T dto, Subprefeitura sub) where T : SubprefeituraDto

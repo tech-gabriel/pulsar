@@ -19,7 +19,7 @@ import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
 import AlagamentosCge from './AlagamentosCge';
-import ChuvaMedidaCge from './ChuvaMedidaCge';
+import ChuvaMedidaLinha from './ChuvaMedidaLinha';
 
 const decimal = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const inteiro = (v: number) => Math.round(v).toLocaleString('pt-BR');
@@ -128,7 +128,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
 
           {/* Dado oficial (chuva medida e alagamento) vem antes de tudo que é estimativa. */}
           <motion.div variants={itemStagger}>
-            <ChuvaMedidaCge medida={area.chuvaMedida} />
+            <ChuvaMedidaLinha nome={area.nome} medida={area.chuvaMedida} chuva24h={area.chuva24h} />
             <AlagamentosCge pontos={area.alagamentosCge} />
           </motion.div>
 

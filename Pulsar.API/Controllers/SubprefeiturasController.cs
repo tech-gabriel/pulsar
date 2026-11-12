@@ -23,13 +23,15 @@ public class SubprefeiturasController : ControllerBase
     private readonly IPrevisaoService _previsaoService;
     private readonly IPontoAlagamentoCgeRepository _pontosCge;
     private readonly IEstacaoCgeService _estacoesCge;
+    private readonly ICemadenService _cemaden;
     private readonly ILogger<SubprefeiturasController> _logger;
 
     public SubprefeiturasController(
         ISubprefeituraRepository subprefeituraRepository, IPrevisaoService previsaoService, IPontoAlagamentoCgeRepository pontosCge,
-        IEstacaoCgeService estacoesCge, ILogger<SubprefeiturasController> logger)
+        IEstacaoCgeService estacoesCge, ICemadenService cemaden, ILogger<SubprefeiturasController> logger)
     {
         _estacoesCge = estacoesCge;
+        _cemaden = cemaden;
         _logger = logger;
         _subprefeituraRepository = subprefeituraRepository;
         _previsaoService = previsaoService;
@@ -46,12 +48,15 @@ public class SubprefeiturasController : ControllerBase
         var pontos = (await _pontosCge.ObterAtivosAsync(DateTime.UtcNow - LimiaresNotificacao.ValidadePontoCge))
             .ToLookup(p => p.SubprefeituraId);
         var medidas = await ObterChuvaMedidaAsync();
+        var cemadenPorSub = await ObterChuvaCemadenAsync();
         var dtos = subs
             .Select(s =>
             {
                 var dto = SubprefeituraDto.Preencher(new SubprefeituraResumoDto { Zona = s.Regiao?.Nome ?? string.Empty }, s);
                 dto.AlagamentosCge = [.. pontos[s.Id].Select(PontoAlagamentoCgeDto.De)];
-                dto.ChuvaMedida = medidas.TryGetValue(s.Id, out var medida) ? ChuvaMedidaDto.De(medida) : null;
+                var cemaden = cemadenPorSub.GetValueOrDefault(s.Id);
+                dto.ChuvaMedida = ChuvaMedidaDto.De(medidas.GetValueOrDefault(s.Id), cemaden);
+                dto.Chuva24h = Chuva24hDto.De(cemaden);
                 return dto;
             })
             .OrderByDescending(d => d.ScoreAtual?.Valor ?? -1)
@@ -73,6 +78,20 @@ public class SubprefeiturasController : ControllerBase
         {
             _logger.LogWarning(ex, "Falha ao ler a chuva medida do CGE-SP para a lista de subprefeituras.");
             return new Dictionary<Guid, ChuvaMedidaRegiao>();
+        }
+    }
+
+    /// <summary>Mesmo trato do CGE: sem o CEMADEN a lista abre igual, só sem a reserva e sem as 24 h.</summary>
+    private async Task<IReadOnlyDictionary<Guid, ChuvaCemadenRegiao>> ObterChuvaCemadenAsync()
+    {
+        try
+        {
+            return await _cemaden.ObterPorSubprefeituraAsync(DateTime.UtcNow, HttpContext.RequestAborted);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Falha ao ler a chuva do CEMADEN para a lista de subprefeituras.");
+            return new Dictionary<Guid, ChuvaCemadenRegiao>();
         }
     }
 

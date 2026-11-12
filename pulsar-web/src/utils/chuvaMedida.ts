@@ -1,16 +1,14 @@
 import type { ChuvaMedida } from '../types';
 
-const mm = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+export const mmMedido = (v: number) => `${v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mm`;
 
 /**
- * A frase da chuva medida pelo posto do CGE-SP. Null quando nenhuma janela dá para afirmar:
- * aí não se mostra nada medido (janela null não é zero).
+ * A frase da chuva medida, para quem só bate o olho. Fala da menor janela que dá para afirmar:
+ * 15 minutos (CGE-SP) ou, sem ela, a última hora (CEMADEN). Null quando nenhuma dá: aí não se
+ * mostra nada medido (janela null não é zero).
  */
-export function textoChuvaMedida(m: ChuvaMedida): string | null {
-  if (m.mm15 === null && m.mm60 === null) return null;
-  if (!m.mm15 && !m.mm60) return m.mm60 === null ? 'Sem chuva nos últimos 15 min' : 'Sem chuva na última hora';
-  return [
-    m.mm15 === null ? null : `${mm(m.mm15)} mm em 15 min`,
-    m.mm60 === null ? null : `${mm(m.mm60)} mm em 1 h`,
-  ].filter(Boolean).join(' · ');
+export function fraseChuvaMedida(m: ChuvaMedida): string | null {
+  if (m.mm15 !== null) return m.mm15 > 0 ? `Chove agora: ${mmMedido(m.mm15)} em 15 min` : 'Sem chuva agora';
+  if (m.mm60 !== null) return m.mm60 > 0 ? `Choveu ${mmMedido(m.mm60)} na última hora` : 'Sem chuva na última hora';
+  return null;
 }

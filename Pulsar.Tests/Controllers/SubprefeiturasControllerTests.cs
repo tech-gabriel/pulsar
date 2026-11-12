@@ -4,8 +4,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentAssertions;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Data;
@@ -298,5 +300,84 @@ public class SubprefeiturasControllerTests : IClassFixture<PulsarWebApplicationF
 
         // Longe de qualquer posto com leitura: sem dado medido, o app mostra "estimado".
         Da(parelheiros).GetProperty("chuvaMedida").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    /// <summary>
+    /// Estações do CEMADEN no extremo leste e no extremo noroeste, longe dos postos do CGE que
+    /// os outros testes desta classe semeiam (o banco é um só para a classe).
+    /// </summary>
+    private async Task<(Guid Tiradentes, Guid Perus)> SemearCemadenAsync()
+    {
+        using var escopo = _factory.Services.CreateScope();
+        var db = escopo.ServiceProvider.GetRequiredService<PulsarDbContext>();
+        var tiradentes = await db.Subprefeituras.SingleAsync(s => s.Nome == "Cidade Tiradentes");
+        var perus = await db.Subprefeituras.SingleAsync(s => s.Nome == "Perus-Anhanguera");
+        if (!await db.EstacoesCemaden.AnyAsync())
+        {
+            var agora = DateTime.UtcNow;
+            db.EstacoesCemaden.AddRange(
+                new EstacaoCemaden { CodEstacao = "T1", CodIbge = "3550308", Nome = "Estação Tiradentes", Latitude = tiradentes.Latitude, Longitude = tiradentes.Longitude, ConferidoEm = agora },
+                new EstacaoCemaden { CodEstacao = "P1", CodIbge = "3550308", Nome = "Estação Perus", Latitude = perus.Latitude, Longitude = perus.Longitude, ConferidoEm = agora });
+            db.LeiturasEstacaoCemaden.AddRange(
+                new LeituraEstacaoCemaden { CodEstacao = "T1", DataHora = agora, ColetadoEm = agora, Acc1h = 2.5, Acc24h = 12.0 },
+                new LeituraEstacaoCemaden { CodEstacao = "P1", DataHora = agora, ColetadoEm = agora, Acc1h = null, Acc24h = 8.0 });
+            await db.SaveChangesAsync();
+        }
+        return (tiradentes.Id, perus.Id);
+    }
+
+    [Fact]
+    public async Task Lista_SemCge_TrazAUltimaHoraEAs24hDoCemaden()
+    {
+        var token = await TokenUsuarioComumAsync();
+        var (tiradentes, perus) = await SemearCemadenAsync();
+
+        var resposta = await GetComTokenAsync("/api/subprefeituras", token);
+
+        // JSON cru: o front lê exatamente estes nomes.
+        using var doc = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        JsonElement Da(Guid id) => doc.RootElement.EnumerateArray().Single(e => e.GetProperty("id").GetGuid() == id);
+
+        var medida = Da(tiradentes).GetProperty("chuvaMedida");
+        medida.GetProperty("fonte").GetString().Should().Be("cemaden");
+        medida.GetProperty("mm15").ValueKind.Should().Be(JsonValueKind.Null, "o CEMADEN não tem janela de 15 minutos");
+        medida.GetProperty("mm60").GetDouble().Should().Be(2.5);
+        medida.GetProperty("acumuladoPeriodoMm").ValueKind.Should().Be(JsonValueKind.Null);
+        medida.GetProperty("posto").GetString().Should().Be("Estação Tiradentes");
+        medida.GetProperty("coletadoEm").GetString().Should().EndWith("Z");
+
+        var h24 = Da(tiradentes).GetProperty("chuva24h");
+        h24.GetProperty("mm").GetDouble().Should().Be(12.0);
+        h24.GetProperty("estacao").GetString().Should().Be("Estação Tiradentes");
+        h24.GetProperty("medidoEm").GetString().Should().EndWith("Z");
+
+        // Estação só com as 24 h: não há "agora" para afirmar, mas as 24 h aparecem.
+        Da(perus).GetProperty("chuvaMedida").ValueKind.Should().Be(JsonValueKind.Null);
+        Da(perus).GetProperty("chuva24h").GetProperty("mm").GetDouble().Should().Be(8.0);
+    }
+
+    [Fact]
+    public async Task Lista_CemadenFalha_AbreIgualSemAs24h()
+    {
+        var token = await TokenUsuarioComumAsync();
+        var (tiradentes, _) = await SemearCemadenAsync();
+        var quebrado = new Moq.Mock<Pulsar.API.Services.Interfaces.ICemadenService>();
+        quebrado.Setup(c => c.ObterPorSubprefeituraAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("banco fora"));
+        using var client = _factory
+            .WithWebHostBuilder(b => b.ConfigureTestServices(s => s.AddScoped(_ => quebrado.Object)))
+            .CreateClient();
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/api/subprefeituras")
+        {
+            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", token) }
+        };
+
+        var resposta = await client.SendAsync(req);
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var doc = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        var sub = doc.RootElement.EnumerateArray().Single(e => e.GetProperty("id").GetGuid() == tiradentes);
+        sub.GetProperty("chuvaMedida").ValueKind.Should().Be(JsonValueKind.Null);
+        sub.GetProperty("chuva24h").ValueKind.Should().Be(JsonValueKind.Null);
     }
 }

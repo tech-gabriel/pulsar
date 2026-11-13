@@ -9,6 +9,7 @@ public class PulsarDbContext : DbContext
     public PulsarDbContext(DbContextOptions<PulsarDbContext> options) : base(options) { }
 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<Cidade> Cidades => Set<Cidade>();
     public DbSet<Regiao> Regioes => Set<Regiao>();
     public DbSet<Subprefeitura> Subprefeituras => Set<Subprefeitura>();
     public DbSet<LeituraClimatica> LeiturasClimaticas => Set<LeituraClimatica>();
@@ -46,6 +47,19 @@ public class PulsarDbContext : DbContext
             e.Property(u => u.EmailPendente).HasMaxLength(200);
             e.Property(u => u.CarimboSeguranca).IsRequired().HasMaxLength(32);
             e.HasIndex(u => u.Role);
+        });
+
+        modelBuilder.Entity<Cidade>(e =>
+        {
+            e.HasKey(c => c.Id);
+            e.Property(c => c.Nome).IsRequired().HasMaxLength(100);
+            e.Property(c => c.Uf).IsRequired().HasMaxLength(2);
+            e.Property(c => c.CodigoIbge).IsRequired().HasMaxLength(7);
+            e.HasIndex(c => c.CodigoIbge).IsUnique();
+            e.HasMany(c => c.Regioes)
+             .WithOne(r => r.Cidade)
+             .HasForeignKey(r => r.CidadeId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Regiao>(e =>
@@ -339,13 +353,17 @@ public class PulsarDbContext : DbContext
         var idOeste  = new Guid("10000000-0000-0000-0000-000000000004");
         var idSul    = new Guid("10000000-0000-0000-0000-000000000005");
 
+        var idSaoPaulo = new Guid("30000000-0000-0000-0000-000000000001");
+        modelBuilder.Entity<Cidade>().HasData(
+            new { Id = idSaoPaulo, Nome = "São Paulo", Uf = "SP", CodigoIbge = "3550308", CriadoEm = seedDate, AtualizadoEm = seedDate });
+
         const string fusoSp = "America/Sao_Paulo";
         modelBuilder.Entity<Regiao>().HasData(
-            new { Id = idCentro, Nome = "Centro", FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idLeste,  Nome = "Leste",  FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idNorte,  Nome = "Norte",  FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idOeste,  Nome = "Oeste",  FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idSul,    Nome = "Sul",    FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate }
+            new { Id = idCentro, Nome = "Centro", CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idLeste,  Nome = "Leste",  CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idNorte,  Nome = "Norte",  CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idOeste,  Nome = "Oeste",  CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idSul,    Nome = "Sul",    CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate }
         );
 
         // --- Subprefeituras (32) — centróides WGS-84 calculados dos polígonos oficiais ---

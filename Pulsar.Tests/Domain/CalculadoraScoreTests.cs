@@ -151,4 +151,26 @@ public class CalculadoraScoreTests
     [InlineData(60.01, FaixaRisco.ALTO)]
     public void ClassificacaoRisco_Cortes(double v, FaixaRisco f)
         => ClassificacaoRisco.Faixa(v).Should().Be(f);
+
+    // Fator explícito: é o caminho do risco por célula, em que o fator vem do trecho e não
+    // do nome da área.
+    [Theory]
+    [InlineData(1.0, 60)]
+    [InlineData(1.2, 72)]
+    public void Calcular_ComFatorExplicito_UsaOFatorInformado(double fator, double esperado)
+        => CalculadoraScore.Calcular(new EntradaScore(0, 35, 0, 0, 20, "Baixa"), P, fator)
+            .Alagamento.Valor.Should().BeApproximately(esperado, 1e-9);
+
+    [Fact]
+    public void Calcular_ComFatorExplicito_NaoPassaDe100()
+        => CalculadoraScore.Calcular(new EntradaScore(0, 60, 0, 0, 20, "Neutra"), P, 1.4)
+            .Alagamento.Valor.Should().Be(100);
+
+    [Fact]
+    public void Calcular_SemFatorExplicito_ContinuaIgual()
+    {
+        var e = new EntradaScore(8, 35, 50, 45, 33, "Alta");
+        CalculadoraScore.Calcular(e, P).Should().Be(CalculadoraScore.Calcular(e, P, P.Fator("Alta")));
+        CalculadoraScore.Calcular(e, P).Alagamento.Valor.Should().NotBe(CalculadoraScore.Calcular(e, P, 1.0).Alagamento.Valor);
+    }
 }

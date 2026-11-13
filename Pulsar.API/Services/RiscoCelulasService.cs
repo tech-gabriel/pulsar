@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
 using Pulsar.API.Domain.Score;
+using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Services.Interfaces;
 
@@ -58,6 +59,33 @@ public class RiscoCelulasService : IRiscoCelulasService
         _db.ResumosCelulas.Add(resumo);
         await _db.SaveChangesAsync(ct);
         return resumo;
+    }
+
+    public async Task<IReadOnlyList<ResumoGradeAreaDto>> ResumirAsync(int dias, CancellationToken ct = default)
+    {
+        var desde = DateTime.UtcNow.AddDays(-Math.Clamp(dias, 1, RetencaoDias));
+        // Agrupa em memória: no máximo a retenção inteira (uns 180 mil registros pequenos), e
+        // a conta por faixa não tem tradução igual em Postgres e SQLite.
+        var linhas = await _db.ResumosCelulas.AsNoTracking()
+            .Where(r => r.Timestamp >= desde)
+            .Select(r => new { r.Subprefeitura.Nome, r.Celulas, r.ValorArea, r.ValorMeioTermo, r.FaixaMeioTermo, r.CelulasAlto })
+            .ToListAsync(ct);
+
+        return linhas
+            .GroupBy(r => r.Nome)
+            .Select(g => new ResumoGradeAreaDto(
+                Subprefeitura: g.Key,
+                Celulas: g.Max(r => r.Celulas),
+                Ciclos: g.Count(),
+                MaxValorArea: g.Max(r => r.ValorArea),
+                MaxMeioTermo: g.Max(r => r.ValorMeioTermo),
+                CiclosAreaAlto: g.Count(r => ClassificacaoRisco.Faixa(r.ValorArea) == FaixaRisco.ALTO),
+                CiclosMeioTermoAlto: g.Count(r => r.FaixaMeioTermo == FaixaRisco.ALTO),
+                CiclosFaixaDiferente: g.Count(r => ClassificacaoRisco.Faixa(r.ValorArea) != r.FaixaMeioTermo),
+                MaxCelulasAlto: g.Max(r => r.CelulasAlto)))
+            .OrderByDescending(l => l.CiclosFaixaDiferente)
+            .ThenBy(l => l.Subprefeitura, StringComparer.Create(System.Globalization.CultureInfo.GetCultureInfo("pt-BR"), false))
+            .ToList();
     }
 
     public async Task<int> PodarAsync(CancellationToken ct = default)

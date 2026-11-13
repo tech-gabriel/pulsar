@@ -140,4 +140,58 @@ public class RiscoCelulasServiceTests : IDisposable
         var sobrou = await _ctx.ResumosCelulas.AsNoTracking().SingleAsync();
         sobrou.Timestamp.Should().BeAfter(DateTime.UtcNow.AddDays(-60));
     }
+
+    private ResumoCelulas Ciclo(int minutosAtras, double valorArea, double meioTermo, int celulasAlto = 0) => new()
+    {
+        SubprefeituraId = _sub.Id, Timestamp = DateTime.UtcNow.AddMinutes(-minutosAtras), Celulas = 75,
+        ValorArea = valorArea, ValorMeioTermo = meioTermo, FaixaMeioTermo = ClassificacaoRisco.Faixa(meioTermo),
+        ValorMaximo = meioTermo, CelulasAlto = celulasAlto,
+    };
+
+    [Fact]
+    public async Task Resumir_ContaCiclosEDivergencias()
+    {
+        _ctx.ResumosCelulas.AddRange(
+            Ciclo(15, valorArea: 10, meioTermo: 12),
+            Ciclo(30, valorArea: 25, meioTermo: 70, celulasAlto: 9), // área tranquila, meio-termo em alerta
+            Ciclo(45, valorArea: 40, meioTermo: 45, celulasAlto: 2));
+        await _ctx.SaveChangesAsync();
+
+        var linhas = await Servico(1).ResumirAsync(7);
+
+        var l = linhas.Should().ContainSingle().Subject;
+        l.Subprefeitura.Should().Be("Itaquera");
+        l.Celulas.Should().Be(75);
+        l.Ciclos.Should().Be(3);
+        l.MaxValorArea.Should().Be(40);
+        l.MaxMeioTermo.Should().Be(70);
+        l.CiclosAreaAlto.Should().Be(0);
+        l.CiclosMeioTermoAlto.Should().Be(1);
+        l.CiclosFaixaDiferente.Should().Be(1);
+        l.MaxCelulasAlto.Should().Be(9);
+    }
+
+    [Fact]
+    public async Task Resumir_ForaDaJanela_NaoEntra()
+    {
+        _ctx.ResumosCelulas.Add(Ciclo(minutosAtras: 3 * 24 * 60, valorArea: 80, meioTermo: 90));
+        await _ctx.SaveChangesAsync();
+
+        (await Servico(1).ResumirAsync(2)).Should().BeEmpty();
+        (await Servico(1).ResumirAsync(7)).Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task Resumir_OrdenaPelasAreasQueMaisDivergem()
+    {
+        var mooca = _ctx.Subprefeituras.First(s => s.Nome == "Mooca");
+        var divergente = Ciclo(15, valorArea: 25, meioTermo: 70);
+        divergente.SubprefeituraId = mooca.Id;
+        _ctx.ResumosCelulas.AddRange(Ciclo(15, valorArea: 10, meioTermo: 12), divergente);
+        await _ctx.SaveChangesAsync();
+
+        var linhas = await Servico(1).ResumirAsync(7);
+
+        linhas.Select(l => l.Subprefeitura).Should().Equal("Mooca", "Itaquera");
+    }
 }

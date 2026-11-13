@@ -6,6 +6,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 import AdminSubnav from '../../components/admin/AdminSubnav';
 import { useQualidadeAdmin } from '../../hooks/useQualidadeAdmin';
+import { useResumoGrade } from '../../hooks/useResumoGrade';
 import { tempoRelativo } from '../../utils/data';
 import type { QualidadeDiaDto, SincronizacaoFonteDto, TipoAvisoQualidade } from '../../types';
 
@@ -27,6 +28,66 @@ const mm = (v: number | null) =>
 const horas = (v: number | null) => (v === null ? 's/d' : String(v));
 
 type Linha = Omit<QualidadeDiaDto, 'dia' | 'teveAlerta'>;
+
+const pontos = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/**
+ * Risco por trecho (grade de hexágonos), ainda só em conferência: ninguém fora do admin vê.
+ * Tem a própria chamada, fora do carregamento do painel, para uma falha aqui não esconder
+ * o resto da página.
+ */
+function RiscoPorTrecho({ dias }: { dias: number }) {
+  const { linhas, carregando, erro } = useResumoGrade(dias);
+
+  return (
+    <section aria-labelledby="titulo-risco-trecho" className="mt-5">
+      <GlassCard hover={false} padding="lg">
+        <h2 id="titulo-risco-trecho" className="mb-1" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-secondary)' }}>
+          Risco por trecho (em teste)
+        </h2>
+        <p className="mb-3" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+          Alagamento de cada área pelo cálculo atual e pelo meio-termo dos hexágonos, de 0 a 100. As áreas em que os dois mais discordam vêm primeiro.
+        </p>
+        {carregando ? (
+          <div className="py-6 grid place-items-center"><LoadingSpinner /></div>
+        ) : erro ? (
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Não foi possível carregar a comparação.</p>
+        ) : linhas.length === 0 ? (
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Ainda sem ciclos registrados.</p>
+        ) : (
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full" style={{ fontSize: 12.5, borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ color: 'var(--text-muted)', fontSize: 11.5, textAlign: 'right' }}>
+                  <th className="px-1 py-1.5 font-semibold" style={{ textAlign: 'left' }}>Subprefeitura</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Hexágonos da grade nesta área">Trechos</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Ciclos de coleta no período">Ciclos</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área pelo cálculo atual">Atual</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área pelo meio-termo dos hexágonos">Meio-termo</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Ciclos em que os dois cálculos caíram em faixas diferentes">Discordam</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Maior número de hexágonos em Alerta num mesmo ciclo">Em alerta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {linhas.map((l) => (
+                  <tr key={l.subprefeitura} className="border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)', textAlign: 'right' }}>
+                    <td className="px-1 py-1.5" style={{ textAlign: 'left', fontWeight: 600 }}>{l.subprefeitura}</td>
+                    <td className="px-1 py-1.5">{l.celulas}</td>
+                    <td className="px-1 py-1.5">{l.ciclos}</td>
+                    <td className="px-1 py-1.5">{pontos(l.maxValorArea)}</td>
+                    <td className="px-1 py-1.5">{pontos(l.maxMeioTermo)}</td>
+                    <td className="px-1 py-1.5">{l.ciclosFaixaDiferente}</td>
+                    <td className="px-1 py-1.5">{l.maxCelulasAlto}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </GlassCard>
+    </section>
+  );
+}
 
 export default function QualidadeAdminPage() {
   const [dias, setDias] = useState<number>(7);
@@ -177,6 +238,8 @@ export default function QualidadeAdminPage() {
             </GlassCard>
           </>
         )}
+
+        <RiscoPorTrecho dias={dias} />
       </main>
     </div>
   );

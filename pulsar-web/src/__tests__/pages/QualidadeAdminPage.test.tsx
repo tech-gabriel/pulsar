@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import type { QualidadeDadosDto } from '../../types';
+import type { QualidadeDadosDto, ResumoGradeAreaDto } from '../../types';
 
 vi.mock('../../components/ui/Header', () => ({ default: () => null }));
 
@@ -14,6 +14,16 @@ const hookState = {
 const useQualidadeAdmin = vi.fn((dias: number) => { void dias; return hookState; });
 vi.mock('../../hooks/useQualidadeAdmin', () => ({
   useQualidadeAdmin: (dias: number) => useQualidadeAdmin(dias),
+}));
+
+const gradeState = {
+  linhas: [] as ResumoGradeAreaDto[],
+  carregando: false,
+  erro: false,
+};
+const useResumoGrade = vi.fn((dias: number) => { void dias; return gradeState; });
+vi.mock('../../hooks/useResumoGrade', () => ({
+  useResumoGrade: (dias: number) => useResumoGrade(dias),
 }));
 
 import QualidadeAdminPage from '../../pages/admin/QualidadeAdminPage';
@@ -32,6 +42,10 @@ function renderPage() {
 
 beforeEach(() => {
   useQualidadeAdmin.mockClear();
+  useResumoGrade.mockClear();
+  gradeState.linhas = [];
+  gradeState.carregando = false;
+  gradeState.erro = false;
   hookState.dados = {
     dias: 7,
     openMeteoDisponivel: true,
@@ -90,5 +104,44 @@ describe('QualidadeAdminPage', () => {
     renderPage();
     fireEvent.click(screen.getByRole('button', { name: '30 dias' }));
     expect(useQualidadeAdmin).toHaveBeenLastCalledWith(30);
+  });
+});
+
+describe('QualidadeAdminPage: risco por trecho (em teste)', () => {
+  const linha = (subprefeitura: string, extra: Partial<ResumoGradeAreaDto> = {}): ResumoGradeAreaDto => ({
+    subprefeitura, celulas: 48, ciclos: 672, maxValorArea: 41.26, maxMeioTermo: 63.5,
+    ciclosAreaAlto: 0, ciclosMeioTermoAlto: 3, ciclosFaixaDiferente: 5, maxCelulasAlto: 9, ...extra,
+  });
+
+  it('mostra uma linha por área com os números da comparação', () => {
+    gradeState.linhas = [linha('Mooca'), linha('Lapa', { celulas: 53, ciclosFaixaDiferente: 0 })];
+    renderPage();
+
+    const secao = screen.getByRole('region', { name: 'Risco por trecho (em teste)' });
+    const mooca = within(secao).getByRole('row', { name: /Mooca/ });
+    expect(within(mooca).getAllByRole('cell').map((c) => c.textContent)).toEqual(
+      ['Mooca', '48', '672', '41,3', '63,5', '5', '9'],
+    );
+    expect(within(secao).getByRole('row', { name: /Lapa/ })).toBeInTheDocument();
+  });
+
+  it('sem ciclos gravados diz isso em vez de uma tabela vazia', () => {
+    renderPage();
+    const secao = screen.getByRole('region', { name: 'Risco por trecho (em teste)' });
+    expect(within(secao).getByText('Ainda sem ciclos registrados.')).toBeInTheDocument();
+    expect(within(secao).queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  it('falha na comparação não derruba o resto da página', () => {
+    gradeState.erro = true;
+    renderPage();
+    expect(screen.getByText('Não foi possível carregar a comparação.')).toBeInTheDocument();
+    expect(screen.getByText('Nenhum problema nos últimos 7 dias.')).toBeInTheDocument();
+  });
+
+  it('acompanha o período escolhido na página', () => {
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: '30 dias' }));
+    expect(useResumoGrade).toHaveBeenLastCalledWith(30);
   });
 });

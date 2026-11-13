@@ -38,7 +38,7 @@ public class GradeCelulasTests
     {
         var todas = NomesDoBanco().SelectMany(Grade.DaArea).ToList();
 
-        todas.Should().HaveCount(2044);
+        todas.Should().HaveCount(2277);
         todas.Select(c => c.H3).Should().OnlyHaveUniqueItems();
         todas.Should().OnlyContain(c => c.Fator >= 0.85 && c.Fator <= 1.4375);
         todas.Should().OnlyContain(c => c.Lat < -23.3 && c.Lat > -24.1 && c.Lon < -46.3 && c.Lon > -46.9);

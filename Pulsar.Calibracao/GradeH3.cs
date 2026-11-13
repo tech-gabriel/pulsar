@@ -22,6 +22,15 @@ public static class GradeH3
     /// <summary>O trecho com mais histórico de alagamento da cidade fica 25% acima do fator da área dele.</summary>
     public const double AcrescimoMaximo = 0.25;
 
+    /// <summary>
+    /// Trava contra excesso de alerta: o fator por célula pode aumentar os dias em ALTO em no
+    /// máximo meio ponto percentual sobre a mesma conta feita com o fator da área.
+    /// </summary>
+    public const double FolgaDiasAlto = 0.005;
+
+    public static bool DentroDaTrava(Metricas comFatorDaArea, Metricas comFatorDaCelula)
+        => Math.Round(comFatorDaCelula.PctDiasAlto - comFatorDaArea.PctDiasAlto, 6) <= FolgaDiasAlto;
+
     public static string CelulaDe(double lat, double lon) => new Coordinate(lon, lat).ToH3Index(Resolucao).ToString();
 
     public static (double Lat, double Lon) Centro(string h3)
@@ -50,10 +59,14 @@ public static class GradeH3
             .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark && char.IsLetterOrDigit(c))
             .Select(char.ToUpperInvariant).ToArray());
 
-    /// <summary>Células da grade (índice H3 em texto) e a área de cada uma. A célula entra pela área que contém o centro dela.</summary>
+    /// <summary>
+    /// Células da grade (índice H3 em texto) e a área de cada uma. Entra toda célula que
+    /// toca alguma área, para que nenhum ponto da cidade fique sem trecho; na divisa, a
+    /// célula fica com a área que ocupa a maior parte dela.
+    /// </summary>
     public static IReadOnlyDictionary<string, string> Celulas(string geojson)
     {
-        var celulas = new Dictionary<string, string>();
+        var areas = new List<(string Nome, Polygon Poligono, Geometry Valido)>();
         using var doc = JsonDocument.Parse(geojson);
         foreach (var f in doc.RootElement.GetProperty("features").EnumerateArray())
         {
@@ -63,9 +76,32 @@ public static class GradeH3
             var poligonos = geo.GetProperty("type").GetString() == "MultiPolygon"
                 ? coords.EnumerateArray().ToList()
                 : [coords];
-            foreach (var p in poligonos)
-                foreach (var indice in Poligono(p).Fill(Resolucao))
-                    celulas.TryAdd(indice.ToString(), nome);
+            // O contorno simplificado tem trechos que se cruzam; Buffer(0) conserta para a conta de área.
+            areas.AddRange(poligonos.Select(Poligono).Select(p => (nome, p, p.IsValid ? p : p.Buffer(0))));
+        }
+
+        // Candidatas: as células com o centro dentro e as dos vértices da borda, mais dois
+        // anéis em volta. É folga de sobra para alcançar toda célula que encosta na área.
+        var candidatas = areas
+            .SelectMany(a => a.Poligono.Fill(Resolucao)
+                .Concat(a.Poligono.Coordinates.Select(c => c.ToH3Index(Resolucao))))
+            .Distinct()
+            .SelectMany(i => i.GridDiskDistances(2).Select(r => r.Index))
+            .Distinct();
+
+        var celulas = new Dictionary<string, string>();
+        foreach (var indice in candidatas)
+        {
+            var hexagono = indice.GetCellBoundary();
+            var melhor = areas
+                .Where(a => a.Valido.EnvelopeInternal.Intersects(hexagono.EnvelopeInternal))
+                .Select(a => (a.Nome, Parte: a.Valido.Intersection(hexagono).Area))
+                .Where(x => x.Parte > 0)
+                .GroupBy(x => x.Nome)
+                .Select(g => (Nome: g.Key, Parte: g.Sum(x => x.Parte)))
+                .OrderByDescending(x => x.Parte).ThenBy(x => x.Nome, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (melhor.Nome is not null) celulas[indice.ToString()] = melhor.Nome;
         }
         return celulas;
     }

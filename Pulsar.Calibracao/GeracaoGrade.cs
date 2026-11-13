@@ -27,9 +27,6 @@ public static class GeracaoGrade
         if (semCelula.Count > 0)
             throw new InvalidOperationException($"Áreas sem nenhuma célula: {string.Join(", ", semCelula)}");
 
-        var arquivo = Path.Combine(repo, "Pulsar.API", "Domain", "Score", "grade-sao-paulo.json");
-        await File.WriteAllTextAsync(arquivo, Json(areaDaCelula, fatores, de, ate));
-
         Console.WriteLine("Baixando séries do Open-Meteo...");
         var series = new Dictionary<string, List<HoraClima>>();
         foreach (var s in Subprefeituras.Todas)
@@ -51,14 +48,38 @@ public static class GeracaoGrade
         var comFatorDaCelula = Backtest.Avaliar(
             DiasAltoPorCelula(series, areaDaCelula, c => fatores[c]), ocorrenciasDaCelula, de, ate);
 
-        var md = Relatorio(areaDaCelula, suavizado, fatores, porArea, comFatorDaArea, comFatorDaCelula, de, ate);
+        // O fator acima saiu das mesmas ocorrências contra as quais ele é medido, o que
+        // favorece o resultado. A validação cruzada tira a dúvida: para cada mês, o fator é
+        // refeito SEM as ocorrências daquele mês e medido só nele.
+        Metricas foraBase = new(0, 0, 0, 0, 0), foraCelula = new(0, 0, 0, 0, 0);
+        for (var ini = de; ini <= ate; ini = ini.AddMonths(1))
+        {
+            var fim = ini.AddMonths(1).AddDays(-1) < ate ? ini.AddMonths(1).AddDays(-1) : ate;
+            var treino = pontos.Where(p => p.Dia < ini || p.Dia > fim).ToList();
+            var fatoresDoTreino = GradeH3.Fatores(
+                GradeH3.Suavizado(treino, areaDaCelula.Keys.ToHashSet(), de, ate), areaDaCelula, CalibracaoScore.Atual);
+            foraBase += Backtest.Avaliar(
+                DiasAltoPorCelula(series, areaDaCelula, c => CalibracaoScore.Atual.Fator(areaDaCelula[c])), ocorrenciasDaCelula, ini, fim);
+            foraCelula += Backtest.Avaliar(
+                DiasAltoPorCelula(series, areaDaCelula, c => fatoresDoTreino[c]), ocorrenciasDaCelula, ini, fim);
+        }
+
+        var dentro = GradeH3.DentroDaTrava(comFatorDaArea, comFatorDaCelula);
+        var md = Relatorio(areaDaCelula, suavizado, fatores, porArea, comFatorDaArea, comFatorDaCelula, foraBase, foraCelula, dentro, de, ate);
         var saida = Path.Combine(raiz, "saida");
         Directory.CreateDirectory(saida);
         var arqRelatorio = Path.Combine(saida, $"grade-{DateTime.Now:yyyyMMdd-HHmm}.md");
         await File.WriteAllTextAsync(arqRelatorio, md);
         Console.WriteLine(md);
-        Console.WriteLine($"Grade: {arquivo}");
         Console.WriteLine($"Relatório: {arqRelatorio}");
+
+        // A grade só é gravada depois de passar na trava: uma grade reprovada nunca chega
+        // a aparecer no diff para alguém commitar sem ler o relatório.
+        if (!dentro)
+            throw new InvalidOperationException("Grade reprovada na trava de excesso de alerta. O arquivo da grade NÃO foi alterado.");
+        var arquivo = Path.Combine(repo, "Pulsar.API", "Domain", "Score", "grade-sao-paulo.json");
+        await File.WriteAllTextAsync(arquivo, Json(areaDaCelula, fatores, de, ate));
+        Console.WriteLine($"Grade: {arquivo}");
     }
 
     /// <summary>Dias em ALTO de cada célula: a série de clima é a da área dela; só o fator muda.</summary>
@@ -91,7 +112,6 @@ public static class GeracaoGrade
         var sb = new StringBuilder();
         sb.Append("{\n");
         sb.Append(inv, $"  \"resolucao\": {GradeH3.Resolucao},\n");
-        sb.Append(inv, $"  \"geradoEm\": \"{DateTime.Now:yyyy-MM-dd}\",\n");
         sb.Append(inv, $"  \"periodo\": {{ \"de\": \"{de:yyyy-MM-dd}\", \"ate\": \"{ate:yyyy-MM-dd}\" }},\n");
         sb.Append("  \"celulas\": [\n");
         // Uma célula por linha, em ordem fixa, para o diff de uma recalibração ser legível.
@@ -109,7 +129,7 @@ public static class GeracaoGrade
     private static string Relatorio(
         IReadOnlyDictionary<string, string> areaDaCelula, IReadOnlyDictionary<string, double> suavizado,
         IReadOnlyDictionary<string, double> fatores, Metricas porArea, Metricas comFatorDaArea, Metricas comFatorDaCelula,
-        DateOnly de, DateOnly ate)
+        Metricas foraBase, Metricas foraCelula, bool dentroDaTrava, DateOnly de, DateOnly ate)
     {
         var pt = CultureInfo.GetCultureInfo("pt-BR");
         string Linha(string nome, Metricas m) => string.Create(pt,
@@ -118,7 +138,7 @@ public static class GeracaoGrade
         var sb = new StringBuilder();
         sb.AppendLine(pt, $"# Grade H3 de São Paulo ({de:dd/MM/yyyy} a {ate:dd/MM/yyyy})");
         sb.AppendLine();
-        sb.AppendLine(pt, $"- Resolução {GradeH3.Resolucao}, {areaDaCelula.Count} células em {areaDaCelula.Values.Distinct().Count()} áreas.");
+        sb.AppendLine(pt, $"- Resolução {GradeH3.Resolucao}, {areaDaCelula.Count} células em {areaDaCelula.Values.Distinct().Count()} áreas. Entra toda célula que toca a cidade, então nenhum ponto dela fica sem trecho.");
         sb.AppendLine(pt, $"- Células com histórico de alagamento (próprio ou de vizinha): {suavizado.Values.Count(v => v > 0)}.");
         sb.AppendLine(pt, $"- Fator por célula: de {fatores.Values.Min():F4} a {fatores.Values.Max():F4}.");
         sb.AppendLine();
@@ -132,8 +152,17 @@ public static class GeracaoGrade
         sb.AppendLine(Linha("Por célula, fator da área", comFatorDaArea));
         sb.AppendLine(Linha("Por célula, fator da célula", comFatorDaCelula));
         sb.AppendLine();
-        var trava = comFatorDaCelula.PctDiasAlto <= Busca.MaxPctDiasAlto ? "dentro da trava" : "ACIMA DA TRAVA";
-        sb.AppendLine(pt, $"Trava contra excesso de alerta: no máximo {Busca.MaxPctDiasAlto:P0} dos dias em ALTO. Por célula com o fator novo: {comFatorDaCelula.PctDiasAlto:P2} ({trava}).");
+        var trava = dentroDaTrava ? "dentro da trava" : "ACIMA DA TRAVA, grade não gravada";
+        sb.AppendLine(pt, $"Trava contra excesso de alerta: o fator da célula pode somar no máximo {GradeH3.FolgaDiasAlto * 100:F1} ponto percentual de dias em ALTO sobre a mesma conta com o fator da área. Somou {(comFatorDaCelula.PctDiasAlto - comFatorDaArea.PctDiasAlto) * 100:F2} ({trava}).");
+        sb.AppendLine();
+        sb.AppendLine("## Validação fora da amostra");
+        sb.AppendLine();
+        sb.AppendLine("Para cada mês, o fator da célula é refeito sem as ocorrências daquele mês e medido só nele. É o número que vale para dizer se o trecho acerta mais: o backtest acima mede o fator contra as mesmas ocorrências que o geraram.");
+        sb.AppendLine();
+        sb.AppendLine("| Nível | Precisão | Cobertura | F1 | Dias em ALTO | Dias previstos | Dias com ocorrência |");
+        sb.AppendLine("|---|---|---|---|---|---|---|");
+        sb.AppendLine(Linha("Por célula, fator da área", foraBase));
+        sb.AppendLine(Linha("Por célula, fator da célula (sem ver o mês)", foraCelula));
         sb.AppendLine();
         sb.AppendLine("## Células por área");
         sb.AppendLine();

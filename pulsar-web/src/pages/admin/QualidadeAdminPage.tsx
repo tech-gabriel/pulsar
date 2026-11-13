@@ -46,14 +46,14 @@ function RiscoPorTrecho({ dias }: { dias: number }) {
           Risco por trecho (em teste)
         </h2>
         <p className="mb-3" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          Alagamento de cada área pelo cálculo atual e pelo meio-termo dos hexágonos, de 0 a 100. As áreas em que os dois mais discordam vêm primeiro.
+          Alagamento de cada área pelo cálculo atual e pelo meio-termo dos hexágonos, de 0 a 100. Só entram os ciclos em que a área ou algum hexágono saiu do risco baixo. As áreas em que os dois mais discordam vêm primeiro.
         </p>
         {carregando ? (
           <div className="py-6 grid place-items-center"><LoadingSpinner /></div>
         ) : erro ? (
           <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Não foi possível carregar a comparação.</p>
         ) : linhas.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Ainda sem ciclos registrados.</p>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Nenhum ciclo com risco no período.</p>
         ) : (
           <div className="overflow-x-auto -mx-1">
             <table className="w-full" style={{ fontSize: 12.5, borderCollapse: 'collapse' }}>
@@ -61,7 +61,7 @@ function RiscoPorTrecho({ dias }: { dias: number }) {
                 <tr style={{ color: 'var(--text-muted)', fontSize: 11.5, textAlign: 'right' }}>
                   <th className="px-1 py-1.5 font-semibold" style={{ textAlign: 'left' }}>Subprefeitura</th>
                   <th className="px-1 py-1.5 font-semibold" title="Hexágonos da grade nesta área">Trechos</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Ciclos de coleta no período">Ciclos</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Ciclos em que a área ou algum hexágono saiu do risco baixo">Com risco</th>
                   <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área pelo cálculo atual">Atual</th>
                   <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área pelo meio-termo dos hexágonos">Meio-termo</th>
                   <th className="px-1 py-1.5 font-semibold" title="Ciclos em que os dois cálculos caíram em faixas diferentes">Discordam</th>

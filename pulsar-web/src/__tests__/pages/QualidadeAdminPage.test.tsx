@@ -125,10 +125,10 @@ describe('QualidadeAdminPage: risco por trecho (em teste)', () => {
     expect(within(secao).getByRole('row', { name: /Lapa/ })).toBeInTheDocument();
   });
 
-  it('sem ciclos gravados diz isso em vez de uma tabela vazia', () => {
+  it('sem ciclo com risco diz isso em vez de uma tabela vazia', () => {
     renderPage();
     const secao = screen.getByRole('region', { name: 'Risco por trecho (em teste)' });
-    expect(within(secao).getByText('Ainda sem ciclos registrados.')).toBeInTheDocument();
+    expect(within(secao).getByText('Nenhum ciclo com risco no período.')).toBeInTheDocument();
     expect(within(secao).queryByRole('table')).not.toBeInTheDocument();
   });
 

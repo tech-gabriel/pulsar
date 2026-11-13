@@ -24,17 +24,35 @@ public sealed class GradeCelulas : IGradeCelulas
 
     private readonly Dictionary<string, List<CelulaGrade>> _porArea;
 
-    public GradeCelulas()
+    public GradeCelulas(ILogger<GradeCelulas> logger)
+        : this(() => Assembly.GetExecutingAssembly().GetManifestResourceStream(Recurso), logger)
     {
-        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(Recurso)
-            ?? throw new InvalidOperationException($"Recurso da grade não encontrado: {Recurso}");
-        var arquivo = JsonSerializer.Deserialize<Arquivo>(stream, Opcoes)
-            ?? throw new InvalidOperationException("Arquivo da grade vazio.");
-        _porArea = arquivo.Celulas.GroupBy(c => c.Sub).ToDictionary(g => g.Key, g => g.ToList());
+    }
+
+    /// <summary>
+    /// Arquivo ausente ou inválido vira grade vazia e um erro no log, nunca exceção: o ciclo
+    /// de coleta depende deste serviço para ser construído, e o risco por célula ainda é só
+    /// conferência. Uma falha aqui não pode custar a coleta e o score. O teste que carrega
+    /// o arquivo real é quem impede um arquivo quebrado de chegar à produção.
+    /// </summary>
+    public GradeCelulas(Func<Stream?> abrir, ILogger logger)
+    {
+        try
+        {
+            using var stream = abrir() ?? throw new InvalidOperationException($"Recurso da grade não encontrado: {Recurso}");
+            var celulas = JsonSerializer.Deserialize<Arquivo>(stream, Opcoes)?.Celulas
+                ?? throw new InvalidOperationException("Arquivo da grade sem células.");
+            _porArea = celulas.GroupBy(c => c.Sub).ToDictionary(g => g.Key, g => g.ToList());
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Grade de células não carregou; o risco por trecho fica desligado.");
+            _porArea = [];
+        }
     }
 
     public IReadOnlyList<CelulaGrade> DaArea(string nomeSubprefeitura)
         => _porArea.TryGetValue(nomeSubprefeitura, out var celulas) ? celulas : [];
 
-    private sealed record Arquivo(List<CelulaGrade> Celulas);
+    private sealed record Arquivo(List<CelulaGrade>? Celulas);
 }

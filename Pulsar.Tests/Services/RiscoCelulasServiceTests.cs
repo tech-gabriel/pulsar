@@ -14,13 +14,24 @@ public class RiscoCelulasServiceTests : IDisposable
     private readonly SqliteConnection _conn = new("Data Source=:memory:");
     private readonly PulsarDbContext _ctx;
     private readonly Subprefeitura _sub;
+    private readonly FalhaAoSalvar _falha = new();
+
+    private sealed class FalhaAoSalvar : Microsoft.EntityFrameworkCore.Diagnostics.SaveChangesInterceptor
+    {
+        public bool Ligada { get; set; }
+
+        public override ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int>> SavingChangesAsync(
+            Microsoft.EntityFrameworkCore.Diagnostics.DbContextEventData dados,
+            Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int> resultado, CancellationToken ct = default)
+            => Ligada ? throw new DbUpdateException("boom") : base.SavingChangesAsync(dados, resultado, ct);
+    }
 
     public RiscoCelulasServiceTests()
     {
         _conn.Open();
-        _ctx = new PulsarDbContext(new DbContextOptionsBuilder<PulsarDbContext>().UseSqlite(_conn).Options);
+        _ctx = new PulsarDbContext(new DbContextOptionsBuilder<PulsarDbContext>().UseSqlite(_conn).AddInterceptors(_falha).Options);
         _ctx.Database.EnsureCreated();
-        _sub = _ctx.Subprefeituras.First(s => s.Nome == "Itaquera"); // fator 1,0 na calibração
+        _sub = _ctx.Subprefeituras.First(s => s.Nome == "Campo Limpo"); // fator 1,15: diferente do das células falsas, para ValorArea não se confundir com elas
     }
 
     public void Dispose()
@@ -32,7 +43,7 @@ public class RiscoCelulasServiceTests : IDisposable
     private sealed class GradeFalsa(params double[] fatores) : IGradeCelulas
     {
         public IReadOnlyList<CelulaGrade> DaArea(string nome)
-            => nome == "Itaquera"
+            => nome == "Campo Limpo"
                 ? fatores.Select((f, i) => new CelulaGrade($"c{i}", -23.5, -46.4, nome, f)).ToList()
                 : [];
     }
@@ -74,7 +85,7 @@ public class RiscoCelulasServiceTests : IDisposable
     public async Task Registrar_ComChuva_MeioTermoEhAMediaDoQuartoMaisAlto()
     {
         var leituras = await SemearLeiturasAsync(17.5 / 3); // 17,5 mm em 3 h
-        var entrada = ScoreService.MontarEntrada("Itaquera", leituras);
+        var entrada = ScoreService.MontarEntrada("Campo Limpo", leituras);
         double Celula(double fator) => CalculadoraScore.Calcular(entrada, CalibracaoScore.Atual, fator).Alagamento.Valor;
 
         var r = await Servico(1, 1, 1, 1.25).RegistrarAsync(_sub.Id);
@@ -95,7 +106,7 @@ public class RiscoCelulasServiceTests : IDisposable
     public async Task Registrar_OitoCelulas_MeioTermoUsaAsDuasMaiores()
     {
         var leituras = await SemearLeiturasAsync(17.5 / 3);
-        var entrada = ScoreService.MontarEntrada("Itaquera", leituras);
+        var entrada = ScoreService.MontarEntrada("Campo Limpo", leituras);
         double Celula(double fator) => CalculadoraScore.Calcular(entrada, CalibracaoScore.Atual, fator).Alagamento.Valor;
 
         var r = await Servico(1, 1, 1, 1, 1, 1, 1.1, 1.25).RegistrarAsync(_sub.Id);
@@ -160,7 +171,7 @@ public class RiscoCelulasServiceTests : IDisposable
         var linhas = await Servico(1).ResumirAsync(7);
 
         var l = linhas.Should().ContainSingle().Subject;
-        l.Subprefeitura.Should().Be("Itaquera");
+        l.Subprefeitura.Should().Be("Campo Limpo");
         l.Celulas.Should().Be(75);
         l.Ciclos.Should().Be(3);
         l.MaxValorArea.Should().Be(40);
@@ -192,6 +203,36 @@ public class RiscoCelulasServiceTests : IDisposable
 
         var linhas = await Servico(1).ResumirAsync(7);
 
-        linhas.Select(l => l.Subprefeitura).Should().Equal("Mooca", "Itaquera");
+        linhas.Select(l => l.Subprefeitura).Should().Equal("Mooca", "Campo Limpo");
+    }
+
+    // O serviço divide o DbContext do ciclo com score, agregado e previsão. Um resumo que
+    // falhou ao gravar não pode ficar preso no contexto: o próximo SaveChanges o regravaria
+    // e falharia junto, e a parte invisível derrubaria a visível.
+    [Fact]
+    public async Task Registrar_FalhaAoGravar_NaoDeixaOResumoPresoNoContexto()
+    {
+        await SemearLeiturasAsync(5);
+        _falha.Ligada = true;
+
+        await FluentActions.Awaiting(() => Servico(1, 1).RegistrarAsync(_sub.Id)).Should().ThrowAsync<DbUpdateException>();
+
+        _falha.Ligada = false;
+        _ctx.ChangeTracker.Entries<ResumoCelulas>().Should().BeEmpty();
+        await _ctx.SaveChangesAsync();
+        (await _ctx.ResumosCelulas.CountAsync()).Should().Be(0);
+    }
+
+    // Coleta que falhou não traz leitura nova: gravar de novo o mesmo retrato inflaria a
+    // contagem de ciclos da tela de conferência.
+    [Fact]
+    public async Task Registrar_SemLeituraNova_NaoDuplica()
+    {
+        await SemearLeiturasAsync(5);
+
+        (await Servico(1, 1).RegistrarAsync(_sub.Id)).Should().NotBeNull();
+        (await Servico(1, 1).RegistrarAsync(_sub.Id)).Should().BeNull();
+
+        (await _ctx.ResumosCelulas.CountAsync()).Should().Be(1);
     }
 }

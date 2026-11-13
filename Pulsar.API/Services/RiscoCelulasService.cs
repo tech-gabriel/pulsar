@@ -56,8 +56,23 @@ public class RiscoCelulasService : IRiscoCelulasService
             CelulasModerado = valores.Count(v => v.Faixa == FaixaRisco.MODERADO),
             CelulasAlto = valores.Count(v => v.Faixa == FaixaRisco.ALTO),
         };
+        // Sem leitura nova (a coleta da área falhou neste ciclo), o retrato seria igual ao
+        // anterior: gravar de novo só inflaria a contagem de ciclos da conferência.
+        if (await _db.ResumosCelulas.AnyAsync(r => r.SubprefeituraId == subprefeituraId && r.Timestamp == resumo.Timestamp, ct))
+            return null;
+
         _db.ResumosCelulas.Add(resumo);
-        await _db.SaveChangesAsync(ct);
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            // Este contexto é o do ciclo inteiro. Um resumo preso como "a inserir" faria o
+            // próximo SaveChanges (agregado, previsão, score da área seguinte) falhar junto.
+            _db.Entry(resumo).State = EntityState.Detached;
+            throw;
+        }
         return resumo;
     }
 

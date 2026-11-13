@@ -74,6 +74,10 @@ namespace Pulsar.API.Migrations
                 column: "CidadeId",
                 value: new Guid("30000000-0000-0000-0000-000000000001"));
 
+            // Qualquer região fora das cinco do seed (criada à mão no banco) ficaria com
+            // CidadeId vazio e a chave estrangeira abaixo derrubaria a migração na subida.
+            migrationBuilder.Sql("UPDATE \"Regioes\" SET \"CidadeId\" = '30000000-0000-0000-0000-000000000001'");
+
             migrationBuilder.CreateIndex(
                 name: "IX_Regioes_CidadeId",
                 table: "Regioes",

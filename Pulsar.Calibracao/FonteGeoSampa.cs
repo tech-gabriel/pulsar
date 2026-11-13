@@ -2,6 +2,8 @@ using System.Text.Json;
 
 namespace Pulsar.Calibracao;
 
+public record OcorrenciaPonto(double Lat, double Lon, DateOnly Dia);
+
 /// <summary>Ocorrências de alagamento e inundação da Defesa Civil (WFS público do GeoSampa).</summary>
 public static class FonteGeoSampa
 {
@@ -17,16 +19,7 @@ public static class FonteGeoSampa
 
         foreach (var camada in Camadas)
         {
-            var arq = Path.Combine(dirCache, $"geosampa-{camada.Split(':')[1]}.json");
-            string json;
-            if (File.Exists(arq)) json = await File.ReadAllTextAsync(arq);
-            else
-            {
-                json = await http.GetStringAsync($"{Wfs}?service=WFS&version=2.0.0&request=GetFeature"
-                    + $"&typeNames={camada}&outputFormat=application/json&srsName=urn:ogc:def:crs:EPSG::4326");
-                Directory.CreateDirectory(dirCache);
-                await File.WriteAllTextAsync(arq, json);
-            }
+            var json = await JsonDaCamadaAsync(http, dirCache, camada);
 
             using var doc = JsonDocument.Parse(json);
             foreach (var f in doc.RootElement.GetProperty("features").EnumerateArray())
@@ -42,5 +35,42 @@ public static class FonteGeoSampa
             }
         }
         return dias;
+    }
+
+    /// <summary>As mesmas ocorrências, com o ponto de cada uma. É o que a grade usa para o fator por célula.</summary>
+    public static async Task<List<OcorrenciaPonto>> PontosAsync(HttpClient http, string dirCache)
+    {
+        var pontos = new List<OcorrenciaPonto>();
+        foreach (var camada in Camadas)
+            pontos.AddRange(Pontos(await JsonDaCamadaAsync(http, dirCache, camada)));
+        return pontos;
+    }
+
+    /// <summary>Feição sem geometria ou sem data é pulada: não há onde ou quando contá-la.</summary>
+    public static List<OcorrenciaPonto> Pontos(string json)
+    {
+        var pontos = new List<OcorrenciaPonto>();
+        using var doc = JsonDocument.Parse(json);
+        foreach (var f in doc.RootElement.GetProperty("features").EnumerateArray())
+        {
+            var geo = f.GetProperty("geometry");
+            var data = f.GetProperty("properties").GetProperty("dt_ocorrencia").GetString() ?? "";
+            if (geo.ValueKind != JsonValueKind.Object || data.Length < 10) continue;
+            var xy = geo.GetProperty("coordinates");
+            pontos.Add(new OcorrenciaPonto(xy[1].GetDouble(), xy[0].GetDouble(), DateOnly.ParseExact(data[..10], "yyyy-MM-dd")));
+        }
+        return pontos;
+    }
+
+    private static async Task<string> JsonDaCamadaAsync(HttpClient http, string dirCache, string camada)
+    {
+        var arq = Path.Combine(dirCache, $"geosampa-{camada.Split(':')[1]}.json");
+        if (File.Exists(arq)) return await File.ReadAllTextAsync(arq);
+
+        var json = await http.GetStringAsync($"{Wfs}?service=WFS&version=2.0.0&request=GetFeature"
+            + $"&typeNames={camada}&outputFormat=application/json&srsName=urn:ogc:def:crs:EPSG::4326");
+        Directory.CreateDirectory(dirCache);
+        await File.WriteAllTextAsync(arq, json);
+        return json;
     }
 }

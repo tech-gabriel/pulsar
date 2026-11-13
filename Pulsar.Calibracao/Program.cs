@@ -10,9 +10,19 @@ internal static class Principal
     public static async Task Main(string[] args)
     {
         // Uso: dotnet run --project Pulsar.Calibracao [-- 2026-01-01 2026-08-31]
+        //      dotnet run --project Pulsar.Calibracao -- grade [2026-01-01 2026-08-31]
+        var modoGrade = args.Length > 0 && args[0] == "grade";
+        if (modoGrade) args = args[1..];
         var de = args.Length > 0 ? DateOnly.Parse(args[0]) : new DateOnly(2026, 1, 1);
         var ate = args.Length > 1 ? DateOnly.Parse(args[1]) : new DateOnly(2026, 8, 31);
         var raiz = AppContext.BaseDirectory.Split("bin")[0];
+        if (modoGrade)
+        {
+            using var httpGrade = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+            httpGrade.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar-Calibracao/1.0 (app-pulsar.com.br)");
+            await GeracaoGrade.ExecutarAsync(httpGrade, raiz, de, ate);
+            return;
+        }
         var cache = Path.Combine(raiz, "cache");
         var saida = Path.Combine(raiz, "saida");
 

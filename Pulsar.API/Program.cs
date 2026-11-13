@@ -267,6 +267,8 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ISistemaService, SistemaService>();
 builder.Services.AddScoped<IQualidadeDadosService, QualidadeDadosService>();
 builder.Services.AddScoped<IColetaRunner, ColetaRunner>();
+builder.Services.AddSingleton<Pulsar.API.Domain.Score.IGradeCelulas, Pulsar.API.Domain.Score.GradeCelulas>();
+builder.Services.AddScoped<IRiscoCelulasService, RiscoCelulasService>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IEmailVerificacaoService, EmailVerificacaoService>();
 builder.Services.AddScoped<IClimateService, ClimateService>();

@@ -796,6 +796,51 @@ namespace Pulsar.API.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.ResumoCelulas", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Celulas")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CelulasAlto")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CelulasModerado")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FaixaMeioTermo")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("ValorArea")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorMaximo")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorMeioTermo")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("SubprefeituraId", "Timestamp");
+
+                    b.ToTable("ResumosCelulas");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.ScorePerigo", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1788,6 +1833,17 @@ namespace Pulsar.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Cidade");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.ResumoCelulas", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subprefeitura");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.ScorePerigo", b =>

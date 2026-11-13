@@ -31,6 +31,7 @@ public class PulsarDbContext : DbContext
     public DbSet<PrevisaoClimatica> PrevisoesClimaticas => Set<PrevisaoClimatica>();
     public DbSet<NotificacaoEnviada> NotificacoesEnviadas => Set<NotificacaoEnviada>();
     public DbSet<LocalSalvo> LocaisSalvos => Set<LocalSalvo>();
+    public DbSet<ResumoCelulas> ResumosCelulas => Set<ResumoCelulas>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -203,6 +204,18 @@ public class PulsarDbContext : DbContext
             e.HasOne(a => a.Subprefeitura)
              .WithMany()
              .HasForeignKey(a => a.SubprefeituraId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ResumoCelulas>(e =>
+        {
+            e.HasKey(r => r.Id);
+            // A tela de conferência lê por área e janela de tempo; a poda varre por tempo.
+            e.HasIndex(r => new { r.SubprefeituraId, r.Timestamp });
+            e.HasIndex(r => r.Timestamp);
+            e.HasOne(r => r.Subprefeitura)
+             .WithMany()
+             .HasForeignKey(r => r.SubprefeituraId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 

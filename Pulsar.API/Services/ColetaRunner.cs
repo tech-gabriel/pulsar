@@ -26,6 +26,7 @@ public class ColetaRunner : IColetaRunner
     private readonly ICemadenService _cemaden;
     private readonly IMotorNotificacoes _motor;
     private readonly IAvisoRotaService _avisoRota;
+    private readonly IRiscoCelulasService _riscoCelulas;
     private readonly PulsarDbContext _db;
     private readonly ILogger<ColetaRunner> _logger;
 
@@ -39,6 +40,7 @@ public class ColetaRunner : IColetaRunner
         ICemadenService cemaden,
         IMotorNotificacoes motor,
         IAvisoRotaService avisoRota,
+        IRiscoCelulasService riscoCelulas,
         PulsarDbContext db,
         ILogger<ColetaRunner> logger)
     {
@@ -51,6 +53,7 @@ public class ColetaRunner : IColetaRunner
         _cemaden = cemaden;
         _motor = motor;
         _avisoRota = avisoRota;
+        _riscoCelulas = riscoCelulas;
         _db = db;
         _logger = logger;
     }
@@ -109,6 +112,18 @@ public class ColetaRunner : IColetaRunner
                 _logger.LogWarning(ex, "Falha ao calcular score da subprefeitura {Nome}.", sub.Nome);
             }
 
+            // Risco por célula da grade, ainda só para conferência (ninguém lê na tela nem no
+            // push). try/catch próprio: uma falha aqui não pode custar o score, o agregado
+            // nem a previsão da área.
+            try
+            {
+                await _riscoCelulas.RegistrarAsync(sub.Id, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Falha ao calcular o risco por célula de {Nome}.", sub.Nome);
+            }
+
             // try/catch próprio: o agregado é o dado que sobrevive, mas uma falha nele
             // não pode derrubar o ciclo nem descartar o score que acabou de ser gravado.
             try
@@ -131,6 +146,15 @@ public class ColetaRunner : IColetaRunner
             {
                 _logger.LogWarning(ex, "Falha ao atualizar previsão de {Nome}.", sub.Nome);
             }
+        }
+
+        try
+        {
+            await _riscoCelulas.PodarAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao podar os resumos do risco por célula.");
         }
 
         var pushEnviados = await AvaliarNotificacoesAsync(ct);

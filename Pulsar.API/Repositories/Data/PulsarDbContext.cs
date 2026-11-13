@@ -211,7 +211,8 @@ public class PulsarDbContext : DbContext
         {
             e.HasKey(r => r.Id);
             // A tela de conferência lê por área e janela de tempo; a poda varre por tempo.
-            e.HasIndex(r => new { r.SubprefeituraId, r.Timestamp });
+            // Único: um retrato por área e leitura, mesmo que a checagem do serviço falhe.
+            e.HasIndex(r => new { r.SubprefeituraId, r.Timestamp }).IsUnique();
             e.HasIndex(r => r.Timestamp);
             e.HasOne(r => r.Subprefeitura)
              .WithMany()

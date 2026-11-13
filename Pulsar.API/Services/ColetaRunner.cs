@@ -17,6 +17,12 @@ namespace Pulsar.API.Services;
 /// </remarks>
 public class ColetaRunner : IColetaRunner
 {
+    // Um ciclo por vez no processo inteiro. O job de 15 minutos e a coleta forçada pelo
+    // admin gravam nas mesmas tabelas; juntos, um batia na chave do outro (agregado diário)
+    // e o erro contaminava o resto do ciclo. Estático porque o runner é criado por escopo.
+    // ponytail: trava de processo; com mais de uma instância da API, trocar por advisory lock do Postgres.
+    private static readonly SemaphoreSlim UmCicloPorVez = new(1, 1);
+
     private readonly IClimateService _climateService;
     private readonly IScoreService _scoreService;
     private readonly IAgregadoDiarioService _agregadoService;
@@ -60,6 +66,19 @@ public class ColetaRunner : IColetaRunner
 
     public async Task<ColetaResultado> ExecutarCicloAsync(CancellationToken ct = default)
     {
+        await UmCicloPorVez.WaitAsync(ct);
+        try
+        {
+            return await ExecutarAsync(ct);
+        }
+        finally
+        {
+            UmCicloPorVez.Release();
+        }
+    }
+
+    private async Task<ColetaResultado> ExecutarAsync(CancellationToken ct)
+    {
         _logger.LogInformation("Iniciando ciclo de coleta: {Hora}", DateTime.UtcNow);
 
         await _climateService.ColetarTodasAsync(ct);
@@ -99,12 +118,14 @@ public class ColetaRunner : IColetaRunner
 
         var subprefeituras = await _db.Subprefeituras.Where(s => s.Ativa).ToListAsync(ct);
         var scoresCalculados = 0;
+        var tempoCelulas = new System.Diagnostics.Stopwatch();
         foreach (var sub in subprefeituras)
         {
             if (ct.IsCancellationRequested) break;
+            Domain.Entities.ScorePerigo? score = null;
             try
             {
-                await _scoreService.CalcularEPersistirAsync(sub.Id, ct);
+                score = await _scoreService.CalcularEPersistirAsync(sub.Id, ct);
                 scoresCalculados++;
             }
             catch (Exception ex)
@@ -114,14 +135,19 @@ public class ColetaRunner : IColetaRunner
 
             // Risco por célula da grade, ainda só para conferência (ninguém lê na tela nem no
             // push). try/catch próprio: uma falha aqui não pode custar o score, o agregado
-            // nem a previsão da área.
-            try
+            // nem a previsão da área. Parte do score recém-gravado; sem ele não há o que calcular.
+            if (score is not null)
             {
-                await _riscoCelulas.RegistrarAsync(sub.Id, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Falha ao calcular o risco por célula de {Nome}.", sub.Nome);
+                tempoCelulas.Start();
+                try
+                {
+                    await _riscoCelulas.RegistrarAsync(sub, score, ct);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Falha ao calcular o risco por célula de {Nome}.", sub.Nome);
+                }
+                tempoCelulas.Stop();
             }
 
             // try/catch próprio: o agregado é o dado que sobrevive, mas uma falha nele
@@ -165,7 +191,8 @@ public class ColetaRunner : IColetaRunner
         // livro-caixa é a exceção da exceção e segue contando, porque lá o push comprovadamente
         // saiu. O número acompanha volume, não audita entrega.
         _logger.LogInformation(
-            "Ciclo de coleta concluído. Push enviados: pelo menos {Push}.", pushEnviados);
+            "Ciclo de coleta concluído. Push enviados: pelo menos {Push}. Risco por célula: {Ms} ms.",
+            pushEnviados, tempoCelulas.ElapsedMilliseconds);
 
         return new ColetaResultado(subprefeituras.Count, scoresCalculados, DateTime.UtcNow);
     }

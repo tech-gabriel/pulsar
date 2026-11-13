@@ -836,7 +836,8 @@ namespace Pulsar.API.Migrations
 
                     b.HasIndex("Timestamp");
 
-                    b.HasIndex("SubprefeituraId", "Timestamp");
+                    b.HasIndex("SubprefeituraId", "Timestamp")
+                        .IsUnique();
 
                     b.ToTable("ResumosCelulas");
                 });

@@ -10,8 +10,9 @@ namespace Pulsar.API.Services;
 
 public class RiscoCelulasService : IRiscoCelulasService
 {
-    // 3.072 linhas por dia (32 áreas × 96 ciclos). Dois meses cobrem uma boa amostra de
-    // dias de chuva para a comparação sem deixar a tabela crescer para sempre.
+    // Só há linha em ciclo com risco (área ou algum trecho fora do baixo): no pior dia
+    // seriam 3.072 (32 áreas × 96 ciclos), no ano típico uma fração pequena disso. Dois
+    // meses cobrem uma boa amostra de dias de chuva sem a tabela crescer para sempre.
     public const int RetencaoDias = 60;
 
     private readonly PulsarDbContext _db;
@@ -23,32 +24,43 @@ public class RiscoCelulasService : IRiscoCelulasService
         _grade = grade;
     }
 
-    public async Task<ResumoCelulas?> RegistrarAsync(Guid subprefeituraId, CancellationToken ct = default)
+    public async Task<ResumoCelulas?> RegistrarAsync(Subprefeitura sub, ScorePerigo score, CancellationToken ct = default)
     {
-        var nome = await _db.Subprefeituras.Where(s => s.Id == subprefeituraId).Select(s => s.Nome).FirstOrDefaultAsync(ct);
-        if (nome is null) return null;
+        // Sem chuva nas 48 h o alagamento é zero em qualquer trecho. É a maior parte do ano:
+        // sair aqui poupa a leitura do banco e 32 linhas de zeros a cada ciclo.
+        if (score.Chuva48hMm <= 0) return null;
 
-        var celulas = _grade.DaArea(nome);
+        var celulas = _grade.DaArea(sub.Nome);
         if (celulas.Count == 0) return null;
 
         // Mesma janela e mesma montagem do score da área: a chuva é a da área, só o fator muda.
         var desde = DateTime.UtcNow.AddHours(-ScoreService.JanelaHoras);
         var leituras = await _db.LeiturasClimaticas.AsNoTracking()
-            .Where(l => l.SubprefeituraId == subprefeituraId && l.Timestamp >= desde)
+            .Where(l => l.SubprefeituraId == sub.Id && l.Timestamp >= desde)
             .ToListAsync(ct);
         if (leituras.Count == 0) return null;
 
-        var entrada = ScoreService.MontarEntrada(nome, leituras);
+        var entrada = ScoreService.MontarEntrada(sub.Nome, leituras);
         var valores = celulas
             .Select(c => CalculadoraScore.Calcular(entrada, CalibracaoScore.Atual, c.Fator).Alagamento)
             .ToList();
-        var meioTermo = MeioTermo.Calcular(valores.Select(v => v.Valor).ToList());
 
+        // Área e todos os trechos em risco baixo: os dois cálculos concordam e não há o que
+        // conferir. A tela lê a ausência de linha como "concordaram em risco baixo".
+        if (ClassificacaoRisco.Faixa(score.ValorAlagamento) == FaixaRisco.BAIXO && valores.All(v => v.Faixa == FaixaRisco.BAIXO))
+            return null;
+
+        // Sem leitura nova (a coleta da área falhou neste ciclo), o retrato seria igual ao
+        // anterior. O índice único do banco é a rede de segurança desta checagem.
+        if (await _db.ResumosCelulas.AnyAsync(r => r.SubprefeituraId == sub.Id && r.Timestamp == score.Timestamp, ct))
+            return null;
+
+        var meioTermo = MeioTermo.Calcular(valores.Select(v => v.Valor).ToList());
         var resumo = new ResumoCelulas
         {
-            SubprefeituraId = subprefeituraId,
-            Timestamp = leituras.Max(l => l.Timestamp),
-            ValorArea = CalculadoraScore.Calcular(entrada).Alagamento.Valor,
+            SubprefeituraId = sub.Id,
+            Timestamp = score.Timestamp,
+            ValorArea = score.ValorAlagamento,
             ValorMeioTermo = meioTermo,
             FaixaMeioTermo = ClassificacaoRisco.Faixa(meioTermo),
             ValorMaximo = valores.Max(v => v.Valor),
@@ -56,11 +68,6 @@ public class RiscoCelulasService : IRiscoCelulasService
             CelulasModerado = valores.Count(v => v.Faixa == FaixaRisco.MODERADO),
             CelulasAlto = valores.Count(v => v.Faixa == FaixaRisco.ALTO),
         };
-        // Sem leitura nova (a coleta da área falhou neste ciclo), o retrato seria igual ao
-        // anterior: gravar de novo só inflaria a contagem de ciclos da conferência.
-        if (await _db.ResumosCelulas.AnyAsync(r => r.SubprefeituraId == subprefeituraId && r.Timestamp == resumo.Timestamp, ct))
-            return null;
-
         _db.ResumosCelulas.Add(resumo);
         try
         {
@@ -79,8 +86,8 @@ public class RiscoCelulasService : IRiscoCelulasService
     public async Task<IReadOnlyList<ResumoGradeAreaDto>> ResumirAsync(int dias, CancellationToken ct = default)
     {
         var desde = DateTime.UtcNow.AddDays(-Math.Clamp(dias, 1, RetencaoDias));
-        // Agrupa em memória: no máximo a retenção inteira (uns 180 mil registros pequenos), e
-        // a conta por faixa não tem tradução igual em Postgres e SQLite.
+        // Agrupa em memória: só existem linhas de ciclos com risco (poucos milhares na
+        // retenção inteira), e a conta por faixa não tem tradução igual em Postgres e SQLite.
         var linhas = await _db.ResumosCelulas.AsNoTracking()
             .Where(r => r.Timestamp >= desde)
             .Select(r => new { r.Subprefeitura.Nome, r.Celulas, r.ValorArea, r.ValorMeioTermo, r.FaixaMeioTermo, r.CelulasAlto })

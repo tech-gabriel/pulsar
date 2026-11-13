@@ -41,7 +41,8 @@ namespace Pulsar.API.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_ResumosCelulas_SubprefeituraId_Timestamp",
                 table: "ResumosCelulas",
-                columns: new[] { "SubprefeituraId", "Timestamp" });
+                columns: new[] { "SubprefeituraId", "Timestamp" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ResumosCelulas_Timestamp",

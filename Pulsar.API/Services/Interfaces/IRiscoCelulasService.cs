@@ -7,10 +7,12 @@ namespace Pulsar.API.Services.Interfaces;
 public interface IRiscoCelulasService
 {
     /// <summary>
-    /// Calcula as células da área com a chuva dela e grava o resumo do ciclo. Devolve
-    /// <c>null</c>, sem gravar, quando a área não tem leitura recente ou não tem células.
+    /// Calcula as células da área com a chuva dela, a partir do score que o ciclo acabou de
+    /// gravar, e guarda o resumo. Só grava quando há o que conferir: a área ou algum trecho
+    /// fora do risco baixo. Devolve <c>null</c>, sem gravar, em tempo seco, com tudo em risco
+    /// baixo, sem leitura recente, sem células ou quando o retrato daquela leitura já existe.
     /// </summary>
-    Task<ResumoCelulas?> RegistrarAsync(Guid subprefeituraId, CancellationToken ct = default);
+    Task<ResumoCelulas?> RegistrarAsync(Subprefeitura sub, ScorePerigo score, CancellationToken ct = default);
 
     /// <summary>Apaga os resumos mais antigos que a retenção. Devolve quantos apagou.</summary>
     Task<int> PodarAsync(CancellationToken ct = default);

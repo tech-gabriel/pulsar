@@ -595,8 +595,20 @@ namespace Pulsar.API.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 
+                    b.Property<double?>("DestinoLat")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("DestinoLon")
+                        .HasColumnType("double precision");
+
                     b.Property<DateTime>("ExpiraEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("OrigemLat")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("OrigemLon")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("SubprefeituraIds")
                         .IsRequired()

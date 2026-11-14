@@ -3,7 +3,8 @@ namespace Pulsar.API.Services.Interfaces;
 public interface IAvisoRotaService
 {
     /// <summary>Guarda o pedido da pessoa, trocando o anterior se houver.</summary>
-    Task RegistrarAsync(Guid usuarioId, IReadOnlyList<Guid> ids, string destino, DateTime agoraUtc, CancellationToken ct = default);
+    Task RegistrarAsync(Guid usuarioId, IReadOnlyList<Guid> ids, string destino, DateTime agoraUtc,
+        Pulsar.API.Services.Rota.CaminhoRota? caminho = null, CancellationToken ct = default);
 
     Task CancelarAsync(Guid usuarioId, CancellationToken ct = default);
 

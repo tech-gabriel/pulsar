@@ -16,6 +16,11 @@ public class PedidoAvisoRota
     /// <summary>Rótulo curto do destino, usado na copy do push.</summary>
     public string Destino { get; set; } = string.Empty;
 
+    /// <summary>Origem e destino do caminho, para reavaliar pelos trechos. Null em pedido antigo: vale a área.</summary>
+    public double? OrigemLat { get; set; }
+    public double? OrigemLon { get; set; }
+    public double? DestinoLat { get; set; }
+    public double? DestinoLon { get; set; }
     public DateTime CriadoEm { get; set; }
     public DateTime ExpiraEm { get; set; }
 }

@@ -313,4 +313,63 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
         using var json = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
         json.RootElement.GetProperty("horas").GetArrayLength().Should().Be(0);
     }
+
+    // ---------- Entrega 3b: origem e destino do caminho.
+
+    [Theory]
+    [InlineData(91.0, -46.6, -23.5, -46.6)]
+    [InlineData(-23.5, -181.0, -23.5, -46.6)]
+    [InlineData(-23.5, -46.6, -23.5, 200.0)]
+    public async Task Avaliar_PontoForaDoGlobo_400(double latO, double lonO, double latD, double lonD)
+    {
+        var ids = await IdsAsync(_factory, "Mooca");
+        var client = await LogadoAsync(_factory);
+        var req = new AvaliarRotaRequest(ids, new PontoRotaDto(latO, lonO), new PontoRotaDto(latD, lonD));
+
+        (await client.PostAsJsonAsync(Rota, req)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Avaliar_SoAOrigemSemODestino_400()
+    {
+        var ids = await IdsAsync(_factory, "Mooca");
+        var client = await LogadoAsync(_factory);
+
+        (await client.PostAsJsonAsync(Rota, new AvaliarRotaRequest(ids, new PontoRotaDto(-23.55, -46.6))))
+            .StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Avaliar_ComOrigemEDestino_200()
+    {
+        var ids = await IdsAsync(_factory, "Mooca");
+        var client = await LogadoAsync(_factory);
+        var req = new AvaliarRotaRequest(ids, new PontoRotaDto(-23.55, -46.602), new PontoRotaDto(-23.55, -46.598));
+
+        (await client.PostAsJsonAsync(Rota, req)).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task PedirAviso_ComOrigemEDestino_GuardaOCaminho()
+    {
+        var ids = await IdsAsync(_factory, "Mooca");
+        var client = await LogadoAsync(_factory);
+        var req = new PedirAvisoRotaRequest(ids, "Trecho 3b", new PontoRotaDto(-23.55, -46.602), new PontoRotaDto(-23.54, -46.598));
+
+        (await client.PostAsJsonAsync(Aviso, req)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = _factory.Services.CreateScope();
+        var pedido = await scope.ServiceProvider.GetRequiredService<PulsarDbContext>().PedidosAvisoRota.SingleAsync(p => p.Destino == "Trecho 3b");
+        (pedido.OrigemLat, pedido.OrigemLon, pedido.DestinoLat, pedido.DestinoLon).Should().Be((-23.55, -46.602, -23.54, -46.598));
+    }
+
+    [Fact]
+    public async Task PedirAviso_PontoForaDoGlobo_400()
+    {
+        var ids = await IdsAsync(_factory, "Mooca");
+        var client = await LogadoAsync(_factory);
+        var req = new PedirAvisoRotaRequest(ids, "Penha", new PontoRotaDto(95, -46.6), new PontoRotaDto(-23.54, -46.598));
+
+        (await client.PostAsJsonAsync(Aviso, req)).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
 }

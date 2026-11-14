@@ -63,4 +63,17 @@ public class GradeCelulasTests
 
         grade.DaArea("Mooca").Should().BeEmpty();
     }
+
+    // O trecho de um endereço é o hexágono onde ele cai: o de centro mais próximo.
+    [Fact]
+    public void MaisProxima_PontoPertoDoCentroDeUmaCelula_DevolveEla()
+    {
+        var alvo = Grade.DaArea("Mooca")[0];
+
+        Grade.MaisProxima(alvo.Lat + 0.001, alvo.Lon - 0.001)!.H3.Should().Be(alvo.H3);
+    }
+
+    [Fact]
+    public void MaisProxima_PontoForaDaCidade_Null()
+        => Grade.MaisProxima(-22.9, -43.2).Should().BeNull(); // Rio de Janeiro
 }

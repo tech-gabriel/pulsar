@@ -300,6 +300,7 @@ builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaMedidaPerto>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaComecou>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoBriefingDiario>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAtencao>();
+builder.Services.AddScoped<IAlagamentoLugar, AlagamentoLugar>();
 builder.Services.AddScoped<IMotorNotificacoes, MotorNotificacoes>();
 
 // --- Web Push (notificações) ---

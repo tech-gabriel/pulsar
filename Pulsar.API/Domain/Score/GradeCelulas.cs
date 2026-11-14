@@ -3,7 +3,11 @@ using System.Text.Json;
 
 namespace Pulsar.API.Domain.Score;
 
-/// <summary>Uma célula H3 da grade: o trecho, a área a que pertence e o fator de suscetibilidade dele.</summary>
+/// <summary>
+/// Uma célula H3 da grade: o trecho e a área a que pertence. <paramref name="Fator"/> resume o
+/// histórico de alagamento do trecho e fica guardado para uso futuro; NÃO entra no risco, que
+/// depende só da chuva do momento e do fator da área.
+/// </summary>
 public sealed record CelulaGrade(string H3, double Lat, double Lon, string Sub, double Fator);
 
 public interface IGradeCelulas

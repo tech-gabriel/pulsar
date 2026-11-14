@@ -67,6 +67,9 @@ public class RiscoCelulasServiceTests : IDisposable
         return new(_ctx, new GradeFalsa(fatores), _cemaden.Object, NullLogger<RiscoCelulasService>.Instance);
     }
 
+    /// <summary>mm/h que, mantidos por 3 h, tiram Campo Limpo do risco baixo (25 mm em 3 h).</summary>
+    private const double ChuvaForte = 25.0 / 3;
+
     // 12 leituras de 15 min nas últimas 3 h; mm = ChuvaMmH × 0,25.
     private async Task<List<LeituraClimatica>> SemearLeiturasAsync(double chuvaMmH)
     {
@@ -113,7 +116,7 @@ public class RiscoCelulasServiceTests : IDisposable
     {
         var leituras = await SemearLeiturasAsync(1); // 3 mm em 3 h
         var entrada = ScoreService.MontarEntrada("Campo Limpo", leituras);
-        CalculadoraScore.Calcular(entrada, CalibracaoScore.Atual, 1.25).Alagamento.Faixa.Should().Be(FaixaRisco.BAIXO); // a premissa do teste
+        CalculadoraScore.Calcular(entrada).Alagamento.Faixa.Should().Be(FaixaRisco.BAIXO); // a premissa do teste
 
         var r = await Servico(1, 1, 1, 1.25).RegistrarAsync(_sub, Score(leituras));
 
@@ -121,38 +124,25 @@ public class RiscoCelulasServiceTests : IDisposable
         (await _ctx.ResumosCelulas.CountAsync()).Should().Be(0);
     }
 
+    // O que separa um trecho do vizinho é a chuva medida ali, no momento. O histórico de
+    // alagamento do trecho (o fator da grade) não entra no risco: sem estação por perto,
+    // todo trecho vale o mesmo que a área.
     [Fact]
-    public async Task Registrar_ComChuva_MeioTermoEhAMediaDoQuartoMaisAlto()
+    public async Task Registrar_SemEstacao_HistoricoDoTrechoNaoMudaORisco()
     {
-        var leituras = await SemearLeiturasAsync(17.5 / 3); // 17,5 mm em 3 h
-        var entrada = ScoreService.MontarEntrada("Campo Limpo", leituras);
-        double Celula(double fator) => CalculadoraScore.Calcular(entrada, CalibracaoScore.Atual, fator).Alagamento.Valor;
+        var leituras = await SemearLeiturasAsync(ChuvaForte);
+        var area = CalculadoraScore.Calcular(ScoreService.MontarEntrada("Campo Limpo", leituras)).Alagamento;
+        area.Faixa.Should().NotBe(FaixaRisco.BAIXO); // a premissa do teste
 
         var r = await Servico(1, 1, 1, 1.25).RegistrarAsync(_sub, Score(leituras));
 
-        Celula(1.25).Should().BeGreaterThan(Celula(1)).And.BeGreaterThan(0); // a chuva do teste precisa separar as células
-        r!.ValorArea.Should().BeApproximately(CalculadoraScore.Calcular(entrada).Alagamento.Valor, 1e-9);
-        r.ValorMeioTermo.Should().BeApproximately(Celula(1.25), 1e-9); // ceil(4/4) = 1: só a maior
-        r.ValorMaximo.Should().BeApproximately(Celula(1.25), 1e-9);
-        r.FaixaMeioTermo.Should().Be(ClassificacaoRisco.Faixa(Celula(1.25)));
+        r!.ValorArea.Should().BeApproximately(area.Valor, 1e-9);
+        r.ValorMeioTermo.Should().BeApproximately(area.Valor, 1e-9);
+        r.ValorMaximo.Should().BeApproximately(area.Valor, 1e-9);
+        r.FaixaMeioTermo.Should().Be(area.Faixa);
         r.Celulas.Should().Be(4);
-        var faixas = new[] { 1, 1, 1, 1.25 }.Select(f => ClassificacaoRisco.Faixa(Celula(f))).ToList();
-        r.CelulasAlto.Should().Be(faixas.Count(f => f == FaixaRisco.ALTO));
-        r.CelulasModerado.Should().Be(faixas.Count(f => f == FaixaRisco.MODERADO));
+        (r.CelulasAlto + r.CelulasModerado).Should().Be(4);
         r.Timestamp.Should().Be(leituras.Max(l => l.Timestamp));
-    }
-
-    [Fact]
-    public async Task Registrar_OitoCelulas_MeioTermoUsaAsDuasMaiores()
-    {
-        var leituras = await SemearLeiturasAsync(17.5 / 3);
-        var entrada = ScoreService.MontarEntrada("Campo Limpo", leituras);
-        double Celula(double fator) => CalculadoraScore.Calcular(entrada, CalibracaoScore.Atual, fator).Alagamento.Valor;
-
-        var r = await Servico(1, 1, 1, 1, 1, 1, 1.1, 1.25).RegistrarAsync(_sub, Score(leituras));
-
-        r!.ValorMeioTermo.Should().BeApproximately((Celula(1.1) + Celula(1.25)) / 2, 1e-9);
-        r.ValorMaximo.Should().BeApproximately(Celula(1.25), 1e-9);
     }
 
     [Fact]
@@ -167,7 +157,7 @@ public class RiscoCelulasServiceTests : IDisposable
     [Fact]
     public async Task Registrar_AreaSemCelulas_NaoGravaENaoLanca()
     {
-        var leituras = await SemearLeiturasAsync(17.5 / 3);
+        var leituras = await SemearLeiturasAsync(ChuvaForte);
 
         var r = await Servico().RegistrarAsync(_sub, Score(leituras));
 
@@ -252,7 +242,7 @@ public class RiscoCelulasServiceTests : IDisposable
     [Fact]
     public async Task Registrar_FalhaAoGravar_NaoDeixaOResumoPresoNoContexto()
     {
-        var leituras = await SemearLeiturasAsync(17.5 / 3);
+        var leituras = await SemearLeiturasAsync(ChuvaForte);
         _falha.Ligada = true;
 
         await FluentActions.Awaiting(() => Servico(1, 1.25).RegistrarAsync(_sub, Score(leituras))).Should().ThrowAsync<DbUpdateException>();
@@ -268,7 +258,7 @@ public class RiscoCelulasServiceTests : IDisposable
     [Fact]
     public async Task Registrar_SemLeituraNova_NaoDuplica()
     {
-        var leituras = await SemearLeiturasAsync(17.5 / 3);
+        var leituras = await SemearLeiturasAsync(ChuvaForte);
 
         (await Servico(1, 1.25).RegistrarAsync(_sub, Score(leituras))).Should().NotBeNull();
         (await Servico(1, 1.25).RegistrarAsync(_sub, Score(leituras))).Should().BeNull();
@@ -278,10 +268,9 @@ public class RiscoCelulasServiceTests : IDisposable
 
     // ---------- Chuva medida (entrega 2) ----------
 
-    private static double Medido(EntradaScore modelo, EstacaoChuva e, double fator)
+    private static double Medido(EntradaScore modelo, EstacaoChuva e)
         => CalculadoraScore.Calcular(
-            modelo with { Chuva1hMm = e.Mm1h, Chuva3hMm = e.Mm3h, Chuva48hMm = e.Mm48h ?? modelo.Chuva48hMm },
-            CalibracaoScore.Atual, fator).Alagamento.Valor;
+            modelo with { Chuva1hMm = e.Mm1h, Chuva3hMm = e.Mm3h, Chuva48hMm = e.Mm48h ?? modelo.Chuva48hMm }).Alagamento.Valor;
 
     // O caso que justifica a entrega: o modelo não viu a chuva e a estação do trecho mediu.
     [Fact]
@@ -290,7 +279,7 @@ public class RiscoCelulasServiceTests : IDisposable
         var leituras = await SemearLeiturasAsync(0);
         var estacao = Estacao(km: 1, mm1h: 40, mm3h: 60, mm48h: 80);
         _estacoes.Add(estacao);
-        var esperado = Medido(ScoreService.MontarEntrada("Campo Limpo", leituras), estacao, 1.25);
+        var esperado = Medido(ScoreService.MontarEntrada("Campo Limpo", leituras), estacao);
         ClassificacaoRisco.Faixa(esperado).Should().Be(FaixaRisco.ALTO); // a premissa do teste
 
         var r = await Servico(1, 1, 1, 1.25).RegistrarAsync(_sub, Score(leituras));
@@ -310,7 +299,7 @@ public class RiscoCelulasServiceTests : IDisposable
     [Fact]
     public async Task Registrar_ModeloComChuvaEEstacaoSeca_MedidaZeraEMaiorMantem()
     {
-        var leituras = await SemearLeiturasAsync(17.5 / 3);
+        var leituras = await SemearLeiturasAsync(ChuvaForte);
         _estacoes.Add(Estacao(km: 1, mm1h: 0, mm3h: 0, mm48h: 0));
 
         var r = await Servico(1, 1, 1, 1.25).RegistrarAsync(_sub, Score(leituras));
@@ -320,14 +309,14 @@ public class RiscoCelulasServiceTests : IDisposable
         r.CelulasAltoMedida.Should().Be(0);
         r.ValorMeioTermoMaior.Should().BeApproximately(r.ValorMeioTermo, 1e-9);
         r.CelulasAltoMaior.Should().Be(r.CelulasAlto);
-        r.Chuva3hModeloMm.Should().BeApproximately(17.5, 1e-9);
+        r.Chuva3hModeloMm.Should().BeApproximately(ChuvaForte * 3, 1e-9);
         r.Chuva3hMedidaMm.Should().Be(0);
     }
 
     [Fact]
     public async Task Registrar_EstacaoLongeDoTrecho_FicaComOModelo()
     {
-        var leituras = await SemearLeiturasAsync(17.5 / 3);
+        var leituras = await SemearLeiturasAsync(ChuvaForte);
         _estacoes.Add(Estacao(km: RiscoCelulasService.RaioEstacaoKm + 1, mm1h: 40, mm3h: 60, mm48h: 80));
 
         var r = await Servico(1, 1, 1, 1.25).RegistrarAsync(_sub, Score(leituras));
@@ -341,20 +330,20 @@ public class RiscoCelulasServiceTests : IDisposable
     [Fact]
     public async Task Registrar_EstacaoSemAs48h_UsaASaturacaoDoModelo()
     {
-        var leituras = await SemearLeiturasAsync(17.5 / 3);
+        var leituras = await SemearLeiturasAsync(ChuvaForte);
         var estacao = Estacao(km: 1, mm1h: 25, mm3h: 45, mm48h: null);
         _estacoes.Add(estacao);
 
         var r = await Servico(1, 1, 1, 1.25).RegistrarAsync(_sub, Score(leituras));
 
-        r!.ValorMeioTermoMedida.Should().BeApproximately(Medido(ScoreService.MontarEntrada("Campo Limpo", leituras), estacao, 1.25), 1e-9);
+        r!.ValorMeioTermoMedida.Should().BeApproximately(Medido(ScoreService.MontarEntrada("Campo Limpo", leituras), estacao), 1e-9);
     }
 
     // A chuva medida é um complemento: o CEMADEN fora do ar não pode custar a conta do modelo.
     [Fact]
     public async Task Registrar_FalhaAoLerAsEstacoes_CalculaSoComOModelo()
     {
-        var leituras = await SemearLeiturasAsync(17.5 / 3);
+        var leituras = await SemearLeiturasAsync(ChuvaForte);
         _cemaden.Setup(c => c.ObterEstacoesComChuvaAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ThrowsAsync(new InvalidOperationException("boom"));
 
         var r = await Servico(1, 1, 1, 1.25).RegistrarAsync(_sub, Score(leituras));
@@ -377,7 +366,7 @@ public class RiscoCelulasServiceTests : IDisposable
     [Fact]
     public async Task Registrar_VariasAreasNoMesmoCiclo_LeAsEstacoesUmaVez()
     {
-        var leituras = await SemearLeiturasAsync(17.5 / 3);
+        var leituras = await SemearLeiturasAsync(ChuvaForte);
         var servico = Servico(1, 1.25);
 
         await servico.RegistrarAsync(_sub, Score(leituras));

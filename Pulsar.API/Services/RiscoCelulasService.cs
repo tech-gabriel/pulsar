@@ -76,19 +76,22 @@ public class RiscoCelulasService : IRiscoCelulasService
         if (leituras.Count == 0) return null;
 
         var entrada = ScoreService.MontarEntrada(sub.Nome, leituras);
-        ComponenteScore Alagamento(EntradaScore e, double fator) => CalculadoraScore.Calcular(e, CalibracaoScore.Atual, fator).Alagamento;
+        // O risco do trecho é a chuva do momento com o fator da área. O histórico de alagamento
+        // do trecho (CelulaGrade.Fator) fica guardado na grade e não entra na conta: o que
+        // separa um trecho do vizinho é a chuva medida ali.
+        ComponenteScore Alagamento(EntradaScore e) => CalculadoraScore.Calcular(e).Alagamento;
+        var modelo = Alagamento(entrada);
 
-        // Três contas por trecho. Modelo: a chuva da área (entrega 1). Medida: a estação
-        // substitui o modelo onde existe. Maior: vale a mais alta das duas. Trecho sem
-        // estação fica com o modelo nas três.
+        // Três contas por trecho. Modelo: a chuva da área. Medida: a estação substitui o
+        // modelo onde existe. Maior: vale a mais alta das duas. Trecho sem estação fica
+        // com o modelo nas três.
         var valores = new List<ComponenteScore>(celulas.Count);
         var comMedida = new List<ComponenteScore>(celulas.Count);
         var comMaior = new List<ComponenteScore>(celulas.Count);
         for (var i = 0; i < celulas.Count; i++)
         {
-            var modelo = Alagamento(entrada, celulas[i].Fator);
             var medida = medidas[i] is { } m
-                ? Alagamento(entrada with { Chuva1hMm = m.Mm1h, Chuva3hMm = m.Mm3h, Chuva48hMm = m.Mm48h ?? entrada.Chuva48hMm }, celulas[i].Fator)
+                ? Alagamento(entrada with { Chuva1hMm = m.Mm1h, Chuva3hMm = m.Mm3h, Chuva48hMm = m.Mm48h ?? entrada.Chuva48hMm })
                 : modelo;
             valores.Add(modelo);
             comMedida.Add(medida);

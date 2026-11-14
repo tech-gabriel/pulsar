@@ -22,7 +22,8 @@ public class AvisoRotaService : IAvisoRotaService
         _logger = logger;
     }
 
-    public async Task RegistrarAsync(Guid usuarioId, IReadOnlyList<Guid> ids, string destino, DateTime agoraUtc, CancellationToken ct = default)
+    public async Task RegistrarAsync(Guid usuarioId, IReadOnlyList<Guid> ids, string destino, DateTime agoraUtc,
+        CaminhoRota? caminho = null, CancellationToken ct = default)
     {
         await _db.PedidosAvisoRota.Where(p => p.UsuarioId == usuarioId).ExecuteDeleteAsync(ct);
         _db.PedidosAvisoRota.Add(new PedidoAvisoRota
@@ -30,6 +31,10 @@ public class AvisoRotaService : IAvisoRotaService
             UsuarioId = usuarioId,
             SubprefeituraIds = string.Join(',', ids),
             Destino = destino,
+            OrigemLat = caminho?.LatOrigem,
+            OrigemLon = caminho?.LonOrigem,
+            DestinoLat = caminho?.LatDestino,
+            DestinoLon = caminho?.LonDestino,
             CriadoEm = agoraUtc,
             ExpiraEm = agoraUtc.AddHours(LimiaresRota.ExpiracaoPedidoHoras),
         });
@@ -61,7 +66,11 @@ public class AvisoRotaService : IAvisoRotaService
                 }
 
                 var ids = pedido.SubprefeituraIds.Split(',').Select(Guid.Parse).ToList();
-                var estado = (await _rota.AvaliarAsync(ids, ct)).Estado;
+                // Pedido antigo (sem os pontos) é reavaliado pela área, como foi feito.
+                var caminho = pedido is { OrigemLat: { } latO, OrigemLon: { } lonO, DestinoLat: { } latD, DestinoLon: { } lonD }
+                    ? new CaminhoRota(latO, lonO, latD, lonD)
+                    : null;
+                var estado = (await _rota.AvaliarAsync(ids, caminho, ct)).Estado;
                 if (estado is EstadoRota.Esperar or EstadoRota.SemDado)
                     continue;
 

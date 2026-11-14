@@ -34,7 +34,7 @@ public class AvisoRotaServiceTests
         _push.SetupGet(p => p.Habilitado).Returns(pushHabilitado);
         _push.Setup(p => p.NotificarUsuarioAsync(It.IsAny<Guid>(), It.IsAny<CriterioOptIn>(), It.IsAny<PushPayload>(), It.IsAny<CancellationToken>()))
              .ReturnsAsync(1);
-        _rota.Setup(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), It.IsAny<CancellationToken>()))
+        _rota.Setup(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), It.IsAny<CaminhoRota?>(), It.IsAny<CancellationToken>()))
              .ReturnsAsync(new RotaAvaliacaoDto(estado, null, null, null, [], []));
         return new AvisoRotaService(ctx, _rota.Object, _push.Object, NullLogger<AvisoRotaService>.Instance);
     }
@@ -129,7 +129,7 @@ public class AvisoRotaServiceTests
         var enviados = await svc.AvaliarEDispararAsync(Agora.AddMinutes(15));
 
         enviados.Should().Be(0);
-        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), It.IsAny<CancellationToken>()), Times.Never);
+        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), It.IsAny<CaminhoRota?>(), It.IsAny<CancellationToken>()), Times.Never);
         (await ctx.PedidosAvisoRota.CountAsync()).Should().Be(1);
     }
 
@@ -256,5 +256,39 @@ public class AvisoRotaServiceTests
 
         _push.Verify(p => p.NotificarUsuarioAsync(usuario, CriterioOptIn.RiscoModerado, It.IsAny<PushPayload>(), It.IsAny<CancellationToken>()), Times.Never);
         _push.Verify(p => p.NotificarUsuarioAsync(usuario, CriterioOptIn.ResumoDiario, It.IsAny<PushPayload>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // Entrega 3b: o pedido guarda a origem e o destino, e a reavaliação lê os trechos do caminho.
+    [Fact]
+    public async Task AvaliarEDisparar_PedidoComCaminho_ReavaliaPelosTrechos()
+    {
+        using var conn = Abrir();
+        using var ctx = NovoContexto(conn);
+        var svc = Novo(ctx, EstadoRota.Esperar);
+        var usuario = Guid.NewGuid();
+        var caminho = new CaminhoRota(-23.55, -46.63, -23.54, -46.60);
+        ctx.AssinaturasPush.Add(new AssinaturaPush { UsuarioId = usuario, Endpoint = "https://push/caminho" });
+        await ctx.SaveChangesAsync();
+
+        await svc.RegistrarAsync(usuario, [Mooca], "Mooca", Agora, caminho);
+        await svc.AvaliarEDispararAsync(Agora.AddMinutes(15));
+
+        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), caminho, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AvaliarEDisparar_PedidoSemCaminho_ReavaliaPelaArea()
+    {
+        using var conn = Abrir();
+        using var ctx = NovoContexto(conn);
+        var svc = Novo(ctx, EstadoRota.Esperar);
+        var usuario = Guid.NewGuid();
+        ctx.AssinaturasPush.Add(new AssinaturaPush { UsuarioId = usuario, Endpoint = "https://push/area" });
+        await ctx.SaveChangesAsync();
+
+        await svc.RegistrarAsync(usuario, [Mooca], "Mooca", Agora);
+        await svc.AvaliarEDispararAsync(Agora.AddMinutes(15));
+
+        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), null, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

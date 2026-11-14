@@ -20,6 +20,9 @@ namespace Pulsar.API.Services.Notificacoes;
 ///
 /// MedidoMm30 e LocalMedicao carregam a chuva medida por posto do CGE-SP (AS7): quanto choveu em
 /// 30 minutos e em que subprefeitura fica o posto. O consolidador monta o texto com eles.
+///
+/// Celula é o trecho (índice H3) do aviso de alagamento no lugar: o consolidador entrega só a
+/// quem tem casa ou trabalho naquele trecho.
 /// </summary>
 public record NotificacaoPendente(
     string Gatilho,
@@ -33,4 +36,5 @@ public record NotificacaoPendente(
     TipoPerigo? Perigo = null,
     string? Intensidade = null,
     double? MedidoMm30 = null,
-    string? LocalMedicao = null);
+    string? LocalMedicao = null,
+    string? Celula = null);

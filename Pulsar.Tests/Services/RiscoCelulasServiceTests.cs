@@ -50,6 +50,8 @@ public class RiscoCelulasServiceTests : IDisposable
             => nome == "Campo Limpo"
                 ? fatores.Select((f, i) => new CelulaGrade($"c{i}", -23.5, -46.4, nome, f)).ToList()
                 : [];
+
+        public CelulaGrade? MaisProxima(double lat, double lon) => null;
     }
 
     // As células falsas ficam todas em (-23,5; -46,4). Sem estações, a conta é a da entrega 1.

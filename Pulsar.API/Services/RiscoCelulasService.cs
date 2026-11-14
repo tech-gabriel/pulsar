@@ -17,11 +17,7 @@ public class RiscoCelulasService : IRiscoCelulasService
     public const int RetencaoDias = 60;
 
     private readonly PulsarDbContext _db;
-    /// <summary>
-    /// Até onde uma estação ainda fala pelo trecho (do centro da célula). Metade do raio que a
-    /// tela usa para a área inteira: o trecho tem 900 m e a chuva de verão muda em poucos km.
-    /// </summary>
-    public const double RaioEstacaoKm = 5.0;
+    public const double RaioEstacaoKm = RiscoTrecho.RaioEstacaoKm;
 
     private readonly IGradeCelulas _grade;
     private readonly ICemadenService _cemaden;
@@ -87,9 +83,7 @@ public class RiscoCelulasService : IRiscoCelulasService
         for (var i = 0; i < celulas.Count; i++)
         {
             var modelo = Alagamento(entrada, celulas[i].Fator);
-            var medida = medidas[i] is { } m
-                ? Alagamento(entrada with { Chuva1hMm = m.Mm1h, Chuva3hMm = m.Mm3h, Chuva48hMm = m.Mm48h ?? entrada.Chuva48hMm }, celulas[i].Fator)
-                : modelo;
+            var medida = medidas[i] is { } m ? RiscoTrecho.ComChuvaMedida(entrada, m, celulas[i].Fator) : modelo;
             valores.Add(modelo);
             comMedida.Add(medida);
             comMaior.Add(medida.Valor > modelo.Valor ? medida : modelo);

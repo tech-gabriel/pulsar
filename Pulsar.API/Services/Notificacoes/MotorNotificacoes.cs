@@ -29,6 +29,7 @@ public class MotorNotificacoes : IMotorNotificacoes
     private readonly IPrevisaoService _previsaoService;
     private readonly IChuvaReferenciaClient _chuvaReferencia;
     private readonly IEstacaoCgeService _estacoesCge;
+    private readonly IAlagamentoLugar _alagamentoLugar;
     private readonly IPushNotificationService _push;
     private readonly IEnumerable<IGatilhoNotificacao> _gatilhos;
     private readonly ILogger<MotorNotificacoes> _logger;
@@ -39,6 +40,7 @@ public class MotorNotificacoes : IMotorNotificacoes
         IPrevisaoService previsaoService,
         IChuvaReferenciaClient chuvaReferencia,
         IEstacaoCgeService estacoesCge,
+        IAlagamentoLugar alagamentoLugar,
         IPushNotificationService push,
         IEnumerable<IGatilhoNotificacao> gatilhos,
         ILogger<MotorNotificacoes> logger)
@@ -48,6 +50,7 @@ public class MotorNotificacoes : IMotorNotificacoes
         _previsaoService = previsaoService;
         _chuvaReferencia = chuvaReferencia;
         _estacoesCge = estacoesCge;
+        _alagamentoLugar = alagamentoLugar;
         _push = push;
         _gatilhos = gatilhos;
         _logger = logger;
@@ -71,6 +74,7 @@ public class MotorNotificacoes : IMotorNotificacoes
         {
             var pendencias = await GerarPendenciasAsync(
                 destinatarios.SelectMany(d => d.Favoritas.Concat(d.LocaisOuVazio.Keys)).ToHashSet(), agora, ct);
+            pendencias.AddRange(await AlagamentoNosLugaresAsync(agora, ct));
 
             // Lista pela metade decide errado: o gatilho que não chegou a rodar pode ser o de
             // risco alto, e a pendência menor sairia por AUSÊNCIA da maior. Nada foi enviado
@@ -121,7 +125,7 @@ public class MotorNotificacoes : IMotorNotificacoes
             .ToListAsync(ct);
         var locais = await _db.LocaisSalvos
             .Where(l => l.Subprefeitura.Ativa)
-            .Select(l => new { l.UsuarioId, l.SubprefeituraId, l.Tipo, Fuso = l.Subprefeitura.Regiao.FusoHorario })
+            .Select(l => new { l.UsuarioId, l.SubprefeituraId, l.Tipo, l.Latitude, l.Longitude, Fuso = l.Subprefeitura.Regiao.FusoHorario })
             .ToListAsync(ct);
         if (favoritas.Count == 0 && locais.Count == 0) return [];
 
@@ -167,9 +171,50 @@ public class MotorNotificacoes : IMotorNotificacoes
                         .ToList(),
                 fuso,
                 lugares.GroupBy(l => l.SubprefeituraId)
+                       .ToDictionary(x => x.Key, x => (IReadOnlySet<Pulsar.API.Domain.Enums.TipoLocal>)x.Select(l => l.Tipo).ToHashSet()),
+                lugares.Select(l => (l.Tipo, Trecho: TrechoDe(l.Latitude, l.Longitude)))
+                       .Where(x => x.Trecho is not null)
+                       .GroupBy(x => x.Trecho!.H3)
                        .ToDictionary(x => x.Key, x => (IReadOnlySet<Pulsar.API.Domain.Enums.TipoLocal>)x.Select(l => l.Tipo).ToHashSet())));
         }
         return lista;
+    }
+
+    // Os trechos (hexágonos) dos lugares salvos vistos neste ciclo, pelo índice H3.
+    private readonly Dictionary<string, Pulsar.API.Domain.Score.CelulaGrade> _trechos = [];
+
+    /// <summary>O trecho de um endereço salvo; null fora da grade ou se a grade falhar.</summary>
+    private Pulsar.API.Domain.Score.CelulaGrade? TrechoDe(double lat, double lon)
+    {
+        try
+        {
+            var trecho = _alagamentoLugar.CelulaDe(lat, lon);
+            if (trecho is not null) _trechos[trecho.H3] = trecho;
+            return trecho;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao achar o trecho de um lugar salvo; ele fica sem o alerta do trecho neste ciclo.");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Alerta de alagamento nos trechos de casa e trabalho. É complemento dos avisos da área:
+    /// se falhar (CEMADEN fora do ar), o ciclo segue com os outros.
+    /// </summary>
+    private async Task<IReadOnlyList<NotificacaoPendente>> AlagamentoNosLugaresAsync(DateTime agora, CancellationToken ct)
+    {
+        if (_trechos.Count == 0) return [];
+        try
+        {
+            return await _alagamentoLugar.AvaliarAsync(_trechos.Values, agora, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Falha ao avaliar o alerta de alagamento nos lugares salvos.");
+            return [];
+        }
     }
 
     /// <summary>Etapa 1: roda os gatilhos em cada subprefeitura acompanhada por alguém.</summary>

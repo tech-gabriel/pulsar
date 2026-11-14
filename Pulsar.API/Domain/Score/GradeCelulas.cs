@@ -10,6 +10,12 @@ public interface IGradeCelulas
 {
     /// <summary>Células de uma área, pelo nome dela no banco. Área desconhecida devolve lista vazia.</summary>
     IReadOnlyList<CelulaGrade> DaArea(string nomeSubprefeitura);
+
+    /// <summary>
+    /// O trecho de um endereço: a célula com o centro mais perto do ponto. Null quando o
+    /// ponto está fora da grade (longe de qualquer célula).
+    /// </summary>
+    CelulaGrade? MaisProxima(double lat, double lon);
 }
 
 /// <summary>
@@ -53,6 +59,26 @@ public sealed class GradeCelulas : IGradeCelulas
 
     public IReadOnlyList<CelulaGrade> DaArea(string nomeSubprefeitura)
         => _porArea.TryGetValue(nomeSubprefeitura, out var celulas) ? celulas : [];
+
+    /// <summary>
+    /// Do centro ao canto de um hexágono de resolução 8 são uns 530 m. Além desta folga, o
+    /// ponto não está em trecho nenhum da grade.
+    /// </summary>
+    private const double AlcanceMetros = 700;
+
+    // ponytail: varre as 2.277 células por endereço (poucos lugares salvos por ciclo). Índice
+    // espacial quando a grade crescer para outras cidades ou os lugares passarem de milhares.
+    public CelulaGrade? MaisProxima(double lat, double lon)
+    {
+        CelulaGrade? melhor = null;
+        var menor = AlcanceMetros;
+        foreach (var c in _porArea.Values.SelectMany(v => v))
+        {
+            var metros = Pulsar.API.Services.GeoDistancia.HaversineMetros(lat, lon, c.Lat, c.Lon);
+            if (metros <= menor) (melhor, menor) = (c, metros);
+        }
+        return melhor;
+    }
 
     private sealed record Arquivo(List<CelulaGrade>? Celulas);
 }

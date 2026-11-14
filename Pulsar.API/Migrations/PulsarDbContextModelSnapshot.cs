@@ -180,6 +180,52 @@ namespace Pulsar.API.Migrations
                     b.ToTable("AssinaturasPush");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.Cidade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CodigoIbge")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Uf")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodigoIbge")
+                        .IsUnique();
+
+                    b.ToTable("Cidades");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("30000000-0000-0000-0000-000000000001"),
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3550308",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nome = "São Paulo",
+                            Uf = "SP"
+                        });
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.EstacaoCemaden", b =>
                 {
                     b.Property<string>("CodEstacao")
@@ -680,6 +726,9 @@ namespace Pulsar.API.Migrations
                     b.Property<DateTime>("AtualizadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("CidadeId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
@@ -695,6 +744,8 @@ namespace Pulsar.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CidadeId");
+
                     b.ToTable("Regioes");
 
                     b.HasData(
@@ -702,6 +753,7 @@ namespace Pulsar.API.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000001"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CidadeId = new Guid("30000000-0000-0000-0000-000000000001"),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             FusoHorario = "America/Sao_Paulo",
                             Nome = "Centro"
@@ -710,6 +762,7 @@ namespace Pulsar.API.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000002"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CidadeId = new Guid("30000000-0000-0000-0000-000000000001"),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             FusoHorario = "America/Sao_Paulo",
                             Nome = "Leste"
@@ -718,6 +771,7 @@ namespace Pulsar.API.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000003"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CidadeId = new Guid("30000000-0000-0000-0000-000000000001"),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             FusoHorario = "America/Sao_Paulo",
                             Nome = "Norte"
@@ -726,6 +780,7 @@ namespace Pulsar.API.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000004"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CidadeId = new Guid("30000000-0000-0000-0000-000000000001"),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             FusoHorario = "America/Sao_Paulo",
                             Nome = "Oeste"
@@ -734,10 +789,78 @@ namespace Pulsar.API.Migrations
                         {
                             Id = new Guid("10000000-0000-0000-0000-000000000005"),
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CidadeId = new Guid("30000000-0000-0000-0000-000000000001"),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             FusoHorario = "America/Sao_Paulo",
                             Nome = "Sul"
                         });
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.ResumoCelulas", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Celulas")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CelulasAlto")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CelulasAltoMaior")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CelulasAltoMedida")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CelulasComMedida")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CelulasModerado")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("Chuva3hMedidaMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Chuva3hModeloMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FaixaMeioTermo")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("ValorArea")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorMaximo")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorMeioTermo")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorMeioTermoMaior")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorMeioTermoMedida")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("SubprefeituraId", "Timestamp")
+                        .IsUnique();
+
+                    b.ToTable("ResumosCelulas");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.ScorePerigo", b =>
@@ -1723,6 +1846,28 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Subprefeitura");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.Regiao", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Cidade", "Cidade")
+                        .WithMany("Regioes")
+                        .HasForeignKey("CidadeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cidade");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.ResumoCelulas", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subprefeitura");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.ScorePerigo", b =>
                 {
                     b.HasOne("Pulsar.API.Domain.Entities.LeituraClimatica", "Leitura")
@@ -1792,6 +1937,11 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Subprefeitura");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.Cidade", b =>
+                {
+                    b.Navigation("Regioes");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Regiao", b =>

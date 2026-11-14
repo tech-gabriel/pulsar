@@ -9,7 +9,7 @@ public class ScoreService : IScoreService
 {
     // 48h e não 72h: a retenção das leituras é 72h, e a janela cheia na borda pegaria
     // um dia parcialmente apagado.
-    private const int JanelaHoras = 48;
+    public const int JanelaHoras = 48;
 
     private readonly ISubprefeituraRepository _subprefeituraRepo;
     private readonly ILeituraRepository _leituraRepo;

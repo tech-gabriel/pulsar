@@ -364,6 +364,31 @@ export interface QualidadeDadosDto {
   geoSampa: SincronizacaoFonteDto;
 }
 
+/**
+ * Risco por trecho, em teste (só admin): por área, o alagamento pelo cálculo atual
+ * comparado com o meio-termo das células da grade, numa janela de dias.
+ */
+export interface ResumoGradeAreaDto {
+  subprefeitura: string;
+  celulas: number;
+  ciclos: number;
+  maxValorArea: number;
+  maxMeioTermo: number;
+  ciclosAreaAlto: number;
+  ciclosMeioTermoAlto: number;
+  ciclosFaixaDiferente: number;
+  maxCelulasAlto: number;
+  /** Chuva medida (em conferência): trechos com estação por perto e as duas regras. */
+  maxCelulasComMedida: number;
+  maxChuva3hModeloMm: number;
+  /** Null = nenhum trecho da área com estação por perto no período. */
+  maxChuva3hMedidaMm: number | null;
+  maxMeioTermoMedida: number;
+  maxMeioTermoMaior: number;
+  ciclosMedidaAlto: number;
+  ciclosMaiorAlto: number;
+}
+
 /** Campos null = nenhuma execução gravada ainda. */
 export interface SincronizacaoFonteDto {
   ultimaTentativa: string | null;

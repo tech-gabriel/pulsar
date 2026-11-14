@@ -7,6 +7,11 @@ public record Metricas(int DiasPrevistos, int DiasPrevistosCertos, int DiasOcorr
     public double Precisao => DiasPrevistos == 0 ? 0 : (double)DiasPrevistosCertos / DiasPrevistos;
     public double Cobertura => DiasOcorrencia == 0 ? 0 : (double)DiasOcorrenciaCobertos / DiasOcorrencia;
     public double F1 => Precisao + Cobertura == 0 ? 0 : 2 * Precisao * Cobertura / (Precisao + Cobertura);
+    /// <summary>Soma das contagens, para juntar as dobras de uma validação cruzada.</summary>
+    public static Metricas operator +(Metricas a, Metricas b) => new(
+        a.DiasPrevistos + b.DiasPrevistos, a.DiasPrevistosCertos + b.DiasPrevistosCertos,
+        a.DiasOcorrencia + b.DiasOcorrencia, a.DiasOcorrenciaCobertos + b.DiasOcorrenciaCobertos, a.DiasTotais + b.DiasTotais);
+
     public double PctDiasAlto => DiasTotais == 0 ? 0 : (double)DiasPrevistos / DiasTotais;
 }
 

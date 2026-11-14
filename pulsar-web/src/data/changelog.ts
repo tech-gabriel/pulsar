@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.33.1',
+    data: '2026-11-13',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Atualização dos dados mais estável',
+        descricao: 'A atualização automática dos dados e a atualização manual não se atrapalham mais quando rodam ao mesmo tempo.',
+      },
+    ],
+  },
+  {
     versao: '1.33.0',
     data: '2026-11-11',
     itens: [

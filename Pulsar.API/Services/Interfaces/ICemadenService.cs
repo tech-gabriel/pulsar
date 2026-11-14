@@ -1,3 +1,5 @@
+using Pulsar.API.Domain.Chuva;
+
 namespace Pulsar.API.Services.Interfaces;
 
 /// <summary>
@@ -24,4 +26,10 @@ public interface ICemadenService
     /// sem dado do CEMADEN agora.
     /// </summary>
     Task<IReadOnlyDictionary<Guid, ChuvaCemadenRegiao>> ObterPorSubprefeituraAsync(DateTime agoraUtc, CancellationToken ct = default);
+
+    /// <summary>
+    /// As estações com leitura atual e plausível, cada uma no seu endereço, para a conta por
+    /// trecho. Lista vazia = sem chuva medida agora (CEMADEN fora do ar, leituras velhas).
+    /// </summary>
+    Task<IReadOnlyList<EstacaoChuva>> ObterEstacoesComChuvaAsync(DateTime agoraUtc, CancellationToken ct = default);
 }

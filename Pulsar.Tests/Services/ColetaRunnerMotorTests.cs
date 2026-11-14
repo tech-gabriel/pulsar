@@ -37,6 +37,7 @@ public class ColetaRunnerMotorTests
             cemaden ?? Mock.Of<ICemadenService>(),
             motor,
             Mock.Of<IAvisoRotaService>(),
+            Mock.Of<IRiscoCelulasService>(),
             ctx,
             NullLogger<ColetaRunner>.Instance);
 

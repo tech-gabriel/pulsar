@@ -35,13 +35,20 @@ public static class CalculadoraScore
     public static ResultadoScore Calcular(EntradaScore e) => Calcular(e, CalibracaoScore.Atual);
 
     public static ResultadoScore Calcular(EntradaScore e, ParametrosScore p)
+        => Calcular(e, p, p.Fator(e.Subprefeitura));
+
+    /// <summary>
+    /// Mesma conta, com o fator de suscetibilidade informado em vez de buscado pelo nome
+    /// da área. É como o risco por célula da grade usa o fator do próprio trecho.
+    /// </summary>
+    public static ResultadoScore Calcular(EntradaScore e, ParametrosScore p, double fator)
     {
         var intensidade = Math.Max(
             Curva.Interpolar(p.Chuva1h, e.Chuva1hMm),
             Curva.Interpolar(p.Chuva3h, e.Chuva3hMm));
         // Solo encharcado só agrava chuva que está caindo: sem chuva agora, não há o que escoar.
         var saturacao = intensidade > 0 ? Curva.Interpolar(p.Saturacao48h, e.Chuva48hMm) : 0;
-        var alagamento = ComponenteScore.De((intensidade + saturacao) * p.Fator(e.Subprefeitura));
+        var alagamento = ComponenteScore.De((intensidade + saturacao) * fator);
         var vento = ComponenteScore.De(Curva.Interpolar(p.Vento, e.VentoKmH));
         var calor = ComponenteScore.De(Curva.Interpolar(p.Calor, e.SensacaoC));
 

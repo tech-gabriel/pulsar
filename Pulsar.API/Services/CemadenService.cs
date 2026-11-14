@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Pulsar.API.Domain.Chuva;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Repositories.Data;
@@ -138,13 +139,7 @@ public class CemadenService : ICemadenService
     {
         // ponytail: sem cache, relido a cada chamada (até uns 500 registros). Cache em memória
         // por ciclo quando a rota pública pesar ou entrar a segunda cidade.
-        var desde = agoraUtc.AddMinutes(-ValidadeMinutos);
-        var ate = agoraUtc.AddMinutes(FolgaRelogioMinutos);
-        var ultimas = (await _db.LeiturasEstacaoCemaden
-                .Where(l => l.DataHora >= desde && l.DataHora <= ate)
-                .ToListAsync(ct))
-            .GroupBy(l => l.CodEstacao)
-            .Select(g => g.MaxBy(l => l.DataHora)!)
+        var ultimas = (await UltimasLeiturasAsync(agoraUtc, ct))
             .Where(l => l.Acc1h is not null || l.Acc24h is not null)
             .ToDictionary(l => l.CodEstacao);
         if (ultimas.Count == 0) return new Dictionary<Guid, ChuvaCemadenRegiao>();
@@ -170,6 +165,33 @@ public class CemadenService : ICemadenService
                 h24.Leitura?.Acc24h, h24.Estacao?.Nome, Utc(h24.Leitura?.DataHora));
         }
         return resultado;
+    }
+
+    public async Task<IReadOnlyList<EstacaoChuva>> ObterEstacoesComChuvaAsync(DateTime agoraUtc, CancellationToken ct = default)
+    {
+        var ultimas = await UltimasLeiturasAsync(agoraUtc, ct);
+        if (ultimas.Count == 0) return [];
+
+        var cadastro = await _db.EstacoesCemaden.AsNoTracking().ToDictionaryAsync(e => e.CodEstacao, ct);
+        return ultimas
+            .Select(l => cadastro.TryGetValue(l.CodEstacao, out var e)
+                ? EstacaoChuva.Criar(e.CodEstacao, e.Latitude, e.Longitude, l.Acc1h, l.Acc3h, l.Acc48h)
+                : null)
+            .OfType<EstacaoChuva>()
+            .ToList();
+    }
+
+    /// <summary>A leitura mais recente de cada estação, entre as que ainda valem como atuais.</summary>
+    private async Task<List<LeituraEstacaoCemaden>> UltimasLeiturasAsync(DateTime agoraUtc, CancellationToken ct)
+    {
+        var desde = agoraUtc.AddMinutes(-ValidadeMinutos);
+        var ate = agoraUtc.AddMinutes(FolgaRelogioMinutos);
+        return (await _db.LeiturasEstacaoCemaden.AsNoTracking()
+                .Where(l => l.DataHora >= desde && l.DataHora <= ate)
+                .ToListAsync(ct))
+            .GroupBy(l => l.CodEstacao)
+            .Select(g => g.MaxBy(l => l.DataHora)!)
+            .ToList();
     }
 
     private static DateTime? Utc(DateTime? d) => d is { } v ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : null;

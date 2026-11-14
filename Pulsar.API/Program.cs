@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Score;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -267,6 +268,8 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ISistemaService, SistemaService>();
 builder.Services.AddScoped<IQualidadeDadosService, QualidadeDadosService>();
 builder.Services.AddScoped<IColetaRunner, ColetaRunner>();
+builder.Services.AddSingleton<IGradeCelulas, GradeCelulas>();
+builder.Services.AddScoped<IRiscoCelulasService, RiscoCelulasService>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IEmailVerificacaoService, EmailVerificacaoService>();
 builder.Services.AddScoped<IClimateService, ClimateService>();

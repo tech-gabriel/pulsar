@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.33.1',
+    data: '2026-11-13',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Atualização dos dados mais estável',
+        descricao: 'Quando duas atualizações de clima rodavam ao mesmo tempo, uma atrapalhava a outra e algumas regiões ficavam sem o dado mais recente até a rodada seguinte. Agora uma espera a outra terminar.',
+      },
+    ],
+  },
+  {
     versao: '1.33.0',
     data: '2026-11-11',
     itens: [

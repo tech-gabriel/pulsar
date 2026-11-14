@@ -118,6 +118,8 @@ public class MotorNotificacoesTests
         return u.Id;
     }
 
+    private readonly Mock<IAlagamentoLugar> _lugarMock = new();
+
     private MotorNotificacoes NovoMotor(PulsarDbContext ctx, params IGatilhoNotificacao[] gatilhos)
     {
         _pushMock.SetupGet(p => p.Habilitado).Returns(true);
@@ -126,7 +128,7 @@ public class MotorNotificacoesTests
         _previsaoMock.Setup(p => p.ObterFaixasSubprefeituraAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                      .ReturnsAsync(Array.Empty<FaixaPrevisaoDto>());
         return new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object, Mock.Of<Pulsar.API.External.Interfaces.IChuvaReferenciaClient>(),
-            Mock.Of<IEstacaoCgeService>(), _pushMock.Object, gatilhos, _logger);
+            Mock.Of<IEstacaoCgeService>(), _lugarMock.Object, _pushMock.Object, gatilhos, _logger);
     }
 
     [Fact]
@@ -323,7 +325,7 @@ public class MotorNotificacoesTests
                   .ThrowsAsync(new HttpRequestException("fora do ar"));
         NovoMotor(ctx);
         var motor = new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object, referencia.Object,
-            Mock.Of<IEstacaoCgeService>(), _pushMock.Object, [new GatilhoPorSub("score-alto")], _logger);
+            Mock.Of<IEstacaoCgeService>(), _lugarMock.Object, _pushMock.Object, [new GatilhoPorSub("score-alto")], _logger);
 
         (await motor.AvaliarEDispararAsync()).Should().Be(1);
     }
@@ -358,7 +360,7 @@ public class MotorNotificacoesTests
                      pontos.Select(_ => (IReadOnlyDictionary<DateTime, double>)Enumerable.Range(-3, 7)
                          .ToDictionary(h => DateTime.UtcNow.Date.AddHours(DateTime.UtcNow.Hour + h), _ => 0.5)).ToList());
         return new MotorNotificacoes(ctx, new NotificacaoEnviadaRepository(ctx), _previsaoMock.Object, openMeteo.Object,
-            Mock.Of<IEstacaoCgeService>(), _pushMock.Object, [new GatilhoChuvaComecou()], _logger);
+            Mock.Of<IEstacaoCgeService>(), _lugarMock.Object, _pushMock.Object, [new GatilhoChuvaComecou()], _logger);
     }
 
     [Fact]
@@ -416,7 +418,7 @@ public class MotorNotificacoesTests
             Mock.Of<Pulsar.API.External.Interfaces.IChuvaReferenciaClient>(),
             estacoes ?? new EstacaoCgeService(ctx, Mock.Of<Pulsar.API.External.Interfaces.ICgeEstacaoClient>(),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<EstacaoCgeService>.Instance),
-            _pushMock.Object, gatilhos.Length > 0 ? gatilhos : [new GatilhoChuvaMedidaPerto()], _logger);
+            _lugarMock.Object, _pushMock.Object, gatilhos.Length > 0 ? gatilhos : [new GatilhoChuvaMedidaPerto()], _logger);
     }
 
     /// <summary>O posto da Sé (vizinha da Mooca) acumulando 18 mm na última meia hora.</summary>
@@ -470,5 +472,47 @@ public class MotorNotificacoesTests
                 .ThrowsAsync(new InvalidOperationException("banco"));
 
         (await MotorComChuvaMedida(ctx, estacoes.Object, new GatilhoPorSub("score-alto")).AvaliarEDispararAsync()).Should().Be(1);
+    }
+
+    // ── Alerta de alagamento no trecho da casa (entrega 3 da grade): ponta a ponta ──
+
+    [Fact]
+    public async Task AlagamentoLugar_CasaNoTrechoEmAlerta_RecebeMesmoSemFavorita()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var pessoa = await PessoaComAparelhoAsync(ctx, true); // nenhuma favorita
+        await CasaEmAsync(ctx, pessoa, Mooca);
+        var trecho = new Pulsar.API.Domain.Score.CelulaGrade("c1", -23.55, -46.6, "Mooca", 1);
+        _lugarMock.Setup(l => l.CelulaDe(-23.55, -46.6)).Returns(trecho);
+        _lugarMock.Setup(l => l.AvaliarAsync(It.Is<IReadOnlyCollection<Pulsar.API.Domain.Score.CelulaGrade>>(c => c.Single() == trecho), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                  .ReturnsAsync([new NotificacaoPendente(AlagamentoLugar.Nome, "lugar:c1:x", CriterioOptIn.RiscoAlto,
+                      new PushPayload("reserva", "Choveu 42 mm.", "/app", AlagamentoLugar.Nome),
+                      LimiaresNotificacao.PrioridadeScoreAlto, LimiaresNotificacao.CooldownScoreAlto, Mooca, "Mooca",
+                      Pulsar.API.Domain.Enums.TipoPerigo.ALAGAMENTO, Celula: "c1")]);
+
+        (await NovoMotor(ctx).AvaliarEDispararAsync()).Should().Be(1);
+
+        _pushMock.Verify(p => p.NotificarUsuarioAsync(pessoa, CriterioOptIn.RiscoAlto,
+            It.Is<PushPayload>(x => x.Titulo == "Alerta de alagamento perto da sua casa" && x.Corpo == "Choveu 42 mm." && x.Url == "/app?lugar=casa"),
+            It.IsAny<CancellationToken>()), Times.Once);
+        (await ctx.NotificacoesEnviadas.SingleAsync()).Gatilho.Should().Be(AlagamentoLugar.Nome);
+    }
+
+    // O aviso do lugar é um complemento: quebrado, não pode calar os avisos da área.
+    [Fact]
+    public async Task AlagamentoLugar_Falhando_NaoDerrubaOsAvisosDaArea()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var pessoa = await PessoaComAparelhoAsync(ctx, true, Mooca);
+        await CasaEmAsync(ctx, pessoa, Mooca);
+        _lugarMock.Setup(l => l.CelulaDe(It.IsAny<double>(), It.IsAny<double>())).Throws(new InvalidOperationException("grade"));
+        _lugarMock.Setup(l => l.AvaliarAsync(It.IsAny<IReadOnlyCollection<Pulsar.API.Domain.Score.CelulaGrade>>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                  .ThrowsAsync(new InvalidOperationException("cemaden"));
+
+        (await NovoMotor(ctx, new GatilhoPorSub("score-alto")).AvaliarEDispararAsync()).Should().Be(1);
     }
 }

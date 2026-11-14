@@ -558,4 +558,135 @@ public class ConsolidadorTests
 
         envio.Payload.Corpo.Should().Be("Chuva fraca no Butantã agora. O CGE mediu 2,4 mm em 30 minutos. Toque para ver como está por lá.");
     }
+
+    // ── Alerta de alagamento no trecho da casa ou do trabalho (entrega 3 da grade) ──
+
+    private static NotificacaoPendente Lugar(Guid sub, string celula, string corpo = "Choveu 42 mm nas últimas 3 horas, medidos a 1,2 km. Toque para ver no mapa.")
+        => new("alagamento-lugar", $"lugar:{celula}:x", CriterioOptIn.RiscoAlto,
+               new PushPayload("reserva", corpo, "/app", "alagamento-lugar"),
+               LimiaresNotificacao.PrioridadeScoreAlto, LimiaresNotificacao.CooldownScoreAlto, sub, "Mooca",
+               TipoPerigo.ALAGAMENTO, Celula: celula);
+
+    private static DestinatarioPush NoTrecho(Dictionary<string, TipoLocal[]> celulas, Guid[]? favoritas = null, params EnvioAnterior[] recentes)
+        => new(Guid.NewGuid(), (favoritas ?? []).ToHashSet(),
+               new HashSet<CriterioOptIn> { CriterioOptIn.RiscoAlto, CriterioOptIn.ChuvaLocais },
+               recentes, Sp, Celulas: celulas.ToDictionary(k => k.Key, v => (IReadOnlySet<TipoLocal>)v.Value.ToHashSet()));
+
+    [Fact]
+    public void AlagamentoLugar_CasaNoTrecho_RecebeComOTextoDaCasa()
+    {
+        var envio = Consolidador.Consolidar(NoTrecho(new() { ["c1"] = [TipoLocal.CASA] }), [Lugar(Mooca, "c1")], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Alerta de alagamento perto da sua casa");
+        envio.Payload.Corpo.Should().Be("Choveu 42 mm nas últimas 3 horas, medidos a 1,2 km. Toque para ver no mapa.");
+        envio.Payload.Url.Should().Be("/app?lugar=casa");
+        envio.Criterio.Should().Be(CriterioOptIn.RiscoAlto);
+    }
+
+    [Fact]
+    public void AlagamentoLugar_SoTrabalhoNoTrecho_FalaDoTrabalho()
+    {
+        var envio = Consolidador.Consolidar(NoTrecho(new() { ["c1"] = [TipoLocal.TRABALHO] }), [Lugar(Mooca, "c1")], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Alerta de alagamento perto do seu trabalho");
+        envio.Payload.Url.Should().Be("/app?lugar=trabalho");
+    }
+
+    [Fact]
+    public void AlagamentoLugar_CasaETrabalhoNoMesmoTrecho_UmAvisoSo()
+    {
+        var envio = Consolidador.Consolidar(NoTrecho(new() { ["c1"] = [TipoLocal.CASA, TipoLocal.TRABALHO] }), [Lugar(Mooca, "c1")], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Alerta de alagamento perto da sua casa e do trabalho");
+        envio.Incluidas.Should().ContainSingle();
+    }
+
+    // Um push, um fato: a medição perto da casa. O trabalho em outro trecho tem outra medição.
+    [Fact]
+    public void AlagamentoLugar_CasaETrabalhoEmTrechosDiferentes_FalaSoDaCasa()
+    {
+        var d = NoTrecho(new() { ["c1"] = [TipoLocal.TRABALHO], ["c2"] = [TipoLocal.CASA] });
+
+        var envio = Consolidador.Consolidar(d, [Lugar(Mooca, "c1", "do trabalho"), Lugar(Penha, "c2", "da casa")], Agora)!;
+
+        envio.Payload.Titulo.Should().Be("Alerta de alagamento perto da sua casa");
+        envio.Payload.Corpo.Should().Be("da casa");
+    }
+
+    // Seguir a área não basta: o aviso é do trecho de quem mora ou trabalha nele.
+    [Fact]
+    public void AlagamentoLugar_QuemSoAcompanhaAArea_NaoRecebe()
+        => Consolidador.Consolidar(D(favoritas: [Mooca]), [Lugar(Mooca, "c1")], Agora).Should().BeNull();
+
+    [Fact]
+    public void AlagamentoLugar_OutroTrecho_NaoRecebe()
+        => Consolidador.Consolidar(NoTrecho(new() { ["c9"] = [TipoLocal.CASA] }), [Lugar(Mooca, "c1")], Agora).Should().BeNull();
+
+    // Mesma área, mesmo ciclo: sai o aviso do trecho, que é o mais específico e é medido.
+    [Fact]
+    public void AlagamentoLugar_ComAlertaDaAreaNoMesmoCiclo_SaiODoLugar()
+    {
+        var d = NoTrecho(new() { ["c1"] = [TipoLocal.CASA] }, favoritas: [Mooca]);
+        var daArea = P(Mooca, "Mooca", perigo: TipoPerigo.ALAGAMENTO, cooldown: LimiaresNotificacao.CooldownScoreAlto);
+
+        var envio = Consolidador.Consolidar(d, [daArea, Lugar(Mooca, "c1")], Agora)!;
+
+        envio.Incluidas.Should().ContainSingle().Which.Gatilho.Should().Be("alagamento-lugar");
+    }
+
+    [Fact]
+    public void AlagamentoLugar_DepoisDoAlertaDaArea_FicaCalado()
+    {
+        var d = NoTrecho(new() { ["c1"] = [TipoLocal.CASA] }, favoritas: [Mooca],
+            Antes(Mooca, "score-alto", TimeSpan.FromHours(1), $"score:{Mooca}:ALAGAMENTO:202610031400"));
+
+        Consolidador.Consolidar(d, [Lugar(Mooca, "c1")], Agora).Should().BeNull();
+    }
+
+    [Fact]
+    public void AlagamentoLugar_DepoisDoPerigoDoCge_FicaCalado()
+    {
+        var d = NoTrecho(new() { ["c1"] = [TipoLocal.CASA] }, recentes: Antes(Mooca, "alagamento-cge", TimeSpan.FromHours(1)));
+
+        Consolidador.Consolidar(d, [Lugar(Mooca, "c1")], Agora).Should().BeNull();
+    }
+
+    // E no sentido contrário: quem já foi avisado pelo trecho não recebe o da área em seguida.
+    [Fact]
+    public void AlertaDaArea_DepoisDoAvisoDoLugar_FicaCalado()
+    {
+        var d = NoTrecho(new() { ["c1"] = [TipoLocal.CASA] }, favoritas: [Mooca],
+            Antes(Mooca, "alagamento-lugar", TimeSpan.FromHours(1)));
+        var daArea = P(Mooca, "Mooca", perigo: TipoPerigo.ALAGAMENTO, chave: "score:novo");
+
+        Consolidador.Consolidar(d, [daArea], Agora).Should().BeNull();
+    }
+
+    [Fact]
+    public void ChuvaComecou_DepoisDoAvisoDoLugar_FicaCalada()
+    {
+        var d = new DestinatarioPush(Guid.NewGuid(), new HashSet<Guid>(),
+            new HashSet<CriterioOptIn> { CriterioOptIn.RiscoAlto, CriterioOptIn.ChuvaLocais },
+            [Antes(Mooca, "alagamento-lugar", TimeSpan.FromHours(1))], Sp,
+            new Dictionary<Guid, IReadOnlySet<TipoLocal>> { [Mooca] = new HashSet<TipoLocal> { TipoLocal.CASA } });
+
+        Consolidador.Consolidar(d, [Chuva(Mooca, "Mooca")], Agora).Should().BeNull();
+    }
+
+    [Fact]
+    public void AlagamentoLugar_NoCooldown_NaoRepete()
+    {
+        var d = NoTrecho(new() { ["c1"] = [TipoLocal.CASA] }, recentes: Antes(Mooca, "alagamento-lugar", TimeSpan.FromHours(2)));
+
+        Consolidador.Consolidar(d, [Lugar(Mooca, "c1")], Agora).Should().BeNull();
+    }
+
+    // Risco alto é isento do teto diário, e o aviso do lugar é risco alto.
+    [Fact]
+    public void AlagamentoLugar_ComTetoDiarioEstourado_SaiMesmoAssim()
+    {
+        var d = NoTrecho(new() { ["c1"] = [TipoLocal.CASA] }, recentes: TresEnviosHoje());
+
+        Consolidador.Consolidar(d, [Lugar(Mooca, "c1")], Agora).Should().NotBeNull();
+    }
 }

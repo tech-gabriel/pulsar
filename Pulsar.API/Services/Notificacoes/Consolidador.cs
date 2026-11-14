@@ -15,8 +15,13 @@ public record DestinatarioPush(
     IReadOnlySet<CriterioOptIn> Criterios,
     IReadOnlyList<EnvioAnterior> Recentes,
     TimeZoneInfo Fuso,
-    IReadOnlyDictionary<Guid, IReadOnlySet<TipoLocal>>? Locais = null)
+    IReadOnlyDictionary<Guid, IReadOnlySet<TipoLocal>>? Locais = null,
+    IReadOnlyDictionary<string, IReadOnlySet<TipoLocal>>? Celulas = null)
 {
+    /// <summary>Trecho (índice H3) → casa e/ou trabalho salvos nele. Vazio para quem não salvou ou está fora da grade.</summary>
+    public IReadOnlyDictionary<string, IReadOnlySet<TipoLocal>> CelulasOuVazio { get; } =
+        Celulas ?? new Dictionary<string, IReadOnlySet<TipoLocal>>();
+
     /// <summary>Subprefeitura → casa e/ou trabalho salvos nela (F4b). Vazio para quem não salvou.</summary>
     public IReadOnlyDictionary<Guid, IReadOnlySet<TipoLocal>> LocaisOuVazio { get; } =
         Locais ?? new Dictionary<Guid, IReadOnlySet<TipoLocal>>();
@@ -40,14 +45,20 @@ public static class Consolidador
         var candidatas = pendencias
             // O "começou a chover" e a chuva medida por perto são da casa e do trabalho, não das
             // favoritas (a casa pode ter ficado fora delas pelo teto de 10).
-            .Where(p => p.Gatilho is ChuvaComecou or ChuvaMedidaPerto
-                ? d.LocaisOuVazio.ContainsKey(p.SubprefeituraId)
-                : d.Favoritas.Contains(p.SubprefeituraId))
+            // O alerta do lugar é de quem tem casa ou trabalho naquele trecho, e de mais ninguém.
+            .Where(p => p.Gatilho switch
+            {
+                AlagamentoLugar => p.Celula is not null && d.CelulasOuVazio.ContainsKey(p.Celula),
+                ChuvaComecou or ChuvaMedidaPerto => d.LocaisOuVazio.ContainsKey(p.SubprefeituraId),
+                _ => d.Favoritas.Contains(p.SubprefeituraId),
+            })
             .Where(p => d.Criterios.Contains(p.Criterio))
             .Where(p => !JaCoberta(d.Recentes, p, agoraUtc))
             .Where(p => !SilenciadaPorAlerta(d.Recentes, p, agoraUtc))
             .Where(p => !SilenciadaPorNivelAcima(d.Recentes, p, agoraUtc))
             .OrderBy(p => p.Prioridade)
+            // Empate entre o alerta do trecho e o da área: sai o do trecho, que é medido e mais específico.
+            .ThenBy(p => p.Gatilho == AlagamentoLugar ? 0 : 1)
             .ThenBy(p => p.Criterio)
             .ToList();
         if (candidatas.Count == 0) return null;
@@ -64,6 +75,7 @@ public static class Consolidador
         {
             ChuvaComecou => PayloadChuvaComecou(grupo, d),
             ChuvaMedidaPerto => PayloadChuvaMedidaPerto(grupo, d),
+            AlagamentoLugar => PayloadAlagamentoLugar(grupo, d),
             _ => MontarPayload(grupo),
         };
         return new EnvioConsolidado(d.UsuarioId, lider.Criterio, payload, grupo);
@@ -71,6 +83,29 @@ public static class Consolidador
 
     private const string ChuvaComecou = "chuva-comecou";
     private const string ChuvaMedidaPerto = "chuva-medida-perto";
+    private const string AlagamentoLugar = Notificacoes.AlagamentoLugar.Nome;
+
+    /// <summary>
+    /// Um push, um fato medido: o do trecho da casa (ou do trabalho, sem casa no aviso). "Da sua
+    /// casa e do trabalho" só quando os dois ficam no MESMO trecho; em trechos diferentes a
+    /// medição é outra, e uma frase só afirmaria o que não foi medido.
+    /// </summary>
+    private static PushPayload PayloadAlagamentoLugar(IReadOnlyList<NotificacaoPendente> grupo, DestinatarioPush d)
+    {
+        IReadOnlySet<TipoLocal> Tipos(NotificacaoPendente p) => d.CelulasOuVazio[p.Celula!];
+        var lider = grupo.OrderBy(p => Tipos(p).Contains(TipoLocal.CASA) ? 0 : 1).First();
+        var tipos = Tipos(lider);
+        var casa = tipos.Contains(TipoLocal.CASA);
+        var perto = (casa, tipos.Contains(TipoLocal.TRABALHO)) switch
+        {
+            (true, true) => "da sua casa e do trabalho",
+            (true, false) => "da sua casa",
+            _ => "do seu trabalho",
+        };
+
+        return new PushPayload($"Alerta de alagamento perto {perto}", lider.Payload.Corpo,
+            Url: casa ? "/app?lugar=casa" : "/app?lugar=trabalho", Tag: AlagamentoLugar);
+    }
 
     private static IReadOnlySet<TipoLocal> TiposDe(NotificacaoPendente p, DestinatarioPush d) =>
         d.LocaisOuVazio.TryGetValue(p.SubprefeituraId, out var t) ? t : new HashSet<TipoLocal>();
@@ -155,7 +190,7 @@ public static class Consolidador
     }
 
     /// <summary>
-    /// O aviso só sobe: Perigo (CGE) &gt; Chuva forte agora (score alto de alagamento) &gt; Vai chover.
+    /// O aviso só sobe: Perigo (CGE) &gt; Chuva forte agora (score alto de alagamento, da área ou do trecho) &gt; Vai chover.
     /// Depois de um nível, os de baixo ficam calados na subprefeitura por SilencioNivelAcimaHoras.
     /// Score alto de vento ou calor não cala a chuva prevista, e o Perigo não cala vento nem calor.
     /// </summary>
@@ -164,14 +199,19 @@ public static class Consolidador
         var desde = agora.AddHours(-LimiaresNotificacao.SilencioNivelAcimaHoras);
         var naJanela = recentes.Where(r => r.SubprefeituraId == p.SubprefeituraId && r.EnviadoEm >= desde).ToList();
         bool houvePerigo = naJanela.Any(r => r.Gatilho == "alagamento-cge");
+        // O alerta do trecho (casa ou trabalho) vale o mesmo nível do alerta de alagamento da
+        // área: um cala o outro, para a pessoa não receber os dois sobre a mesma chuva.
+        bool houveLugar = naJanela.Any(r => r.Gatilho == AlagamentoLugar);
+        bool houveAlertaDaArea = naJanela.Any(r => r.Gatilho == "score-alto"
+            && (PerigoDaChaveDeAlerta(r.Chave) is not { } perigo || perigo == TipoPerigo.ALAGAMENTO));
 
         return p.Gatilho switch
         {
             // O "começou a chover" cala pelo mesmo motivo: depois do alerta a pessoa já sabe.
             // A chuva prevista não cala ele, porque ele confirma que a chuva chegou.
-            "chuva-prevista" or ChuvaComecou or ChuvaMedidaPerto => houvePerigo || naJanela.Any(r => r.Gatilho == "score-alto"
-                && (PerigoDaChaveDeAlerta(r.Chave) is not { } perigo || perigo == TipoPerigo.ALAGAMENTO)),
-            "score-alto" => p.Perigo == TipoPerigo.ALAGAMENTO && houvePerigo,
+            "chuva-prevista" or ChuvaComecou or ChuvaMedidaPerto => houvePerigo || houveLugar || houveAlertaDaArea,
+            "score-alto" => p.Perigo == TipoPerigo.ALAGAMENTO && (houvePerigo || houveLugar),
+            AlagamentoLugar => houvePerigo || houveAlertaDaArea,
             _ => false,
         };
     }

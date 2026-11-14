@@ -808,8 +808,23 @@ namespace Pulsar.API.Migrations
                     b.Property<int>("CelulasAlto")
                         .HasColumnType("integer");
 
+                    b.Property<int>("CelulasAltoMaior")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CelulasAltoMedida")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CelulasComMedida")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CelulasModerado")
                         .HasColumnType("integer");
+
+                    b.Property<double?>("Chuva3hMedidaMm")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Chuva3hModeloMm")
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -830,6 +845,12 @@ namespace Pulsar.API.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<double>("ValorMeioTermo")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorMeioTermoMaior")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ValorMeioTermoMedida")
                         .HasColumnType("double precision");
 
                     b.HasKey("Id");

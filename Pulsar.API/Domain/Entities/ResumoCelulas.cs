@@ -27,5 +27,26 @@ public class ResumoCelulas
     public int Celulas { get; set; }
     public int CelulasModerado { get; set; }
     public int CelulasAlto { get; set; }
+
+    // Chuva medida (em conferência). Os campos acima usam a chuva de modelo da área; os de
+    // baixo refazem a conta com a estação mais próxima de cada célula, por duas regras, para
+    // decidir com números qual delas vale quando medida e modelo discordam.
+
+    /// <summary>Células com estação válida por perto. As outras ficam com o modelo nas duas regras.</summary>
+    public int CelulasComMedida { get; set; }
+
+    /// <summary>Meio-termo com a regra "a medida substitui o modelo".</summary>
+    public double ValorMeioTermoMedida { get; set; }
+    public int CelulasAltoMedida { get; set; }
+
+    /// <summary>Meio-termo com a regra "vale a maior das duas".</summary>
+    public double ValorMeioTermoMaior { get; set; }
+    public int CelulasAltoMaior { get; set; }
+
+    /// <summary>Chuva de 3 h do modelo para a área, em mm.</summary>
+    public double Chuva3hModeloMm { get; set; }
+
+    /// <summary>Média da chuva de 3 h medida nas células com estação. Null = nenhuma célula com estação.</summary>
+    public double? Chuva3hMedidaMm { get; set; }
     public DateTime CriadoEm { get; set; }
 }

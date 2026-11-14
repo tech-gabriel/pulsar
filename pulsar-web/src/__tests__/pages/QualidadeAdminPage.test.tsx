@@ -110,7 +110,9 @@ describe('QualidadeAdminPage', () => {
 describe('QualidadeAdminPage: risco por trecho (em teste)', () => {
   const linha = (subprefeitura: string, extra: Partial<ResumoGradeAreaDto> = {}): ResumoGradeAreaDto => ({
     subprefeitura, celulas: 48, ciclos: 672, maxValorArea: 41.26, maxMeioTermo: 63.5,
-    ciclosAreaAlto: 0, ciclosMeioTermoAlto: 3, ciclosFaixaDiferente: 5, maxCelulasAlto: 9, ...extra,
+    ciclosAreaAlto: 0, ciclosMeioTermoAlto: 3, ciclosFaixaDiferente: 5, maxCelulasAlto: 9,
+    maxCelulasComMedida: 40, maxChuva3hModeloMm: 2, maxChuva3hMedidaMm: 31.25, maxMeioTermoMedida: 71.04, maxMeioTermoMaior: 71.04,
+    ciclosMedidaAlto: 1, ciclosMaiorAlto: 4, ...extra,
   });
 
   it('mostra uma linha por área com os números da comparação', () => {
@@ -118,11 +120,23 @@ describe('QualidadeAdminPage: risco por trecho (em teste)', () => {
     renderPage();
 
     const secao = screen.getByRole('region', { name: 'Risco por trecho (em teste)' });
-    const mooca = within(secao).getByRole('row', { name: /Mooca/ });
+    const mooca = within(within(secao).getByRole('table', { name: 'Área e trechos com a chuva do modelo' })).getByRole('row', { name: /Mooca/ });
     expect(within(mooca).getAllByRole('cell').map((c) => c.textContent)).toEqual(
       ['Mooca', '48', '672', '41,3', '63,5', '5', '9'],
     );
-    expect(within(secao).getByRole('row', { name: /Lapa/ })).toBeInTheDocument();
+    expect(within(secao).getAllByRole('row', { name: /Lapa/ })).toHaveLength(2);
+  });
+
+  it('mostra a chuva medida ao lado da do modelo e as duas regras', () => {
+    gradeState.linhas = [linha('Mooca'), linha('Lapa', { maxCelulasComMedida: 0, maxChuva3hMedidaMm: null })];
+    renderPage();
+
+    const tabela = screen.getByRole('table', { name: 'Trechos com a chuva medida' });
+    expect(within(within(tabela).getByRole('row', { name: /Mooca/ })).getAllByRole('cell').map((c) => c.textContent)).toEqual(
+      ['Mooca', '40 de 48', '2,0', '31,3', '63,5', '71,0', '71,0', '3 / 1 / 4'],
+    );
+    // Sem estação perto não é zero de chuva: é "sem dado".
+    expect(within(within(tabela).getByRole('row', { name: /Lapa/ })).getAllByRole('cell')[3].textContent).toBe('s/d');
   });
 
   it('sem ciclo com risco diz isso em vez de uma tabela vazia', () => {

@@ -22,4 +22,11 @@ public record ResumoGradeAreaDto(
     int CiclosAreaAlto,
     int CiclosMeioTermoAlto,
     int CiclosFaixaDiferente,
-    int MaxCelulasAlto);
+    int MaxCelulasAlto,
+    int MaxCelulasComMedida = 0,
+    double MaxChuva3hModeloMm = 0,
+    double? MaxChuva3hMedidaMm = null,
+    double MaxMeioTermoMedida = 0,
+    double MaxMeioTermoMaior = 0,
+    int CiclosMedidaAlto = 0,
+    int CiclosMaiorAlto = 0);

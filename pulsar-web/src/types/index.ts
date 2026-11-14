@@ -378,6 +378,15 @@ export interface ResumoGradeAreaDto {
   ciclosMeioTermoAlto: number;
   ciclosFaixaDiferente: number;
   maxCelulasAlto: number;
+  /** Chuva medida (em conferência): trechos com estação por perto e as duas regras. */
+  maxCelulasComMedida: number;
+  maxChuva3hModeloMm: number;
+  /** Null = nenhum trecho da área com estação por perto no período. */
+  maxChuva3hMedidaMm: number | null;
+  maxMeioTermoMedida: number;
+  maxMeioTermoMaior: number;
+  ciclosMedidaAlto: number;
+  ciclosMaiorAlto: number;
 }
 
 /** Campos null = nenhuma execução gravada ainda. */

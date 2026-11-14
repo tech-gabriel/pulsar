@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Chuva;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -168,7 +169,7 @@ public class CemadenServiceTests : IDisposable
     private async Task<Subprefeitura> Lapa() => await _ctx.Subprefeituras.SingleAsync(s => s.Nome == "Lapa");
 
     /// <summary>Estação a <paramref name="km"/> ao norte do centro da Lapa, com uma leitura.</summary>
-    private async Task Semear(string cod, double km, double? acc1h, double? acc24h, int minutosAtras = 5)
+    private async Task Semear(string cod, double km, double? acc1h, double? acc24h, int minutosAtras = 5, double? acc3h = null, double? acc48h = null)
     {
         var lapa = await Lapa();
         if (!await _ctx.EstacoesCemaden.AnyAsync(e => e.CodEstacao == cod))
@@ -180,7 +181,7 @@ public class CemadenServiceTests : IDisposable
         _ctx.LeiturasEstacaoCemaden.Add(new LeituraEstacaoCemaden
         {
             CodEstacao = cod, DataHora = Agora.AddMinutes(-minutosAtras), ColetadoEm = Agora.AddMinutes(-minutosAtras),
-            Acc1h = acc1h, Acc24h = acc24h,
+            Acc1h = acc1h, Acc24h = acc24h, Acc3h = acc3h, Acc48h = acc48h,
         });
         await _ctx.SaveChangesAsync();
     }
@@ -293,5 +294,52 @@ public class CemadenServiceTests : IDisposable
         await _ctx.SaveChangesAsync();
 
         (await Servico(Mock.Of<ICemadenClient>()).ObterPorSubprefeituraAsync(Agora)).Should().BeEmpty();
+    }
+
+    // ---------- Estações para a conta por trecho ----------
+
+    private Task<IReadOnlyList<EstacaoChuva>> Estacoes() => Servico(Mock.Of<ICemadenClient>()).ObterEstacoesComChuvaAsync(Agora);
+
+    [Fact]
+    public async Task Estacoes_LeituraAtualComUmaETresHoras_VemComOEndereco()
+    {
+        await Semear("A", km: 3, acc1h: 4.0, acc24h: 30.0, acc3h: 10.0, acc48h: 40.0);
+        var lapa = await Lapa();
+
+        (await Estacoes()).Should().ContainSingle().Which.Should().Be(
+            new EstacaoChuva("A", lapa.Latitude + 3 * GrauPorKm, lapa.Longitude, 4.0, 10.0, 40.0));
+    }
+
+    [Fact]
+    public async Task Estacoes_SemAsTresHoras_FicaDeFora()
+    {
+        await Semear("A", km: 3, acc1h: 4.0, acc24h: 30.0);
+
+        (await Estacoes()).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Estacoes_LeituraVelha_FicaDeFora()
+    {
+        await Semear("A", km: 3, acc1h: 4.0, acc24h: 30.0, minutosAtras: 120, acc3h: 10.0);
+
+        (await Estacoes()).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Estacoes_LeituraAbsurda_FicaDeFora()
+    {
+        await Semear("A", km: 3, acc1h: 300.0, acc24h: 400.0, acc3h: 400.0);
+
+        (await Estacoes()).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Estacoes_UsaAUltimaLeituraDeCadaEstacao()
+    {
+        await Semear("A", km: 3, acc1h: 9.0, acc24h: 9.0, minutosAtras: 20, acc3h: 9.0);
+        await Semear("A", km: 3, acc1h: 1.0, acc24h: 11.0, minutosAtras: 5, acc3h: 10.0);
+
+        (await Estacoes()).Should().ContainSingle().Which.Mm1h.Should().Be(1.0);
     }
 }

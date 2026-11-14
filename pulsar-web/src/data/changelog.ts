@@ -31,7 +31,7 @@ export const CHANGELOG: Release[] = [
       {
         tipo: 'correcao',
         titulo: 'Atualização dos dados mais estável',
-        descricao: 'Quando duas atualizações de clima rodavam ao mesmo tempo, uma atrapalhava a outra e algumas regiões ficavam sem o dado mais recente até a rodada seguinte. Agora uma espera a outra terminar.',
+        descricao: 'A atualização automática dos dados e a atualização manual não se atrapalham mais quando rodam ao mesmo tempo.',
       },
     ],
   },

@@ -43,6 +43,7 @@ public class ColetaRunnerAgregadoTests
             Mock.Of<ICemadenService>(),
             Mock.Of<IMotorNotificacoes>(),
             Mock.Of<IAvisoRotaService>(),
+            Mock.Of<IRiscoCelulasService>(),
             ctx,
             NullLogger<ColetaRunner>.Instance);
 

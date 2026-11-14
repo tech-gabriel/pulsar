@@ -47,6 +47,18 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> ObterQualidade([FromQuery] int dias = 7, CancellationToken ct = default)
         => Ok(await _qualidade.ObterAsync(Math.Clamp(dias, 1, 30), ct));
 
+    /// <summary>
+    /// Risco por trecho, em teste: compara por área, nos últimos dias (1 a 60), o alagamento
+    /// pelo cálculo atual com o meio-termo das células da grade. Ninguém fora do admin vê isto.
+    /// </summary>
+    [HttpGet("grade/resumo")]
+    [ProducesResponseType(typeof(IReadOnlyList<ResumoGradeAreaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ObterResumoGrade(
+        [FromServices] IRiscoCelulasService riscoCelulas, [FromQuery] int dias = 7, CancellationToken ct = default)
+        => Ok(await riscoCelulas.ResumirAsync(dias, ct));
+
     /// <summary>Agregados diários recentes. Serve para conferir que a série está acumulando.</summary>
     [HttpGet("agregados")]
     [ProducesResponseType(typeof(IReadOnlyList<AgregadoDiarioDto>), StatusCodes.Status200OK)]

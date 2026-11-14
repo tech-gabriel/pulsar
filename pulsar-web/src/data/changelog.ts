@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.34.0',
+    data: '2026-11-14',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Alerta de alagamento perto de casa e do trabalho',
+        descricao: 'Quando a estação de chuva mais próxima da sua casa ou do seu trabalho medir chuva forte, você recebe um alerta daquele trecho, e não só da região inteira.',
+      },
+    ],
+  },
+  {
     versao: '1.33.1',
     data: '2026-11-13',
     itens: [

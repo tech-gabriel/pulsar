@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Pulsar.API.DTOs;
 using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services.Interfaces;
+using Pulsar.API.Services.Rota;
 
 namespace Pulsar.API.Controllers;
 
@@ -35,9 +36,12 @@ public class RotaController : ControllerBase
     {
         if (req.SubprefeituraIds is null || req.SubprefeituraIds.Count is 0 or > MaxSubprefeituras)
             return BadRequest(new { mensagem = $"Informe de 1 a {MaxSubprefeituras} subprefeituras." });
+        if (!TentarCaminho(req.PontoOrigem, req.PontoDestino, out var caminho))
+            return BadRequest(new { mensagem = MensagemPontos });
+
         try
         {
-            return Ok(await _service.AvaliarAsync(req.SubprefeituraIds, ct));
+            return Ok(await _service.AvaliarAsync(req.SubprefeituraIds, caminho, ct));
         }
         catch (ArgumentException ex)
         {
@@ -58,6 +62,8 @@ public class RotaController : ControllerBase
         var destino = req.Destino?.Trim();
         if (string.IsNullOrEmpty(destino) || destino.Length > 80)
             return BadRequest(new { mensagem = "Informe o destino, com até 80 caracteres." });
+        if (!TentarCaminho(req.PontoOrigem, req.PontoDestino, out var caminho))
+            return BadRequest(new { mensagem = MensagemPontos });
         if (UsuarioId() is not { } usuarioId)
             return Unauthorized();
         // O pedido vira cálculo a cada ciclo do job: id que não é de subprefeitura ativa não entra.
@@ -65,7 +71,7 @@ public class RotaController : ControllerBase
         if (req.SubprefeituraIds.Any(id => !ativas.Contains(id)))
             return BadRequest(new { mensagem = "Subprefeitura desconhecida no caminho." });
 
-        await _aviso.RegistrarAsync(usuarioId, req.SubprefeituraIds, destino, DateTime.UtcNow, ct);
+        await _aviso.RegistrarAsync(usuarioId, req.SubprefeituraIds, destino, DateTime.UtcNow, caminho, ct);
         return NoContent();
     }
 
@@ -78,6 +84,25 @@ public class RotaController : ControllerBase
             return Unauthorized();
         await _aviso.CancelarAsync(usuarioId, ct);
         return NoContent();
+    }
+
+    private const string MensagemPontos = "Informe a origem e o destino do caminho, com latitude e longitude válidas.";
+
+    /// <summary>
+    /// Origem e destino vêm juntos ou não vêm (app antigo em cache: a rota segue pela área).
+    /// Devolve false quando só um veio ou quando algum ponto não é uma coordenada.
+    /// </summary>
+    private static bool TentarCaminho(PontoRotaDto? origem, PontoRotaDto? destino, out CaminhoRota? caminho)
+    {
+        caminho = null;
+        if (origem is null && destino is null) return true;
+        if (origem is null || destino is null || !Valido(origem) || !Valido(destino)) return false;
+
+        caminho = new CaminhoRota(origem.Lat, origem.Lon, destino.Lat, destino.Lon);
+        return true;
+
+        // NaN falha nas duas comparações, então não passa.
+        static bool Valido(PontoRotaDto p) => Math.Abs(p.Lat) <= 90 && Math.Abs(p.Lon) <= 180;
     }
 
     private Guid? UsuarioId()

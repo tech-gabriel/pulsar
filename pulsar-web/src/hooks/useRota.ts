@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Feature, FeatureCollection } from 'geojson';
-import { avaliarRota, cancelarAvisoRota, pedirAvisoRota } from '../api/rota';
+import { avaliarRota, cancelarAvisoRota, pedirAvisoRota, type Coordenada } from '../api/rota';
 import { track } from '../analytics';
 import { useToast } from '../contexts/ToastContext';
 import { idsDosTrechos, tracarCorredor } from '../features/rota/corredor';
@@ -17,6 +17,22 @@ export const REAVALIAR_MS = 5 * 60_000;
 
 export const ROTULO_LOCALIZACAO = 'Minha localização';
 
+/**
+ * O caminho como texto: ids dos trechos, origem e destino. O risco é lido nos trechos por onde a
+ * reta passa, então outro ponto dentro da mesma subprefeitura é outro caminho.
+ */
+const chaveDoCaminho = (ids: string[], origem: Coordenada, destino: Coordenada) =>
+  `${ids.join(',')}|${origem.lat},${origem.lon}|${destino.lat},${destino.lon}`;
+
+function caminhoDaChave(chave: string): { ids: string[]; origem: Coordenada; destino: Coordenada } {
+  const [ids, origem, destino] = chave.split('|');
+  const ponto = (texto: string): Coordenada => {
+    const [lat, lon] = texto.split(',').map(Number);
+    return { lat, lon };
+  };
+  return { ids: ids.split(','), origem: ponto(origem), destino: ponto(destino) };
+}
+
 const TEXTO_PUSH: Record<string, string> = {
   indisponivel: 'Este aparelho não recebe avisos. No iPhone, instale o Pulsar na tela de início.',
   negado: 'Permita as notificações do Pulsar no navegador para receber o aviso.',
@@ -29,7 +45,7 @@ type Resposta = { chave: string; resultado: RotaAvaliacao | null; em: number };
 /**
  * Estado da rota no mapa: origem e destino, o corredor em linha reta entre eles, a avaliação
  * da API e a linha colorida por trecho. A avaliação dispara sozinha quando há os dois pontos.
- * Resultado e erro de rede são amarrados à chave do caminho (ids dos trechos): resposta de um
+ * Resultado e erro de rede são amarrados à chave do caminho (ids dos trechos e os dois pontos): resposta de um
  * destino antigo que chega depois da troca nunca aparece.
  * `aberta`: o push só é consultado com a rota aberta (abrir o mapa não busca a chave VAPID).
  */
@@ -56,12 +72,13 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
     : subs.length > 0 && (ids.length === 0 || ids.length > MAX_TRECHOS) ? 'destinoFora'
     : null;
   const pronto = !!corredor?.ok && !erroCorredor && ids.length > 0;
-  const chave = pronto ? ids.join(',') : null;
+  const chave = pronto && origem && destino ? chaveDoCaminho(ids, origem, destino) : null;
 
   useEffect(() => {
     if (!chave) return;
     let valendo = true;
-    avaliarRota(chave.split(','))
+    const caminho = caminhoDaChave(chave);
+    avaliarRota(caminho.ids, caminho.origem, caminho.destino)
       .then((resultado) => valendo && setResposta({ chave, resultado, em: Date.now() }))
       // Falha numa reavaliação de fundo mantém o resultado que já estava na tela.
       .catch(() => valendo && setResposta((r) => (r?.chave === chave && r.resultado ? r : { chave, resultado: null, em: Date.now() })));
@@ -152,7 +169,8 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
       const rotulo = destino.rotulo === ROTULO_LOCALIZACAO
         ? resultado?.trechos[resultado.trechos.length - 1]?.nome ?? destino.rotulo
         : destino.rotulo;
-      await pedirAvisoRota(chave.split(','), rotulo.slice(0, 80));
+      const caminho = caminhoDaChave(chave);
+      await pedirAvisoRota(caminho.ids, rotulo.slice(0, 80), caminho.origem, caminho.destino);
       setChaveAviso(chave);
       track.pediuAvisoRota();
     } catch {

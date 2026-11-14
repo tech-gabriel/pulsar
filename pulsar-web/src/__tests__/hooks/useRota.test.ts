@@ -32,6 +32,9 @@ const subs = [{ id: 'se', nome: 'Sé' }, { id: 'mooca', nome: 'Mooca' }] as Subp
 const se = { lat: -23.5505, lon: -46.6333, rotulo: 'Sé' };
 const mooca = { lat: -23.545, lon: -46.6, rotulo: 'Mooca' };
 const rio = { lat: -22.9, lon: -43.2, rotulo: 'Rio' };
+// O que a API recebe de cada ponto: só a coordenada.
+const pSe = { lat: se.lat, lon: se.lon };
+const pMooca = { lat: mooca.lat, lon: mooca.lon };
 
 const avaliacao = (estado: RotaAvaliacao['estado'] = 'PodeIr'): RotaAvaliacao => ({
   estado, trechoDecisivoId: null, tranquiloAteUtc: null, esperarAteUtc: null, horas: [],
@@ -54,7 +57,7 @@ describe('useRota', () => {
     const { result } = renderHook(() => useRota(leve, subs));
     act(() => { result.current.setOrigem(se); result.current.setDestino(mooca); });
     await waitFor(() => expect(result.current.resultado?.estado).toBe('PodeIr'));
-    expect(avaliar).toHaveBeenCalledWith(['se', 'mooca']);
+    expect(avaliar).toHaveBeenCalledWith(['se', 'mooca'], pSe, pMooca);
     expect(result.current.linha?.features.some((f) => f.properties?.cor)).toBe(true);
   });
 
@@ -91,12 +94,25 @@ describe('useRota', () => {
     await waitFor(() => expect(result.current.erro).toBe('rede'));
   });
 
+  // O risco é lido nos trechos do caminho: outro destino na mesma subprefeitura é outro caminho.
+  it('trocar o destino dentro da mesma subprefeitura avalia de novo', async () => {
+    const { result } = renderHook(() => useRota(leve, subs));
+    act(() => { result.current.setOrigem(se); result.current.setDestino(mooca); });
+    await waitFor(() => expect(avaliar).toHaveBeenCalledTimes(1));
+
+    const outroPonto = { lat: -23.548, lon: -46.595, rotulo: 'Outro ponto da Mooca' };
+    act(() => { result.current.setDestino(outroPonto); });
+
+    await waitFor(() => expect(avaliar).toHaveBeenCalledTimes(2));
+    expect(avaliar).toHaveBeenLastCalledWith(['se', 'mooca'], pSe, { lat: outroPonto.lat, lon: outroPonto.lon });
+  });
+
   it('pedir aviso com push ativo registra o pedido', async () => {
     const { result } = renderHook(() => useRota(leve, subs));
     act(() => { result.current.setOrigem(se); result.current.setDestino(mooca); });
     await waitFor(() => expect(result.current.resultado).not.toBeNull());
     await act(() => result.current.pedirAviso());
-    expect(avisar).toHaveBeenCalledWith(['se', 'mooca'], 'Mooca');
+    expect(avisar).toHaveBeenCalledWith(['se', 'mooca'], 'Mooca', pSe, pMooca);
     expect(result.current.avisoPedido).toBe(true);
   });
 
@@ -163,7 +179,7 @@ describe('useRota: nova tentativa e avisos', () => {
     act(() => { result.current.setOrigem(se); result.current.setDestino({ ...mooca, rotulo: 'Minha localização' }); });
     await waitFor(() => expect(result.current.resultado).not.toBeNull());
     await act(() => result.current.pedirAviso());
-    expect(avisar).toHaveBeenCalledWith(['se', 'mooca'], 'Mooca');
+    expect(avisar).toHaveBeenCalledWith(['se', 'mooca'], 'Mooca', pSe, pMooca);
   });
 });
 

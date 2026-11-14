@@ -1,3 +1,5 @@
+using Pulsar.API.Domain.Chuva;
+using Pulsar.API.Domain.Score;
 using Microsoft.Extensions.Caching.Memory;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
@@ -20,11 +22,15 @@ public class RotaService : IRotaService
     private readonly IPontoAlagamentoCgeRepository _pontosCge;
     private readonly IChuvaReferenciaClient _chuva;
     private readonly IMemoryCache _cache;
+    private readonly IGradeCelulas _grade;
+    private readonly ICemadenService _cemaden;
     private readonly ILogger<RotaService> _logger;
 
     public RotaService(ISubprefeituraRepository subprefeituraRepo, IPontoAlagamentoCgeRepository pontosCge,
-        IChuvaReferenciaClient chuva, IMemoryCache cache, ILogger<RotaService> logger)
+        IChuvaReferenciaClient chuva, IMemoryCache cache, IGradeCelulas grade, ICemadenService cemaden, ILogger<RotaService> logger)
     {
+        _grade = grade;
+        _cemaden = cemaden;
         _subprefeituraRepo = subprefeituraRepo;
         _pontosCge = pontosCge;
         _chuva = chuva;
@@ -32,7 +38,7 @@ public class RotaService : IRotaService
         _logger = logger;
     }
 
-    public async Task<RotaAvaliacaoDto> AvaliarAsync(IReadOnlyList<Guid> ids, CancellationToken ct = default)
+    public async Task<RotaAvaliacaoDto> AvaliarAsync(IReadOnlyList<Guid> ids, CaminhoRota? caminho = null, CancellationToken ct = default)
     {
         if (ids.Distinct().Count() != ids.Count)
             throw new ArgumentException("Há subprefeituras repetidas no caminho.");
@@ -47,6 +53,9 @@ public class RotaService : IRotaService
         var series = await ObterSeriesAsync(ativas.Values.ToList(), ct);
         var horaAtual = new DateTime(agora.Year, agora.Month, agora.Day, agora.Hour, 0, 0, DateTimeKind.Utc);
         var limite = horaAtual.AddHours(LimiaresRota.HorizonteEsperaHoras);
+
+        var trechosDoCaminho = TrechosDoCaminho(caminho);
+        var estacoes = trechosDoCaminho.Count > 0 ? await EstacoesAsync(agora, ct) : [];
 
         var trechos = ids.Select(id =>
         {
@@ -63,7 +72,9 @@ public class RotaService : IRotaService
 
             // Rota a pé ou de carro só se importa com alagamento e vento; calor não decide o caminho.
             FaixaRisco? faixa = recente
-                ? (FaixaRisco)Math.Max((int)score!.Componentes.Alagamento.Faixa, (int)score.Componentes.Vento.Faixa)
+                ? (FaixaRisco)Math.Max(
+                    (int)AlagamentoNoCaminho(score!, sub.Nome, trechosDoCaminho.GetValueOrDefault(sub.Nome), estacoes),
+                    (int)score!.Componentes.Vento.Faixa)
                 : null;
 
             return new TrechoEntrada(id, sub.Nome, faixa, comCge.Contains(id), proximas);
@@ -73,6 +84,62 @@ public class RotaService : IRotaService
         return new RotaAvaliacaoDto(r.Estado, r.TrechoDecisivoId, r.TranquiloAteUtc, r.EsperarAteUtc,
             [.. trechos.Select(t => new TrechoRotaDto(t.SubprefeituraId, t.Nome, t.FaixaAgora, t.AlagandoCge))],
             [.. r.Horas.Select(h => new HoraRotaDto(h.InicioUtc, h.PiorFaixa))]);
+    }
+
+    /// <summary>
+    /// Os trechos (hexágonos) por onde a reta passa, por área. Sem caminho (app antigo, pedido
+    /// antigo) ou com a grade fora do ar, vazio: a rota responde pela área inteira, como antes.
+    /// </summary>
+    private Dictionary<string, List<CelulaGrade>> TrechosDoCaminho(CaminhoRota? caminho)
+    {
+        if (caminho is null) return [];
+        try
+        {
+            return caminho.Pontos()
+                .Select(p => _grade.MaisProxima(p.Lat, p.Lon))
+                .OfType<CelulaGrade>()
+                .DistinctBy(c => c.H3)
+                .GroupBy(c => c.Sub)
+                .ToDictionary(g => g.Key, g => g.ToList());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao ler os trechos do caminho; a rota segue pela área.");
+            return [];
+        }
+    }
+
+    /// <summary>A chuva medida é complemento: sem ela, a rota responde pela área.</summary>
+    private async Task<IReadOnlyList<EstacaoChuva>> EstacoesAsync(DateTime agora, CancellationToken ct)
+    {
+        try
+        {
+            return await _cemaden.ObterEstacoesComChuvaAsync(agora, ct);
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested)
+        {
+            _logger.LogWarning(ex, "Falha ao ler as estações com chuva medida; a rota segue pela área.");
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// O alagamento de uma área, visto do caminho: o pior entre os trechos por onde ele passa.
+    /// Trecho com estação válida por perto vale a chuva medida (a medida manda), com o histórico
+    /// de alagamento do trecho no fator. Trecho sem estação vale o que a área diz: parte do
+    /// caminho sem medição não pode ser dada como tranquila.
+    /// </summary>
+    private static FaixaRisco AlagamentoNoCaminho(ScoreDto score, string nome, List<CelulaGrade>? trechos,
+        IReadOnlyList<EstacaoChuva> estacoes)
+    {
+        var daArea = score.Componentes.Alagamento.Faixa;
+        if (trechos is null || estacoes.Count == 0) return daArea;
+
+        // A chuva de 1 h e 3 h vem da estação; do modelo só entram as 48 h, quando a estação não as manda.
+        var modelo = new EntradaScore(0, 0, score.Chuva48hMm, 0, 0, nome);
+        return trechos.Max(t => EstacaoChuva.MaisProxima(t.Lat, t.Lon, estacoes, RiscoTrecho.RaioEstacaoKm) is { } estacao
+            ? RiscoTrecho.ComChuvaMedida(modelo, estacao, t.Fator).Faixa
+            : daArea);
     }
 
     /// <summary>

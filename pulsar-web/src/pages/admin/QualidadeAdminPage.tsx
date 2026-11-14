@@ -83,8 +83,8 @@ function RiscoPorTrecho({ dias }: { dias: number }) {
               </tbody>
             </table>
 
-            <h3 className="mt-5 mb-1" style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-secondary)' }}>Chuva medida no trecho</h3>
-            <p className="mb-2" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            <h3 className="mt-5 mb-1 px-1" style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-secondary)' }}>Chuva medida no trecho</h3>
+            <p className="mb-2 px-1" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
               A mesma conta com a chuva da estação do CEMADEN mais próxima de cada hexágono, por duas regras: a medida substitui o modelo, ou vale a maior das duas. Hexágono sem estação por perto fica com o modelo.
             </p>
             <table aria-label="Trechos com a chuva medida" className="w-full" style={{ fontSize: 12.5, borderCollapse: 'collapse' }}>

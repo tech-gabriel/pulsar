@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.35.0',
+    data: '2026-11-14',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Rota mais precisa na chuva',
+        descricao: 'O risco do caminho agora considera a chuva medida pelas estações ao longo dele, e não só a da região inteira.',
+      },
+    ],
+  },
+  {
     versao: '1.34.0',
     data: '2026-11-14',
     itens: [

@@ -46,7 +46,7 @@ function RiscoPorTrecho({ dias }: { dias: number }) {
           Risco por trecho (em teste)
         </h2>
         <p className="mb-3" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          Alagamento de cada área pelo cálculo atual e pelo meio-termo dos hexágonos, de 0 a 100. Só entram os ciclos em que a área ou algum hexágono saiu do risco baixo. As áreas em que os dois mais discordam vêm primeiro.
+          Alagamento de cada área, de 0 a 100, com a chuva do modelo e com a chuva medida pela estação do CEMADEN mais próxima de cada hexágono. A medida entra por duas regras: substitui o modelo, ou vale a maior das duas. Hexágono sem estação por perto fica com o modelo. Só entram os ciclos em que a área ou algum hexágono saiu do risco baixo.
         </p>
         {carregando ? (
           <div className="py-6 grid place-items-center"><LoadingSpinner /></div>
@@ -56,54 +56,25 @@ function RiscoPorTrecho({ dias }: { dias: number }) {
           <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Nenhum ciclo com risco no período.</p>
         ) : (
           <div className="overflow-x-auto -mx-1">
-            <table aria-label="Área e trechos com a chuva do modelo" className="w-full" style={{ fontSize: 12.5, borderCollapse: 'collapse' }}>
+            <table className="w-full" style={{ fontSize: 12.5, borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ color: 'var(--text-muted)', fontSize: 11.5, textAlign: 'right' }}>
                   <th className="px-1 py-1.5 font-semibold" style={{ textAlign: 'left' }}>Subprefeitura</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Hexágonos da grade nesta área">Trechos</th>
                   <th className="px-1 py-1.5 font-semibold" title="Ciclos em que a área ou algum hexágono saiu do risco baixo">Com risco</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área pelo cálculo atual">Atual</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área pelo meio-termo dos hexágonos">Meio-termo</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Ciclos em que os dois cálculos caíram em faixas diferentes">Discordam</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Maior número de hexágonos em Alerta num mesmo ciclo">Em alerta</th>
-                </tr>
-              </thead>
-              <tbody>
-                {linhas.map((l) => (
-                  <tr key={l.subprefeitura} className="border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)', textAlign: 'right' }}>
-                    <td className="px-1 py-1.5" style={{ textAlign: 'left', fontWeight: 600 }}>{l.subprefeitura}</td>
-                    <td className="px-1 py-1.5">{l.celulas}</td>
-                    <td className="px-1 py-1.5">{l.ciclos}</td>
-                    <td className="px-1 py-1.5">{pontos(l.maxValorArea)}</td>
-                    <td className="px-1 py-1.5">{pontos(l.maxMeioTermo)}</td>
-                    <td className="px-1 py-1.5">{l.ciclosFaixaDiferente}</td>
-                    <td className="px-1 py-1.5">{l.maxCelulasAlto}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <h3 className="mt-5 mb-1 px-1" style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-secondary)' }}>Chuva medida no trecho</h3>
-            <p className="mb-2 px-1" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              A mesma conta com a chuva da estação do CEMADEN mais próxima de cada hexágono, por duas regras: a medida substitui o modelo, ou vale a maior das duas. Hexágono sem estação por perto fica com o modelo.
-            </p>
-            <table aria-label="Trechos com a chuva medida" className="w-full" style={{ fontSize: 12.5, borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ color: 'var(--text-muted)', fontSize: 11.5, textAlign: 'right' }}>
-                  <th className="px-1 py-1.5 font-semibold" style={{ textAlign: 'left' }}>Subprefeitura</th>
                   <th className="px-1 py-1.5 font-semibold" title="Hexágonos com estação a até 5 km, no melhor ciclo">Com estação</th>
                   <th className="px-1 py-1.5 font-semibold" title="Maior chuva de 3 horas do modelo, em mm">Chuva modelo</th>
                   <th className="px-1 py-1.5 font-semibold" title="Maior chuva de 3 horas medida, média dos hexágonos com estação, em mm">Chuva medida</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Maior meio-termo com a chuva do modelo">Modelo</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Maior meio-termo quando a medida substitui o modelo">Medida</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Maior meio-termo quando vale a maior das duas">Maior</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Ciclos com o meio-termo em Alerta: modelo / medida / maior">Em alerta</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área com a chuva do modelo (o que o app mostra hoje)">Modelo</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área quando a medida substitui o modelo">Medida</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área quando vale a maior das duas">Maior</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Ciclos com a área em Alerta: modelo / medida / maior">Em alerta</th>
                 </tr>
               </thead>
               <tbody>
                 {linhas.map((l) => (
                   <tr key={l.subprefeitura} className="border-t" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)', textAlign: 'right' }}>
                     <td className="px-1 py-1.5" style={{ textAlign: 'left', fontWeight: 600 }}>{l.subprefeitura}</td>
+                    <td className="px-1 py-1.5">{l.ciclos}</td>
                     <td className="px-1 py-1.5">{l.maxCelulasComMedida} de {l.celulas}</td>
                     <td className="px-1 py-1.5">{mm(l.maxChuva3hModeloMm)}</td>
                     <td className="px-1 py-1.5">{mm(l.maxChuva3hMedidaMm)}</td>

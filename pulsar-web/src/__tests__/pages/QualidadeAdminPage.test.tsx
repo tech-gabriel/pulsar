@@ -115,28 +115,17 @@ describe('QualidadeAdminPage: risco por trecho (em teste)', () => {
     ciclosMedidaAlto: 1, ciclosMaiorAlto: 4, ...extra,
   });
 
-  it('mostra uma linha por área com os números da comparação', () => {
-    gradeState.linhas = [linha('Mooca'), linha('Lapa', { celulas: 53, ciclosFaixaDiferente: 0 })];
-    renderPage();
-
-    const secao = screen.getByRole('region', { name: 'Risco por trecho (em teste)' });
-    const mooca = within(within(secao).getByRole('table', { name: 'Área e trechos com a chuva do modelo' })).getByRole('row', { name: /Mooca/ });
-    expect(within(mooca).getAllByRole('cell').map((c) => c.textContent)).toEqual(
-      ['Mooca', '48', '672', '41,3', '63,5', '5', '9'],
-    );
-    expect(within(secao).getAllByRole('row', { name: /Lapa/ })).toHaveLength(2);
-  });
-
-  it('mostra a chuva medida ao lado da do modelo e as duas regras', () => {
+  it('mostra uma linha por área com a chuva do modelo, a medida e as duas regras', () => {
     gradeState.linhas = [linha('Mooca'), linha('Lapa', { maxCelulasComMedida: 0, maxChuva3hMedidaMm: null })];
     renderPage();
 
-    const tabela = screen.getByRole('table', { name: 'Trechos com a chuva medida' });
-    expect(within(within(tabela).getByRole('row', { name: /Mooca/ })).getAllByRole('cell').map((c) => c.textContent)).toEqual(
-      ['Mooca', '40 de 48', '2,0', '31,3', '63,5', '71,0', '71,0', '3 / 1 / 4'],
+    const secao = screen.getByRole('region', { name: 'Risco por trecho (em teste)' });
+    expect(within(secao).getAllByRole('table')).toHaveLength(1);
+    expect(within(within(secao).getByRole('row', { name: /Mooca/ })).getAllByRole('cell').map((c) => c.textContent)).toEqual(
+      ['Mooca', '672', '40 de 48', '2,0', '31,3', '63,5', '71,0', '71,0', '3 / 1 / 4'],
     );
     // Sem estação perto não é zero de chuva: é "sem dado".
-    expect(within(within(tabela).getByRole('row', { name: /Lapa/ })).getAllByRole('cell')[3].textContent).toBe('s/d');
+    expect(within(within(secao).getByRole('row', { name: /Lapa/ })).getAllByRole('cell')[4].textContent).toBe('s/d');
   });
 
   it('sem ciclo com risco diz isso em vez de uma tabela vazia', () => {

@@ -83,7 +83,7 @@ export function fraseDoRisco(area: Area, faixas: FaixaPrevisaoDto[]): string {
   const s = area.scoreAtual;
   const l = area.ultimaLeitura;
   const motivo = s && motivoDoRisco({
-    faixa: area.faixaRisco, perigoPrincipal: s.perigoPrincipal, chuva3hMm: s.chuva3hMm,
+    faixa: area.faixaRisco, perigoPrincipal: s.perigoPrincipal, chuva3hMm: s.chuva3hMm, chuva3hMedidaMm: s.chuva3hMedidaMm,
     ventoKmH: l?.ventoKmH, sensacaoTermica: l?.sensacaoTermica,
   });
   if (motivo) return motivo;

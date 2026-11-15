@@ -6,9 +6,10 @@ import { Flag } from 'lucide-react';
 import maplibregl from './maplibre';
 import { comChaveMapTiler, estiloBaseCompartilhado, urlReservaMapTiler } from './estiloBase';
 import { circuloGeojson, deslocamentoDoPainel, paddingDaRota, paddingDoPainel } from './geometria';
-import { ZOOM } from './zoom';
+import { ZOOM, ZOOM_TRECHOS } from './zoom';
 import ZoomControles from './ZoomControles';
 import RegioesLayer from './RegioesLayer';
+import TrechosLayer from './TrechosLayer';
 import ScoreLabel from './ScoreLabel';
 import OcorrenciasLayer from './OcorrenciasLayer';
 import type { FeatureCollection } from 'geojson';
@@ -74,7 +75,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -113,8 +114,11 @@ export default function MapaGL(props: PropsMapa) {
 
   // Seleção vinda de clique no mapa: o próprio clique já voou para a subprefeitura.
   const subSelRef = useRef(subSelecionadaAtiva);
+  // Trecho aberto (toque, busca ou localização): o mapa já está nele; voar ao centro da área o tiraria de vista.
+  const trechoSelRef = useRef(trechoSelecionado);
   useEffect(() => {
     subSelRef.current = subSelecionadaAtiva;
+    trechoSelRef.current = trechoSelecionado;
   });
 
   useEffect(() => {
@@ -131,7 +135,7 @@ export default function MapaGL(props: PropsMapa) {
 
   // A subprefeitura escolhida na lista, na busca ou no sino vira o foco do mapa.
   useEffect(() => {
-    if (carregou && subSelecionada) voar([subSelecionada.longitude, subSelecionada.latitude], ZOOM.sub, 600);
+    if (carregou && subSelecionada && !trechoSelRef.current) voar([subSelecionada.longitude, subSelecionada.latitude], ZOOM.sub, 600);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subSelecionada?.id, carregou]);
 
@@ -305,7 +309,9 @@ export default function MapaGL(props: PropsMapa) {
         setCarregou(true);
         setIdPrimeiroSimbolo(primeiroSimbolo(e.target));
         e.target.once('idle', () => performance.mark('mapa-pronto'));
+        onPerto?.(e.target.getZoom() >= ZOOM_TRECHOS.carregar);
       }}
+      onZoomEnd={(e) => onPerto?.(e.viewState.zoom >= ZOOM_TRECHOS.carregar)}
       // styledata dispara a cada mudança de pintura (a animação da borda muda a cada 70 ms): só
       // recalcula quando o rótulo de referência sumiu, ou seja, quando o estilo base foi trocado.
       onStyleData={(e) => {
@@ -326,7 +332,11 @@ export default function MapaGL(props: PropsMapa) {
             camadaAtiva={camadaAtiva}
             zonaEmFoco={zonaEmFoco}
             idPrimeiroSimbolo={idPrimeiroSimbolo}
+            comTrechos={!!trechos}
           />
+          {trechos && onTocarTrecho && (
+            <TrechosLayer dados={trechos} selecionado={trechoSelecionado} onTocar={onTocarTrecho} idPrimeiroSimbolo={idPrimeiroSimbolo} />
+          )}
           <ScoreLabel
             subprefeituras={subprefeituras}
             subSelecionada={subSelecionada}

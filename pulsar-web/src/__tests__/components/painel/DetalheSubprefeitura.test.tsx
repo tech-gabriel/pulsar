@@ -208,3 +208,37 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
     expect(screen.queryByText(/null/)).not.toBeInTheDocument();
   });
 });
+
+describe('DetalheSubprefeitura: trecho', () => {
+  const trecho = (o: object = {}) => ({
+    h3: 'h1', areaId: 's1', valor: 34, faixa: 'MODERADO' as const, perigo: 'ALAGAMENTO' as const,
+    alagamento: { valor: 34, faixa: 'MODERADO' as const }, estacao: null, origem: 'toque' as const, ...o,
+  });
+
+  it('o topo é do trecho, com de onde ele veio, e a área inteira vira uma linha', () => {
+    renderiza({ trecho: trecho() });
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Itaquera');
+    expect(screen.getByText('Trecho que você tocou · Zona Leste')).toBeInTheDocument();
+    expect(screen.getByLabelText('Score 34 de 100')).toBeInTheDocument();
+    expect(screen.getByText('Atenção')).toBeInTheDocument();
+    expect(screen.getByText('Itaquera inteira em Alerta')).toBeInTheDocument();
+  });
+
+  it('localização e busca dizem de onde é o trecho', () => {
+    const { unmount } = renderiza({ trecho: trecho({ origem: 'localizacao' }) });
+    expect(screen.getByText('Trecho onde você está · Zona Leste')).toBeInTheDocument();
+    unmount();
+    renderiza({ trecho: trecho({ origem: 'busca' }) });
+    expect(screen.getByText('Trecho do endereço buscado · Zona Leste')).toBeInTheDocument();
+  });
+
+  it('com estação perto, a frase é a leitura dela', () => {
+    renderiza({ trecho: trecho({ estacao: { cod: 'E1', mm1h: 4.2, mm3h: 6, distanciaKm: 1.9 } }) });
+    expect(screen.getByText('Estação a 1,9 km mediu 4,2 mm na última hora')).toBeInTheDocument();
+  });
+
+  it('sem estação, a frase do risco segue a faixa do trecho, não a da área', () => {
+    renderiza({ area: { ...itaquera, faixaRisco: 'BAIXO' } as Area, trecho: trecho() });
+    expect(screen.getByText('Por chuva: 22,0 mm nas últimas 3h')).toBeInTheDocument();
+  });
+});

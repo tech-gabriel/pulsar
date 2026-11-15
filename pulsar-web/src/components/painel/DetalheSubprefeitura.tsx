@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Bell, BellRing, CloudRain, Droplets, Phone, Route, Sun, Thermometer, TriangleAlert, Wind, X } from 'lucide-react';
+import { Bell, BellRing, CloudRain, Droplets, Map as IconeMapa, Phone, Route, Sun, Thermometer, TriangleAlert, Wind, X } from 'lucide-react';
 import { useCountUp } from '../../hooks/useCountUp';
 import { useNotificacoesPrefs } from '../../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../../hooks/usePushSubscription';
@@ -13,6 +13,7 @@ import { blocosDeDicas } from '../../utils/dicas';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import { useArrastoFolha } from '../../motion/useArrastoFolha';
 import { CIDADE_ATUAL } from '../../features/cidade/cidade';
+import { fraseDoTrecho, type Trecho } from '../../features/cidade/trechos';
 import type { Area } from '../../features/cidade/areas';
 import type { TipoPerigo } from '../../types';
 import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
@@ -33,6 +34,15 @@ function nivelUv(uv: number): string {
   if (uv < 11) return 'muito alto';
   return 'extremo';
 }
+
+/** De onde veio o trecho aberto: a pessoa precisa saber de que pedaço da área é o número. */
+export type OrigemTrecho = 'toque' | 'localizacao' | 'busca' | 'ponto';
+const ROTULO_TRECHO: Record<OrigemTrecho, string> = {
+  toque: 'Trecho que você tocou',
+  localizacao: 'Trecho onde você está',
+  busca: 'Trecho do endereço buscado',
+  ponto: 'Trecho do ponto marcado',
+};
 
 const PERIGO: Record<TipoPerigo, { nome: string; Icon: React.ElementType }> = {
   ALAGAMENTO: { nome: 'Alagamento', Icon: CloudRain },
@@ -65,6 +75,11 @@ interface Props {
    * tablet) o detalhe aparece inteiro e sem alça.
    */
   folha?: { aberta: boolean; onMudar: (aberta: boolean) => void };
+  /**
+   * Trecho aberto (toque no mapa, busca ou localização): o topo passa a ser dele e a área
+   * inteira vira uma linha. O resto (chuva, tempo, emergência) continua sendo da área.
+   */
+  trecho?: Trecho & { origem: OrigemTrecho };
 }
 
 /**
@@ -73,18 +88,25 @@ interface Props {
  * pergunta: o que fazer agora, a chuva (medida, estimada e prevista, cada uma com nome), o
  * tempo agora e os telefones de emergência. As ações ficam presas no pé, sempre no mesmo lugar.
  */
-export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorito, onFechar, onComoChegar, folha }: Props) {
+export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorito, onFechar, onComoChegar, folha, trecho }: Props) {
   const navigate = useNavigate();
   const { prefs } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
   const previsao = usePrevisaoSubprefeitura(area.id);
   const faixas = previsao.erro ? [] : previsao.faixas;
-  const cores = coresParaFaixa(area.faixaRisco);
   const s = area.scoreAtual;
   const l = area.ultimaLeitura;
-  const animado = useCountUp(s?.valor ?? 0, 800);
+  // O número de cima: o do trecho quando há um aberto, senão o da área.
+  const valor = trecho ? trecho.valor : s?.valor;
+  const faixa = trecho ? trecho.faixa : area.faixaRisco;
+  const cores = coresParaFaixa(faixa);
+  const animado = useCountUp(valor ?? 0, 800);
   const catalogo = useCatalogoDicas();
-  const blocos = blocosDeDicas(s, catalogo);
+  // As dicas seguem o trecho: o alagamento dele no lugar do da área; vento e calor são da área.
+  const scoreDasDicas = trecho && s?.componentes
+    ? { ...s, valor: trecho.valor, faixa: trecho.faixa, perigoPrincipal: trecho.perigo, componentes: { ...s.componentes, alagamento: trecho.alagamento } }
+    : s;
+  const blocos = blocosDeDicas(scoreDasDicas, catalogo);
   const medida = temChuvaMedida(area.chuvaMedida);
   const pontos = area.alagamentosCge ?? [];
   const riscoVento = s?.componentes?.vento.faixa;
@@ -110,7 +132,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
       <div className="det-cab">
         <div className="flex-1 min-w-0">
           <h2 className="truncate">{area.nome}</h2>
-          <p className="truncate">Zona {area.zona} · {CIDADE_ATUAL.nome}</p>
+          <p className="truncate">{trecho ? `${ROTULO_TRECHO[trecho.origem]} · Zona ${area.zona}` : `Zona ${area.zona} · ${CIDADE_ATUAL.nome}`}</p>
         </div>
         <BotaoFavorito ativo={isFavorito(area.id)} onToggle={() => onToggleFavorito(area.id)} size={20} />
         <button type="button" className="det-fechar" onClick={onFechar} aria-label="Fechar"><X size={20} aria-hidden="true" /></button>
@@ -119,18 +141,24 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
       <div className="det-rola painel-scroll" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         {/* Resumo: o que aparece ao tocar. A cor só aqui. */}
         <div className="det-hero" style={{ '--c': cores.fill, '--c-escura': cores.text } as React.CSSProperties}>
-          <span className="det-hero-num score-ring-valor" aria-label={`Score ${Math.round(s?.valor ?? 0)} de 100`}>
-            {s ? Math.round(animado) : '–'}
+          <span className="det-hero-num score-ring-valor" aria-label={`Score ${Math.round(valor ?? 0)} de 100`}>
+            {valor != null ? Math.round(animado) : '–'}
           </span>
           <div className="min-w-0">
-            <p className="det-hero-faixa score-ring-valor">{labelFaixa(area.faixaRisco)}</p>
-            <p className="det-hero-frase">{fraseDoRisco(area, faixas)}</p>
+            <p className="det-hero-faixa score-ring-valor">{labelFaixa(faixa)}</p>
+            <p className="det-hero-frase">{trecho ? fraseDoTrecho(trecho, area, faixas) : fraseDoRisco(area, faixas)}</p>
           </div>
         </div>
         {pontos.length > 0 && (
           <p className="det-linha">
             <TriangleAlert size={17} aria-hidden="true" className="text-risco-alto-text" />
             <span>{pontos.length === 1 ? `Alagamento agora na ${pontos[0].via}` : `${pontos.length} pontos de alagamento agora`}</span>
+          </p>
+        )}
+        {trecho && (
+          <p className="det-linha">
+            <IconeMapa size={17} aria-hidden="true" style={{ color: coresParaFaixa(area.faixaRisco).fill }} />
+            <span>{`${area.nome} inteira em ${labelFaixa(area.faixaRisco)}`}</span>
           </p>
         )}
 

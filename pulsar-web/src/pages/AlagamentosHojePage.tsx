@@ -276,7 +276,7 @@ function RegiaoEscolhida({ regiao, risco, pontos, pontosErro, contorno, logado, 
               <div className="min-w-0">
                 <p className="det-hero-faixa">{labelFaixa(atual.faixaRisco)}</p>
                 <p className="det-hero-frase">
-                  {motivoDoRisco({ faixa: atual.faixaRisco, perigoPrincipal: atual.perigoPrincipal, chuva3hMm: atual.chuva3hMm, ventoKmH: atual.ventoKmH, sensacaoTermica: atual.sensacaoTermica }) ?? 'Nada fora do normal agora'}
+                  {motivoDoRisco({ faixa: atual.faixaRisco, perigoPrincipal: atual.perigoPrincipal, chuva3hMm: atual.chuva3hMm, chuva3hMedidaMm: atual.chuva3hMedidaMm, ventoKmH: atual.ventoKmH, sensacaoTermica: atual.sensacaoTermica }) ?? 'Nada fora do normal agora'}
                 </p>
               </div>
             </div>

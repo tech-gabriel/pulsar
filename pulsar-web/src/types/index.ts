@@ -131,6 +131,29 @@ export interface ComponenteScoreDto {
   faixa: FaixaRisco;
 }
 
+/** Estação com chuva medida que mandou na conta de algum trecho (GET /api/celulas). */
+export interface EstacaoAgoraDto {
+  cod: string;
+  mm1h: number;
+  mm3h: number;
+}
+
+/** Alagamento de um trecho (hexágono da grade) agora. `estacao` é o índice em `estacoes`; null = chuva estimada. */
+export interface CelulaAgoraDto {
+  h3: string;
+  areaId: string;
+  valor: number;
+  faixa: FaixaRisco;
+  estacao: number | null;
+  distanciaKm: number | null;
+}
+
+export interface CelulasAgoraDto {
+  calculadoEm: string;
+  estacoes: EstacaoAgoraDto[];
+  celulas: CelulaAgoraDto[];
+}
+
 /** valor/faixa = principal (o pior perigo). Campos novos opcionais: API antiga ou score pré-migração. */
 export interface ScoreDto {
   valor: number;
@@ -140,6 +163,8 @@ export interface ScoreDto {
   componentes?: { alagamento: ComponenteScoreDto; vento: ComponenteScoreDto; calor: ComponenteScoreDto };
   chuva3hMm?: number;
   chuva48hMm?: number;
+  /** Chuva de 3 h medida pelas estações que fizeram o alagamento ("a medida manda"). Null = o número veio do modelo. */
+  chuva3hMedidaMm?: number | null;
 }
 
 export interface LeituraDto {
@@ -406,6 +431,8 @@ export interface RiscoAgoraPublico {
   atualizadoEmUtc: string | null;
   perigoPrincipal: TipoPerigo | null;
   chuva3hMm: number | null;
+  /** Ausente em resposta de API antiga. */
+  chuva3hMedidaMm?: number | null;
   ventoKmH: number | null;
   sensacaoTermica: number | null;
   alagamentosCge: PontoAlagamentoCge[];

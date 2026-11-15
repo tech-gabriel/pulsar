@@ -52,7 +52,12 @@ export function dadosDoCard(area: Area, catalogo: DicaDto[], agora: Date = new D
   let dado = 'Sem risco de chuva forte, vento ou calor agora';
   if (emRisco && principal === 'VENTO') dado = l ? `Ventos de ${Math.round(l.ventoKmH)} km/h` : 'Ventos fortes agora';
   else if (emRisco && principal === 'CALOR') dado = l ? `Sensação de ${Math.round(l.sensacaoTermica)} °C` : 'Calor forte agora';
-  else if (emRisco) dado = (score?.chuva3hMm ?? 0) > 0 ? `${num(score!.chuva3hMm!)} mm de chuva em 3 h` : 'Condições de risco de alagamento';
+  else if (emRisco) {
+    // "A medida manda": com o número pelas estações, o card cita o que elas mediram.
+    const medida = score?.chuva3hMedidaMm != null;
+    const mm = (medida ? score!.chuva3hMedidaMm : score?.chuva3hMm) ?? 0;
+    dado = mm > 0 ? `${num(mm)} mm de chuva${medida ? ' medida' : ''} em 3 h` : 'Condições de risco de alagamento';
+  }
 
   const bloco = emRisco ? blocosDeDicas(score, catalogo).find((b) => b.perigo === principal) : undefined;
   const primeira = bloco?.dicas[0];

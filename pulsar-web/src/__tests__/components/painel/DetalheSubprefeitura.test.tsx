@@ -218,6 +218,12 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
       chuvaMedida: { ...medida, mm15: 0, mm60: 0, posto: 'Mooca' },
       chuva24h: { mm: 18, estacao: 'Mooca', medidoEm: '2026-11-11T03:40:00Z' } } as unknown as Area });
     expect(screen.getByText('Sem chuva agora')).toBeInTheDocument();
+    // O topo diz que choveu num ponto da área e o posto está seco: a frase-ponte explica.
+    expect(screen.getByText('A chuva forte foi em outro ponto de Itaquera.')).toBeInTheDocument();
+  });
+  it('sem o número pela medida, o posto seco não ganha a frase-ponte', () => {
+    com({ mm15: 0, mm60: 0 });
+    expect(screen.queryByText(/em outro ponto/)).not.toBeInTheDocument();
   });
   it('estação seca o dia todo continua "sem chuva", mesmo com o número pela medida', () => {
     renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 },
@@ -253,7 +259,21 @@ describe('DetalheSubprefeitura: trecho', () => {
     expect(screen.getByText('Trecho que você tocou · Zona Leste')).toBeInTheDocument();
     expect(screen.getByLabelText('Score 34 de 100')).toBeInTheDocument();
     expect(screen.getByText('Atenção')).toBeInTheDocument();
-    expect(screen.getByText('Itaquera inteira em Alerta')).toBeInTheDocument();
+    expect(screen.getByText(/^Itaquera inteira em Alerta/)).toBeInTheDocument();
+  });
+
+  // Trecho mais calmo que a área: uma frase diz por quê (crítica de 15/11).
+  it('trecho mais calmo que a área: diz que o risco maior está em outro ponto', () => {
+    renderiza({ trecho: trecho() });
+    expect(screen.getByText('O risco maior está em outro ponto de Itaquera.')).toBeInTheDocument();
+  });
+  it('com o número da área pela chuva medida, diz que a chuva forte foi em outro ponto', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 } } as unknown as Area, trecho: trecho() });
+    expect(screen.getByText('A chuva forte foi em outro ponto de Itaquera.')).toBeInTheDocument();
+  });
+  it('trecho na mesma faixa da área não ganha a frase', () => {
+    renderiza({ trecho: trecho({ faixa: 'ALTO' }) });
+    expect(screen.queryByText(/em outro ponto/)).not.toBeInTheDocument();
   });
 
   it('localização e busca dizem de onde é o trecho', () => {

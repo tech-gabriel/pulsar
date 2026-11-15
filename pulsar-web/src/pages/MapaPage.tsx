@@ -123,8 +123,8 @@ export default function MapaPage() {
   // Modo rota: o De/Para toma o lugar da busca e o resultado, o do painel/folha.
   const [rotaAberta, setRotaAberta] = useState(false);
   const [rotuloBusca, setRotuloBusca] = useState<string | null>(null);
-  // Rótulo com o número digitado, à espera de a pessoa soltar o pino na porta (o mapa não tinha o número).
-  const rotuloAoSoltar = useRef<string | null>(null);
+  // Último ponto onde a pessoa soltou o pino: a rua dele chega depois e só vale se o pino não mudou.
+  const ultimoSolto = useRef<{ lat: number; lon: number } | null>(null);
   // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
@@ -171,8 +171,6 @@ export default function MapaPage() {
   // mapa chega perto ou quando há um ponto (busca, localização), nunca na abertura de longe.
   const [perto, setPerto] = useState(false);
   const comTrechos = camadaAtiva === 'score' && !rotaAberta;
-  // Dica única de que o trecho é tocável: aparece quando os trechos surgem pela primeira vez.
-  const dicaTrecho = useDicaUnica('pulsar-dica-trecho-vista');
   const ativoTrechos = comTrechos && (perto || !!pontoBusca);
   const contornoTrechos = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
   const celulasAgora = useCelulasAgora(ativoTrechos, ultimaAtualizacao?.getTime() ?? null);
@@ -181,6 +179,12 @@ export default function MapaPage() {
     () => (contornoTrechos.dados && trechos ? montarTrechos(contornoTrechos.dados, trechos) : null),
     [contornoTrechos.dados, trechos],
   );
+  // Dica única de que o trecho é tocável: aparece quando os trechos surgem pela primeira vez.
+  const dicaTrecho = useDicaUnica('pulsar-dica-trecho-vista');
+  const mostrarDicaTrecho = dicaTrecho.mostrarDica && comTrechos && perto && !!dadosTrechos && !localAberto;
+  // Uma dica por sessão: depois da do trecho, a do alvo não entra logo no lugar dela.
+  const [dicaTrechoNaSessao, setDicaTrechoNaSessao] = useState(false);
+  if (mostrarDicaTrecho && !dicaTrechoNaSessao) setDicaTrechoNaSessao(true);
   // O trecho tocado ganha do trecho do ponto; os dois só valem se forem da área aberta.
   const h3DoPontoBusca = useMemo(
     () => (pontoBusca ? h3DoPonto(pontoBusca.lat, pontoBusca.lon, contornoTrechos.dados) : null),
@@ -309,30 +313,37 @@ export default function MapaPage() {
   }
 
   // Núcleo compartilhado por busca e geolocalização: resolve o ponto para uma
-  // seleção de região (ou aviso) e aplica no estado do mapa. Devolve se caiu na área.
-  function selecionarPorPonto(ponto: PontoBusca, origem: 'busca' | 'localizacao') {
+  // seleção de região (ou aviso) e aplica no estado do mapa. Devolve a subprefeitura (null fora da área).
+  function selecionarPorPonto(ponto: PontoBusca, origem: 'busca' | 'localizacao'): SubprefeituraMapaDto | null {
     setPontoBusca(ponto);
     setTrechoTocado(null); // o trecho passa a ser o do ponto
     const sel = resolverSelecao(ponto.lat, ponto.lon, geojson as FeatureCollection | null, subprefeituras, origem);
     if (sel.aviso) {
       setSubSelecionada(null);
       setAvisoBusca(sel.aviso);
-      return false;
+      return null;
     }
     setAvisoBusca(null);
     setSubSelecionada(sel.sub);
     setPainelRecolhido(false);
     setZonaEmFoco(null);
     if (isMobile) setPainelMobileAberto(false);
-    return true;
+    return sel.sub;
   }
 
-  // Pin arrastado: o ponto passa a ser exato (sem círculo nem aviso) e o mapa não voa.
+  // Pin arrastado: o ponto passa a ser exato (sem círculo nem aviso) e o mapa não voa. O nome
+  // do destino passa a ser a rua de onde o pino caiu (escolha de 15/11), não o que foi digitado:
+  // o pino pode ter ido parar em outra rua.
   function handleMoverPonto(lat: number, lon: number) {
-    selecionarPorPonto({ lat, lon, ajustado: true }, 'busca');
-    // Quem arrastou até a porta do número que o mapa não tinha leva esse endereço para a rota.
-    setRotuloBusca(rotuloAoSoltar.current);
-    rotuloAoSoltar.current = null;
+    const sub = selecionarPorPonto({ lat, lon, ajustado: true }, 'busca');
+    setRotuloBusca(null);
+    ultimoSolto.current = { lat, lon };
+    if (sub) {
+      void buscarRuaPerto(lat, lon).then((rua) => {
+        const agora = ultimoSolto.current;
+        if (rua && agora && agora.lat === lat && agora.lon === lon) setRotuloBusca(`${rua}, ${sub.nome}`);
+      });
+    }
     void atualizarProximas(lat, lon);
   }
 
@@ -341,9 +352,8 @@ export default function MapaPage() {
   // carregado), abrindo o painel de detalhe. Fora dos polígonos → aviso.
   function handleSelecionarEndereco(endereco: EnderecoBusca, numeroFaltando?: string) {
     const dentro = selecionarPorPonto({ lat: endereco.latitude, lon: endereco.longitude }, 'busca');
-    const rotulo = endereco.nome || endereco.descricao;
-    setRotuloBusca(rotulo);
-    rotuloAoSoltar.current = numeroFaltando ? `${rotulo}, ${numeroFaltando}` : null;
+    setRotuloBusca(endereco.nome || endereco.descricao);
+    ultimoSolto.current = null;
     // O mapa não tem o número digitado: a rota vai exatamente para onde a pessoa soltar o pino.
     if (dentro && numeroFaltando) setAvisoBusca(`O mapa não tem o número ${numeroFaltando}. Arraste o pino até a porta.`);
   }
@@ -401,8 +411,8 @@ export default function MapaPage() {
       localizando={localizando}
       onAbrirRota={() => void abrirRota('chip')}
       embutida={embutida}
-      semDica={!!localAberto}
-      dicaTrecho={dicaTrecho.mostrarDica && comTrechos && perto && !!dadosTrechos && !localAberto}
+      semDica={!!localAberto || dicaTrechoNaSessao}
+      dicaTrecho={mostrarDicaTrecho}
       onDispensarDicaTrecho={dicaTrecho.dispensar}
       aviso={isMobile ? avisoBusca : null}
     />
@@ -544,18 +554,18 @@ export default function MapaPage() {
           {/* Legenda dinâmica: muda com a camada. Com o overlay ligado ganha a chave dos alagamentos. */}
           <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} />
 
-          {/* Aviso quando o endereço cai fora da área coberta */}
-          {avisoBusca && (
+          {/* Aviso do ponto buscado. Só no computador: no celular ele fica embaixo da busca. */}
+          {avisoBusca && !isMobile && (
             <div className="superficie rounded-2xl mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">
               {avisoBusca}
             </div>
           )}
 
           {/* Convite para ativar notificações push. Sem favorita o push não tem o que mandar:
-              primeiro escolher, depois ativar. */}
-          {semFavoritas
+              primeiro escolher, depois ativar. Com a rota aberta ele sai: o mapa é do caminho. */}
+          {!rotaAberta && (semFavoritas
             ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
-            : <ConvitePush favoritas={favoritas} />}
+            : <ConvitePush favoritas={favoritas} />)}
 
           {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
           {proximas && (

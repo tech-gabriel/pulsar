@@ -15,13 +15,16 @@ import { useArrastoFolha } from '../../motion/useArrastoFolha';
 import { CIDADE_ATUAL } from '../../features/cidade/cidade';
 import { fraseDoTrecho, type Trecho } from '../../features/cidade/trechos';
 import type { Area } from '../../features/cidade/areas';
-import type { TipoPerigo } from '../../types';
+import type { FaixaRisco, TipoPerigo } from '../../types';
 import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
 import AlagamentosCge from './AlagamentosCge';
 import ChuvaMedidaLinha from './ChuvaMedidaLinha';
 import { temChuvaMedida } from '../../utils/chuvaMedida';
+import { deNomeDe } from '../../data/regioes-seo';
+
+const GRAVIDADE: Record<FaixaRisco, number> = { BAIXO: 0, MODERADO: 1, ALTO: 2 };
 
 const decimal = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const inteiro = (v: number) => Math.round(v).toLocaleString('pt-BR');
@@ -158,7 +161,17 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
         {trecho && (
           <p className="det-linha">
             <IconeMapa size={17} aria-hidden="true" style={{ color: coresParaFaixa(area.faixaRisco).fill }} />
-            <span>{`${area.nome} inteira em ${labelFaixa(area.faixaRisco)}`}</span>
+            <span>
+              {`${area.nome} inteira em ${labelFaixa(area.faixaRisco)}`}
+              {/* Trecho mais calmo que a área: diz por quê, para os dois números não brigarem. */}
+              {GRAVIDADE[trecho.faixa] < GRAVIDADE[area.faixaRisco ?? 'BAIXO'] && (
+                <small className="det-linha-ponte">
+                  {(s?.chuva3hMedidaMm ?? 0) > 0
+                    ? `A chuva forte foi em outro ponto ${deNomeDe(area.nome)}.`
+                    : `O risco maior está em outro ponto ${deNomeDe(area.nome)}.`}
+                </small>
+              )}
+            </span>
           </p>
         )}
 

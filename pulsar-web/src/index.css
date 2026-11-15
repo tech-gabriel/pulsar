@@ -645,7 +645,8 @@ html.light .score-ring-valor {
 }
 /* Título do perigo em "O que fazer agora": o mesmo par de cores, ou o vermelho escuro some no
    fundo vinho do tema escuro. */
-.det-perigo-t { color: var(--c); }
+/* No escuro a cor viva pura dá 3,9:1 no texto de 12,5 px (crítica 15/11); clareada, passa de 4,5:1. */
+.det-perigo-t { color: color-mix(in srgb, var(--c) 60%, #fff); }
 html.light .det-perigo-t { color: var(--c-escura); }
 
 /* ── Detalhe da subprefeitura (redesenho 11/2026) ────────────────────────────────
@@ -686,6 +687,9 @@ html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
 .det-linha { display: flex; align-items: center; gap: 10px; margin: 10px 4px 0; font: 600 14px/1.3 var(--font-body); color: var(--text-primary); }
 .det-linha svg { flex-shrink: 0; }
 .det-linha span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Frases-ponte: por que o número de um lugar difere do de outro (15/11). Secundárias, quebram linha. */
+.det-linha-ponte { display: block; margin-top: 2px; white-space: normal; font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
+.det-faixa-ponte { margin-top: 4px; font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
 .det-resto > :first-child { margin-top: 14px; }
 .det-sec { margin-top: 20px; }
 .det-t { font: 700 17px/1.2 var(--font-heading); letter-spacing: -.01em; color: var(--text-primary); margin: 0 4px 8px; }

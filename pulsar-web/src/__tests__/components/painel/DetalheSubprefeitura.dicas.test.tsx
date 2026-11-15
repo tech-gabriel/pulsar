@@ -32,12 +32,12 @@ const renderiza = (a: Area) =>
 beforeEach(() => { dados.catalogo = CATALOGO; });
 
 describe('DetalheSubprefeitura: dicas por perigo', () => {
-  it('um bloco por perigo ativo, principal primeiro, e o aviso de estimativa', () => {
+  it('um bloco por perigo ativo, principal primeiro, sob "O que fazer agora"', () => {
     renderiza(area('ALTO', 'MODERADO'));
+    expect(screen.getByRole('heading', { level: 3, name: 'O que fazer agora' })).toBeInTheDocument();
     const titulos = screen.getAllByRole('heading', { level: 4 }).map((h) => h.textContent);
     expect(titulos).toEqual(['Alagamento · Alerta', 'Calor · Atenção']);
     expect(screen.getAllByText(/dica \d/)).toHaveLength(6);
-    expect(screen.getByText(/Estimativa do Pulsar\. Em emergência, ligue 199/)).toBeInTheDocument();
   });
 
   it('perigo em Tranquilo não ganha bloco', () => {
@@ -45,10 +45,10 @@ describe('DetalheSubprefeitura: dicas por perigo', () => {
     expect(screen.getAllByRole('heading', { level: 4 }).map((h) => h.textContent)).toEqual(['Alagamento · Alerta']);
   });
 
-  it('catálogo vazio (carregando ou falhou): sem bloco, sem erro, com o aviso', () => {
+  it('catálogo vazio (carregando ou falhou): sem a seção, sem erro, com o aviso', () => {
     dados.catalogo = [];
     renderiza(area('ALTO', 'MODERADO'));
-    expect(screen.queryByText('Como se proteger')).not.toBeInTheDocument();
-    expect(screen.getByText(/Estimativa do Pulsar/)).toBeInTheDocument();
+    expect(screen.queryByText('O que fazer agora')).not.toBeInTheDocument();
+    expect(screen.getByText(/estimativa do Pulsar/)).toBeInTheDocument();
   });
 });

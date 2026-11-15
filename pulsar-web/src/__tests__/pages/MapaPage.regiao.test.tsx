@@ -97,7 +97,7 @@ describe('MapaPage deep-link', () => {
     function Ir() { const navigate = useNavigate(); return <button onClick={() => navigate('/app?regiao=itaquera')}>ir</button>; }
     render(<MemoryRouter initialEntries={['/app?regiao=itaquera']}><Ir /><MapaPage /></MemoryRouter>);
     await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Itaquera' }).length).toBeGreaterThan(0));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Voltar' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Fechar' })[0]);
     await waitFor(() => expect(screen.queryAllByRole('heading', { name: 'Itaquera' })).toHaveLength(0));
     fireEvent.click(screen.getByRole('button', { name: 'ir' }));
     await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Itaquera' }).length).toBeGreaterThan(0));

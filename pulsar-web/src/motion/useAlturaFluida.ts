@@ -33,6 +33,8 @@ export function useAlturaFluida(ref: RefObject<HTMLElement | null>, montado = tr
     };
 
     const ro = new ResizeObserver(() => {
+      // Dedo na alça (useArrastoFolha): a altura é do dedo. Só guarda de onde animar ao soltar.
+      if (el.dataset.arrastando !== undefined) { ultima = el.getBoundingClientRect().height; return; }
       if (anim) return; // a própria animação muda a altura a cada quadro; mudança de conteúdo vem pelo MutationObserver
       animar(ultima);
     });

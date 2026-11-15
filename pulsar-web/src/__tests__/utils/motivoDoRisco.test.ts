@@ -16,7 +16,7 @@ describe('motivoDoRisco', () => {
   // "A medida manda": quando o número saiu das estações, a frase cita o que elas mediram.
   it('alagamento pela chuva medida cita a medida, não o modelo', () => {
     expect(motivoDoRisco({ faixa: 'ALTO', perigoPrincipal: 'ALAGAMENTO', chuva3hMm: 27, chuva3hMedidaMm: 38 }))
-      .toBe('Por chuva medida: 38,0 mm nas últimas 3h');
+      .toBe('Por chuva medida na parte mais atingida: 38,0 mm nas últimas 3h');
   });
   it('vento sem leitura cai na chuva', () => {
     expect(motivoDoRisco({ faixa: 'MODERADO', perigoPrincipal: 'VENTO', chuva3hMm: 0 })).toBe('Por chuva: 0,0 mm nas últimas 3h');

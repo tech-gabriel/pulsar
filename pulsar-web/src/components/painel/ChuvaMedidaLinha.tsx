@@ -42,12 +42,16 @@ export default function ChuvaMedidaLinha({ nome, medida, chuva24h }: Props) {
     medida.mm60 !== null && { mm: medida.mm60, quando: 'na última hora' },
   ].filter((j) => !!j);
   const choveu = janelas.some((j) => j.mm > 0);
+  // De onde é a leitura: o número grande pode vir da parte mais atingida da área e esta, de
+  // outro ponto. O CEMADEN vale pela estação mais perto do centro; o CGE, pelo posto da região
+  // (o nome do posto já diz onde) ou, sem ele, pelo posto mais perto.
+  const onde = !cge ? ', perto do centro' : medida.vizinho ? ', no posto mais perto' : '';
 
   return (
     <>
       <div className="det-faixa">
         <div className="det-faixa-cab">
-          <span className="det-faixa-nome">Medida agora</span>
+          <span className="det-faixa-nome">{`Medida agora${onde}`}</span>
           <button type="button" className="det-faixa-de" onClick={() => setAberta(true)}>
             <span>{cge ? `posto ${medida.posto} do CGE` : `estação ${medida.posto} do CEMADEN`}</span>
             <ChevronRight size={14} aria-hidden="true" />

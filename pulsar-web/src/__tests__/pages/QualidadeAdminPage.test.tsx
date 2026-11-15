@@ -107,7 +107,7 @@ describe('QualidadeAdminPage', () => {
   });
 });
 
-describe('QualidadeAdminPage: risco por trecho (em teste)', () => {
+describe('QualidadeAdminPage: risco por trecho', () => {
   const linha = (subprefeitura: string, extra: Partial<ResumoGradeAreaDto> = {}): ResumoGradeAreaDto => ({
     subprefeitura, celulas: 48, ciclos: 672, maxValorArea: 41.26, maxMeioTermo: 63.5,
     ciclosAreaAlto: 0, ciclosMeioTermoAlto: 3, ciclosFaixaDiferente: 5, maxCelulasAlto: 9,
@@ -119,7 +119,7 @@ describe('QualidadeAdminPage: risco por trecho (em teste)', () => {
     gradeState.linhas = [linha('Mooca'), linha('Lapa', { celulas: 53, ciclosFaixaDiferente: 0 })];
     renderPage();
 
-    const secao = screen.getByRole('region', { name: 'Risco por trecho (em teste)' });
+    const secao = screen.getByRole('region', { name: 'Risco por trecho' });
     const mooca = within(within(secao).getByRole('table', { name: 'Área e trechos com a chuva do modelo' })).getByRole('row', { name: /Mooca/ });
     expect(within(mooca).getAllByRole('cell').map((c) => c.textContent)).toEqual(
       ['Mooca', '48', '672', '41,3', '63,5', '5', '9'],
@@ -141,7 +141,7 @@ describe('QualidadeAdminPage: risco por trecho (em teste)', () => {
 
   it('sem ciclo com risco diz isso em vez de uma tabela vazia', () => {
     renderPage();
-    const secao = screen.getByRole('region', { name: 'Risco por trecho (em teste)' });
+    const secao = screen.getByRole('region', { name: 'Risco por trecho' });
     expect(within(secao).getByText('Nenhum ciclo com risco no período.')).toBeInTheDocument();
     expect(within(secao).queryByRole('table')).not.toBeInTheDocument();
   });

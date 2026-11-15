@@ -21,7 +21,8 @@ const { de, ate } = ZOOM_TRECHOS;
 const OPACIDADE: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], de, 0, ate, ['get', 'opacidade'], 15, ['*', ['get', 'opacidade'], 0.6]];
 const LARGURA_LINHA: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], 9, 0.15, 13, 1];
 // A linha entre os trechos tem a cor do chão do mapa (rejunte, escolhido em 15/11): separa sem
-// competir com a cor do risco e deixa o contorno branco do trecho tocado como o único traço claro.
+// competir com a cor do risco. No escuro, o contorno branco do trecho tocado vira o único traço
+// claro; no claro o rejunte já é quase branco e quem destaca o tocado é a espessura (3 px).
 const OPACIDADE_LINHA: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], de, 0, ate, 0.9];
 
 interface Props {

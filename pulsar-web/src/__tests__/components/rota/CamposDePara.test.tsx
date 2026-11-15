@@ -208,6 +208,18 @@ describe('CamposDePara: casa e trabalho', () => {
     expect(screen.getByRole('button', { name: /^Trabalho/ })).toBeInTheDocument();
   });
 
+  it('minhaLocalizacao_primeiraLinhaDoDe_soNoDe', () => {
+    const onMinhaLocalizacao = vi.fn();
+    monta({ origem: { lat: -23.6, lon: -46.7, rotulo: 'Rua Augusta' }, onMinhaLocalizacao });
+    fireEvent.focus(screen.getByRole('combobox', { name: 'De' }));
+    const linhas = screen.getAllByRole('button').filter((b) => b.classList.contains('mapa-item'));
+    expect(linhas[0]).toHaveTextContent('Minha localização');
+    fireEvent.click(linhas[0]);
+    expect(onMinhaLocalizacao).toHaveBeenCalledOnce();
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
+    expect(screen.queryByRole('button', { name: 'Minha localização' })).not.toBeInTheDocument();
+  });
+
   it('Tab do campo para a linha não fecha as linhas, e sair delas fecha', () => {
     monta();
     const campo = screen.getByRole('combobox', { name: 'Para' });

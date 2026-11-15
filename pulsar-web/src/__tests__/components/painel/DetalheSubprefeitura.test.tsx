@@ -221,6 +221,25 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
     // O topo diz que choveu num ponto da área e o posto está seco: a frase-ponte explica.
     expect(screen.getByText('A chuva forte foi em outro ponto de Itaquera.')).toBeInTheDocument();
   });
+  it('número pela medida com a estação mais forte: a linha diz o nome dela', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22, chuva3hMm: 3 } } as unknown as Area, estacaoMaisForte: 'Penha3' });
+    expect(screen.getByText('em 3 h, mais forte perto da estação Penha 3')).toBeInTheDocument();
+    expect(screen.getByText('O modelo estimou 3,0 mm em 3 h.')).toBeInTheDocument();
+  });
+  // Número pela medida: o cartão abre com a leitura que o fez e o modelo vira uma linha pequena.
+  it('número pela medida: "Chuva que gerou o risco" primeiro e o modelo em uma linha', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22, chuva3hMm: 0 } } as unknown as Area });
+    expect(screen.getByText('Chuva que gerou o risco')).toBeInTheDocument();
+    expect(screen.getByText('em 3 h, num ponto de Itaquera')).toBeInTheDocument();
+    expect(screen.getByText('O modelo não registrou essa chuva.')).toBeInTheDocument();
+    expect(screen.queryByText('Estimada pelo modelo')).not.toBeInTheDocument();
+  });
+  it('sem o número pela medida, o modelo continua como bloco', () => {
+    renderiza();
+    expect(screen.queryByText('Chuva que gerou o risco')).not.toBeInTheDocument();
+    expect(screen.getByText('Estimada pelo modelo')).toBeInTheDocument();
+  });
+
   it('sem o número pela medida, o posto seco não ganha a frase-ponte', () => {
     com({ mm15: 0, mm60: 0 });
     expect(screen.queryByText(/em outro ponto/)).not.toBeInTheDocument();
@@ -271,6 +290,30 @@ describe('DetalheSubprefeitura: trecho', () => {
     renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 } } as unknown as Area, trecho: trecho() });
     expect(screen.getByText('A chuva forte foi em outro ponto de Itaquera.')).toBeInTheDocument();
   });
+  // No trecho, "Medida agora" é a estação do trecho, a mesma do topo (crítica de 15/11).
+  it('o cartão Chuva do trecho mostra a estação do trecho, não a do centro', () => {
+    renderiza({
+      area: { ...itaquera, chuvaMedida: { fonte: 'cge', mm15: 2.4, mm60: 12.4, acumuladoPeriodoMm: 30, posto: 'Centro', vizinho: false, coletadoEm: '2026-11-11T03:45:00Z' } } as unknown as Area,
+      trecho: trecho({ estacao: { cod: 'E1', nome: 'Vila Ema', mm1h: 0, mm3h: 0, distanciaKm: 2.3, em: '2026-11-11T03:40:00Z' } }),
+    });
+    expect(screen.getByRole('button', { name: 'Estação Vila Ema · 2,3 km' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Posto Centro/ })).not.toBeInTheDocument();
+  });
+  // No trecho com estação o modelo é da região inteira: uma linha pequena, e a frase usa 3 horas como o topo.
+  it('trecho com estação: modelo da região em uma linha e frase de 3 horas', () => {
+    renderiza({ trecho: trecho({ estacao: { cod: 'E1', nome: 'Vila Ema', mm1h: 0, mm3h: 0, distanciaKm: 2.3, em: '' } }) });
+    expect(screen.getByText('O modelo estimou 22,0 mm em 3 h para toda a região de Itaquera.')).toBeInTheDocument();
+    expect(screen.queryByText('Estimada pelo modelo')).not.toBeInTheDocument();
+    expect(screen.getByText('Sem chuva nas últimas 3 horas')).toBeInTheDocument();
+  });
+  it('trecho sem estação: o cartão não cita a estação do centro da área', () => {
+    renderiza({
+      area: { ...itaquera, chuvaMedida: { fonte: 'cge', mm15: 2.4, mm60: 12.4, acumuladoPeriodoMm: 30, posto: 'Centro', vizinho: false, coletadoEm: '2026-11-11T03:45:00Z' } } as unknown as Area,
+      trecho: trecho(),
+    });
+    expect(screen.queryByText(/^Medida agora/)).not.toBeInTheDocument();
+  });
+
   it('trecho na mesma faixa da área não ganha a frase', () => {
     renderiza({ trecho: trecho({ faixa: 'ALTO' }) });
     expect(screen.queryByText(/em outro ponto/)).not.toBeInTheDocument();

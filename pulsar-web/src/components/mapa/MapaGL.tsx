@@ -306,6 +306,8 @@ export default function MapaGL(props: PropsMapa) {
       transformRequest={CHAVE_MAPTILER ? (url) => ({ url: comChaveMapTiler(url, CHAVE_MAPTILER) }) : undefined}
       onLoad={(e) => {
         performance.mark('mapa-base');
+        // O crédito do mapa abre sozinho; aqui começa recolhido (pedido de 15/11), o "i" abre.
+        e.target.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
         setCarregou(true);
         setIdPrimeiroSimbolo(primeiroSimbolo(e.target));
         e.target.once('idle', () => performance.mark('mapa-pronto'));
@@ -334,7 +336,7 @@ export default function MapaGL(props: PropsMapa) {
             idPrimeiroSimbolo={idPrimeiroSimbolo}
             comTrechos={!!trechos}
           />
-          {trechos && onTocarTrecho && (
+          {trechos && (
             <TrechosLayer dados={trechos} selecionado={trechoSelecionado} onTocar={onTocarTrecho} idPrimeiroSimbolo={idPrimeiroSimbolo} />
           )}
           <ScoreLabel

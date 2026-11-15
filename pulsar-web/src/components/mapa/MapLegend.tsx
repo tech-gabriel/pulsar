@@ -24,7 +24,7 @@ function gradiente(...tons: string[]): string {
 
 const LEGENDAS: Record<Camada, LegendaConfig> = {
   score: {
-    titulo: 'Score de Perigo',
+    titulo: 'Risco',
     gradiente: gradiente(PALETA.verde, PALETA.amarelo, PALETA.vermelho),
     labels: ['0', '30', '60', '100'],
   },

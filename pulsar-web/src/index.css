@@ -497,6 +497,12 @@ body:has(.convite-push) .legenda-pill { display: none; }
 .camadas-pilula .layer-btn { border-radius: 999px !important; padding: 0 16px !important; min-height: 40px; }
 @media (min-width: 1024px) {
   .camadas-pilula { left: calc((100% - var(--largura-painel) - 26px) / 2); }
+  /* O "i" do crédito do mapa ficaria embaixo do painel: vai para a esquerda dele. */
+  .maplibregl-map .maplibregl-ctrl-bottom-right { right: calc(var(--largura-painel) + 26px); }
+}
+/* No tablet o painel ocupa a base inteira: o "i" do crédito vai para baixo da legenda, no alto. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .maplibregl-map .maplibregl-ctrl-bottom-right { bottom: auto; top: calc(var(--topo-app) + 82px); }
 }
 /* No pé, a partir de 1280: centrada na tela (cabe entre a coluna da esquerda e o painel). */
 @media (min-width: 1280px) {
@@ -662,6 +668,8 @@ html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
 .det-hero-num { font: 800 52px/1 var(--font-heading); letter-spacing: -.04em; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .det-hero-faixa { font: 700 17px/1.2 var(--font-heading); }
 .det-hero-frase { font-size: 13.5px; line-height: 1.4; color: var(--text-secondary); margin-top: 2px; }
+/* No escuro, o texto secundário sobre o fundo tingido da faixa (verde do Tranquilo) caía a 3,8:1. */
+html:not(.light) .det-hero .det-hero-frase { color: var(--text-primary); }
 .det-medida-fonte { font-size: 11.5px; color: var(--text-secondary); }
 .med-item { display: grid; gap: 2px; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent); }
 .med-item b { font: 600 16px/1.35 var(--font-body); font-variant-numeric: tabular-nums; color: var(--text-primary); }
@@ -673,10 +681,13 @@ html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
 .prev-hora { font: 500 10.5px var(--font-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 /* Detalhe no desenho de 14/11/2026 (entrega 4 do H3). Resumo em cima (risco e linhas), o resto
    abre ao puxar a alça no celular; as ações ficam presas no pé nas duas alturas. */
-.det-alca { flex-shrink: 0; width: 100%; height: 22px; display: flex; align-items: center; justify-content: center; touch-action: none; cursor: grab; }
+.det-alca { flex-shrink: 0; width: 100%; height: 44px; margin-bottom: -22px; padding-top: 8.5px; position: relative; z-index: 0; display: flex; align-items: flex-start; justify-content: center; touch-action: none; cursor: grab; }
 .det-alca span { width: 36px; height: 5px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary) 22%, transparent); }
 .det-cab { flex-shrink: 0; display: flex; align-items: flex-start; gap: 8px; padding: 14px 16px 10px; }
-.det-alca + .det-cab { padding-top: 2px; }
+/* Alça de 44 px (crítica de 15/11): ela desce 22 px por trás do cabeçalho, que deixa o toque
+   passar (menos nos botões). A borda da folha cortava qualquer área extra para cima. */
+.det-alca + .det-cab { padding-top: 2px; position: relative; z-index: 1; pointer-events: none; }
+.det-alca + .det-cab :is(button, a) { pointer-events: auto; }
 .det-cab h2 { font: 800 24px/1.15 var(--font-heading); letter-spacing: -.03em; color: var(--text-primary); }
 .det-cab p { font-size: 12.5px; color: var(--text-secondary); }
 .det-fechar { flex-shrink: 0; width: 44px; height: 44px; margin: -8px -8px -8px 0; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--text-secondary); }
@@ -689,6 +700,7 @@ html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
 .det-linha span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Frases-ponte: por que o número de um lugar difere do de outro (15/11). Secundárias, quebram linha. */
 .det-linha-ponte { display: block; margin-top: 2px; white-space: normal; font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
+.det-faixa-modelo { font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
 .det-faixa-ponte { margin-top: 4px; font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
 .det-resto > :first-child { margin-top: 14px; }
 .det-sec { margin-top: 20px; }
@@ -709,10 +721,11 @@ button.det-faixa-de::after { content: ''; position: absolute; inset: -14px 0; }
 .det-par { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .det-par b { display: block; font: 700 22px/1.15 var(--font-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--text-primary); }
 .det-par.menor b { font-size: 17px; }
+.det-par.um { grid-template-columns: 1fr; }
 .det-par b span { font: 500 13px var(--font-body); letter-spacing: 0; color: var(--text-secondary); margin-left: 3px; }
 .det-par i { font-style: normal; font-size: 12px; color: var(--text-secondary); }
 .det-aviso { font-size: 12px; line-height: 1.4; color: var(--text-secondary); margin-top: 8px; }
-.det-faixa .prev-barras { padding: 4px 0 0; height: 104px; }
+.det-faixa .prev-barras { padding: 4px 0 0; height: 84px; }
 .det-quad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .det-quad > div { padding: 11px 4px; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
 .det-quad > div + div { border-left: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); }
@@ -727,7 +740,8 @@ button.det-faixa-de::after { content: ''; position: absolute; inset: -14px 0; }
 .det-tel strong { font: 700 15px var(--font-heading); font-variant-numeric: tabular-nums; }
 .det-fim-nota { font-size: 12.5px; line-height: 1.45; color: var(--text-secondary); }
 .det-pe { flex-shrink: 0; display: flex; gap: 8px; padding: 10px 16px 12px; border-top: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); }
-.det-acao { flex: 1; min-width: 0; min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 12px; font: 600 13px var(--font-body); color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 7%, transparent); white-space: nowrap; }
+/* 44 px: alvo de toque mínimo (crítica de 15/11; eram 38). */
+.det-acao { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 12px; font: 600 13px var(--font-body); color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 7%, transparent); white-space: nowrap; }
 .det-acao.forte { flex: 1.7; background: var(--color-pulsar-600); color: #fff; }
 .det-acao.ligado { color: var(--text-accent); }
 .det-acao:active { transform: scale(.97); transition: transform 100ms ease-out; }
@@ -1187,6 +1201,8 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 /* Folha aberta: os cartões e a legenda que flutuam acima dela saem, para não cobri-la. */
 body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-pill) { display: none; }
 @media (max-width: 767px) { .mapa-app .maplibregl-ctrl-bottom-right { bottom: var(--topo-folha); } }
+/* Crédito do mapa aberto (largura toda no celular; duas linhas a 320 px, 44 px de altura): a legenda sobe para não cobri-lo. */
+@media (max-width: 767px) { body:has(.maplibregl-compact-show) .legenda-pill { bottom: calc(var(--topo-folha) + 60px) !important; } }
 /* Celular: o convite de alertas mora no mesmo pé do mapa; a atribuição (exigida pela licença do
    OpenStreetMap) sobe para não ficar coberta enquanto ele está aberto. */
 @media (max-width: 767px) { body:has(.convite-push) .mapa-app .maplibregl-ctrl-bottom-right { bottom: calc(var(--topo-folha) + 68px); } }

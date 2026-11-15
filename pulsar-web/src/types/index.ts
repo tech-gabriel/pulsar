@@ -136,6 +136,8 @@ export interface EstacaoAgoraDto {
   cod: string;
   mm1h: number;
   mm3h: number;
+  /** Nome no cadastro do CEMADEN (o código, se faltar). */
+  nome?: string;
 }
 
 /** Alagamento de um trecho (hexágono da grade) agora. `estacao` é o índice em `estacoes`; null = chuva estimada. */

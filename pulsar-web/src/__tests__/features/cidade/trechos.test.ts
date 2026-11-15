@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { FeatureCollection } from 'geojson';
 import type { CelulaAgoraDto, CelulasAgoraDto } from '../../../types';
 import type { Area } from '../../../features/cidade/areas';
-import { centroDoTrecho, fraseDaEstacao, fraseDoTrecho, h3DoPonto, montarTrechos, trechosDe } from '../../../features/cidade/trechos';
+import { centroDoTrecho, estacaoMaisForte, fraseDaEstacao, fraseDoTrecho, h3DoPonto, montarTrechos, trechosDe } from '../../../features/cidade/trechos';
 
 const componente = (valor: number, faixa: 'BAIXO' | 'MODERADO' | 'ALTO') => ({ valor, faixa });
 
@@ -50,7 +50,7 @@ describe('trechosDe', () => {
 
   it('a estação do trecho vem com a leitura e a distância', () => {
     const t = trechosDe(agora([celula({ estacao: 0, distanciaKm: 1.9 })]), [area()]).get('h1')!;
-    expect(t.estacao).toEqual({ cod: 'E1', mm1h: 4.2, mm3h: 6, distanciaKm: 1.9 });
+    expect(t.estacao).toEqual({ cod: 'E1', mm1h: 4.2, mm3h: 6, distanciaKm: 1.9, em: '' });
   });
 
   it('célula de área que o app não conhece fica de fora', () => {
@@ -152,5 +152,14 @@ describe('fraseDoTrecho', () => {
   it('trecho tranquilo sem estação e sem previsão: nada fora do normal', () => {
     const t = trechosDe(agora([celula({ valor: 3, faixa: 'BAIXO' })]), [area()]).get('h1')!;
     expect(fraseDoTrecho(t, area(), [])).toBe('Nada fora do normal agora');
+  });
+});
+
+describe('estacaoMaisForte', () => {
+  it('fica com a estação que mais mediu em 3 h, só da área', () => {
+    const t = (h3: string, areaId: string, mm3h: number, nome: string) => [h3, { h3, areaId, estacao: { cod: nome, mm1h: 0, mm3h, distanciaKm: 1, nome } }] as const;
+    const mapa = new Map([t('a', 's1', 4, 'Vila Ema'), t('b', 's1', 9, 'Penha3'), t('c', 's2', 30, 'Outra')]) as unknown as Parameters<typeof estacaoMaisForte>[0];
+    expect(estacaoMaisForte(mapa, 's1')).toBe('Penha3');
+    expect(estacaoMaisForte(mapa, 's3')).toBeNull();
   });
 });

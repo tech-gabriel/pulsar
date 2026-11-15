@@ -36,7 +36,7 @@ import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from
 import { useAlturaFluida } from '../motion/useAlturaFluida';
 import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
 import { useJsonPublico } from '../hooks/useJsonPublico';
-import { escolherDestinoComoChegar, rotuloDoTrecho } from '../features/rota/destino';
+import { escolherDestinoComoChegar, rotuloDoPino, rotuloDoTrecho } from '../features/rota/destino';
 import { buscarRuaPerto } from '../api/busca';
 import CamposDePara from '../components/rota/CamposDePara';
 import PainelRota from '../components/rota/PainelRota';
@@ -45,7 +45,7 @@ import type { PontoRota } from '../features/rota/tipos';
 import type { LocalSalvoDto, TipoLocal } from '../types';
 import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
 import { pontoDoLocal, subprefeituraIdDoPonto } from '../features/locais/regras';
-import { centroDoTrecho, h3DoPonto, montarTrechos, trechosDe } from '../features/cidade/trechos';
+import { centroDoTrecho, estacaoMaisForte, h3DoPonto, montarTrechos, trechosDe } from '../features/cidade/trechos';
 import { useCelulasAgora } from '../hooks/useCelulasAgora';
 import type { OrigemTrecho } from '../components/painel/DetalheSubprefeitura';
 
@@ -123,8 +123,13 @@ export default function MapaPage() {
   // Modo rota: o De/Para toma o lugar da busca e o resultado, o do painel/folha.
   const [rotaAberta, setRotaAberta] = useState(false);
   const [rotuloBusca, setRotuloBusca] = useState<string | null>(null);
+  // Trecho de destino da rota aberta a partir de um toque: fica contornado com a rota aberta.
   // Último ponto onde a pessoa soltou o pino: a rua dele chega depois e só vale se o pino não mudou.
   const ultimoSolto = useRef<{ lat: number; lon: number } | null>(null);
+  // A rua de onde o pino caiu também vai para o campo da busca (crítica de 15/11).
+  const [textoArrastado, setTextoArrastado] = useState<string | null>(null);
+  // Lista da busca aberta: o convite de alertas sai do caminho.
+  const [buscaAberta, setBuscaAberta] = useState(false);
   // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
@@ -170,10 +175,13 @@ export default function MapaPage() {
   // Trechos (hexágonos da grade): só na camada de risco e fora da rota. Os dados vêm quando o
   // mapa chega perto ou quando há um ponto (busca, localização), nunca na abertura de longe.
   const [perto, setPerto] = useState(false);
-  const comTrechos = camadaAtiva === 'score' && !rotaAberta;
+  // Também com a rota aberta (crítica de 15/11): o que a pessoa viu antes de tocar em Rota continua
+  // no mapa, sem toque; o trecho de destino fica contornado.
+  const comTrechos = camadaAtiva === 'score';
   const ativoTrechos = comTrechos && (perto || !!pontoBusca);
   const contornoTrechos = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
-  const celulasAgora = useCelulasAgora(ativoTrechos, ultimaAtualizacao?.getTime() ?? null);
+  // Com uma área aberta as células também vêm: nomeiam a estação da chuva que gerou o risco dela.
+  const celulasAgora = useCelulasAgora(ativoTrechos || !!subSelecionada, ultimaAtualizacao?.getTime() ?? null);
   const trechos = useMemo(() => (celulasAgora ? trechosDe(celulasAgora, subprefeituras) : null), [celulasAgora, subprefeituras]);
   const dadosTrechos = useMemo(
     () => (contornoTrechos.dados && trechos ? montarTrechos(contornoTrechos.dados, trechos) : null),
@@ -181,11 +189,17 @@ export default function MapaPage() {
   );
   // Dica única de que o trecho é tocável: aparece quando os trechos surgem pela primeira vez.
   const dicaTrecho = useDicaUnica('pulsar-dica-trecho-vista');
-  const mostrarDicaTrecho = dicaTrecho.mostrarDica && comTrechos && perto && !!dadosTrechos && !localAberto;
+  const mostrarDicaTrecho = dicaTrecho.mostrarDica && comTrechos && !rotaAberta && perto && !!dadosTrechos && !localAberto;
   // Uma dica por sessão: depois da do trecho, a do alvo não entra logo no lugar dela.
   const [dicaTrechoNaSessao, setDicaTrechoNaSessao] = useState(false);
   if (mostrarDicaTrecho && !dicaTrechoNaSessao) setDicaTrechoNaSessao(true);
   // O trecho tocado ganha do trecho do ponto; os dois só valem se forem da área aberta.
+  // Na rota, o trecho do destino fica marcado, venha ele de um toque, de uma busca ou do campo Para.
+  const [dLat, dLon] = [rota.destino?.lat, rota.destino?.lon];
+  const h3DoDestino = useMemo(
+    () => (dLat != null && dLon != null ? h3DoPonto(dLat, dLon, contornoTrechos.dados) : null),
+    [dLat, dLon, contornoTrechos.dados],
+  );
   const h3DoPontoBusca = useMemo(
     () => (pontoBusca ? h3DoPonto(pontoBusca.lat, pontoBusca.lon, contornoTrechos.dados) : null),
     [pontoBusca, contornoTrechos.dados],
@@ -280,6 +294,18 @@ export default function MapaPage() {
     }
   }
 
+  // "Minha localização" no campo De: volta a sair de onde a pessoa está.
+  async function origemNaLocalizacao() {
+    try {
+      const { lat, lon } = await detectar();
+      rota.setOrigem({ lat, lon, rotulo: ROTULO_LOCALIZACAO });
+    } catch (err) {
+      showToast(err instanceof GeoError && err.tipo === 'negado'
+        ? 'Permita o acesso à localização no navegador para sair de onde você está.'
+        : 'Não consegui te localizar agora. Escolha o ponto de partida pelo endereço.', 'error');
+    }
+  }
+
   function fecharRota() {
     setRotaAberta(false);
     rota.setOrigem(null);
@@ -290,12 +316,16 @@ export default function MapaPage() {
   function comoChegar(sub: SubprefeituraMapaDto) {
     const centro = trechoAberto?.origem === 'toque' ? centroDoTrecho(trechoAberto.h3, contornoTrechos.dados) : null;
     const destino = escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? (geojson as FeatureCollection | null), centro);
-    void abrirRota('como_chegar', destino);
+    const paraOTrecho = !!centro && destino.lat === centro.lat && destino.lon === centro.lon;
+    // Trecho: o rótulo final é a rua, que chega em seguida; até lá diz que está buscando, em vez
+    // de mostrar um nome e trocá-lo depois.
+    void abrirRota('como_chegar', paraOTrecho ? { ...destino, rotulo: 'Buscando a rua…' } : destino);
     // Destino no trecho: a rota abre com o nome da região e ganha a rua mais perto quando ela chega
     // (só se a pessoa ainda não trocou o destino).
-    if (centro && destino.lat === centro.lat && destino.lon === centro.lon) {
-      void buscarRuaPerto(centro.lat, centro.lon).then((rua) => {
-        if (rua) rota.setDestino((d) => (d && d.lat === centro.lat && d.lon === centro.lon ? { ...d, rotulo: rotuloDoTrecho(sub.nome, rua) } : d));
+    if (centro && paraOTrecho) {
+      // Sem rua por perto (ou com a busca fora do ar) fica o nome da região: "Trecho na Mooca".
+      void buscarRuaPerto(centro.lat, centro.lon).then((r) => {
+        rota.setDestino((d) => (d && d.lat === centro.lat && d.lon === centro.lon ? { ...d, rotulo: rotuloDoTrecho(sub.nome, r?.rua ?? null) } : d));
       });
     }
   }
@@ -339,9 +369,13 @@ export default function MapaPage() {
     setRotuloBusca(null);
     ultimoSolto.current = { lat, lon };
     if (sub) {
-      void buscarRuaPerto(lat, lon).then((rua) => {
+      void buscarRuaPerto(lat, lon).then((r) => {
         const agora = ultimoSolto.current;
-        if (rua && agora && agora.lat === lat && agora.lon === lon) setRotuloBusca(`${rua}, ${sub.nome}`);
+        if (r && agora && agora.lat === lat && agora.lon === lon) {
+          const rotulo = rotuloDoPino(sub.nome, r.rua, r.metros);
+          setRotuloBusca(rotulo);
+          setTextoArrastado(rotulo);
+        }
       });
     }
     void atualizarProximas(lat, lon);
@@ -415,6 +449,8 @@ export default function MapaPage() {
       dicaTrecho={mostrarDicaTrecho}
       onDispensarDicaTrecho={dicaTrecho.dispensar}
       aviso={isMobile ? avisoBusca : null}
+      textoBusca={textoArrastado}
+      onListaAberta={setBuscaAberta}
     />
   );
 
@@ -464,6 +500,7 @@ export default function MapaPage() {
       locais={locaisSalvos.locais}
       onSalvarLocal={salvarLocal}
       carregandoLocais={locaisSalvos.carregando}
+      onMinhaLocalizacao={() => void origemNaLocalizacao()}
     />
   );
 
@@ -521,8 +558,10 @@ export default function MapaPage() {
           voltarDoLugar={voltarDoLugar}
           lugaresEmAlerta={lugaresEmAlerta}
           trechos={comTrechos ? dadosTrechos : null}
-          trechoSelecionado={trechoAberto?.h3 ?? null}
-          onTocarTrecho={handleTocarTrecho}
+          trechoSelecionado={rotaAberta
+            ? h3DoDestino
+            : trechoAberto?.h3 ?? null}
+          onTocarTrecho={rotaAberta ? undefined : handleTocarTrecho}
           onPerto={setPerto}
         />
 
@@ -552,7 +591,8 @@ export default function MapaPage() {
             No celular a pilha some (display: contents) e cada peça se posiciona sozinha. */}
         <div className="pilha-mapa">
           {/* Legenda dinâmica: muda com a camada. Com o overlay ligado ganha a chave dos alagamentos. */}
-          <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} />
+          {/* Com a rota aberta no celular a legenda sai: ela cobria o crédito do mapa, e o veredito já diz a faixa. */}
+          {!rotaNoCelular && <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} />}
 
           {/* Aviso do ponto buscado. Só no computador: no celular ele fica embaixo da busca. */}
           {avisoBusca && !isMobile && (
@@ -563,7 +603,7 @@ export default function MapaPage() {
 
           {/* Convite para ativar notificações push. Sem favorita o push não tem o que mandar:
               primeiro escolher, depois ativar. Com a rota aberta ele sai: o mapa é do caminho. */}
-          {!rotaAberta && (semFavoritas
+          {!rotaAberta && !mostrarDicaTrecho && !buscaAberta && (semFavoritas
             ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
             : <ConvitePush favoritas={favoritas} />)}
 
@@ -624,6 +664,7 @@ export default function MapaPage() {
               onToggleFavorito={toggleFavorito}
               onComoChegar={() => comoChegar(subSelecionada)}
               trecho={trechoAberto}
+              estacaoMaisForte={estacaoMaisForte(trechos, subSelecionada.id)}
             />
           ) : (
             <PainelLateral
@@ -676,6 +717,7 @@ export default function MapaPage() {
               onToggleFavorito={toggleFavorito}
               onComoChegar={() => comoChegar(detalheNaFolha)}
               trecho={trechoAberto}
+              estacaoMaisForte={estacaoMaisForte(trechos, detalheNaFolha.id)}
               folha={{ aberta: detalheAberto, onMudar: (a) => setDetalheAbertoEm(a ? detalheNaFolha.id : null) }}
             />
           </div>

@@ -29,7 +29,8 @@ interface Props {
   dados: FeatureCollection<Polygon, PropsTrecho>;
   /** Trecho aberto no detalhe: ganha o contorno forte. */
   selecionado: string | null;
-  onTocar: (h3: string) => void;
+  /** Sem ele (rota aberta) os trechos só mostram o risco: não abrem o detalhe nem mudam o cursor. */
+  onTocar?: (h3: string) => void;
   idPrimeiroSimbolo: string | undefined;
 }
 
@@ -57,8 +58,9 @@ export default function TrechosLayer({ dados, selecionado, onTocar, idPrimeiroSi
     };
     const clicar = (e: MapLayerMouseEvent) => {
       const h3 = e.features?.[0]?.properties?.h3;
-      if (typeof h3 !== 'string' || alagamentoNoPonto(e)) return;
-      onTocarRef.current(h3);
+      const tocar = onTocarRef.current;
+      if (!tocar || typeof h3 !== 'string' || alagamentoNoPonto(e)) return;
+      tocar(h3);
       // Fica no zoom em que a pessoa está (aproximou para ver a rua); só garante o do detalhe.
       mapa.easeTo({
         center: e.lngLat,
@@ -67,7 +69,7 @@ export default function TrechosLayer({ dados, selecionado, onTocar, idPrimeiroSi
         offset: deslocamentoDoPainel(paddingDoPainel(mapa.getContainer())),
       });
     };
-    const entrar = () => { mapa.getCanvas().style.cursor = 'pointer'; };
+    const entrar = () => { if (onTocarRef.current) mapa.getCanvas().style.cursor = 'pointer'; };
     const sair = () => { mapa.getCanvas().style.cursor = ''; };
     mapa.on('click', ID_TRECHOS_FILL, clicar);
     mapa.on('mouseenter', ID_TRECHOS_FILL, entrar);

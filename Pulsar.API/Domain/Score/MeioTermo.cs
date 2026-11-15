@@ -11,7 +11,9 @@ public static class MeioTermo
     public static double Calcular(IReadOnlyList<double> valores)
     {
         if (valores.Count == 0) return 0;
-        var quantos = (int)Math.Ceiling(valores.Count / 4.0);
-        return valores.OrderByDescending(v => v).Take(quantos).Average();
+        return valores.OrderByDescending(v => v).Take(Quantos(valores.Count)).Average();
     }
+
+    /// <summary>Quantos valores entram na média: o quarto mais alto, arredondado para cima.</summary>
+    public static int Quantos(int total) => (int)Math.Ceiling(total / 4.0);
 }

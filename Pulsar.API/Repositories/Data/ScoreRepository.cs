@@ -20,6 +20,7 @@ public class ScoreRepository : IScoreRepository
         => await _context.ScoresPerigo
             .Where(s => s.SubprefeituraId == subprefeituraId)
             .OrderByDescending(s => s.Timestamp)
+            .ThenByDescending(s => s.CriadoEm)
             .FirstOrDefaultAsync();
 
     public async Task<IEnumerable<ScorePerigo>> ObterHistoricoAsync(Guid subprefeituraId, int horas = 24)

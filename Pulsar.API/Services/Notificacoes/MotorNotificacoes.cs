@@ -291,6 +291,7 @@ public class MotorNotificacoes : IMotorNotificacoes
         var scores = await _db.ScoresPerigo
             .Where(s => s.SubprefeituraId == sub.Id)
             .OrderByDescending(s => s.Timestamp)
+            .ThenByDescending(s => s.CriadoEm)
             .Take(2)
             .ToListAsync(ct);
         var score = scores.ElementAtOrDefault(0);

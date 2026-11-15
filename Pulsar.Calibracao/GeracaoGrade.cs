@@ -80,6 +80,28 @@ public static class GeracaoGrade
         var arquivo = Path.Combine(repo, "Pulsar.API", "Domain", "Score", "grade-sao-paulo.json");
         await File.WriteAllTextAsync(arquivo, Json(areaDaCelula, fatores, de, ate));
         Console.WriteLine($"Grade: {arquivo}");
+        await GravarContornoAsync(repo, areaDaCelula.Keys);
+    }
+
+    /// <summary>
+    /// Modo <c>contorno</c>: refaz só o desenho dos hexágonos a partir da grade gravada, sem
+    /// rede e sem recalibrar. O mapa e a API precisam das mesmas células.
+    /// </summary>
+    public static async Task ContornoAsync(string raiz)
+    {
+        var repo = Path.GetFullPath(Path.Combine(raiz, ".."));
+        var grade = Path.Combine(repo, "Pulsar.API", "Domain", "Score", "grade-sao-paulo.json");
+        using var doc = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(grade));
+        var celulas = doc.RootElement.GetProperty("celulas").EnumerateArray()
+            .Select(c => c.GetProperty("h3").GetString()!).ToList();
+        await GravarContornoAsync(repo, celulas);
+    }
+
+    private static async Task GravarContornoAsync(string repo, IEnumerable<string> celulas)
+    {
+        var arquivo = Path.Combine(repo, "pulsar-web", "public", "grade-sao-paulo.geojson");
+        await File.WriteAllTextAsync(arquivo, GradeH3.Contorno(celulas));
+        Console.WriteLine($"Contorno: {arquivo}");
     }
 
     /// <summary>Dias em ALTO de cada célula: a série de clima é a da área dela; só o fator muda.</summary>

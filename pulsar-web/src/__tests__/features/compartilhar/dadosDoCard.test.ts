@@ -45,6 +45,12 @@ describe('dadosDoCard', () => {
     expect(d.texto).toBe('Mooca agora: Alerta de alagamento\nVeja o risco da sua subprefeitura no Pulsar:\nhttps://app-pulsar.com.br/cadastro?regiao=mooca');
   });
 
+  it('com a área pela chuva medida, o card cita a medida', () => {
+    const a = area({ chuva3h: 0 });
+    const comMedida = { ...a, scoreAtual: { ...a.scoreAtual!, chuva3hMedidaMm: 38 } } as Area;
+    expect(dadosDoCard(comMedida, CATALOGO, AGORA).dado).toBe('38 mm de chuva medida em 3 h');
+  });
+
   it('chuva com decimal usa vírgula; sem chuva em 3 h, frase de condição', () => {
     expect(dadosDoCard(area({ chuva3h: 6.5 }), CATALOGO, AGORA).dado).toBe('6,5 mm de chuva em 3 h');
     expect(dadosDoCard(area({ chuva3h: 0 }), CATALOGO, AGORA).dado).toBe('Condições de risco de alagamento');

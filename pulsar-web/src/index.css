@@ -657,34 +657,67 @@ html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
 .det-hero-num { font: 800 52px/1 var(--font-heading); letter-spacing: -.04em; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .det-hero-faixa { font: 700 17px/1.2 var(--font-heading); }
 .det-hero-frase { font-size: 13.5px; line-height: 1.4; color: var(--text-secondary); margin-top: 2px; }
-/* Chuva medida (AS7): uma frase que abre a folha das fontes. 44 px = alvo de toque mínimo. */
-.det-medida { width: 100%; min-height: 44px; padding: 10px 14px; margin-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; cursor: pointer; }
-.det-medida:active { background: color-mix(in srgb, var(--text-primary) 9%, transparent); }
-.det-medida-v { display: flex; align-items: center; gap: 8px; min-width: 0; font: 600 14px/1.35 var(--font-body); font-variant-numeric: tabular-nums; color: var(--text-primary); }
-.det-medida-v svg { flex-shrink: 0; color: var(--text-secondary); }
 .det-medida-fonte { font-size: 11.5px; color: var(--text-secondary); }
-.det-medida-mais { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 .med-item { display: grid; gap: 2px; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent); }
 .med-item b { font: 600 16px/1.35 var(--font-body); font-variant-numeric: tabular-nums; color: var(--text-primary); }
-.det-secao { margin-top: 18px; }
-.det-secao-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 4px 8px; }
-.det-rotulo { font: 600 11px var(--font-body); letter-spacing: .07em; text-transform: uppercase; color: var(--text-secondary); }
-.det-nota { font-size: 11px; color: var(--text-secondary); }
 .prev-barras { list-style: none; margin: 0; display: grid; gap: 6px; align-items: end; padding: 14px 12px 10px; height: 136px; }
 .prev-barra { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; }
 .prev-barra i { display: block; width: 100%; max-width: 22px; border-radius: 6px 6px 3px 3px; background: var(--prev-chuva); opacity: .85; }
 .prev-barra.forte i { background: var(--prev-forte); opacity: 1; }
 .prev-valor { font: 600 10.5px var(--font-body); color: var(--text-primary); font-variant-numeric: tabular-nums; min-height: 14px; }
 .prev-hora { font: 500 10.5px var(--font-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-.det-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
-.det-tile { padding: 12px 14px; display: grid; gap: 2px; align-content: start; min-width: 0; }
-.det-tile.inteiro { grid-column: 1 / -1; }
-.det-tile-t { display: flex; align-items: center; gap: 6px; font: 600 11px var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--text-secondary); }
-.det-tile-v { font: 700 24px/1.15 var(--font-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 4px; color: var(--text-primary); }
-.det-tile-v span { font: 500 13px var(--font-body); letter-spacing: 0; color: var(--text-secondary); margin-left: 4px; }
-.det-tile-s { font-size: 12px; color: var(--text-secondary); }
-.det-tile-r { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-.det-tile-r i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex-shrink: 0; margin-top: 5px; } /* na 1ª linha quando o texto quebra */
+/* Detalhe no desenho de 14/11/2026 (entrega 4 do H3). Resumo em cima (risco e linhas), o resto
+   abre ao puxar a alça no celular; as ações ficam presas no pé nas duas alturas. */
+.det-alca { flex-shrink: 0; width: 100%; height: 22px; display: flex; align-items: center; justify-content: center; touch-action: none; cursor: grab; }
+.det-alca span { width: 36px; height: 5px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary) 22%, transparent); }
+.det-cab { flex-shrink: 0; display: flex; align-items: flex-start; gap: 8px; padding: 14px 16px 10px; }
+.det-alca + .det-cab { padding-top: 2px; }
+.det-cab h2 { font: 800 24px/1.15 var(--font-heading); letter-spacing: -.03em; color: var(--text-primary); }
+.det-cab p { font-size: 12.5px; color: var(--text-secondary); }
+.det-fechar { flex-shrink: 0; width: 44px; height: 44px; margin: -8px -8px -8px 0; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--text-secondary); }
+.det-rola { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 16px 16px; }
+.det[data-estado="curta"] .det-rola { overflow: hidden; padding-bottom: 12px; }
+.det[data-estado="curta"] .det-resto { display: none; }
+.folha-mapa[data-arrastando] .det-resto { display: block; }
+.det-linha { display: flex; align-items: center; gap: 10px; margin: 10px 4px 0; font: 600 14px/1.3 var(--font-body); color: var(--text-primary); }
+.det-linha svg { flex-shrink: 0; }
+.det-linha span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.det-resto > :first-child { margin-top: 14px; }
+.det-sec { margin-top: 20px; }
+.det-t { font: 700 17px/1.2 var(--font-heading); letter-spacing: -.01em; color: var(--text-primary); margin: 0 4px 8px; }
+.det-faixa { padding: 11px 14px 12px; }
+.det-faixa + .det-faixa { border-top: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); }
+.det-faixa-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.det-faixa-nome { flex-shrink: 0; font: 600 12.5px/1.2 var(--font-body); color: var(--text-primary); }
+.det-faixa-de { display: inline-flex; align-items: center; gap: 2px; min-width: 0; font-size: 12px; color: var(--text-secondary); }
+button.det-faixa-de { min-height: 44px; margin: -14px -6px -14px 0; padding: 0 6px; cursor: pointer; }
+.det-faixa-de span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.det-faixa-frase { font: 600 14px/1.35 var(--font-body); color: var(--text-primary); }
+.det-par { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.det-par b { display: block; font: 700 22px/1.15 var(--font-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.det-par.menor b { font-size: 17px; }
+.det-par b span { font: 500 13px var(--font-body); letter-spacing: 0; color: var(--text-secondary); margin-left: 3px; }
+.det-par i { font-style: normal; font-size: 12px; color: var(--text-secondary); }
+.det-aviso { font-size: 12px; line-height: 1.4; color: var(--text-secondary); margin-top: 8px; }
+.det-faixa .prev-barras { padding: 4px 0 0; height: 104px; }
+.det-quad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.det-quad > div { padding: 11px 4px; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+.det-quad > div + div { border-left: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); }
+.det-quad em { font-style: normal; display: inline-flex; align-items: center; gap: 4px; font: 500 11.5px/1 var(--font-body); color: var(--text-secondary); }
+.det-quad b { font: 700 19px/1.15 var(--font-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--text-primary); margin-top: 6px; }
+.det-quad b small { font: 500 11.5px var(--font-body); letter-spacing: 0; color: var(--text-secondary); margin-left: 2px; }
+.det-quad > div > span { font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; min-height: 16px; }
+.det-fim { margin-top: 18px; padding: 14px 4px 0; border-top: 1px solid color-mix(in srgb, var(--text-primary) 9%, transparent); }
+.det-fim-t { font: 600 13.5px/1.3 var(--font-body); color: var(--text-primary); margin-bottom: 8px; }
+.det-tel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.det-tel a { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; border-radius: 12px; font: 500 13px var(--font-body); color: var(--text-primary); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary) 16%, transparent); }
+.det-tel strong { font: 700 15px var(--font-heading); font-variant-numeric: tabular-nums; }
+.det-fim-nota { font-size: 12.5px; line-height: 1.45; color: var(--text-secondary); }
+.det-pe { flex-shrink: 0; display: flex; gap: 8px; padding: 10px 16px 12px; border-top: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); }
+.det-acao { flex: 1; min-width: 0; min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 12px; font: 600 13px var(--font-body); color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 7%, transparent); white-space: nowrap; }
+.det-acao.forte { flex: 1.7; background: var(--color-pulsar-600); color: #fff; }
+.det-acao.ligado { color: var(--text-accent); }
+.det-acao:active { transform: scale(.97); transition: transform 100ms ease-out; }
 
 /* Texto dentro dos controles do mapa. */
 .mapa-txt {
@@ -1135,7 +1168,9 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 }
 /* Com o detalhe, a folha para em 45% da tela (testado no aparelho; 55% cobria mapa demais): o
    detalhe rola por dentro e a região escolhida fica à vista no mapa, acima do cartão. */
-.folha-mapa[data-detalhe] { max-height: min(45dvh, calc(100dvh - var(--base-tabbar) - var(--topo-app) - 4.75rem)); }
+.folha-mapa[data-detalhe=""] { max-height: min(45dvh, calc(100dvh - var(--base-tabbar) - var(--topo-app) - 4.75rem)); }
+/* Detalhe da subprefeitura: curta fica do tamanho do resumo; aberta ocupa a altura toda (a busca do topo continua à vista). */
+.folha-mapa[data-detalhe="aberta"] { height: calc(100dvh - var(--base-tabbar) - var(--topo-app) - 4.75rem); }
 /* Folha aberta: os cartões e a legenda que flutuam acima dela saem, para não cobri-la. */
 body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-pill) { display: none; }
 @media (max-width: 767px) { .mapa-app .maplibregl-ctrl-bottom-right { bottom: var(--topo-folha); } }

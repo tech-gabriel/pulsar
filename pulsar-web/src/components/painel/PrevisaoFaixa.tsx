@@ -50,12 +50,12 @@ export default function PrevisaoFaixa({ faixas, erro }: Props) {
   const escala = Math.max(CHUVA_FORTE_MM, ...faixas.map((f) => f.chuvaMm));
 
   return (
-    <section className="det-secao" aria-label="Chuva prevista nas próximas horas">
-      <div className="det-secao-cab">
-        <h3 className="det-rotulo">Próximas horas</h3>
-        {velha && <span className="det-nota">{`previsão de ${horaMinuto(coletaMaisAntiga)}`}</span>}
+    <section className="det-faixa" aria-label="Chuva prevista nas próximas horas">
+      <div className="det-faixa-cab">
+        <span className="det-faixa-nome">Previsão</span>
+        <span className="det-faixa-de">{velha ? `previsão de ${horaMinuto(coletaMaisAntiga)}` : 'em mm, próximas horas'}</span>
       </div>
-      <ul className="det-bloco prev-barras" style={{ gridTemplateColumns: `repeat(${faixas.length}, minmax(0, 1fr))` }}>
+      <ul className="prev-barras" style={{ gridTemplateColumns: `repeat(${faixas.length}, minmax(0, 1fr))` }}>
         {faixas.map((f) => {
           const forte = chuvaForte(f);
           return (

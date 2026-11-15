@@ -25,6 +25,27 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.36.0',
+    data: '2026-11-15',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'O risco de cada trecho no mapa',
+        descricao: 'Aproxime o mapa e cada pedaço da cidade, de uns 900 metros, ganha a cor do próprio risco. Toque num trecho para ver o número dele e o que a estação de chuva mais perto mediu.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Número da região pela chuva medida',
+        descricao: 'Quando há estação de chuva por perto, o número de cada região segue o que ela mediu, e não a chuva estimada. Menos alerta de chuva que não caiu.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Detalhe da região redesenhado',
+        descricao: 'No celular, o detalhe abre curto, só com o essencial, e cresce quando você puxa. Os botões ficam sempre no mesmo lugar.',
+      },
+    ],
+  },
+  {
     versao: '1.35.0',
     data: '2026-11-14',
     itens: [

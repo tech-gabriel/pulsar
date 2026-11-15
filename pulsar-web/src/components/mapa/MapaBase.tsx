@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
-import type { FeatureCollection, GeoJsonObject } from 'geojson';
+import type { FeatureCollection, GeoJsonObject, Polygon } from 'geojson';
 import type { LocalSalvoDto, OcorrenciaAlagamentoDto, SubprefeituraMapaDto, TipoLocal } from '../../types';
+import type { PropsTrecho } from '../../features/cidade/trechos';
 import type { Camada } from '../../utils/camadas';
 import { temWebGL } from './webgl';
 import { estiloBaseCompartilhado, URL_OPENFREEMAP } from './estiloBase';
@@ -40,6 +41,13 @@ export interface PropsMapa {
   voltarDoLugar?: number;
   /** Lugares com alagamento ativo na região: o marcador ganha o anel de alerta. */
   lugaresEmAlerta?: TipoLocal[];
+  /** Trechos pintados pelo risco de agora (camada de risco). Null ou ausente: só as áreas. */
+  trechos?: FeatureCollection<Polygon, PropsTrecho> | null;
+  /** Trecho aberto no detalhe: contorno forte, e o mapa não voa para o centro da área. */
+  trechoSelecionado?: string | null;
+  onTocarTrecho?: (h3: string) => void;
+  /** Avisa quando o mapa chega perto o bastante para os trechos (só então vale baixar os dados). */
+  onPerto?: (perto: boolean) => void;
 }
 
 // O MapLibre (e o worker dele) vêm num chunk próprio: a página, o painel e a busca aparecem antes.

@@ -2,6 +2,13 @@
 // números de hoje são os do Leaflet menos 1: o enquadramento fica igual ao de antes da troca.
 export const ZOOM = { sp: 9, regiao: 10, sub: 12, busca: 15 } as const;
 
+/**
+ * Intervalo em que as áreas dão lugar aos trechos (opção B, escolhida no protótipo de 13/11):
+ * abaixo de `de` só áreas, acima de `ate` só trechos, no meio as duas se cruzam. Os dados
+ * começam a vir um pouco antes (`carregar`), para os trechos já estarem lá quando surgirem.
+ */
+export const ZOOM_TRECHOS = { carregar: 10, de: 10.6, ate: 11.4 } as const;
+
 export interface TamanhoLabel {
   diametro: number;
   fonte: number;

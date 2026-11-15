@@ -43,6 +43,9 @@ import type { PontoRota } from '../features/rota/tipos';
 import type { LocalSalvoDto, TipoLocal } from '../types';
 import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
 import { pontoDoLocal, subprefeituraIdDoPonto } from '../features/locais/regras';
+import { h3DoPonto, montarTrechos, trechosDe } from '../features/cidade/trechos';
+import { useCelulasAgora } from '../hooks/useCelulasAgora';
+import type { OrigemTrecho } from '../components/painel/DetalheSubprefeitura';
 
 /** ?lugar= do aviso de chuva: "casa" | "trabalho"; outro valor não abre nada. */
 const tipoDoParam = (v: string | null): TipoLocal | null => (v === 'casa' ? 'CASA' : v === 'trabalho' ? 'TRABALHO' : null);
@@ -78,6 +81,8 @@ export default function MapaPage() {
   const [slugAplicado, setSlugAplicado] = useState<string | null>(null);
   const [zonaEmFoco, setZonaEmFoco] = useState<string | null>(null);
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
+  // Trecho tocado no mapa (índice H3). Toda outra forma de escolher a área o limpa.
+  const [trechoTocado, setTrechoTocado] = useState<string | null>(null);
   // Casa ou trabalho aberto no mapa (F4b): a folha do lugar toma o lugar do detalhe. Declarado
   // aqui porque o ?regiao= abaixo precisa fechá-lo (alerta tocado com a casa aberta).
   const [lugarAberto, setLugarAberto] = useState<TipoLocal | null>(null);
@@ -94,6 +99,7 @@ export default function MapaPage() {
     if (sub) {
       setLugarAberto(null);
       setSubSelecionada(sub);
+      setTrechoTocado(null);
     }
   }
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
@@ -104,6 +110,9 @@ export default function MapaPage() {
   const folhaRef = useRef<HTMLDivElement>(null);
   const menosMovimento = useReducedMotion();
   const detalheNaFolha = isMobile && subSelecionada;
+  // Folha do detalhe aberta, guardada pelo id: trocar de subprefeitura volta para a curta sozinho.
+  const [detalheAbertoEm, setDetalheAbertoEm] = useState<string | null>(null);
+  const detalheAberto = !!subSelecionada && detalheAbertoEm === subSelecionada.id;
   const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');
   const [pontoBusca, setPontoBusca] = useState<PontoBusca | null>(null);
   const [avisoBusca, setAvisoBusca] = useState<string | null>(null);
@@ -141,6 +150,7 @@ export default function MapaPage() {
     if (tipo && locaisSalvos.locais[tipo]) {
       // O mesmo que abrirLugar faz, sem o evento (o efeito conta como 'aviso').
       setSubSelecionada(null);
+      setTrechoTocado(null);
       setZonaEmFoco(null);
       setPainelRecolhido(false);
       setPainelMobileAberto(false);
@@ -152,6 +162,47 @@ export default function MapaPage() {
   const rotaNoCelular = isMobile && rotaAberta;
   useAlturaFluida(folhaRef, !rotaSemPontos); // a folha sai e volta (AnimatePresence)
   const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
+
+  // Trechos (hexágonos da grade): só na camada de risco e fora da rota. Os dados vêm quando o
+  // mapa chega perto ou quando há um ponto (busca, localização), nunca na abertura de longe.
+  const [perto, setPerto] = useState(false);
+  const comTrechos = camadaAtiva === 'score' && !rotaAberta;
+  const ativoTrechos = comTrechos && (perto || !!pontoBusca);
+  const contornoTrechos = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
+  const celulasAgora = useCelulasAgora(ativoTrechos, ultimaAtualizacao?.getTime() ?? null);
+  const trechos = useMemo(() => (celulasAgora ? trechosDe(celulasAgora, subprefeituras) : null), [celulasAgora, subprefeituras]);
+  const dadosTrechos = useMemo(
+    () => (contornoTrechos.dados && trechos ? montarTrechos(contornoTrechos.dados, trechos) : null),
+    [contornoTrechos.dados, trechos],
+  );
+  // O trecho tocado ganha do trecho do ponto; os dois só valem se forem da área aberta.
+  const h3DoPontoBusca = useMemo(
+    () => (pontoBusca ? h3DoPonto(pontoBusca.lat, pontoBusca.lon, contornoTrechos.dados) : null),
+    [pontoBusca, contornoTrechos.dados],
+  );
+  const trechoAberto = (() => {
+    const h3 = trechoTocado ?? h3DoPontoBusca;
+    const t = h3 ? trechos?.get(h3) : undefined;
+    if (!t || !subSelecionada || t.areaId !== subSelecionada.id) return undefined;
+    const origem: OrigemTrecho = trechoTocado ? 'toque'
+      : pontoBusca?.precisao !== undefined ? 'localizacao'
+      : pontoBusca?.ajustado ? 'ponto' : 'busca';
+    return { ...t, origem };
+  })();
+
+  function handleTocarTrecho(h3: string) {
+    const t = trechos?.get(h3);
+    const area = t && subprefeituras.find((s) => s.id === t.areaId);
+    if (!t || !area) return;
+    track.tocouTrecho(t.faixa);
+    limparDeepLink();
+    setLugarAberto(null);
+    setSubSelecionada(area);
+    setTrechoTocado(h3);
+    setPainelRecolhido(false);
+    setZonaEmFoco(null);
+    if (isMobile) setPainelMobileAberto(false);
+  }
 
 
 
@@ -194,6 +245,7 @@ export default function MapaPage() {
     limparDeepLink();
     track.abriuLugar(tipo === 'CASA' ? 'casa' : 'trabalho', 'mapa');
     setSubSelecionada(null);
+    setTrechoTocado(null);
     setZonaEmFoco(null);
     setPainelRecolhido(false);
     if (isMobile) setPainelMobileAberto(false);
@@ -232,6 +284,8 @@ export default function MapaPage() {
     limparDeepLink();
     setZonaEmFoco(null);
     setSubSelecionada(null);
+    setTrechoTocado(null);
+    setDetalheAbertoEm(null);
     setPontoBusca(null);
     setAvisoBusca(null);
     setProximas(null);
@@ -242,6 +296,7 @@ export default function MapaPage() {
   // seleção de região (ou aviso) e aplica no estado do mapa. Devolve se caiu na área.
   function selecionarPorPonto(ponto: PontoBusca, origem: 'busca' | 'localizacao') {
     setPontoBusca(ponto);
+    setTrechoTocado(null); // o trecho passa a ser o do ponto
     const sel = resolverSelecao(ponto.lat, ponto.lon, geojson as FeatureCollection | null, subprefeituras, origem);
     if (sel.aviso) {
       setSubSelecionada(null);
@@ -308,6 +363,7 @@ export default function MapaPage() {
     limparDeepLink();
     setLugarAberto(null);
     setSubSelecionada(sub);
+    setTrechoTocado(null);
     setPainelRecolhido(false);
     setZonaEmFoco(null);
     if (isMobile) setPainelMobileAberto(false);
@@ -428,6 +484,10 @@ export default function MapaPage() {
           lugarEmFoco={lugarEmFoco}
           voltarDoLugar={voltarDoLugar}
           lugaresEmAlerta={lugaresEmAlerta}
+          trechos={comTrechos ? dadosTrechos : null}
+          trechoSelecionado={trechoAberto?.h3 ?? null}
+          onTocarTrecho={handleTocarTrecho}
+          onPerto={setPerto}
         />
 
         {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}
@@ -527,6 +587,7 @@ export default function MapaPage() {
               isFavorito={isFavorito}
               onToggleFavorito={toggleFavorito}
               onComoChegar={() => comoChegar(subSelecionada)}
+              trecho={trechoAberto}
             />
           ) : (
             <PainelLateral
@@ -556,7 +617,7 @@ export default function MapaPage() {
         ref={folhaRef}
         data-painel-mapa
         data-aberta={painelMobileAberto || detalheNaFolha || lugarNaFolha || rotaAberta ? '' : undefined}
-        data-detalhe={detalheNaFolha || lugarNaFolha || rotaAberta ? '' : undefined}
+        data-detalhe={rotaAberta || lugarNaFolha ? '' : detalheNaFolha ? (detalheAberto ? 'aberta' : 'curta') : undefined}
         className="folha-mapa painel-mapa vidro-painel md:hidden fixed z-[500] flex flex-col overflow-hidden"
         initial={menosMovimento ? { opacity: 0 } : { y: 'calc(100% + 16px)' }}
         animate={menosMovimento
@@ -578,6 +639,8 @@ export default function MapaPage() {
               isFavorito={isFavorito}
               onToggleFavorito={toggleFavorito}
               onComoChegar={() => comoChegar(detalheNaFolha)}
+              trecho={trechoAberto}
+              folha={{ aberta: detalheAberto, onMudar: (a) => setDetalheAbertoEm(a ? detalheNaFolha.id : null) }}
             />
           </div>
         ) : (

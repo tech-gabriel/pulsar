@@ -9,7 +9,7 @@ import { desenharCard } from './desenharCard';
 import { carregarFontesCard, compartilharCard, gerarPng } from './compartilhar';
 
 /** Gera o card da subprefeitura no próprio aparelho e abre o compartilhar (ou baixa e copia). */
-export default function BotaoCompartilhar({ area }: { area: Area }) {
+export default function BotaoCompartilhar({ area, rotulo = 'Compartilhar' }: { area: Area; rotulo?: string }) {
   const catalogo = useCatalogoDicas();
   const { showToast } = useToast();
   const [gerando, setGerando] = useState(false);
@@ -45,9 +45,8 @@ export default function BotaoCompartilhar({ area }: { area: Area }) {
 
   return (
     <button type="button" onClick={compartilhar} aria-disabled={gerando} aria-busy={gerando}
-      className="rounded-xl min-h-11 flex items-center justify-center gap-1.5 font-semibold"
-      style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}>
-      {gerando ? <Loader2 size={15} className="animate-spin" /> : <Share2 size={15} />} Compartilhar
+      className="det-acao">
+      {gerando ? <Loader2 size={15} className="animate-spin" /> : <Share2 size={15} aria-hidden="true" />} {rotulo}
     </button>
   );
 }

@@ -17,8 +17,12 @@ public class Subprefeitura
     public LeituraClimatica? GetUltimaLeitura()
         => Leituras.OrderByDescending(l => l.Timestamp).FirstOrDefault();
 
+    /// <summary>
+    /// O score de agora. Mesmo horário de leitura em dois scores (ciclo sem leitura nova, estações
+    /// mudaram): vale o último gravado.
+    /// </summary>
     public ScorePerigo? GetUltimoScore()
-        => Scores.OrderByDescending(s => s.Timestamp).FirstOrDefault();
+        => Scores.OrderByDescending(s => s.Timestamp).ThenByDescending(s => s.CriadoEm).FirstOrDefault();
 
     public IList<LeituraClimatica> GetHistorico(int horas = 24)
     {

@@ -1,6 +1,7 @@
 import { posthog, isAnalyticsEnabled } from './posthog';
 import type { Passo } from '../features/ativacao/passos';
 import type { Plataforma } from '../features/ativacao/instalacao';
+import type { FaixaRisco } from '../types';
 
 export type NomeEvento =
   | 'visitou_landing'
@@ -24,6 +25,7 @@ export type NomeEvento =
   | 'pediu_aviso_rota'
   | 'salvou_local'
   | 'abriu_lugar'
+  | 'tocou_trecho'
   | 'usou_local'
   | 'excluiu_conta';
 
@@ -55,6 +57,8 @@ export const track = {
   usouLocal: (tipo: 'casa' | 'trabalho') => capturar('usou_local', { tipo }),
   excluiuConta: (motivo?: MotivoSaida) => capturar('excluiu_conta', motivo ? { motivo } : undefined),
   abriuLugar: (tipo: 'casa' | 'trabalho', origem: 'mapa' | 'aviso') => capturar('abriu_lugar', { tipo, origem }),
+  /** Toque num trecho do mapa. A faixa diz se as pessoas procuram o detalhe fino quando há risco. */
+  tocouTrecho: (faixa: FaixaRisco) => capturar('tocou_trecho', { faixa }),
   viuNovidades: (versao: string) => capturar('viu_novidades', { versao }),
   clicouInstagram: (origem: string) => capturar('clicou_instagram', { origem }),
   passoVisto: (passo: Passo, ordem: number, total: number) => capturar('ativacao_passo_visto', { passo, ordem, total }),

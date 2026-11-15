@@ -70,9 +70,9 @@ public class GatilhoAtencao : IGatilhoNotificacao
             TipoPerigo.CALOR => ($"Atenção: calor {em}", leitura is null
                 ? "Calor forte agora. Hidrate-se e evite sol forte."
                 : string.Create(c, $"Sensação térmica de {leitura.SensacaoTermica:0} °C. Hidrate-se e evite sol forte.")),
-            _ => ($"Atenção: chuva {em}", score.Chuva3hMm <= 0
+            _ => ($"Atenção: chuva {em}", score.Chuva3hDoAlagamentoMm <= 0
                 ? "Condições de atenção para alagamento agora."
-                : string.Create(c, $"Chuva de {score.Chuva3hMm:0.#} mm nas últimas 3 horas.")),
+                : string.Create(c, $"Chuva{(score.Chuva3hMedidaMm is null ? "" : " medida")} de {score.Chuva3hDoAlagamentoMm:0.#} mm nas últimas 3 horas.")),
         };
     }
 }

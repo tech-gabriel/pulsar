@@ -881,6 +881,9 @@ namespace Pulsar.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<double?>("Chuva3hMedidaMm")
+                        .HasColumnType("double precision");
+
                     b.Property<double>("Chuva3hMm")
                         .HasColumnType("double precision");
 

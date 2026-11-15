@@ -33,12 +33,12 @@ public class GatilhoScoreAltoTests
 
     private static ContextoGatilho Montar(
         LeituraClimatica? leitura, (double valor, FaixaRisco faixa) score,
-        TipoPerigo perigo = TipoPerigo.ALAGAMENTO, double chuva48h = 0, double chuva3h = 0)
+        TipoPerigo perigo = TipoPerigo.ALAGAMENTO, double chuva48h = 0, double chuva3h = 0, double? chuva3hMedida = null)
         => new()
         {
             Estado = new EstadoSubprefeitura(
                 new Subprefeitura { Nome = "Mooca", Ativa = true },
-                new ScorePerigo { Valor = score.valor, Faixa = score.faixa, PerigoPrincipal = perigo, Chuva48hMm = chuva48h, Chuva3hMm = chuva3h, Timestamp = DateTime.UtcNow },
+                new ScorePerigo { Valor = score.valor, Faixa = score.faixa, PerigoPrincipal = perigo, Chuva48hMm = chuva48h, Chuva3hMm = chuva3h, Chuva3hMedidaMm = chuva3hMedida, Timestamp = DateTime.UtcNow },
                 leitura),
             Fuso = Sp,
             Previsao = Array.Empty<FaixaPrevisaoDto>(),
@@ -309,5 +309,17 @@ public class GatilhoScoreAltoTests
     {
         (await new GatilhoScoreAlto().AvaliarAsync(ComAnterior(TipoPerigo.VENTO, null)))
             .Should().ContainSingle();
+    }
+
+    // "A medida manda": o Alerta veio das estações, então o aviso cita o que elas mediram, e
+    // não o modelo (que pode até estar em zero).
+    [Fact]
+    public async Task AlertaPelaChuvaMedida_CitaAMedidaENaoOModelo()
+    {
+        var ctx = Montar(LeituraPadrao(), (95, FaixaRisco.ALTO), chuva3h: 0, chuva3hMedida: 38);
+
+        var p = await new GatilhoScoreAlto().AvaliarAsync(ctx);
+
+        p[0].Payload.Corpo.Should().Be("Chuva medida de 38 mm nas últimas 3 horas.");
     }
 }

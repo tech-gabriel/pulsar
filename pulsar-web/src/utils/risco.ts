@@ -139,6 +139,8 @@ export function motivoDoRisco(r: {
   faixa: FaixaRisco | null | undefined;
   perigoPrincipal?: TipoPerigo | null;
   chuva3hMm?: number | null;
+  /** Chuva medida pelas estações que fizeram o número; sem ela, a frase cita o modelo. */
+  chuva3hMedidaMm?: number | null;
   ventoKmH?: number | null;
   sensacaoTermica?: number | null;
 }): string | null {
@@ -146,6 +148,7 @@ export function motivoDoRisco(r: {
   const inteiro = (v: number) => Math.round(v).toLocaleString('pt-BR');
   if (r.perigoPrincipal === 'VENTO' && r.ventoKmH != null) return `Por vento de ${inteiro(r.ventoKmH)} km/h`;
   if (r.perigoPrincipal === 'CALOR' && r.sensacaoTermica != null) return `Por calor: sensação de ${inteiro(r.sensacaoTermica)} °C`;
-  const mm = (r.chuva3hMm ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  return `Por chuva: ${mm} mm nas últimas 3h`;
+  const medida = r.chuva3hMedidaMm != null;
+  const mm = ((medida ? r.chuva3hMedidaMm : r.chuva3hMm) ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return `Por chuva${medida ? ' medida' : ''}: ${mm} mm nas últimas 3h`;
 }

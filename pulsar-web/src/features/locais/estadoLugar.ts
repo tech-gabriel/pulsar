@@ -84,7 +84,7 @@ export function fraseDoRisco(area: Area, faixas: FaixaPrevisaoDto[]): string {
   const l = area.ultimaLeitura;
   const motivo = s && motivoDoRisco({
     faixa: area.faixaRisco, perigoPrincipal: s.perigoPrincipal, chuva3hMm: s.chuva3hMm, chuva3hMedidaMm: s.chuva3hMedidaMm,
-    ventoKmH: l?.ventoKmH, sensacaoTermica: l?.sensacaoTermica,
+    ventoKmH: l?.ventoKmH, sensacaoTermica: l?.sensacaoTermica, nome: area.nome,
   });
   if (motivo) return motivo;
   return fraseChuvaForte(faixas, Date.now())

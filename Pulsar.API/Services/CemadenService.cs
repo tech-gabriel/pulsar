@@ -162,7 +162,8 @@ public class CemadenService : ICemadenService
 
             resultado[sub.Id] = new ChuvaCemadenRegiao(sub.Id,
                 h1.Leitura?.Acc1h, h1.Estacao?.Nome, Utc(h1.Leitura?.DataHora),
-                h24.Leitura?.Acc24h, h24.Estacao?.Nome, Utc(h24.Leitura?.DataHora));
+                h24.Leitura?.Acc24h, h24.Estacao?.Nome, Utc(h24.Leitura?.DataHora),
+                h1.Estacao is null ? null : Math.Round(h1.Km, 1));
         }
         return resultado;
     }

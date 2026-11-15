@@ -31,6 +31,12 @@ public class ChuvaMedidaDto
     public bool Vizinho { get; set; }
 
     /// <summary>
+    /// Do centro da região até a estação do CEMADEN, em km. Null no CGE: o posto não tem
+    /// coordenada publicada (o próprio é da região; o de outra é marcado por <see cref="Vizinho"/>).
+    /// </summary>
+    public double? DistanciaKm { get; set; }
+
+    /// <summary>
     /// Em UTC. No CGE é o horário da NOSSA coleta (a página não informa o da leitura); no
     /// CEMADEN é o instante da consulta lá. Nenhum dos dois é o horário em que choveu.
     /// </summary>
@@ -57,6 +63,7 @@ public class ChuvaMedidaDto
             Fonte = "cemaden",
             Mm60 = mm1h,
             Posto = estacao,
+            DistanciaKm = cemaden.Km1h,
             ColetadoEm = DateTime.SpecifyKind(quando, DateTimeKind.Utc),
         };
     }

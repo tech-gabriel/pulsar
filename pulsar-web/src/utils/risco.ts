@@ -16,6 +16,7 @@ export function motivoPerigo(
 }
 import { PALETA, comAlfa } from './paleta';
 import { CIDADE_ATUAL } from '../features/cidade/cidade';
+import { deNomeDe } from '../data/regioes-seo';
 
 export interface RiscoCores {
   bg: string;
@@ -143,6 +144,8 @@ export function motivoDoRisco(r: {
   chuva3hMedidaMm?: number | null;
   ventoKmH?: number | null;
   sensacaoTermica?: number | null;
+  /** Nome da área, para a frase da chuva medida dizer de onde ela é ("num ponto da Mooca"). */
+  nome?: string | null;
 }): string | null {
   if (!r.faixa || r.faixa === 'BAIXO') return null;
   const inteiro = (v: number) => Math.round(v).toLocaleString('pt-BR');
@@ -150,7 +153,9 @@ export function motivoDoRisco(r: {
   if (r.perigoPrincipal === 'CALOR' && r.sensacaoTermica != null) return `Por calor: sensação de ${inteiro(r.sensacaoTermica)} °C`;
   const medida = r.chuva3hMedidaMm != null;
   const mm = ((medida ? r.chuva3hMedidaMm : r.chuva3hMm) ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  // A medida que fez o número é a da parte mais atingida da área (o quarto de trechos com mais
-  // risco), não a do centro: o "Medida agora" do detalhe pode marcar outra coisa na mesma chuva.
-  return `Por chuva${medida ? ' medida na parte mais atingida' : ''}: ${mm} mm nas últimas 3h`;
+  // A medida que fez o número é a das estações da parte mais atingida da área, não a do centro:
+  // a frase diz que é "num ponto" dela, porque o "Medida agora" do detalhe pode ler outra estação
+  // na mesma chuva (decisão de 15/11, depois da crítica).
+  if (medida) return `Choveu ${mm} mm em 3 h num ponto ${r.nome ? deNomeDe(r.nome) : 'da região'}`;
+  return `Por chuva: ${mm} mm nas últimas 3h`;
 }

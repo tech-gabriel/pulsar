@@ -8,10 +8,12 @@ namespace Pulsar.API.Services.Interfaces;
 /// diferentes. Null = nenhuma estação por perto tem aquela janela (não é zero).
 /// </summary>
 /// <param name="DataHora1h">Instante da consulta no CEMADEN, em UTC (não é o horário em que a estação mediu).</param>
+/// <param name="Km1h">Do centro da subprefeitura até a estação da última hora, em km (uma casa).</param>
 public record ChuvaCemadenRegiao(
     Guid SubprefeituraId,
     double? Mm1h, string? Estacao1h, DateTime? DataHora1h,
-    double? Mm24h, string? Estacao24h, DateTime? DataHora24h);
+    double? Mm24h, string? Estacao24h, DateTime? DataHora24h,
+    double? Km1h = null);
 
 public interface ICemadenService
 {

@@ -127,13 +127,13 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
   const dia = { mm: 12, estacao: 'Vila Leopoldina', medidoEm: '2026-11-11T03:40:00Z' };
   const com = (m: object = {}, chuva24h: typeof dia | null = null) =>
     renderiza({ area: { ...itaquera, chuvaMedida: { ...medida, ...m }, chuva24h } as Area });
-  const abrir = () => fireEvent.click(screen.getByRole('button', { name: /posto|estação/ }));
+  const abrir = () => fireEvent.click(screen.getByRole('button', { name: /^(Posto|Estação) / }));
   const AVISO_ESTIMADA = 'Não há estação com leitura perto daqui agora. O risco usa a chuva estimada.';
 
   it('medida com o posto e os números; a estimada continua, sem o aviso', () => {
     com();
     expect(screen.getByText('Medida agora')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'posto Lapa do CGE' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Posto Lapa' })).toBeInTheDocument();
     expect(screen.getByText('2,4')).toBeInTheDocument();
     expect(screen.getByText('nos últimos 15 min')).toBeInTheDocument();
     expect(screen.getByText('12,4')).toBeInTheDocument();
@@ -166,7 +166,7 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
   it('posto de outra subprefeitura: a folha avisa que é o mais próximo', () => {
     com({ vizinho: true });
     abrir();
-    expect(screen.getByRole('dialog')).toHaveTextContent('Medida no posto mais próximo');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Medida no posto mais próximo, de outra região');
   });
 
   it('posto que marca zero vira uma frase, não um número', () => {
@@ -176,8 +176,8 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
   });
 
   it('CGE sem dado: fala o CEMADEN, pela última hora e nunca em 15 minutos', () => {
-    com({ fonte: 'cemaden', mm15: null, mm60: 5.8, acumuladoPeriodoMm: null, posto: 'Vila Leopoldina' });
-    expect(screen.getByRole('button', { name: 'estação Vila Leopoldina do CEMADEN' })).toBeInTheDocument();
+    com({ fonte: 'cemaden', mm15: null, mm60: 5.8, acumuladoPeriodoMm: null, posto: 'Vila Leopoldina', distanciaKm: 6.3 });
+    expect(screen.getByRole('button', { name: 'Estação Vila Leopoldina · 6,3 km' })).toBeInTheDocument();
     expect(screen.getByText('5,8')).toBeInTheDocument();
     expect(screen.getByText('na última hora')).toBeInTheDocument();
     expect(screen.queryByText('nos últimos 15 min')).not.toBeInTheDocument();
@@ -194,19 +194,41 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
     expect(screen.getByText('Sem chuva na última hora')).toBeInTheDocument();
   });
 
-  // O número grande pode vir da parte mais atingida; a faixa diz de onde é a leitura dela.
-  it('a faixa diz de onde é a leitura', () => {
-    com({ fonte: 'cemaden', mm15: null, mm60: 0 });
-    expect(screen.getByText('Medida agora, perto do centro')).toBeInTheDocument();
-  });
-  it('posto do CGE de outra região: diz que é o mais perto', () => {
+  // O rótulo fica curto; o lugar (e a distância, quando se sabe) vai no botão ao lado.
+  it('o botão diz de onde é a leitura e o rótulo fica curto', () => {
     com({ vizinho: true });
-    expect(screen.getByText('Medida agora, no posto mais perto')).toBeInTheDocument();
+    expect(screen.getByText('Medida agora')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Posto Lapa · vizinho' })).toBeInTheDocument();
+  });
+  it('CEMADEN: a folha explica que é a estação mais perto do centro e a distância', () => {
+    com({ fonte: 'cemaden', mm15: null, mm60: 0, posto: 'Ipiranga', distanciaKm: 4.2 });
+    abrir();
+    expect(screen.getByRole('dialog')).toHaveTextContent('Medida na estação mais perto do centro de Itaquera, a 4,2 km.');
+  });
+
+  // O topo diz que choveu num ponto da área; se esta estação marcou chuva no dia, ela "parou".
+  it('número pela medida e estação seca agora que choveu no dia: parou de chover', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 },
+      chuvaMedida: { ...medida, fonte: 'cemaden', mm15: null, mm60: 0, posto: 'Ipiranga' },
+      chuva24h: { mm: 18, estacao: 'Ipiranga', medidoEm: '2026-11-11T03:40:00Z' } } as unknown as Area });
+    expect(screen.getByText('Parou de chover aqui')).toBeInTheDocument();
+  });
+  it('posto do CGE com o mesmo nome de uma estação do CEMADEN não vira "parou"', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 },
+      chuvaMedida: { ...medida, mm15: 0, mm60: 0, posto: 'Mooca' },
+      chuva24h: { mm: 18, estacao: 'Mooca', medidoEm: '2026-11-11T03:40:00Z' } } as unknown as Area });
+    expect(screen.getByText('Sem chuva agora')).toBeInTheDocument();
+  });
+  it('estação seca o dia todo continua "sem chuva", mesmo com o número pela medida', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 },
+      chuvaMedida: { ...medida, fonte: 'cemaden', mm15: null, mm60: 0, posto: 'Ipiranga' },
+      chuva24h: { mm: 0, estacao: 'Ipiranga', medidoEm: '2026-11-11T03:40:00Z' } } as unknown as Area });
+    expect(screen.getByText('Sem chuva na última hora')).toBeInTheDocument();
   });
 
   it('sem chuva medida, a estimada fala sozinha e avisa', () => {
     renderiza();
-    expect(screen.queryByText('Medida agora')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Medida agora/)).not.toBeInTheDocument();
     expect(screen.getByText('Estimada pelo modelo')).toBeInTheDocument();
     expect(screen.getByText('22,0')).toBeInTheDocument();
     expect(screen.getByText(AVISO_ESTIMADA)).toBeInTheDocument();
@@ -214,7 +236,7 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
 
   it('sem janela nenhuma não mostra a faixa nem "null mm"', () => {
     com({ mm15: null, mm60: null });
-    expect(screen.queryByText('Medida agora')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Medida agora/)).not.toBeInTheDocument();
     expect(screen.queryByText(/null/)).not.toBeInTheDocument();
   });
 });

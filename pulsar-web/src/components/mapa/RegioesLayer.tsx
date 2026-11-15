@@ -9,21 +9,24 @@ import { usePrefereMenosMovimento } from '../../hooks/usePrefereMenosMovimento';
 import { montarRegioes } from './regioesGeo';
 import { deslocamentoDoPainel, paddingDoPainel } from './geometria';
 import { tooltipSubprefeituraHtml } from './tooltipSub';
-import { ZOOM } from './zoom';
+import { ZOOM, ZOOM_TRECHOS } from './zoom';
+import { ID_TRECHOS_FILL } from './TrechosLayer';
 import { criarRepouso } from './repouso';
 
 export const ID_FONTE_REGIOES = 'pulsar-regioes';
 const FILL = 'pulsar-regioes-fill';
 const BORDA = 'pulsar-regioes-borda';
 const SEL = 'pulsar-regioes-sel';
-/** Camadas que, quando tocadas, não selecionam a subprefeitura de baixo (alagamentos). */
-const CAMADAS_POR_CIMA = ['pulsar-ocorr-cluster', 'pulsar-ocorr-ponto'];
+/** Camadas que, quando tocadas, não selecionam a subprefeitura de baixo (alagamentos e trechos). */
+const CAMADAS_POR_CIMA = ['pulsar-ocorr-cluster', 'pulsar-ocorr-ponto', ID_TRECHOS_FILL];
 
 const HOVER: ExpressionSpecification = ['boolean', ['feature-state', 'hover'], false];
 const BASE_FILL: ExpressionSpecification = ['+', ['get', 'fillOpacity'], ['case', HOVER, 0.15, 0]];
 // O risco some conforme o zoom chega na rua: igual até z11, ~0,06 em z14 (0,28 × 0,214).
 const OPACIDADE_BORDA: ExpressionSpecification = ['case', HOVER, 1, ['get', 'bordaOpacidade']];
 const OPACIDADE_FILL: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], 11, BASE_FILL, 14, ['*', BASE_FILL, 0.214]];
+// Com os trechos no mapa, o preenchimento da área some enquanto eles surgem; contorno e nome ficam.
+const OPACIDADE_FILL_COM_TRECHOS: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], ZOOM_TRECHOS.de, BASE_FILL, ZOOM_TRECHOS.ate, 0];
 
 // Borda "andando" da selecionada (marching ants), como no exemplo de dasharray animado do MapLibre.
 const PASSOS_TRACEJADO: number[][] = [
@@ -39,9 +42,11 @@ interface Props {
   camadaAtiva: Camada;
   zonaEmFoco: string | null;
   idPrimeiroSimbolo: string | undefined;
+  /** Trechos desenhados por cima: de perto, a área fica só no contorno. */
+  comTrechos?: boolean;
 }
 
-export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, idPrimeiroSimbolo }: Props) {
+export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, idPrimeiroSimbolo, comTrechos = false }: Props) {
   const { current: mapRef } = useMap();
   const menosMovimento = usePrefereMenosMovimento();
   const dados = useMemo(
@@ -167,7 +172,7 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
 
   return (
     <Source id={ID_FONTE_REGIOES} type="geojson" data={dados}>
-      <Layer id={FILL} type="fill" beforeId={idPrimeiroSimbolo} paint={{ 'fill-color': ['get', 'fill'], 'fill-opacity': OPACIDADE_FILL }} />
+      <Layer id={FILL} type="fill" beforeId={idPrimeiroSimbolo} paint={{ 'fill-color': ['get', 'fill'], 'fill-opacity': comTrechos ? OPACIDADE_FILL_COM_TRECHOS : OPACIDADE_FILL }} />
       <Layer
         id={BORDA}
         type="line"

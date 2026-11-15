@@ -11,6 +11,12 @@ internal static class Principal
     {
         // Uso: dotnet run --project Pulsar.Calibracao [-- 2026-01-01 2026-08-31]
         //      dotnet run --project Pulsar.Calibracao -- grade [2026-01-01 2026-08-31]
+        //      dotnet run --project Pulsar.Calibracao -- contorno
+        if (args.Length > 0 && args[0] == "contorno")
+        {
+            await GeracaoGrade.ContornoAsync(AppContext.BaseDirectory.Split("bin")[0]);
+            return;
+        }
         var modoGrade = args.Length > 0 && args[0] == "grade";
         if (modoGrade) args = args[1..];
         var de = args.Length > 0 ? DateOnly.Parse(args[0]) : new DateOnly(2026, 1, 1);

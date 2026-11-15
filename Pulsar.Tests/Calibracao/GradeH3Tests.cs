@@ -30,6 +30,28 @@ public class GradeH3Tests
             .Should().Throw<InvalidOperationException>().WithMessage("*XYZ*");
 
     [Fact]
+    public void Contorno_UmHexagonoFechadoPorCelulaComOIndice()
+    {
+        var a = GradeH3.CelulaDe(-23.55, -46.60);
+        var b = GradeH3.Vizinhas(a).First();
+
+        using var doc = System.Text.Json.JsonDocument.Parse(GradeH3.Contorno([b, a]));
+
+        var features = doc.RootElement.GetProperty("features").EnumerateArray().ToList();
+        features.Should().HaveCount(2);
+        features.Select(f => f.GetProperty("properties").GetProperty("h3").GetString())
+            .Should().Equal(new[] { a, b }.OrderBy(c => c, StringComparer.Ordinal));
+        var anel = features.Single(f => f.GetProperty("properties").GetProperty("h3").GetString() == a)
+            .GetProperty("geometry").GetProperty("coordinates")[0].EnumerateArray()
+            .Select(p => (Lon: p[0].GetDouble(), Lat: p[1].GetDouble())).ToList();
+        anel.Should().HaveCount(7, "seis vértices e o primeiro repetido no fim");
+        anel[0].Should().Be(anel[^1]);
+        // GeoJSON é [lon, lat]: o hexágono fica em volta do ponto de origem, a menos de 1 km.
+        anel.Average(p => p.Lon).Should().BeApproximately(-46.60, 0.01);
+        anel.Average(p => p.Lat).Should().BeApproximately(-23.55, 0.01);
+    }
+
+    [Fact]
     public void Celulas_CobreOPoligono()
     {
         var celulas = GradeH3.Celulas(GeojsonMooca);

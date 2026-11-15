@@ -39,6 +39,24 @@ public static class GradeH3
         return (c.Y, c.X);
     }
 
+    /// <summary>
+    /// Contorno dos hexágonos em GeoJSON, para o mapa desenhar os trechos sem conhecer H3
+    /// (troca uma dependência no navegador por um arquivo estático). Só o índice vai na
+    /// feature: o risco vem da API e se junta pelo índice. Cinco casas decimais (cerca de 1 m)
+    /// e uma célula por linha, em ordem fixa, para o arquivo ser pequeno e o diff legível.
+    /// </summary>
+    public static string Contorno(IEnumerable<string> celulas)
+    {
+        var inv = CultureInfo.InvariantCulture;
+        var linhas = celulas.OrderBy(c => c, StringComparer.Ordinal).Select(c =>
+        {
+            var anel = string.Join(",", new H3Index(c).GetCellBoundary().Coordinates
+                .Select(p => string.Create(inv, $"[{p.X:F5},{p.Y:F5}]")));
+            return $"{{\"type\":\"Feature\",\"properties\":{{\"h3\":\"{c}\"}},\"geometry\":{{\"type\":\"Polygon\",\"coordinates\":[[{anel}]]}}}}";
+        });
+        return "{\"type\":\"FeatureCollection\",\"features\":[\n" + string.Join(",\n", linhas) + "\n]}\n";
+    }
+
     public static IEnumerable<string> Vizinhas(string h3)
         => new H3Index(h3).GridDiskDistances(1).Where(r => r.Distance == 1).Select(r => r.Index.ToString());
 

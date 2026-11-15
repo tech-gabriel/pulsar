@@ -75,7 +75,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, destinoSemRota = null, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -374,6 +374,11 @@ export default function MapaGL(props: PropsMapa) {
       {/* A chegada nasce quando a linha termina (com menos movimento, só aparece). */}
       {destinoRota && destinoNasceu && desenho?.chave === chaveRota && (
         <Marker longitude={destinoRota[0]} latitude={destinoRota[1]} anchor="bottom" offset={[0, 5]} style={{ pointerEvents: 'none' }}>
+          <PinoChegada />
+        </Marker>
+      )}
+      {destinoSemRota && !rota && (
+        <Marker longitude={destinoSemRota.lon} latitude={destinoSemRota.lat} anchor="bottom" offset={[0, 5]} style={{ pointerEvents: 'none' }}>
           <PinoChegada />
         </Marker>
       )}

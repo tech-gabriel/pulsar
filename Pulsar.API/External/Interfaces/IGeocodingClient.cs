@@ -7,6 +7,9 @@ namespace Pulsar.API.External.Interfaces;
 public interface IGeocodingClient
 {
     Task<IReadOnlyList<EnderecoGeocodificado>> BuscarAsync(string consulta, CancellationToken ct = default);
+
+    /// <summary>A rua mais perto de um ponto (geocoding reverso). Null sem chave, sem resultado ou fora de alcance.</summary>
+    Task<string?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default);
 }
 
 /// <summary>

@@ -49,4 +49,17 @@ public class BuscaService : IBuscaService
         _cache.Set(chave, (IReadOnlyList<EnderecoBuscaDto>)dtos, CacheTtl);
         return dtos;
     }
+
+    /// <summary>
+    /// A rua não muda: o cache vale um dia, pelo ponto arredondado a uns 10 m (o centro de um trecho
+    /// é sempre o mesmo, então cada trecho custa uma consulta ao MapTiler por dia).
+    /// </summary>
+    public async Task<string?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
+    {
+        var chave = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"rua:{lat:0.0000},{lon:0.0000}");
+        if (_cache.TryGetValue(chave, out string? cached)) return cached;
+        var rua = await _geocodingClient.RuaPertoAsync(lat, lon, ct);
+        _cache.Set(chave, rua, TimeSpan.FromDays(1));
+        return rua;
+    }
 }

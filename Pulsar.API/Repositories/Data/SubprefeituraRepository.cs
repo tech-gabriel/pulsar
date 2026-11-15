@@ -23,7 +23,7 @@ public class SubprefeituraRepository : ISubprefeituraRepository
         => await _context.Subprefeituras
             .Where(s => s.Ativa)
             .Include(s => s.Regiao)
-            .Include(s => s.Scores.OrderByDescending(sc => sc.Timestamp).Take(1))
+            .Include(s => s.Scores.OrderByDescending(sc => sc.Timestamp).ThenByDescending(sc => sc.CriadoEm).Take(1))
             .Include(s => s.Leituras.OrderByDescending(l => l.Timestamp).Take(1))
             .ToListAsync();
 
@@ -35,7 +35,7 @@ public class SubprefeituraRepository : ISubprefeituraRepository
     public async Task<Subprefeitura?> ObterComUltimaLeituraAsync(Guid id)
         => await _context.Subprefeituras
             .Include(s => s.Leituras.OrderByDescending(l => l.Timestamp).Take(1))
-            .Include(s => s.Scores.OrderByDescending(sc => sc.Timestamp).Take(1))
+            .Include(s => s.Scores.OrderByDescending(sc => sc.Timestamp).ThenByDescending(sc => sc.CriadoEm).Take(1))
             .FirstOrDefaultAsync(s => s.Id == id);
 
     public async Task AdicionarAsync(Subprefeitura entidade)

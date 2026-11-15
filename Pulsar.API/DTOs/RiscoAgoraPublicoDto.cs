@@ -16,6 +16,8 @@ public class RiscoAgoraPublicoDto
     // O que a frase do risco usa (a mesma do detalhe do app): o perigo que puxa o risco e a leitura dele.
     public TipoPerigo? PerigoPrincipal { get; set; }
     public double? Chuva3hMm { get; set; }
+    /// <summary>Chuva de 3 h medida pelas estações que fizeram o alagamento. Null = o número veio do modelo.</summary>
+    public double? Chuva3hMedidaMm { get; set; }
     public double? VentoKmH { get; set; }
     public double? SensacaoTermica { get; set; }
     public IReadOnlyList<PontoAlagamentoCgeDto> AlagamentosCge { get; set; } = [];

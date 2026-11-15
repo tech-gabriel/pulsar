@@ -1,4 +1,5 @@
 using Pulsar.API.Domain.Entities;
+using Pulsar.API.Domain.Score;
 using Pulsar.API.DTOs;
 
 namespace Pulsar.API.Services.Interfaces;
@@ -14,6 +15,19 @@ public interface IRiscoCelulasService
     /// baixo, sem leitura recente, sem células ou quando o retrato daquela leitura já existe.
     /// </summary>
     Task<ResumoCelulas?> RegistrarAsync(Subprefeitura sub, ScorePerigo score, CancellationToken ct = default);
+
+    /// <summary>
+    /// O alagamento oficial da área: o meio-termo dos trechos dela, cada um com a chuva de
+    /// modelo da área e, onde há estação a até 5 km, a chuva medida ("a medida manda").
+    /// <c>null</c> quando a área não tem trechos na grade: vale a conta pela área inteira.
+    /// </summary>
+    Task<AlagamentoArea?> AlagamentoDaAreaAsync(string nomeArea, EntradaScore entrada, CancellationToken ct = default);
+
+    /// <summary>
+    /// O risco de alagamento de cada trecho agora, pela mesma conta do score da área. Área
+    /// sem leitura nas últimas 48 h fica de fora.
+    /// </summary>
+    Task<CelulasAgoraDto> AgoraAsync(CancellationToken ct = default);
 
     /// <summary>Apaga os resumos mais antigos que a retenção. Devolve quantos apagou.</summary>
     Task<int> PodarAsync(CancellationToken ct = default);

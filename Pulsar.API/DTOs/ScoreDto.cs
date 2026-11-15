@@ -13,6 +13,8 @@ public class ScoreDto
     public ComponentesScoreDto Componentes { get; set; } = new();
     public double Chuva3hMm { get; set; }
     public double Chuva48hMm { get; set; }
+    /// <summary>Chuva de 3 h medida pelas estações que fizeram o alagamento. Null = o número veio do modelo.</summary>
+    public double? Chuva3hMedidaMm { get; set; }
 
     public static ScoreDto De(ScorePerigo s) => new()
     {
@@ -28,5 +30,6 @@ public class ScoreDto
         },
         Chuva3hMm = Math.Round(s.Chuva3hMm, 1),
         Chuva48hMm = Math.Round(s.Chuva48hMm, 1),
+        Chuva3hMedidaMm = s.Chuva3hMedidaMm is { } mm ? Math.Round(mm, 1) : null,
     };
 }

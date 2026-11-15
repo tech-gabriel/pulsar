@@ -24,6 +24,22 @@ public readonly record struct ResultadoScore(
         TipoPerigo.CALOR => Calor,
         _ => Alagamento,
     };
+
+    /// <summary>Maior estrito ganha; empate fica com quem vem antes (alagamento, depois vento).</summary>
+    public static ResultadoScore De(ComponenteScore alagamento, ComponenteScore vento, ComponenteScore calor)
+    {
+        var principal = TipoPerigo.ALAGAMENTO;
+        var maior = alagamento.Valor;
+        if (vento.Valor > maior) { principal = TipoPerigo.VENTO; maior = vento.Valor; }
+        if (calor.Valor > maior) principal = TipoPerigo.CALOR;
+        return new ResultadoScore(alagamento, vento, calor, principal);
+    }
+
+    /// <summary>
+    /// O mesmo resultado com outro alagamento (o meio-termo dos trechos da área) e o perigo
+    /// principal reescolhido: com o alagamento menor, vento ou calor podem passar à frente.
+    /// </summary>
+    public ResultadoScore ComAlagamento(ComponenteScore alagamento) => De(alagamento, Vento, Calor);
 }
 
 /// <summary>
@@ -52,12 +68,6 @@ public static class CalculadoraScore
         var vento = ComponenteScore.De(Curva.Interpolar(p.Vento, e.VentoKmH));
         var calor = ComponenteScore.De(Curva.Interpolar(p.Calor, e.SensacaoC));
 
-        // Maior estrito ganha; empate fica com quem vem antes (alagamento, depois vento).
-        var principal = TipoPerigo.ALAGAMENTO;
-        var maior = alagamento.Valor;
-        if (vento.Valor > maior) { principal = TipoPerigo.VENTO; maior = vento.Valor; }
-        if (calor.Valor > maior) principal = TipoPerigo.CALOR;
-
-        return new ResultadoScore(alagamento, vento, calor, principal);
+        return ResultadoScore.De(alagamento, vento, calor);
     }
 }

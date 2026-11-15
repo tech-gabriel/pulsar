@@ -24,8 +24,19 @@ public class ScorePerigo
     public FaixaRisco FaixaVento { get; set; }
     public double ValorCalor { get; set; }
     public FaixaRisco FaixaCalor { get; set; }
+    /// <summary>Chuva de 3 h do modelo para a área (a mesma de sempre, guardada para recalibrar).</summary>
     public double Chuva3hMm { get; set; }
     public double Chuva48hMm { get; set; }
+
+    /// <summary>
+    /// Chuva de 3 h MEDIDA pelas estações dos trechos que fizeram o alagamento da área ("a medida
+    /// manda"). Null quando o número saiu do modelo, ou em score anterior a esta conta.
+    /// </summary>
+    public double? Chuva3hMedidaMm { get; set; }
+
+    /// <summary>A chuva de 3 h que explica o alagamento: a medida quando foi ela que fez o número.</summary>
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public double Chuva3hDoAlagamentoMm => Chuva3hMedidaMm ?? Chuva3hMm;
     public DateTime Timestamp { get; set; }
     public DateTime CriadoEm { get; set; }
 

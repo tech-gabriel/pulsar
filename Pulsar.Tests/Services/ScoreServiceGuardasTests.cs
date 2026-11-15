@@ -51,7 +51,7 @@ public class ScoreServiceGuardasTests
 
     private ScoreService CriarScoreService() => new(
         _subprefeituraRepoMock.Object, _leituraRepoMock.Object, _scoreRepoMock.Object,
-        NullLogger<ScoreService>.Instance);
+        Mock.Of<Pulsar.API.Services.Interfaces.IRiscoCelulasService>(), NullLogger<ScoreService>.Instance);
 
     [Fact]
     public async Task CalcularEPersistirAsync_SubprefeituraInexistente_LancaException()

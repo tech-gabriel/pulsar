@@ -61,12 +61,13 @@ public class BuscaController : ControllerBase
 
         try
         {
-            return Ok(new RuaPertoDto(await _buscaService.RuaPertoAsync(lat, lon, ct)));
+            var rua = await _buscaService.RuaPertoAsync(lat, lon, ct);
+            return Ok(new RuaPertoDto(rua?.Nome, rua is null ? null : (int)Math.Round(rua.Metros)));
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {
             _logger.LogWarning(ex, "Falha na busca reversa de rua.");
-            return Ok(new RuaPertoDto(null));
+            return Ok(new RuaPertoDto(null, null));
         }
     }
 }

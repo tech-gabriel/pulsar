@@ -16,6 +16,6 @@ public class FakeGeocodingClient : IGeocodingClient
             new($"{consulta} — resultado 2, São Paulo", -23.5700, -46.6400, consulta, "address"),
         ]);
 
-    public Task<string?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
-        => Task.FromResult<string?>("Rua Taquari");
+    public Task<RuaProxima?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
+        => Task.FromResult<RuaProxima?>(new RuaProxima("Rua Taquari", 40));
 }

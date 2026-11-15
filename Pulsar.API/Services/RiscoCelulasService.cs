@@ -89,7 +89,12 @@ public class RiscoCelulasService : IRiscoCelulasService
                 celulas.Add(new CelulaAgoraDto(t.Celula.H3, area.Id, Math.Round(t.Risco.Valor, 1), t.Risco.Faixa, indice, km));
             }
         }
-        return new CelulasAgoraDto(agora, usadas.Select(e => new EstacaoAgoraDto(e.Cod, e.Mm1h, e.Mm3h)).ToList(), celulas);
+        // O nome da estação vai junto: o detalhe do trecho mostra de qual estação é a leitura.
+        var codigos = usadas.Select(e => e.Cod).ToList();
+        var nomes = await _db.EstacoesCemaden.AsNoTracking().Where(e => codigos.Contains(e.CodEstacao))
+            .ToDictionaryAsync(e => e.CodEstacao, e => e.Nome, ct);
+        return new CelulasAgoraDto(agora,
+            usadas.Select(e => new EstacaoAgoraDto(e.Cod, e.Mm1h, e.Mm3h, nomes.GetValueOrDefault(e.Cod) ?? e.Cod)).ToList(), celulas);
     }
 
     public async Task<ResumoCelulas?> RegistrarAsync(Subprefeitura sub, ScorePerigo score, CancellationToken ct = default)

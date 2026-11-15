@@ -95,14 +95,21 @@ public class MapTilerGeocodingClientTests
     public void ParseFeatureCollection_VazioOuSemFeatures_RetornaVazio(string json)
         => MapTilerGeocodingClient.ParseFeatureCollection(json).Should().BeEmpty();
 
-    // O endereço reverso só nomeia o destino se estiver perto do ponto tocado.
+    // O endereço reverso só nomeia o destino se estiver perto do ponto, e vale o mais perto (não o primeiro).
     [Fact]
-    public void RuaSePerto_EnderecoAte300m_DevolveARua()
-        => MapTilerGeocodingClient.RuaSePerto(new("Rua do Oratório", -23.5564, -46.5991, "Rua do Oratório", "address"), -23.5560, -46.5990)
-            .Should().Be("Rua do Oratório");
+    public void RuaMaisPerto_EntreVarios_FicaComOMaisPerto()
+    {
+        var r = MapTilerGeocodingClient.RuaMaisPerto(
+        [
+            new("Rua Irene", -23.5590, -46.5990, "Rua Irene", "address"),
+            new("Rua do Oratório", -23.5562, -46.5990, "Rua do Oratório", "address"),
+        ], -23.5560, -46.5990);
+        r!.Nome.Should().Be("Rua do Oratório");
+        r.Metros.Should().BeLessThan(30);
+    }
 
     [Fact]
-    public void RuaSePerto_EnderecoLonge_ENull()
-        => MapTilerGeocodingClient.RuaSePerto(new("Rua Longe", -23.5660, -46.5990, "Rua Longe", "address"), -23.5560, -46.5990)
+    public void RuaMaisPerto_TodosLonge_ENull()
+        => MapTilerGeocodingClient.RuaMaisPerto([new("Rua Longe", -23.5660, -46.5990, "Rua Longe", "address")], -23.5560, -46.5990)
             .Should().BeNull();
 }

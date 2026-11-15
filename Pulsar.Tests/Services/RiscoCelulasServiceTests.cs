@@ -408,4 +408,91 @@ public class RiscoCelulasServiceTests : IDisposable
         l.CiclosMedidaAlto.Should().Be(1);
         l.CiclosMaiorAlto.Should().Be(2);
     }
+
+    // ── Alagamento oficial da área e retrato de agora (entrega 4b) ──
+
+    private static readonly EntradaScore ChuvaForte = new(30, 45, 60, 0, 20, "Campo Limpo");
+
+    [Fact]
+    public async Task AlagamentoDaArea_SemCelulas_DevolveNull()
+    {
+        (await Servico().AlagamentoDaAreaAsync("Campo Limpo", ChuvaForte)).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task AlagamentoDaArea_SemEstacao_EhOMeioTermoDoModelo()
+    {
+        var r = await Servico(1, 1, 1, 1.25).AlagamentoDaAreaAsync("Campo Limpo", ChuvaForte);
+
+        r!.Alagamento.Valor.Should().BeApproximately(CalculadoraScore.Calcular(ChuvaForte, CalibracaoScore.Atual, 1.25).Alagamento.Valor, 1e-9);
+    }
+
+    [Fact]
+    public async Task AlagamentoDaArea_EstacaoPertoMarcandoZero_AMedidaManda()
+    {
+        _estacoes.Add(Estacao(2, 0, 0, 0));
+
+        var r = await Servico(1, 1.25).AlagamentoDaAreaAsync("Campo Limpo", ChuvaForte);
+
+        r!.Alagamento.Valor.Should().Be(0);
+        r.Alagamento.Faixa.Should().Be(FaixaRisco.BAIXO);
+    }
+
+    [Fact]
+    public async Task AlagamentoDaArea_CemadenForaDoAr_SegueComOModelo()
+    {
+        _cemaden.Setup(c => c.ObterEstacoesComChuvaAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ThrowsAsync(new HttpRequestException("fora"));
+
+        var r = await Servico(1).AlagamentoDaAreaAsync("Campo Limpo", ChuvaForte);
+
+        r!.Alagamento.Valor.Should().BeApproximately(CalculadoraScore.Calcular(ChuvaForte, CalibracaoScore.Atual, 1).Alagamento.Valor, 1e-9);
+    }
+
+    // O score gravado já é o meio-termo; a conferência precisa continuar comparando com a conta antiga.
+    [Fact]
+    public async Task Registrar_ValorAreaEhAContaAntiga_MesmoComOScoreJaPeloMeioTermo()
+    {
+        var leituras = await SemearLeiturasAsync(17.5 / 3);
+        var entrada = ScoreService.MontarEntrada("Campo Limpo", leituras);
+        var score = Score(leituras);
+        score.ValorAlagamento = 3; // o que o ciclo gravou (meio-termo), diferente da conta antiga
+
+        var r = await Servico(1, 1, 1, 1.25).RegistrarAsync(_sub, score);
+
+        r!.ValorArea.Should().BeApproximately(CalculadoraScore.Calcular(entrada).Alagamento.Valor, 1e-9);
+    }
+
+    [Fact]
+    public async Task Agora_UmaCelulaPorTrechoDaAreaComLeitura_ComAEstacaoQueMandou()
+    {
+        await SemearLeiturasAsync(17.5 / 3);
+        _estacoes.Add(Estacao(2, 40, 60, 80));
+
+        var r = await Servico(1, 1.25).AgoraAsync();
+
+        // As outras áreas não têm leitura (nem células na grade falsa): ficam de fora.
+        r.Celulas.Should().HaveCount(2);
+        r.Celulas.Should().OnlyContain(c => c.AreaId == _sub.Id && c.Estacao == 0);
+        r.Celulas[0].DistanciaKm.Should().BeApproximately(2, 0.11);
+        r.Celulas[1].Valor.Should().BeGreaterThanOrEqualTo(r.Celulas[0].Valor);
+        r.Estacoes.Should().ContainSingle().Which.Mm3h.Should().Be(60);
+    }
+
+    [Fact]
+    public async Task Agora_SemEstacaoPerto_CelulaSemEstacaoEListaDeEstacoesVazia()
+    {
+        await SemearLeiturasAsync(17.5 / 3);
+        _estacoes.Add(Estacao(8, 40, 60, 80));
+
+        var r = await Servico(1).AgoraAsync();
+
+        r.Celulas.Should().ContainSingle().Which.Estacao.Should().BeNull();
+        r.Estacoes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Agora_AreaSemLeitura_FicaDeFora()
+    {
+        (await Servico(1, 1).AgoraAsync()).Celulas.Should().BeEmpty();
+    }
 }

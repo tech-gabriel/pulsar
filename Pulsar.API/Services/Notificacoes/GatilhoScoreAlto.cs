@@ -77,9 +77,10 @@ public class GatilhoScoreAlto : IGatilhoNotificacao
                 : string.Create(c, $"Sensação térmica de {leitura.SensacaoTermica:0} °C. Hidrate-se e evite sol forte.")),
             // Cita o acumulado de 3h que está no score, e não a chuva do instante: o ALTO
             // pode vir de uma chuva que já parou, e "0 mm por hora" desmentiria o aviso.
-            _ => ($"Alerta de alagamento {em}", score.Chuva3hMm <= 0
+            // Com a medida mandando, cita o que as estações mediram, não o modelo.
+            _ => ($"Alerta de alagamento {em}", score.Chuva3hDoAlagamentoMm <= 0
                 ? "Condições de alerta agora. Evite áreas de alagamento."
-                : string.Create(c, $"Chuva de {score.Chuva3hMm:0.#} mm nas últimas 3 horas")
+                : string.Create(c, $"Chuva{(score.Chuva3hMedidaMm is null ? "" : " medida")} de {score.Chuva3hDoAlagamentoMm:0.#} mm nas últimas 3 horas")
                   + (score.Chuva48hMm >= LimiaresNotificacao.SoloEncharcadoMm ? ", com o solo já encharcado." : ".")),
         };
     }

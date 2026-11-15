@@ -14,17 +14,20 @@ public class ScoreService : IScoreService
     private readonly ISubprefeituraRepository _subprefeituraRepo;
     private readonly ILeituraRepository _leituraRepo;
     private readonly IScoreRepository _scoreRepo;
+    private readonly IRiscoCelulasService _riscoCelulas;
     private readonly ILogger<ScoreService> _logger;
 
     public ScoreService(
         ISubprefeituraRepository subprefeituraRepo,
         ILeituraRepository leituraRepo,
         IScoreRepository scoreRepo,
+        IRiscoCelulasService riscoCelulas,
         ILogger<ScoreService> logger)
     {
         _subprefeituraRepo = subprefeituraRepo;
         _leituraRepo = leituraRepo;
         _scoreRepo = scoreRepo;
+        _riscoCelulas = riscoCelulas;
         _logger = logger;
     }
 
@@ -48,7 +51,10 @@ public class ScoreService : IScoreService
             Chuva3hMm = entrada.Chuva3hMm,
             Chuva48hMm = entrada.Chuva48hMm,
         };
-        score.Aplicar(CalculadoraScore.Calcular(entrada));
+        var daArea = CalculadoraScore.Calcular(entrada);
+        var pelosTrechos = await AlagamentoDosTrechosAsync(entrada, ct);
+        score.Aplicar(pelosTrechos is null ? daArea : daArea.ComAlagamento(pelosTrechos.Alagamento));
+        score.Chuva3hMedidaMm = pelosTrechos?.Chuva3hMedidaMm is { } mm ? Math.Round(mm, 1) : null;
 
         await _scoreRepo.AdicionarAsync(score);
         await _scoreRepo.SalvarAsync();
@@ -57,6 +63,24 @@ public class ScoreService : IScoreService
             subprefeitura.Nome, score.Valor, score.Faixa, score.PerigoPrincipal);
 
         return score;
+    }
+
+    /// <summary>
+    /// O alagamento da área é o meio-termo dos trechos dela (chuva medida onde há estação
+    /// perto). Vento e calor seguem pela área. Sem grade para a área, ou se a conta por
+    /// trecho falhar, vale a conta pela área inteira: o ciclo não pode ficar sem score.
+    /// </summary>
+    private async Task<AlagamentoArea?> AlagamentoDosTrechosAsync(EntradaScore entrada, CancellationToken ct)
+    {
+        try
+        {
+            return await _riscoCelulas.AlagamentoDaAreaAsync(entrada.Subprefeitura, entrada, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Falha na conta por trecho de {Nome}; o alagamento segue pela área inteira.", entrada.Subprefeitura);
+            return null;
+        }
     }
 
     /// <summary>

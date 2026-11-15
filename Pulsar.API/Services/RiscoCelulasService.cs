@@ -50,6 +50,48 @@ public class RiscoCelulasService : IRiscoCelulasService
         return _estacoes;
     }
 
+    public async Task<AlagamentoArea?> AlagamentoDaAreaAsync(string nomeArea, EntradaScore entrada, CancellationToken ct = default)
+    {
+        var celulas = _grade.DaArea(nomeArea);
+        if (celulas.Count == 0) return null;
+        return RiscoTrecho.MeioTermoDaArea(RiscoTrecho.DaArea(entrada, celulas, await EstacoesAsync(ct)));
+    }
+
+    public async Task<CelulasAgoraDto> AgoraAsync(CancellationToken ct = default)
+    {
+        var agora = DateTime.UtcNow;
+        var desde = agora.AddHours(-ScoreService.JanelaHoras);
+        var areas = await _db.Subprefeituras.AsNoTracking().Where(a => a.Ativa).Select(a => new { a.Id, a.Nome }).ToListAsync(ct);
+        // Uma consulta para a cidade inteira: 32 áreas × 192 leituras de 15 min nas 48 h.
+        var leituras = (await _db.LeiturasClimaticas.AsNoTracking().Where(l => l.Timestamp >= desde).ToListAsync(ct))
+            .ToLookup(l => l.SubprefeituraId);
+        var estacoes = await EstacoesAsync(ct);
+
+        var usadas = new List<EstacaoChuva>();
+        var indices = new Dictionary<EstacaoChuva, int>(ReferenceEqualityComparer.Instance);
+        var celulas = new List<CelulaAgoraDto>();
+        foreach (var area in areas)
+        {
+            // Área sem leitura recente fica de fora: sem a chuva dela não há o que afirmar do trecho.
+            var daArea = leituras[area.Id].ToList();
+            if (daArea.Count == 0) continue;
+            var entrada = ScoreService.MontarEntrada(area.Nome, daArea);
+            foreach (var t in RiscoTrecho.DaArea(entrada, _grade.DaArea(area.Nome), estacoes))
+            {
+                int? indice = null;
+                double? km = null;
+                if (t.Estacao is { } e)
+                {
+                    if (!indices.TryGetValue(e, out var i)) { indices[e] = i = usadas.Count; usadas.Add(e); }
+                    indice = i;
+                    km = Math.Round(GeoDistancia.HaversineMetros(t.Celula.Lat, t.Celula.Lon, e.Lat, e.Lon) / 1000, 1);
+                }
+                celulas.Add(new CelulaAgoraDto(t.Celula.H3, area.Id, Math.Round(t.Risco.Valor, 1), t.Risco.Faixa, indice, km));
+            }
+        }
+        return new CelulasAgoraDto(agora, usadas.Select(e => new EstacaoAgoraDto(e.Cod, e.Mm1h, e.Mm3h)).ToList(), celulas);
+    }
+
     public async Task<ResumoCelulas?> RegistrarAsync(Subprefeitura sub, ScorePerigo score, CancellationToken ct = default)
     {
         var celulas = _grade.DaArea(sub.Nome);
@@ -89,9 +131,13 @@ public class RiscoCelulasService : IRiscoCelulasService
             comMaior.Add(medida.Valor > modelo.Valor ? medida : modelo);
         }
 
+        // A conta antiga da área (fator da área inteira). O score gravado já é o meio-termo dos
+        // trechos; a conferência continua comparando com o que o app mostrava antes.
+        var valorArea = CalculadoraScore.Calcular(entrada).Alagamento.Valor;
+
         // Área e todos os trechos em risco baixo, nas três contas: não há o que conferir.
         // A tela lê a ausência de linha como "concordaram em risco baixo".
-        if (ClassificacaoRisco.Faixa(score.ValorAlagamento) == FaixaRisco.BAIXO
+        if (ClassificacaoRisco.Faixa(valorArea) == FaixaRisco.BAIXO
             && valores.Concat(comMedida).All(v => v.Faixa == FaixaRisco.BAIXO))
             return null;
 
@@ -105,7 +151,7 @@ public class RiscoCelulasService : IRiscoCelulasService
         {
             SubprefeituraId = sub.Id,
             Timestamp = score.Timestamp,
-            ValorArea = score.ValorAlagamento,
+            ValorArea = valorArea,
             ValorMeioTermo = meioTermo,
             FaixaMeioTermo = ClassificacaoRisco.Faixa(meioTermo),
             ValorMaximo = valores.Max(v => v.Valor),

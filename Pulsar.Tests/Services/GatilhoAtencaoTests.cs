@@ -14,12 +14,12 @@ public class GatilhoAtencaoTests
 
     private static ContextoGatilho Ctx(FaixaRisco geral,
         FaixaRisco alag = FaixaRisco.BAIXO, FaixaRisco vento = FaixaRisco.BAIXO, FaixaRisco calor = FaixaRisco.BAIXO,
-        TipoPerigo principal = TipoPerigo.ALAGAMENTO, double chuva3h = 6, DateTime? agora = null)
+        TipoPerigo principal = TipoPerigo.ALAGAMENTO, double chuva3h = 6, DateTime? agora = null, double? chuva3hMedida = null)
         => new()
         {
             Estado = new EstadoSubprefeitura(
                 new Subprefeitura { Nome = "Mooca", Ativa = true },
-                new ScorePerigo { Faixa = geral, PerigoPrincipal = principal, FaixaAlagamento = alag, FaixaVento = vento, FaixaCalor = calor, Chuva3hMm = chuva3h, Timestamp = Agora },
+                new ScorePerigo { Faixa = geral, PerigoPrincipal = principal, FaixaAlagamento = alag, FaixaVento = vento, FaixaCalor = calor, Chuva3hMm = chuva3h, Chuva3hMedidaMm = chuva3hMedida, Timestamp = Agora },
                 new LeituraClimatica { VentoKmH = 45, SensacaoTermica = 34, Timestamp = Agora }),
             Fuso = Sp,
             Previsao = Array.Empty<FaixaPrevisaoDto>(),
@@ -94,5 +94,13 @@ public class GatilhoAtencaoTests
         var p = await Avaliar(Ctx(FaixaRisco.MODERADO, alag: FaixaRisco.MODERADO, agora: new DateTime(2026, 10, 8, 2, 30, 0, DateTimeKind.Utc)));
 
         p[0].Chave.Should().EndWith(":2026-10-07");
+    }
+
+    [Fact]
+    public async Task AtencaoPelaChuvaMedida_CitaAMedida()
+    {
+        var p = await Avaliar(Ctx(FaixaRisco.MODERADO, alag: FaixaRisco.MODERADO, chuva3h: 0, chuva3hMedida: 12.4));
+
+        p[0].Payload.Corpo.Should().Be("Chuva medida de 12,4 mm nas últimas 3 horas.");
     }
 }

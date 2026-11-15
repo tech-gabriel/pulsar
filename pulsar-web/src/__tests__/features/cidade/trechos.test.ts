@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { FeatureCollection } from 'geojson';
 import type { CelulaAgoraDto, CelulasAgoraDto } from '../../../types';
 import type { Area } from '../../../features/cidade/areas';
-import { fraseDaEstacao, fraseDoTrecho, h3DoPonto, montarTrechos, trechosDe } from '../../../features/cidade/trechos';
+import { centroDoTrecho, fraseDaEstacao, fraseDoTrecho, h3DoPonto, montarTrechos, trechosDe } from '../../../features/cidade/trechos';
 
 const componente = (valor: number, faixa: 'BAIXO' | 'MODERADO' | 'ALTO') => ({ valor, faixa });
 
@@ -83,6 +83,16 @@ const contorno: FeatureCollection = {
     { type: 'Feature', properties: { h3: 'h2' }, geometry: { type: 'Polygon', coordinates: [[[1, 0], [2, 0], [2, 1], [1, 1], [1, 0]]] } },
   ],
 };
+
+describe('centroDoTrecho', () => {
+  it('devolve o centro do trecho', () => {
+    expect(centroDoTrecho('h2', contorno)).toEqual({ lat: 0.5, lon: 1.5 });
+  });
+  it('trecho fora do contorno ou sem contorno devolve null', () => {
+    expect(centroDoTrecho('h9', contorno)).toBeNull();
+    expect(centroDoTrecho('h1', null)).toBeNull();
+  });
+});
 
 describe('h3DoPonto', () => {
   it('acha o trecho que contém o ponto', () => {

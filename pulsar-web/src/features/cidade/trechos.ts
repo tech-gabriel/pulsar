@@ -82,6 +82,19 @@ export function h3DoPonto(lat: number, lon: number, contorno: FeatureCollection 
   return typeof h3 === 'string' ? h3 : null;
 }
 
+/**
+ * O centro do trecho, para a rota até ele. Média dos vértices do anel (sem o que fecha): no
+ * hexágono regular é o centro exato. Null se o trecho não está no contorno.
+ */
+export function centroDoTrecho(h3: string, contorno: FeatureCollection | null): { lat: number; lon: number } | null {
+  const f = contorno?.features.find((x) => x.properties?.h3 === h3);
+  if (!f || f.geometry.type !== 'Polygon') return null;
+  const anel = f.geometry.coordinates[0].slice(0, -1);
+  const lon = anel.reduce((s, p) => s + p[0], 0) / anel.length;
+  const lat = anel.reduce((s, p) => s + p[1], 0) / anel.length;
+  return { lat, lon };
+}
+
 export interface PropsTrecho {
   h3: string;
   faixa: FaixaRisco;

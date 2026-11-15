@@ -43,7 +43,7 @@ import type { PontoRota } from '../features/rota/tipos';
 import type { LocalSalvoDto, TipoLocal } from '../types';
 import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
 import { pontoDoLocal, subprefeituraIdDoPonto } from '../features/locais/regras';
-import { h3DoPonto, montarTrechos, trechosDe } from '../features/cidade/trechos';
+import { centroDoTrecho, h3DoPonto, montarTrechos, trechosDe } from '../features/cidade/trechos';
 import { useCelulasAgora } from '../hooks/useCelulasAgora';
 import type { OrigemTrecho } from '../components/painel/DetalheSubprefeitura';
 
@@ -275,8 +275,11 @@ export default function MapaPage() {
     rota.setDestino(null);
   }
 
-  // "Como chegar" no detalhe: o destino é o ponto buscado só se ele é desta subprefeitura; senão o centro dela.
+  // "Como chegar" no detalhe: o trecho tocado, se há um; senão o ponto buscado só se ele é desta
+  // subprefeitura; senão o centro dela.
   function comoChegar(sub: SubprefeituraMapaDto) {
+    const centro = trechoAberto?.origem === 'toque' ? centroDoTrecho(trechoAberto.h3, contornoTrechos.dados) : null;
+    if (centro) return void abrirRota('como_chegar', { ...centro, rotulo: `Trecho em ${sub.nome}` });
     void abrirRota('como_chegar', escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? (geojson as FeatureCollection | null)));
   }
 

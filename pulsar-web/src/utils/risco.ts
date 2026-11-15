@@ -150,5 +150,7 @@ export function motivoDoRisco(r: {
   if (r.perigoPrincipal === 'CALOR' && r.sensacaoTermica != null) return `Por calor: sensação de ${inteiro(r.sensacaoTermica)} °C`;
   const medida = r.chuva3hMedidaMm != null;
   const mm = ((medida ? r.chuva3hMedidaMm : r.chuva3hMm) ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  return `Por chuva${medida ? ' medida' : ''}: ${mm} mm nas últimas 3h`;
+  // A medida que fez o número é a da parte mais atingida da área (o quarto de trechos com mais
+  // risco), não a do centro: o "Medida agora" do detalhe pode marcar outra coisa na mesma chuva.
+  return `Por chuva${medida ? ' medida na parte mais atingida' : ''}: ${mm} mm nas últimas 3h`;
 }

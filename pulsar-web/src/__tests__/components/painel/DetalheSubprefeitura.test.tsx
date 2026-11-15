@@ -194,6 +194,16 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
     expect(screen.getByText('Sem chuva na última hora')).toBeInTheDocument();
   });
 
+  // O número grande pode vir da parte mais atingida; a faixa diz de onde é a leitura dela.
+  it('a faixa diz de onde é a leitura', () => {
+    com({ fonte: 'cemaden', mm15: null, mm60: 0 });
+    expect(screen.getByText('Medida agora, perto do centro')).toBeInTheDocument();
+  });
+  it('posto do CGE de outra região: diz que é o mais perto', () => {
+    com({ vizinho: true });
+    expect(screen.getByText('Medida agora, no posto mais perto')).toBeInTheDocument();
+  });
+
   it('sem chuva medida, a estimada fala sozinha e avisa', () => {
     renderiza();
     expect(screen.queryByText('Medida agora')).not.toBeInTheDocument();

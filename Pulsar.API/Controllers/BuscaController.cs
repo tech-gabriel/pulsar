@@ -54,8 +54,9 @@ public class BuscaController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RuaPerto([FromQuery] double lat, [FromQuery] double lon, CancellationToken ct)
     {
-        // Retângulo largo da Grande São Paulo: barra coordenada trocada ou fora da cidade.
-        if (lat is < -24.1 or > -23.2 || lon is < -47.0 or > -46.2)
+        // Retângulo largo da Grande São Paulo: barra coordenada trocada ou fora da cidade. Escrito
+        // como "dentro" negado, porque NaN falha toda comparação e passaria num "fora".
+        if (!(lat >= -24.1 && lat <= -23.2 && lon >= -47.0 && lon <= -46.2))
             return BadRequest(new { mensagem = "Ponto fora de São Paulo." });
 
         try

@@ -70,8 +70,16 @@ public class MapTilerGeocodingClient : IGeocodingClient
         using var response = await client.GetAsync(url, ct);
         response.EnsureSuccessStatusCode();
         var primeiro = ParseFeatureCollection(await response.Content.ReadAsStringAsync(ct)).FirstOrDefault();
-        return string.IsNullOrWhiteSpace(primeiro?.Nome) ? null : primeiro.Nome;
+        return RuaSePerto(primeiro, lat, lon);
     }
+
+    /// <summary>Endereço reverso a mais de uns 300 m não é "a rua daqui": melhor o nome da região.</summary>
+    public const double AlcanceRuaMetros = 300;
+
+    public static string? RuaSePerto(EnderecoGeocodificado? r, double lat, double lon)
+        => r is null || string.IsNullOrWhiteSpace(r.Nome)
+            || Pulsar.API.Services.GeoDistancia.HaversineMetros(lat, lon, r.Latitude, r.Longitude) > AlcanceRuaMetros
+            ? null : r.Nome;
 
     /// <summary>
     /// Faz o parse da FeatureCollection do MapTiler em resultados de endereço.

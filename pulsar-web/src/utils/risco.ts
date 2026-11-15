@@ -151,7 +151,8 @@ export function motivoDoRisco(r: {
   const inteiro = (v: number) => Math.round(v).toLocaleString('pt-BR');
   if (r.perigoPrincipal === 'VENTO' && r.ventoKmH != null) return `Por vento de ${inteiro(r.ventoKmH)} km/h`;
   if (r.perigoPrincipal === 'CALOR' && r.sensacaoTermica != null) return `Por calor: sensação de ${inteiro(r.sensacaoTermica)} °C`;
-  const medida = r.chuva3hMedidaMm != null;
+  // Medida zero não "choveu": a frase volta para a do modelo.
+  const medida = (r.chuva3hMedidaMm ?? 0) > 0;
   const mm = ((medida ? r.chuva3hMedidaMm : r.chuva3hMm) ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   // A medida que fez o número é a das estações da parte mais atingida da área, não a do centro:
   // a frase diz que é "num ponto" dela, porque o "Medida agora" do detalhe pode ler outra estação

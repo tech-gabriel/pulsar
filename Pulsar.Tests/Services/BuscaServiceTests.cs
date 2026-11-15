@@ -21,6 +21,25 @@ public class BuscaServiceTests
             Chamadas++;
             return Task.FromResult(Resultado);
         }
+
+        public Task<string?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
+        {
+            Chamadas++;
+            return Task.FromResult<string?>("Rua Taquari");
+        }
+    }
+
+    // O centro de um trecho é sempre o mesmo: a rua dele custa uma consulta só.
+    [Fact]
+    public async Task RuaPerto_MesmoPonto_ConsultaOProvedorUmaVez()
+    {
+        var stub = new StubGeocodingClient();
+        var service = CriarService(stub);
+
+        (await service.RuaPertoAsync(-23.55501, -46.59001)).Should().Be("Rua Taquari");
+        (await service.RuaPertoAsync(-23.55502, -46.59002)).Should().Be("Rua Taquari");
+
+        stub.Chamadas.Should().Be(1);
     }
 
     private static BuscaService CriarService(IGeocodingClient client)

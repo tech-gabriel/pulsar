@@ -21,6 +21,7 @@ vi.mock('../../../hooks/useBuscaEndereco', () => ({
 }));
 
 import BuscaUnificada from '../../../components/mapa/BuscaUnificada';
+import { numeroFaltando } from '../../../utils/busca';
 import type { Area } from '../../../features/cidade/areas';
 
 const resultados: EnderecoBusca[] = [
@@ -55,7 +56,7 @@ describe('BuscaUnificada', () => {
     fireEvent.focus(screen.getByLabelText('Buscar subprefeitura ou endereço'));
     fireEvent.click(screen.getByText('Av. Paulista'));
 
-    expect(onSelecionar).toHaveBeenCalledWith(resultados[0]);
+    expect(onSelecionar).toHaveBeenCalledWith(resultados[0], undefined);
   });
 
   it('limpa a busca ao clicar no X', () => {
@@ -127,5 +128,22 @@ describe('BuscaUnificada: rota', () => {
     expect(botao).toHaveTextContent(/^$/);
     fireEvent.click(botao);
     expect(onAbrirRota).toHaveBeenCalled();
+  });
+});
+
+// O MapTiler não conhece todo número: quem digitou "1000" e escolheu a rua precisa ajustar o pino.
+describe('numeroFaltando', () => {
+  const r = (nome: string, descricao = '') => ({ nome, descricao } as EnderecoBusca);
+  it('número digitado que o resultado não tem', () => {
+    expect(numeroFaltando('Rua da Mooca 1000', r('Rua da Mooca', 'Rua da Mooca, São Paulo 03104-000'))).toBe('1000');
+  });
+  it('resultado com o número: nada falta', () => {
+    expect(numeroFaltando('Rua da Mooca 1001', r('Rua Da Mooca 1001'))).toBeUndefined();
+  });
+  it('sem número digitado: nada falta', () => {
+    expect(numeroFaltando('Rua da Mooca', r('Rua da Mooca'))).toBeUndefined();
+  });
+  it('não confunde 100 com 1000', () => {
+    expect(numeroFaltando('Rua X 100', r('Rua X 1000'))).toBe('100');
   });
 });

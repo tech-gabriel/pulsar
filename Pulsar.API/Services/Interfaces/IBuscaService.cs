@@ -6,4 +6,7 @@ namespace Pulsar.API.Services.Interfaces;
 public interface IBuscaService
 {
     Task<IReadOnlyList<EnderecoBuscaDto>> BuscarEnderecosAsync(string? consulta, CancellationToken ct = default);
+
+    /// <summary>A rua mais perto do ponto, para dar nome a um destino tocado no mapa. Null quando não há.</summary>
+    Task<string?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default);
 }

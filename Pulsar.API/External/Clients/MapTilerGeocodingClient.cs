@@ -57,6 +57,22 @@ public class MapTilerGeocodingClient : IGeocodingClient
         return ParseFeatureCollection(json);
     }
 
+    public async Task<string?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
+    {
+        var apiKey = _configuration["MapTiler:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey)) return null;
+
+        var client = _httpClientFactory.CreateClient("maptiler");
+        var c = System.Globalization.CultureInfo.InvariantCulture;
+        var url = string.Create(c, $"{lon:0.######},{lat:0.######}.json") +
+            $"?key={apiKey}&language=pt&types=address&limit=1";
+
+        using var response = await client.GetAsync(url, ct);
+        response.EnsureSuccessStatusCode();
+        var primeiro = ParseFeatureCollection(await response.Content.ReadAsStringAsync(ct)).FirstOrDefault();
+        return string.IsNullOrWhiteSpace(primeiro?.Nome) ? null : primeiro.Nome;
+    }
+
     /// <summary>
     /// Faz o parse da FeatureCollection do MapTiler em resultados de endereço.
     /// Exposto como estático para ser testável sem chamadas HTTP.

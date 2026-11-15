@@ -16,3 +16,14 @@ export function fraseChuvaMedida(m: ChuvaMedida): string | null {
 /** Há leitura que dê para afirmar? Sem isso a faixa "Medida agora" não existe e a estimada fala sozinha. */
 export const temChuvaMedida = (medida: ChuvaMedida | null | undefined): medida is ChuvaMedida =>
   !!medida && fraseChuvaMedida(medida) !== null;
+
+export const km = (v: number) => `${v.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km`;
+
+/**
+ * De onde é a leitura, curto, ao lado de "Medida agora" (opção A, escolhida em 15/11): o lugar e,
+ * quando se sabe, a distância. CGE ou CEMADEN fica para a folha do toque.
+ */
+export function ondeMediu(m: ChuvaMedida): string {
+  if (m.fonte === 'cemaden') return `Estação ${m.posto}${m.distanciaKm != null ? ` · ${km(m.distanciaKm)}` : ''}`;
+  return `Posto ${m.posto}${m.vizinho ? ' · vizinho' : ''}`;
+}

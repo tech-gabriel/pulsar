@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, X, MapPin, Landmark, Building2, Loader2, LocateFixed, Route } from 'lucide-react';
+import { numeroFaltando } from '../../utils/busca';
+import { Search, X, MapPin, Landmark, Building2, Loader2, LocateFixed, Route, Hexagon } from 'lucide-react';
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
 import { useDicaLocalizacao } from '../../hooks/useDicaLocalizacao';
 import type { EnderecoBusca } from '../../types';
@@ -10,7 +11,8 @@ interface Props {
   /** Subprefeituras para achar pelo nome (resultado local, aparece antes dos endereços). */
   areas: Area[];
   onSelecionarArea: (area: Area) => void;
-  onSelecionar: (endereco: EnderecoBusca) => void;
+  /** `numeroFaltando`: número que a pessoa digitou e o resultado escolhido não tem (o mapa não conhece). */
+  onSelecionar: (endereco: EnderecoBusca, numeroFaltando?: string) => void;
   isMobile: boolean;
   onUsarLocalizacao?: () => void;
   localizando?: boolean;
@@ -20,6 +22,17 @@ interface Props {
   embutida?: boolean;
   /** Esconde a dica do alvo por ora (outra folha disputa a atenção), sem dispensá-la. */
   semDica?: boolean;
+  /**
+   * Os trechos acabaram de aparecer e a pessoa ainda não sabe que dá para tocar neles: a faixa
+   * de dica fala deles no lugar da dica do alvo, uma vez só.
+   */
+  dicaTrecho?: boolean;
+  onDispensarDicaTrecho?: () => void;
+  /**
+   * Aviso do ponto buscado (número que o mapa não tem, localização aproximada, fora da área).
+   * No celular ele vive aqui, embaixo da busca: o cartão do pé do mapa fica atrás da folha.
+   */
+  aviso?: string | null;
 }
 
 const MIN_CHARS = 3;
@@ -45,7 +58,7 @@ function contextoDe(r: EnderecoBusca): string {
  * Busca unificada sobreposta ao mapa (SP3): subprefeituras pelo nome primeiro, depois
  * endereços (geocoding via backend), num campo só.
  */
-export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, onAbrirRota, embutida = false, semDica = false }: Props) {
+export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, onAbrirRota, embutida = false, semDica = false, dicaTrecho = false, onDispensarDicaTrecho, aviso = null }: Props) {
   const { termo, setTermo, resultados, carregando, erro, limpar } = useBuscaEndereco();
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -70,7 +83,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
   }
 
   function selecionar(endereco: EnderecoBusca) {
-    onSelecionar(endereco);
+    onSelecionar(endereco, numeroFaltando(termo, endereco));
     setTermo(endereco.nome || endereco.descricao);
     setAberto(false);
   }
@@ -170,7 +183,27 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
       </div>
 
       {/* Com os resultados abertos a dica sai, para a lista colar na busca. */}
-      {onUsarLocalizacao && mostrarDica && !mostrarDropdown && !embutida && (
+      {aviso && !mostrarDropdown && !embutida && (
+        <div role="status" className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
+          <MapPin size={13} className="mapa-txt-suave flex-shrink-0" />
+          <span className="flex-1">{aviso}</span>
+        </div>
+      )}
+      {!aviso && dicaTrecho && !mostrarDropdown && !embutida && (
+        <div className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
+          <Hexagon size={13} className="mapa-txt-suave flex-shrink-0" />
+          <span className="flex-1">Toque num trecho para ver o risco daquele pedaço</span>
+          <button
+            type="button"
+            onClick={onDispensarDicaTrecho}
+            aria-label="Dispensar dica"
+            className="mapa-txt-suave flex items-center justify-center w-11 h-11 -my-2 -mr-2 flex-shrink-0 transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+      {!aviso && !dicaTrecho && onUsarLocalizacao && mostrarDica && !mostrarDropdown && !embutida && (
         <div className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
           <LocateFixed size={13} className="mapa-txt-suave flex-shrink-0" />
           <span className="flex-1">Toque no alvo para ver a sua subprefeitura</span>

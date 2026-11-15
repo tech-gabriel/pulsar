@@ -30,18 +30,23 @@ export const CHANGELOG: Release[] = [
     itens: [
       {
         tipo: 'correcao',
-        titulo: 'Rota até o trecho que você tocou',
-        descricao: 'Tocou num trecho e pediu a rota? Agora ela leva até aquele trecho, e não até o meio da região.',
+        titulo: 'Rota vai aonde você pediu',
+        descricao: 'Buscou um endereço? A rota vai exatamente para ele. Tocou num trecho? Vai até ele, e o destino mostra a rua mais perto.',
       },
       {
         tipo: 'melhoria',
         titulo: 'Chuva medida com o lugar',
-        descricao: 'O número da região diz que a chuva foi medida na parte mais atingida, e a linha da chuva medida diz onde fica a estação. Fica claro quando chove num canto da região e não no outro.',
+        descricao: 'O número da região diz que choveu num ponto dela, e a linha da chuva medida diz qual posto ou estação mediu e a que distância.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Endereço sem número no mapa',
+        descricao: 'Quando o mapa não conhece o número da casa, o app pede para você arrastar o pino até a porta.',
       },
       {
         tipo: 'melhoria',
         titulo: 'Mapa escuro mais limpo',
-        descricao: 'No tema escuro, as divisões entre os trechos ficaram discretas e a cor do risco aparece melhor.',
+        descricao: 'No tema escuro, as divisões entre os trechos ficaram discretas e os alertas, mais legíveis.',
       },
     ],
   },

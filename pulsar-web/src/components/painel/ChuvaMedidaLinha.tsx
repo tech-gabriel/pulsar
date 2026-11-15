@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import type { Chuva24h, ChuvaMedida } from '../../types';
 import { horaCurta } from '../../utils/data';
-import { fraseChuvaMedida, mmMedido } from '../../utils/chuvaMedida';
+import { fraseChuvaMedida, km, mmMedido, ondeMediu } from '../../utils/chuvaMedida';
 import FolhaInferior from '../ui/FolhaInferior';
+import { deNomeDe } from '../../data/regioes-seo';
 
 interface Props {
   nome: string;
   medida: ChuvaMedida | null | undefined;
   chuva24h?: Chuva24h | null;
+  /** O número grande da área veio da chuva medida (num ponto dela): muda a frase de quando aqui está seco. */
+  numeroPelaMedida?: boolean;
 }
 
 const as = (verbo: string, iso: string) => { const h = horaCurta(iso); return h ? ` · ${verbo} às ${h}` : ''; };
@@ -19,7 +22,7 @@ const numero = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits:
  * estimativa, por isso vem antes da chuva do modelo. Posto marcando zero vira frase, não número.
  * O toque no posto abre a última hora, as 24 horas e o crédito. Some sem leitura que dê para afirmar.
  */
-export default function ChuvaMedidaLinha({ nome, medida, chuva24h }: Props) {
+export default function ChuvaMedidaLinha({ nome, medida, chuva24h, numeroPelaMedida = false }: Props) {
   const [aberta, setAberta] = useState(false);
   const frase = medida ? fraseChuvaMedida(medida) : null;
   if (!medida || !frase) return null;
@@ -42,18 +45,19 @@ export default function ChuvaMedidaLinha({ nome, medida, chuva24h }: Props) {
     medida.mm60 !== null && { mm: medida.mm60, quando: 'na última hora' },
   ].filter((j) => !!j);
   const choveu = janelas.some((j) => j.mm > 0);
-  // De onde é a leitura: o número grande pode vir da parte mais atingida da área e esta, de
-  // outro ponto. O CEMADEN vale pela estação mais perto do centro; o CGE, pelo posto da região
-  // (o nome do posto já diz onde) ou, sem ele, pelo posto mais perto.
-  const onde = !cge ? ', perto do centro' : medida.vizinho ? ', no posto mais perto' : '';
+  // O número grande diz que choveu num ponto da área e aqui está seco: se esta mesma estação
+  // marcou chuva nas 24 horas, o certo é "parou", não um "sem chuva" que parece desmentir o topo.
+  // Só no CEMADEN: o posto do CGE e uma estação do CEMADEN podem ter o mesmo nome ("Mooca") e
+  // ser aparelhos diferentes.
+  const parou = numeroPelaMedida && !cge && !choveu && !!chuva24h && chuva24h.estacao === medida.posto && chuva24h.mm > 0;
 
   return (
     <>
       <div className="det-faixa">
         <div className="det-faixa-cab">
-          <span className="det-faixa-nome">{`Medida agora${onde}`}</span>
+          <span className="det-faixa-nome">Medida agora</span>
           <button type="button" className="det-faixa-de" onClick={() => setAberta(true)}>
-            <span>{cge ? `posto ${medida.posto} do CGE` : `estação ${medida.posto} do CEMADEN`}</span>
+            <span>{ondeMediu(medida)}</span>
             <ChevronRight size={14} aria-hidden="true" />
           </button>
         </div>
@@ -61,13 +65,15 @@ export default function ChuvaMedidaLinha({ nome, medida, chuva24h }: Props) {
           <div className="det-par">
             {janelas.map((j) => <div key={j.quando}><b>{numero(j.mm)}<span>mm</span></b><i>{j.quando}</i></div>)}
           </div>
-        ) : <p className="det-faixa-frase">{frase}</p>}
+        ) : <p className="det-faixa-frase">{parou ? 'Parou de chover aqui' : frase}</p>}
       </div>
 
       <FolhaInferior aberta={aberta} onFechar={() => setAberta(false)} tituloId="titulo-folha-medida">
         <h2 id="titulo-folha-medida" style={{ font: '700 18px var(--font-heading)', color: 'var(--text-primary)' }}>Chuva medida em {nome}</h2>
         <p className="mt-0.5 mb-2.5" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-          {medida.vizinho ? 'Medida no posto mais próximo. Não é previsão.' : 'Medida por pluviômetro, não é previsão.'}
+          {medida.vizinho ? 'Medida no posto mais próximo, de outra região. Não é previsão.'
+            : !cge ? `Medida na estação mais perto do centro ${deNomeDe(nome)}${medida.distanciaKm != null ? `, a ${km(medida.distanciaKm)}` : ''}. Não é previsão.`
+            : 'Medida por pluviômetro, não é previsão.'}
         </p>
         {itens.map((i) => (
           <div key={i.rotulo} className="med-item">

@@ -211,6 +211,8 @@ export interface ChuvaMedida {
   posto: string;
   /** O posto é de outra subprefeitura (a região não tem posto próprio com leitura). */
   vizinho: boolean;
+  /** Do centro da região até a estação do CEMADEN, em km. Null no CGE (o posto não tem coordenada publicada). */
+  distanciaKm?: number | null;
   /** ISO UTC. No CGE é a nossa coleta; no CEMADEN, o instante da consulta lá. Nenhum é a hora em que choveu. */
   coletadoEm: string;
 }

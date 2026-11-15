@@ -15,6 +15,7 @@ import type { Camada } from '../utils/camadas';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
+import { useDicaUnica } from '../hooks/useDicaLocalizacao';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useNotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../hooks/usePushSubscription';
@@ -35,7 +36,8 @@ import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from
 import { useAlturaFluida } from '../motion/useAlturaFluida';
 import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
 import { useJsonPublico } from '../hooks/useJsonPublico';
-import { escolherDestinoComoChegar } from '../features/rota/destino';
+import { escolherDestinoComoChegar, rotuloDoTrecho } from '../features/rota/destino';
+import { buscarRuaPerto } from '../api/busca';
 import CamposDePara from '../components/rota/CamposDePara';
 import PainelRota from '../components/rota/PainelRota';
 import { track } from '../analytics';
@@ -121,6 +123,8 @@ export default function MapaPage() {
   // Modo rota: o De/Para toma o lugar da busca e o resultado, o do painel/folha.
   const [rotaAberta, setRotaAberta] = useState(false);
   const [rotuloBusca, setRotuloBusca] = useState<string | null>(null);
+  // Rótulo com o número digitado, à espera de a pessoa soltar o pino na porta (o mapa não tinha o número).
+  const rotuloAoSoltar = useRef<string | null>(null);
   // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
@@ -167,6 +171,8 @@ export default function MapaPage() {
   // mapa chega perto ou quando há um ponto (busca, localização), nunca na abertura de longe.
   const [perto, setPerto] = useState(false);
   const comTrechos = camadaAtiva === 'score' && !rotaAberta;
+  // Dica única de que o trecho é tocável: aparece quando os trechos surgem pela primeira vez.
+  const dicaTrecho = useDicaUnica('pulsar-dica-trecho-vista');
   const ativoTrechos = comTrechos && (perto || !!pontoBusca);
   const contornoTrechos = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
   const celulasAgora = useCelulasAgora(ativoTrechos, ultimaAtualizacao?.getTime() ?? null);
@@ -195,6 +201,7 @@ export default function MapaPage() {
     const area = t && subprefeituras.find((s) => s.id === t.areaId);
     if (!t || !area) return;
     track.tocouTrecho(t.faixa);
+    dicaTrecho.dispensar(); // aprendeu: a dica não volta
     limparDeepLink();
     setLugarAberto(null);
     setSubSelecionada(area);
@@ -275,12 +282,18 @@ export default function MapaPage() {
     rota.setDestino(null);
   }
 
-  // "Como chegar" no detalhe: o trecho tocado, se há um; senão o ponto buscado só se ele é desta
-  // subprefeitura; senão o centro dela.
+  // "Rota até aqui" no detalhe: a ordem dos destinos fica em escolherDestinoComoChegar.
   function comoChegar(sub: SubprefeituraMapaDto) {
     const centro = trechoAberto?.origem === 'toque' ? centroDoTrecho(trechoAberto.h3, contornoTrechos.dados) : null;
-    if (centro) return void abrirRota('como_chegar', { ...centro, rotulo: `Trecho em ${sub.nome}` });
-    void abrirRota('como_chegar', escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? (geojson as FeatureCollection | null)));
+    const destino = escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? (geojson as FeatureCollection | null), centro);
+    void abrirRota('como_chegar', destino);
+    // Destino no trecho: a rota abre com o nome da região e ganha a rua mais perto quando ela chega
+    // (só se a pessoa ainda não trocou o destino).
+    if (centro && destino.lat === centro.lat && destino.lon === centro.lon) {
+      void buscarRuaPerto(centro.lat, centro.lon).then((rua) => {
+        if (rua) rota.setDestino((d) => (d && d.lat === centro.lat && d.lon === centro.lon ? { ...d, rotulo: rotuloDoTrecho(sub.nome, rua) } : d));
+      });
+    }
   }
 
   function fecharDetalhe() {
@@ -317,16 +330,22 @@ export default function MapaPage() {
   // Pin arrastado: o ponto passa a ser exato (sem círculo nem aviso) e o mapa não voa.
   function handleMoverPonto(lat: number, lon: number) {
     selecionarPorPonto({ lat, lon, ajustado: true }, 'busca');
-    setRotuloBusca(null);
+    // Quem arrastou até a porta do número que o mapa não tinha leva esse endereço para a rota.
+    setRotuloBusca(rotuloAoSoltar.current);
+    rotuloAoSoltar.current = null;
     void atualizarProximas(lat, lon);
   }
 
   // Seleção de um endereço na busca: marca o ponto no mapa, voa até ele e resolve
   // a subprefeitura/região correspondente (point-in-polygon sobre o GeoJSON já
   // carregado), abrindo o painel de detalhe. Fora dos polígonos → aviso.
-  function handleSelecionarEndereco(endereco: EnderecoBusca) {
-    selecionarPorPonto({ lat: endereco.latitude, lon: endereco.longitude }, 'busca');
-    setRotuloBusca(endereco.nome || endereco.descricao);
+  function handleSelecionarEndereco(endereco: EnderecoBusca, numeroFaltando?: string) {
+    const dentro = selecionarPorPonto({ lat: endereco.latitude, lon: endereco.longitude }, 'busca');
+    const rotulo = endereco.nome || endereco.descricao;
+    setRotuloBusca(rotulo);
+    rotuloAoSoltar.current = numeroFaltando ? `${rotulo}, ${numeroFaltando}` : null;
+    // O mapa não tem o número digitado: a rota vai exatamente para onde a pessoa soltar o pino.
+    if (dentro && numeroFaltando) setAvisoBusca(`O mapa não tem o número ${numeroFaltando}. Arraste o pino até a porta.`);
   }
 
   async function atualizarProximas(lat: number, lon: number) {
@@ -383,6 +402,9 @@ export default function MapaPage() {
       onAbrirRota={() => void abrirRota('chip')}
       embutida={embutida}
       semDica={!!localAberto}
+      dicaTrecho={dicaTrecho.mostrarDica && comTrechos && perto && !!dadosTrechos && !localAberto}
+      onDispensarDicaTrecho={dicaTrecho.dispensar}
+      aviso={isMobile ? avisoBusca : null}
     />
   );
 
@@ -481,6 +503,7 @@ export default function MapaPage() {
           overlayAlagamento={overlayAlagamento}
           ocorrencias={ocorrencias}
           rota={rotaAberta ? rota.linha : null}
+          destinoSemRota={rotaAberta && !rota.linha ? rota.destino : null}
           semZoom={rotaNoCelular}
           lugares={rotaAberta ? undefined : lugaresNoMapa}
           onTocarLugar={abrirLugar}

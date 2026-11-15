@@ -173,7 +173,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
                 const { nome, Icon } = PERIGO[perigo];
                 return (
                   <div key={perigo} className="mb-3" style={{ '--c': coresParaFaixa(faixa).fill } as React.CSSProperties}>
-                    <h4 className="flex items-center gap-1.5 mb-1.5 mx-1" style={{ fontSize: 12.5, fontWeight: 600, color: coresParaFaixa(faixa).text }}>
+                    <h4 className="det-perigo-t flex items-center gap-1.5 mb-1.5 mx-1" style={{ fontSize: 12.5, fontWeight: 600, '--c-escura': coresParaFaixa(faixa).text } as React.CSSProperties}>
                       <Icon size={14} aria-hidden="true" />{`${nome} · ${labelFaixa(faixa)}`}
                     </h4>
                     {dicas.map((d) => (
@@ -192,7 +192,8 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             <section className="det-sec">
               <h3 className="det-t">Chuva</h3>
               <div className="det-bloco">
-                <ChuvaMedidaLinha nome={area.nome} medida={area.chuvaMedida} chuva24h={area.chuva24h} />
+                <ChuvaMedidaLinha nome={area.nome} medida={area.chuvaMedida} chuva24h={area.chuva24h}
+                  numeroPelaMedida={!trecho && (s?.chuva3hMedidaMm ?? 0) > 0} />
                 {s && (
                   <div className="det-faixa">
                     <div className="det-faixa-cab"><span className="det-faixa-nome">Estimada pelo modelo</span></div>

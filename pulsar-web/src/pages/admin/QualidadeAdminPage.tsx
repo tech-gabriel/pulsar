@@ -32,7 +32,7 @@ type Linha = Omit<QualidadeDiaDto, 'dia' | 'teveAlerta'>;
 const pontos = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 /**
- * Risco por trecho (grade de hexágonos), ainda só em conferência: ninguém fora do admin vê.
+ * Conferência do risco por trecho (grade de hexágonos), em uso no app desde a 1.36.0. Só o admin vê.
  * Tem a própria chamada, fora do carregamento do painel, para uma falha aqui não esconder
  * o resto da página.
  */
@@ -43,10 +43,10 @@ function RiscoPorTrecho({ dias }: { dias: number }) {
     <section aria-labelledby="titulo-risco-trecho" className="mt-5">
       <GlassCard hover={false} padding="lg">
         <h2 id="titulo-risco-trecho" className="mb-1" style={{ fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: 15, color: 'var(--text-secondary)' }}>
-          Risco por trecho (em teste)
+          Risco por trecho
         </h2>
         <p className="mb-3" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-          Alagamento de cada área pelo cálculo atual e pelo meio-termo dos hexágonos, de 0 a 100. Só entram os ciclos em que a área ou algum hexágono saiu do risco baixo. As áreas em que os dois mais discordam vêm primeiro.
+          Alagamento de cada área pela conta antiga, da área inteira, e pelo meio-termo dos hexágonos com a chuva do modelo, de 0 a 100. Só entram os ciclos em que a área ou algum hexágono saiu do risco baixo. As áreas em que os dois mais discordam vêm primeiro.
         </p>
         {carregando ? (
           <div className="py-6 grid place-items-center"><LoadingSpinner /></div>
@@ -62,7 +62,7 @@ function RiscoPorTrecho({ dias }: { dias: number }) {
                   <th className="px-1 py-1.5 font-semibold" style={{ textAlign: 'left' }}>Subprefeitura</th>
                   <th className="px-1 py-1.5 font-semibold" title="Hexágonos da grade nesta área">Trechos</th>
                   <th className="px-1 py-1.5 font-semibold" title="Ciclos em que a área ou algum hexágono saiu do risco baixo">Com risco</th>
-                  <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área pelo cálculo atual">Atual</th>
+                  <th className="px-1 py-1.5 font-semibold" title="Maior alagamento pela conta antiga, da área inteira (a do app até a 1.36.0)">Área inteira</th>
                   <th className="px-1 py-1.5 font-semibold" title="Maior alagamento da área pelo meio-termo dos hexágonos">Meio-termo</th>
                   <th className="px-1 py-1.5 font-semibold" title="Ciclos em que os dois cálculos caíram em faixas diferentes">Discordam</th>
                   <th className="px-1 py-1.5 font-semibold" title="Maior número de hexágonos em Alerta num mesmo ciclo">Em alerta</th>
@@ -85,7 +85,7 @@ function RiscoPorTrecho({ dias }: { dias: number }) {
 
             <h3 className="mt-5 mb-1 px-1" style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-secondary)' }}>Chuva medida no trecho</h3>
             <p className="mb-2 px-1" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              A mesma conta com a chuva da estação do CEMADEN mais próxima de cada hexágono, por duas regras: a medida substitui o modelo, ou vale a maior das duas. Hexágono sem estação por perto fica com o modelo.
+              A mesma conta com a chuva da estação do CEMADEN mais próxima de cada hexágono, por duas regras: a medida substitui o modelo, ou vale a maior das duas. Hexágono sem estação por perto fica com o modelo. Desde a 1.36.0 o app usa a regra Medida.
             </p>
             <table aria-label="Trechos com a chuva medida" className="w-full" style={{ fontSize: 12.5, borderCollapse: 'collapse' }}>
               <thead>

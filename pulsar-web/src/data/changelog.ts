@@ -25,6 +25,27 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.36.1',
+    data: '2026-11-15',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Rota até o trecho que você tocou',
+        descricao: 'Tocou num trecho e pediu a rota? Agora ela leva até aquele trecho, e não até o meio da região.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Chuva medida com o lugar',
+        descricao: 'O número da região diz que a chuva foi medida na parte mais atingida, e a linha da chuva medida diz onde fica a estação. Fica claro quando chove num canto da região e não no outro.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Mapa escuro mais limpo',
+        descricao: 'No tema escuro, as divisões entre os trechos ficaram discretas e a cor do risco aparece melhor.',
+      },
+    ],
+  },
+  {
     versao: '1.36.0',
     data: '2026-11-15',
     itens: [

@@ -104,6 +104,9 @@ export default function MapaPage() {
   const folhaRef = useRef<HTMLDivElement>(null);
   const menosMovimento = useReducedMotion();
   const detalheNaFolha = isMobile && subSelecionada;
+  // Folha do detalhe aberta, guardada pelo id: trocar de subprefeitura volta para a curta sozinho.
+  const [detalheAbertoEm, setDetalheAbertoEm] = useState<string | null>(null);
+  const detalheAberto = !!subSelecionada && detalheAbertoEm === subSelecionada.id;
   const [camadaAtiva, setCamadaAtiva] = useState<Camada>('score');
   const [pontoBusca, setPontoBusca] = useState<PontoBusca | null>(null);
   const [avisoBusca, setAvisoBusca] = useState<string | null>(null);
@@ -232,6 +235,7 @@ export default function MapaPage() {
     limparDeepLink();
     setZonaEmFoco(null);
     setSubSelecionada(null);
+    setDetalheAbertoEm(null);
     setPontoBusca(null);
     setAvisoBusca(null);
     setProximas(null);
@@ -556,7 +560,7 @@ export default function MapaPage() {
         ref={folhaRef}
         data-painel-mapa
         data-aberta={painelMobileAberto || detalheNaFolha || lugarNaFolha || rotaAberta ? '' : undefined}
-        data-detalhe={detalheNaFolha || lugarNaFolha || rotaAberta ? '' : undefined}
+        data-detalhe={rotaAberta || lugarNaFolha ? '' : detalheNaFolha ? (detalheAberto ? 'aberta' : 'curta') : undefined}
         className="folha-mapa painel-mapa vidro-painel md:hidden fixed z-[500] flex flex-col overflow-hidden"
         initial={menosMovimento ? { opacity: 0 } : { y: 'calc(100% + 16px)' }}
         animate={menosMovimento
@@ -578,6 +582,7 @@ export default function MapaPage() {
               isFavorito={isFavorito}
               onToggleFavorito={toggleFavorito}
               onComoChegar={() => comoChegar(detalheNaFolha)}
+              folha={{ aberta: detalheAberto, onMudar: (a) => setDetalheAbertoEm(a ? detalheNaFolha.id : null) }}
             />
           </div>
         ) : (

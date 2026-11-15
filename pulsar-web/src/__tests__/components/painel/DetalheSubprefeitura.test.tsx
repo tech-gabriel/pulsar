@@ -31,33 +31,37 @@ describe('DetalheSubprefeitura', () => {
     expect(screen.getByText('Alerta')).toBeInTheDocument();
   });
 
-  it('favoritar, voltar e histórico', () => {
+  it('favoritar e fechar; o histórico saiu do detalhe', () => {
     const onToggleFavorito = vi.fn();
     const onFechar = vi.fn();
     renderiza({ onToggleFavorito, onFechar });
     fireEvent.click(screen.getByRole('button', { name: /favorit/i }));
     expect(onToggleFavorito).toHaveBeenCalledWith('s1');
-    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
     expect(onFechar).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: /Histórico/ }));
-    expect(navigate).toHaveBeenCalledWith('/app/historico/itaquera', { state: { subNome: 'Itaquera', zona: 'Leste' } });
+    expect(screen.queryByRole('button', { name: /Histórico/ })).not.toBeInTheDocument();
   });
 
-  it('alerta desligado leva à ativação', () => {
+  it('aviso desligado leva à ativação; ligado vira estado, não botão', () => {
     push.estado = 'inativo';
-    renderiza();
-    fireEvent.click(screen.getByRole('button', { name: /Ativar alertas/ }));
+    const { unmount } = renderiza();
+    fireEvent.click(screen.getByRole('button', { name: 'Avisar' }));
     expect(navigate).toHaveBeenCalledWith('/app/boas-vindas');
+    unmount();
     push.estado = 'ativo';
+    const { container } = renderiza();
+    expect(screen.queryByRole('button', { name: 'Avisar' })).not.toBeInTheDocument();
+    expect(container.querySelector('.det-acao.ligado')).toHaveTextContent(/Avisos\s*ligados/i);
   });
 
-  it('risco com o porquê; blocos pelo nome da medida, sem repetir dado', () => {
+  it('risco com o porquê; seções Chuva e Tempo agora, sem repetir dado', () => {
     renderiza();
     expect(screen.getByText('Por chuva: 22,0 mm nas últimas 3h')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Chuva' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Tempo agora' })).toBeInTheDocument();
     // A chuva não se chama "Alagamento": isso leria como rua alagada.
-    expect(screen.getByText('Chuva estimada')).toBeInTheDocument();
     expect(screen.queryByText(/^Alagamento$/)).not.toBeInTheDocument();
-    // Vento aparece uma vez só (antes saía no perigo e de novo nas condições).
+    // Vento aparece uma vez só.
     expect(screen.getAllByText('10')).toHaveLength(1);
   });
 
@@ -66,47 +70,76 @@ describe('DetalheSubprefeitura', () => {
     expect(container.textContent).not.toMatch(/regi(ão|ões)/i);
   });
 
-  it('ação principal (alertas) vem primeiro, na linha inteira; histórico e compartilhar embaixo', () => {
-    push.estado = 'inativo';
+  it('emergência com os dois telefones e o aviso de estimativa', () => {
     renderiza();
-    const ativar = screen.getByRole('button', { name: /Ativar alertas/ });
-    const historico = screen.getByRole('button', { name: /Histórico/ });
-    expect(ativar.compareDocumentPosition(historico) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(ativar.className).toContain('col-span-2');
-    push.estado = 'ativo';
-    renderiza();
-    expect(screen.getAllByText('Alertas ligados')[0].className).toContain('col-span-2');
+    expect(screen.getByRole('link', { name: /199.*Defesa Civil/ })).toHaveAttribute('href', 'tel:199');
+    expect(screen.getByRole('link', { name: /193.*Bombeiros/ })).toHaveAttribute('href', 'tel:193');
+    expect(screen.getByText('O risco é uma estimativa do Pulsar e não substitui os avisos oficiais.')).toBeInTheDocument();
+  });
+
+  it('área sem score nem leitura abre só com cabeçalho, traço e pé', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: null, ultimaLeitura: null } as unknown as Area });
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Itaquera');
+    expect(screen.getByText('–')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
   });
 });
 
+describe('DetalheSubprefeitura: folha do celular', () => {
+  it('sem folha (computador) fica aberto e sem alça', () => {
+    const { container } = renderiza();
+    expect(container.querySelector('.det')).toHaveAttribute('data-estado', 'aberta');
+    expect(screen.queryByRole('button', { name: /Mostrar/ })).not.toBeInTheDocument();
+  });
 
-describe('DetalheSubprefeitura: como chegar', () => {
-  it('o botão Como chegar chama onComoChegar', () => {
+  it('curta: o toque na alça pede para abrir', () => {
+    const onMudar = vi.fn();
+    const { container } = renderiza({ folha: { aberta: false, onMudar } });
+    expect(container.querySelector('.det')).toHaveAttribute('data-estado', 'curta');
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar mais detalhes' }));
+    expect(onMudar).toHaveBeenCalledWith(true);
+  });
+
+  it('aberta: o toque na alça pede para recolher', () => {
+    const onMudar = vi.fn();
+    renderiza({ folha: { aberta: true, onMudar } });
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar menos' }));
+    expect(onMudar).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('DetalheSubprefeitura: rota até aqui', () => {
+  it('o botão chama onComoChegar', () => {
     const onComoChegar = vi.fn();
     renderiza({ onComoChegar });
-    fireEvent.click(screen.getByRole('button', { name: /Como chegar/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rota até aqui' }));
     expect(onComoChegar).toHaveBeenCalled();
   });
 
   it('sem onComoChegar o botão não existe', () => {
     renderiza();
-    expect(screen.queryByRole('button', { name: /Como chegar/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Rota até aqui' })).not.toBeInTheDocument();
   });
 });
 
-describe('DetalheSubprefeitura: chuva medida (AS7), uma frase na tela e os dados no toque', () => {
+describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados no toque', () => {
   const medida = { fonte: 'cge', mm15: 2.4, mm60: 12.4, acumuladoPeriodoMm: 30, posto: 'Lapa', vizinho: false, coletadoEm: '2026-11-11T03:45:00Z' };
   const dia = { mm: 12, estacao: 'Vila Leopoldina', medidoEm: '2026-11-11T03:40:00Z' };
   const com = (m: object = {}, chuva24h: typeof dia | null = null) =>
     renderiza({ area: { ...itaquera, chuvaMedida: { ...medida, ...m }, chuva24h } as Area });
-  const abrir = () => fireEvent.click(screen.getByRole('button', { name: /medido/ }));
+  const abrir = () => fireEvent.click(screen.getByRole('button', { name: /posto|estação/ }));
+  const AVISO_ESTIMADA = 'Não há estação com leitura perto daqui agora. O risco usa a chuva estimada.';
 
-  it('na tela só a frase e "medido"; posto e horário ficam para o toque', () => {
+  it('medida com o posto e os números; a estimada continua, sem o aviso', () => {
     com();
-    expect(screen.getByText('Chove agora: 2,4 mm em 15 min')).toBeInTheDocument();
-    expect(screen.queryByText(/posto Lapa/)).not.toBeInTheDocument();
+    expect(screen.getByText('Medida agora')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'posto Lapa do CGE' })).toBeInTheDocument();
+    expect(screen.getByText('2,4')).toBeInTheDocument();
+    expect(screen.getByText('nos últimos 15 min')).toBeInTheDocument();
+    expect(screen.getByText('12,4')).toBeInTheDocument();
+    expect(screen.getByText('Estimada pelo modelo')).toBeInTheDocument();
+    expect(screen.queryByText(AVISO_ESTIMADA)).not.toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByText('Chuva estimada')).toBeInTheDocument();
   });
 
   it('o toque abre a folha com cada medição, quem mediu e o crédito', () => {
@@ -139,12 +172,15 @@ describe('DetalheSubprefeitura: chuva medida (AS7), uma frase na tela e os dados
   it('posto que marca zero vira uma frase, não um número', () => {
     com({ mm15: 0, mm60: 0 });
     expect(screen.getByText('Sem chuva agora')).toBeInTheDocument();
-    expect(screen.queryByText(/0,0 mm em 15 min/)).not.toBeInTheDocument();
+    expect(screen.queryByText('nos últimos 15 min')).not.toBeInTheDocument();
   });
 
   it('CGE sem dado: fala o CEMADEN, pela última hora e nunca em 15 minutos', () => {
     com({ fonte: 'cemaden', mm15: null, mm60: 5.8, acumuladoPeriodoMm: null, posto: 'Vila Leopoldina' });
-    expect(screen.getByText('Choveu 5,8 mm na última hora')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'estação Vila Leopoldina do CEMADEN' })).toBeInTheDocument();
+    expect(screen.getByText('5,8')).toBeInTheDocument();
+    expect(screen.getByText('na última hora')).toBeInTheDocument();
+    expect(screen.queryByText('nos últimos 15 min')).not.toBeInTheDocument();
     abrir();
     const folha = screen.getByRole('dialog');
     expect(folha).not.toHaveTextContent('15 minutos');
@@ -158,16 +194,17 @@ describe('DetalheSubprefeitura: chuva medida (AS7), uma frase na tela e os dados
     expect(screen.getByText('Sem chuva na última hora')).toBeInTheDocument();
   });
 
-  it('sem chuva medida, só o bloco estimado com o número do modelo', () => {
+  it('sem chuva medida, a estimada fala sozinha e avisa', () => {
     renderiza();
-    expect(screen.queryByText(/medido/)).not.toBeInTheDocument();
-    expect(screen.getByText('Chuva estimada')).toBeInTheDocument();
+    expect(screen.queryByText('Medida agora')).not.toBeInTheDocument();
+    expect(screen.getByText('Estimada pelo modelo')).toBeInTheDocument();
     expect(screen.getByText('22,0')).toBeInTheDocument();
+    expect(screen.getByText(AVISO_ESTIMADA)).toBeInTheDocument();
   });
 
-  it('sem janela nenhuma não mostra a linha nem "null mm"', () => {
+  it('sem janela nenhuma não mostra a faixa nem "null mm"', () => {
     com({ mm15: null, mm60: null });
-    expect(screen.queryByText(/medido/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Medida agora')).not.toBeInTheDocument();
     expect(screen.queryByText(/null/)).not.toBeInTheDocument();
   });
 });

@@ -12,3 +12,7 @@ export function fraseChuvaMedida(m: ChuvaMedida): string | null {
   if (m.mm60 !== null) return m.mm60 > 0 ? `Choveu ${mmMedido(m.mm60)} na última hora` : 'Sem chuva na última hora';
   return null;
 }
+
+/** Há leitura que dê para afirmar? Sem isso a faixa "Medida agora" não existe e a estimada fala sozinha. */
+export const temChuvaMedida = (medida: ChuvaMedida | null | undefined): medida is ChuvaMedida =>
+  !!medida && fraseChuvaMedida(medida) !== null;

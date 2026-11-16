@@ -25,6 +25,37 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.37.0',
+    data: '2026-11-16',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Postos da Prefeitura nos trechos',
+        descricao: 'A chuva medida pelos postos do CGE agora conta no risco de cada trecho perto deles, como as estações do CEMADEN.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Rota pela chuva que caiu',
+        descricao: 'A rota diz se dá para ir pela chuva medida agora. A previsão aparece só para dizer até quando esperar.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Cores da Defesa Civil',
+        descricao: 'Verde, amarelo e vermelho no mesmo tom dos alertas da Defesa Civil, com marcadores menores e mais fáceis de ler.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Mapa mais fácil de ler',
+        descricao: 'Legenda no menu de camadas, no celular, e no botão de informação, no computador. A busca e a rota funcionam melhor pelo teclado.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Chuva sem susto',
+        descricao: 'Em dia tranquilo, o detalhe da região mostra a chuva medida sem falar em chuva forte.',
+      },
+    ],
+  },
+  {
     versao: '1.36.1',
     data: '2026-11-15',
     itens: [

@@ -14,6 +14,7 @@ public class BuscaServiceTests
     private sealed class StubGeocodingClient : IGeocodingClient
     {
         public int Chamadas { get; private set; }
+        public string NomeRua { get; set; } = "Rua Taquari";
         public IReadOnlyList<EnderecoGeocodificado> Resultado { get; set; } = [];
 
         public Task<IReadOnlyList<EnderecoGeocodificado>> BuscarAsync(string consulta, CancellationToken ct = default)
@@ -25,7 +26,7 @@ public class BuscaServiceTests
         public Task<RuaProxima?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
         {
             Chamadas++;
-            return Task.FromResult<RuaProxima?>(new RuaProxima("Rua Taquari", 40));
+            return Task.FromResult<RuaProxima?>(new RuaProxima(NomeRua, 40));
         }
     }
 
@@ -40,6 +41,14 @@ public class BuscaServiceTests
         (await service.RuaPertoAsync(-23.61102, -46.70102))!.Nome.Should().Be("Rua Taquari");
 
         stub.Chamadas.Should().Be(1);
+    }
+
+    // O cadastro às vezes vem em caixa alta e com espaço dobrado: o nome sai como se lê.
+    [Fact]
+    public async Task RuaPerto_NomeEmCaixaAltaComEspacoDobrado_SaiLimpo()
+    {
+        var stub = new StubGeocodingClient { NomeRua = "RUA  PINHEIRO DA SILVA " };
+        (await CriarService(stub).RuaPertoAsync(-23.588, -46.572))!.Nome.Should().Be("Rua Pinheiro da Silva");
     }
 
     private static BuscaService CriarService(IGeocodingClient client)

@@ -113,6 +113,9 @@ public class BuscaService : IBuscaService
         var chave = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"rua:{lat:0.0000},{lon:0.0000}");
         if (CacheRuas.TryGetValue(chave, out RuaProxima? cached)) return cached;
         var rua = await _geocodingClient.RuaPertoAsync(lat, lon, ct);
+        // O provedor às vezes devolve o nome cru do cadastro ("RUA  COQUEIRAL"): o título do
+        // cartão do trecho e o destino da rota mostram esse nome como veio.
+        if (rua is not null) rua = rua with { Nome = SemCaixaAlta(string.Join(' ', rua.Nome.Split(' ', StringSplitOptions.RemoveEmptyEntries))) };
         CacheRuas.Set(chave, rua, new MemoryCacheEntryOptions { Size = 1, AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1) });
         return rua;
     }

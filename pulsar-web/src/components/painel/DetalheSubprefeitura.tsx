@@ -7,6 +7,7 @@ import { useNotificacoesPrefs } from '../../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../../hooks/usePushSubscription';
 import { usePrevisaoSubprefeitura } from '../../hooks/usePrevisaoSubprefeitura';
 import { coresParaFaixa, labelFaixa } from '../../utils/risco';
+import { rotuloDoTrecho } from '../../features/rota/destino';
 import { fraseDoRisco } from '../../features/locais/estadoLugar';
 import { useCatalogoDicas } from '../../hooks/useCatalogoDicas';
 import { blocosDeDicas } from '../../utils/dicas';
@@ -39,14 +40,8 @@ function nivelUv(uv: number): string {
   return 'extremo';
 }
 
-/** De onde veio o trecho aberto: a pessoa precisa saber de que pedaço da área é o número. */
+/** De onde veio o trecho aberto (toque, localização, busca ou pino arrastado). */
 export type OrigemTrecho = 'toque' | 'localizacao' | 'busca' | 'ponto';
-const ROTULO_TRECHO: Record<OrigemTrecho, string> = {
-  toque: 'Trecho que você tocou',
-  localizacao: 'Trecho onde você está',
-  busca: 'Trecho do endereço buscado',
-  ponto: 'Trecho do ponto marcado',
-};
 
 const PERIGO: Record<TipoPerigo, { nome: string; Icon: React.ElementType }> = {
   ALAGAMENTO: { nome: 'Alagamento', Icon: CloudRain },
@@ -83,7 +78,9 @@ interface Props {
    * Trecho aberto (toque no mapa, busca ou localização): o topo passa a ser dele e a área
    * inteira vira uma linha. O resto (chuva, tempo, emergência) continua sendo da área.
    */
-  trecho?: Trecho & { origem: OrigemTrecho };
+  trecho?: Trecho & { origem: OrigemTrecho; titulo?: string };
+  /** Do trecho, a linha da área inteira abre o cartão da área (escolha A de 16/11/2026). */
+  onVerRegiao?: () => void;
   /** Estação que mais mediu chuva na área: dá nome ao ponto quando o número veio da medida. */
   estacaoMaisForte?: NonNullable<Trecho['estacao']> | null;
 }
@@ -94,7 +91,7 @@ interface Props {
  * pergunta: o que fazer agora, a chuva (medida, estimada e prevista, cada uma com nome), o
  * tempo agora e os telefones de emergência. As ações ficam presas no pé, sempre no mesmo lugar.
  */
-export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorito, onFechar, onComoChegar, folha, trecho, estacaoMaisForte }: Props) {
+export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorito, onFechar, onComoChegar, folha, trecho, estacaoMaisForte, onVerRegiao }: Props) {
   const navigate = useNavigate();
   const { prefs } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
@@ -126,7 +123,8 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
   // Em Tranquilo a chuva medida não gerou risco nenhum: uma faixa só, sem "gerou o risco" nem
   // "chuva forte", e o modelo no bloco dele, como nas áreas sem medida (opção B, crítica 8).
   const calma = pelaMedida && area.faixaRisco === 'BAIXO';
-  const modeloEmLinha = (pelaMedida && !calma) || !!trecho?.estacao;
+  // No trecho o modelo fica no bloco dele, como na área: o cartão segue um padrão só (16/11/2026).
+  const modeloEmLinha = pelaMedida && !calma;
   const choveuMedido = pelaMedida || (trecho?.estacao?.mm3h ?? 0) > 0;
   const pontos = area.alagamentosCge ?? [];
   const riscoVento = s?.componentes?.vento.faixa;
@@ -166,8 +164,9 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
 
       <div className="det-cab">
         <div className="flex-1 min-w-0">
-          <h2 ref={titulo} tabIndex={-1} className="truncate outline-none">{area.nome}</h2>
-          <p className="truncate">{trecho ? `${ROTULO_TRECHO[trecho.origem]} · Zona ${area.zona}` : `Zona ${area.zona} · ${CIDADE_ATUAL.nome}`}</p>
+          {/* O título diz de onde é o número: a rua do ponto no trecho, o nome da área na área. */}
+          <h2 ref={titulo} tabIndex={-1} className={`${trecho ? 'line-clamp-2' : 'truncate'} outline-none`}>{trecho ? trecho.titulo ?? rotuloDoTrecho(area.nome, null) : area.nome}</h2>
+          <p className="truncate">{trecho ? `${area.nome} · Zona ${area.zona}` : `Zona ${area.zona} · ${CIDADE_ATUAL.nome}`}</p>
         </div>
         <BotaoFavorito ativo={isFavorito(area.id)} onToggle={() => onToggleFavorito(area.id)} size={20} />
         <button type="button" className="det-fechar" onClick={onFechar} aria-label="Fechar"><X size={20} aria-hidden="true" /></button>
@@ -192,7 +191,8 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
           </p>
         )}
         {trecho && (
-          <p className="det-linha">
+          // O texto de antes (pedido de 16/11/2026), mas o toque abre o cartão da área.
+          <button type="button" className="det-linha det-regiao" onClick={onVerRegiao} disabled={!onVerRegiao}>
             <IconeMapa size={17} aria-hidden="true" style={{ color: coresParaFaixa(area.faixaRisco).fill }} />
             <span>
               {`${area.nome} inteira em ${labelFaixa(area.faixaRisco)}`}
@@ -207,7 +207,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
                 </small>
               )}
             </span>
-          </p>
+          </button>
         )}
 
         <div className="det-resto">

@@ -355,6 +355,7 @@ export default function MapaGL(props: PropsMapa) {
             atenuado={overlayAlagamento}
             ocultos={ocultos}
             onSelecionar={onSelecionarSub}
+            comTrechos={!!trechos}
           />
         </>
       )}

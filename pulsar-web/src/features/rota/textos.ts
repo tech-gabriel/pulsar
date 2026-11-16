@@ -41,9 +41,10 @@ export function textoVeredito(r: RotaAvaliacao, fuso?: string, agora: number = D
       };
     }
     case 'ComAtencao': {
-      // O backend não manda hora no "com atenção": vale a 1ª hora BAIXO depois da 1ª que não é.
-      const primeira = r.horas.findIndex((x) => x.piorFaixa !== 'BAIXO');
-      const volta = primeira < 0 ? undefined : r.horas.slice(primeira).find((x) => x.piorFaixa === 'BAIXO');
+      // O backend não manda hora no "com atenção": vale a hora depois da ÚLTIMA que não é BAIXO.
+      // A primeira volta ao BAIXO enganava: "até umas 21h" com 22h e 23h em Atenção (crítica de 15/11).
+      const ultima = r.horas.findLastIndex((x) => x.piorFaixa !== 'BAIXO');
+      const volta = ultima < 0 ? undefined : r.horas[ultima + 1];
       const h = volta ? rotuloHora(volta.inicioUtc, fuso) : null;
       return { titulo: 'Pode ir, com atenção', detalhe: `Fique de olho ${em}${h ? ` até umas ${h}` : ''}.` };
     }

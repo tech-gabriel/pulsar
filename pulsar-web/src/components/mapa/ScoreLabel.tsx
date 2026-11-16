@@ -6,6 +6,7 @@ import { nomeAbreviado } from '../../utils/nomesSub';
 import { fundoParaTextoBranco, opaca } from '../../utils/contraste';
 import { normalizarNome } from '../../utils/texto';
 import { tamanhoParaZoom } from './zoom';
+import { labelFaixa } from '../../utils/risco';
 
 interface Props {
   subprefeituras: SubprefeituraMapaDto[];
@@ -16,6 +17,8 @@ interface Props {
   atenuado?: boolean;
   /** Ids que não mostram o número (modo rota: a subprefeitura de saída e a de chegada). */
   ocultos?: Set<string>;
+  /** Teclado e leitor de tela: o número abre a área (o toque continua caindo no polígono). */
+  onSelecionar?: (sub: SubprefeituraMapaDto) => void;
 }
 
 // Glow do círculo: a cor da faixa com alpha ~0.5.
@@ -25,7 +28,7 @@ function glowDaCor(cor: string): string {
 
 // Legibilidade do número: o círculo é opaco e o fundo é fechado até o branco passar em 4,5:1
 // (ver utils/contraste). O preenchimento translúcido fica no polígono.
-export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco, atenuado = false, ocultos }: Props) {
+export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco, atenuado = false, ocultos, onSelecionar }: Props) {
   const { current: mapRef } = useMap();
   const [zoom, setZoom] = useState(() => mapRef?.getZoom() ?? 0);
 
@@ -67,6 +70,16 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
             <div className="pulsar-label-wrap" style={{ opacity: esmaecida ? 0.2 : 1 }}>
               <div
                 className={classes}
+                role={onSelecionar ? 'button' : undefined}
+                tabIndex={onSelecionar ? 0 : undefined}
+                aria-label={camadaAtiva === 'score' && sub.faixaRisco
+                  ? `${sub.nome}: risco ${estilo.texto}, ${labelFaixa(sub.faixaRisco)}`
+                  : `${sub.nome}: ${estilo.texto}`}
+                onKeyDown={onSelecionar ? (e) => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  e.preventDefault();
+                  onSelecionar(sub);
+                } : undefined}
                 style={{
                   width: diametro,
                   height: diametro,

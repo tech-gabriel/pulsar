@@ -62,6 +62,7 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
   // O traçado depende só das coordenadas: trocar o rótulo (a rua do trecho chega depois) não
   // refaz o corredor nem redesenha a linha.
   const [oLat, oLon, dLat, dLon] = [origem?.lat, origem?.lon, destino?.lat, destino?.lon];
+  const origemAqui = origem?.rotulo === ROTULO_LOCALIZACAO;
   const origemPos = useMemo(() => (oLat != null && oLon != null ? { lat: oLat, lon: oLon, rotulo: '' } : null), [oLat, oLon]);
   const destinoPos = useMemo(() => (dLat != null && dLon != null ? { lat: dLat, lon: dLon, rotulo: '' } : null), [dLat, dLon]);
   const corredor = useMemo(
@@ -149,11 +150,12 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
       };
     });
     // subId: no modo rota o mapa esconde o número da subprefeitura de saída e de chegada, que cobriria o ponto.
+    // aqui: o halo azul de "você está aqui" só quando a saída é a localização (Casa não é "aqui").
     const ponto = (p: PontoRota, papel: 'origem' | 'destino', subId: string | undefined): Feature => ({
-      type: 'Feature', properties: { papel, subId }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
+      type: 'Feature', properties: { papel, subId, aqui: papel === 'origem' && origemAqui }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
     });
     return { type: 'FeatureCollection', features: [...trechos, ponto(origemPos, 'origem', ids[0]), ponto(destinoPos, 'destino', ids[ids.length - 1])] };
-  }, [corredor, resultado, origemPos, destinoPos, ids]);
+  }, [corredor, resultado, origemPos, destinoPos, ids, origemAqui]);
 
   const pedirAviso = useCallback(async () => {
     if (!chave || !destino) return;

@@ -221,6 +221,11 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
     // O topo diz que choveu num ponto da área e o posto está seco: a frase-ponte explica.
     expect(screen.getByText('A chuva forte foi em outro ponto de Itaquera.')).toBeInTheDocument();
   });
+  it('número pelo posto do CGE: topo e linha dizem o posto, não a estação', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 15.8, postoChuvaMedida: 'Ipiranga', chuva3hMm: 3 } } as unknown as Area, estacaoMaisForte: 'Penha3' });
+    expect(screen.getByText('em 3 h, no posto Ipiranga do CGE')).toBeInTheDocument();
+    expect(screen.getAllByText(/Choveu 15,8 mm em 3 h no posto Ipiranga/).length).toBeGreaterThan(0);
+  });
   it('número pela medida com a estação mais forte: a linha diz o nome dela', () => {
     renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22, chuva3hMm: 3 } } as unknown as Area, estacaoMaisForte: 'Penha3' });
     expect(screen.getByText('em 3 h, mais forte perto da estação Penha 3')).toBeInTheDocument();

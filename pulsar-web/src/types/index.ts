@@ -167,6 +167,8 @@ export interface ScoreDto {
   chuva48hMm?: number;
   /** Chuva de 3 h medida pelas estações que fizeram o alagamento ("a medida manda"). Null = o número veio do modelo. */
   chuva3hMedidaMm?: number | null;
+  /** Posto do CGE quando foi ele que mediu essa chuva; null = estações do CEMADEN nos trechos. */
+  postoChuvaMedida?: string | null;
 }
 
 export interface LeituraDto {
@@ -437,6 +439,7 @@ export interface RiscoAgoraPublico {
   chuva3hMm: number | null;
   /** Ausente em resposta de API antiga. */
   chuva3hMedidaMm?: number | null;
+  postoChuvaMedida?: string | null;
   ventoKmH: number | null;
   sensacaoTermica: number | null;
   alagamentosCge: PontoAlagamentoCge[];

@@ -130,6 +130,8 @@ export default function MapaPage() {
   const [textoArrastado, setTextoArrastado] = useState<string | null>(null);
   // Lista da busca aberta: o convite de alertas sai do caminho.
   const [buscaAberta, setBuscaAberta] = useState(false);
+  // Uma coisa por vez no celular: com a dica da localização na tela, o convite do push espera.
+  const [dicaLocalNaTela, setDicaLocalNaTela] = useState(false);
   // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
@@ -451,6 +453,7 @@ export default function MapaPage() {
       aviso={isMobile ? avisoBusca : null}
       textoBusca={textoArrastado}
       onListaAberta={setBuscaAberta}
+      onDicaVisivel={setDicaLocalNaTela}
     />
   );
 
@@ -592,7 +595,7 @@ export default function MapaPage() {
         <div className="pilha-mapa">
           {/* Legenda dinâmica: muda com a camada. Com o overlay ligado ganha a chave dos alagamentos. */}
           {/* Com a rota aberta no celular a legenda sai: ela cobria o crédito do mapa, e o veredito já diz a faixa. */}
-          {!rotaNoCelular && <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} />}
+          {!rotaNoCelular && <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} comTrechos={comTrechos && !!dadosTrechos} />}
 
           {/* Aviso do ponto buscado. Só no computador: no celular ele fica embaixo da busca. */}
           {avisoBusca && !isMobile && (
@@ -603,7 +606,7 @@ export default function MapaPage() {
 
           {/* Convite para ativar notificações push. Sem favorita o push não tem o que mandar:
               primeiro escolher, depois ativar. Com a rota aberta ele sai: o mapa é do caminho. */}
-          {!rotaAberta && !mostrarDicaTrecho && !buscaAberta && (semFavoritas
+          {!rotaAberta && !mostrarDicaTrecho && !buscaAberta && !(isMobile && dicaLocalNaTela) && (semFavoritas
             ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
             : <ConvitePush favoritas={favoritas} />)}
 

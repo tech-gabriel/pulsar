@@ -22,6 +22,7 @@ import PrevisaoFaixa from './PrevisaoFaixa';
 import AlagamentosCge from './AlagamentosCge';
 import ChuvaMedidaLinha from './ChuvaMedidaLinha';
 import { nomeEstacao, temChuvaMedida } from '../../utils/chuvaMedida';
+import { porExtenso } from '../../utils/texto';
 import { deNomeDe } from '../../data/regioes-seo';
 
 const GRAVIDADE: Record<FaixaRisco, number> = { BAIXO: 0, MODERADO: 1, ALTO: 2 };
@@ -165,10 +166,11 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             <p className="det-hero-frase">{trecho ? fraseDoTrecho(trecho, area, faixas) : fraseDoRisco(area, faixas)}</p>
           </div>
         </div>
-        {pontos.length > 0 && (
+        {/* Com o detalhe inteiro na tela, o cartão do CGE vem logo abaixo: a linha só resume a folha curta. */}
+        {pontos.length > 0 && folha && !folha.aberta && (
           <p className="det-linha">
             <TriangleAlert size={17} aria-hidden="true" className="text-risco-alto-text" />
-            <span>{pontos.length === 1 ? `Alagamento agora na ${pontos[0].via}` : `${pontos.length} pontos de alagamento agora`}</span>
+            <span>{pontos.length === 1 ? `Alagamento agora: ${porExtenso(pontos[0].via)}` : `${pontos.length} pontos de alagamento agora`}</span>
           </p>
         )}
         {trecho && (
@@ -223,7 +225,9 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
                   <div className="det-faixa">
                     <div className="det-faixa-cab"><span className="det-faixa-nome">Chuva que gerou o risco</span></div>
                     <div className="det-par um">
-                      <div><b>{decimal(s.chuva3hMedidaMm)}<span>mm</span></b><i>{estacaoMaisForte ? `em 3 h, mais forte perto da estação ${nomeEstacao(estacaoMaisForte)}` : `em 3 h, num ponto ${deNomeDe(area.nome)}`}</i></div>
+                      <div><b>{decimal(s.chuva3hMedidaMm)}<span>mm</span></b><i>{s.postoChuvaMedida ? `em 3 h, no posto ${s.postoChuvaMedida} do CGE`
+                        : estacaoMaisForte ? `em 3 h, mais forte perto da estação ${nomeEstacao(estacaoMaisForte)}`
+                        : `em 3 h, num ponto ${deNomeDe(area.nome)}`}</i></div>
                     </div>
                   </div>
                 )}

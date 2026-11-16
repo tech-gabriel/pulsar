@@ -142,6 +142,8 @@ export function motivoDoRisco(r: {
   chuva3hMm?: number | null;
   /** Chuva medida pelas estações que fizeram o número; sem ela, a frase cita o modelo. */
   chuva3hMedidaMm?: number | null;
+  /** Posto do CGE que mediu a chuva do número; a frase diz o nome dele. */
+  postoChuvaMedida?: string | null;
   ventoKmH?: number | null;
   sensacaoTermica?: number | null;
   /** Nome da área, para a frase da chuva medida dizer de onde ela é ("num ponto da Mooca"). */
@@ -157,6 +159,7 @@ export function motivoDoRisco(r: {
   // A medida que fez o número é a das estações da parte mais atingida da área, não a do centro:
   // a frase diz que é "num ponto" dela, porque o "Medida agora" do detalhe pode ler outra estação
   // na mesma chuva (decisão de 15/11, depois da crítica).
+  if (medida && r.postoChuvaMedida) return `Choveu ${mm} mm em 3 h no posto ${r.postoChuvaMedida}`;
   if (medida) return `Choveu ${mm} mm em 3 h num ponto ${r.nome ? deNomeDe(r.nome) : 'da região'}`;
   return `Por chuva: ${mm} mm nas últimas 3h`;
 }

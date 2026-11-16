@@ -1,6 +1,7 @@
 import { TriangleAlert } from 'lucide-react';
 import type { PontoAlagamentoCge } from '../../types';
 import { horaCurta } from '../../utils/data';
+import { porExtenso } from '../../utils/texto';
 
 /** Quantos pontos listar antes do "e mais N": o painel é estreito no celular. */
 const MAX_LISTADOS = 3;
@@ -19,7 +20,7 @@ export default function AlagamentosCge({ pontos }: { pontos: PontoAlagamentoCge[
   const resto = pontos.length - listados.length;
 
   return (
-    <section className="rounded-[10px] px-4 py-3 mb-3 bg-risco-alto-bg text-risco-alto-text" aria-label="Alagamentos agora">
+    <section className="cge-alag rounded-[10px] px-4 py-3 mb-3 bg-risco-alto-bg text-risco-alto-text" aria-label="Alagamentos agora">
       <p className="flex items-center gap-1.5 font-semibold" style={{ fontSize: 14 }}>
         <TriangleAlert size={16} aria-hidden="true" />
         {pontos.length === 1 ? 'Alagamento agora' : `${pontos.length} pontos de alagamento agora`}
@@ -27,8 +28,8 @@ export default function AlagamentosCge({ pontos }: { pontos: PontoAlagamentoCge[
       <ul className="mt-1.5 space-y-1" style={{ fontSize: 12.5, lineHeight: 1.4 }}>
         {listados.map((p) => (
           <li key={`${p.via}-${p.inicioUtc}`}>
-            <span className="font-semibold">{p.via}</span>
-            {temNome(p.referencia) && `, perto de ${p.referencia}`}
+            <span className="font-semibold">{porExtenso(p.via)}</span>
+            {temNome(p.referencia) && `, perto de ${porExtenso(p.referencia)}`}
             {`. Desde ${horaCurta(p.inicioUtc)}`}
             {!p.transitavel && ', sem passagem'}
           </li>

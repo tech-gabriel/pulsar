@@ -38,8 +38,8 @@ interface Props {
 
 function iconePara(tipo: string) {
   if (tipo === 'poi') return Landmark;
-  if (tipo === 'address') return MapPin;
-  return Building2;
+  if (['place', 'neighbourhood', 'locality', 'municipal_district', 'municipality', 'county', 'region', 'subregion', 'postal_code'].includes(tipo)) return Building2;
+  return MapPin;
 }
 
 interface Opcao { chave: string; rotulo: string; Icone: typeof House; peso: string; acao: () => void }

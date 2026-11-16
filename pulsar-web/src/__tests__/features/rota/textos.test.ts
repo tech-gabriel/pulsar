@@ -26,6 +26,12 @@ describe('textos do veredito', () => {
       horas: [{ inicioUtc: '2026-11-03T19:00:00Z', piorFaixa: 'MODERADO' }, { inicioUtc: '2026-11-03T20:00:00Z', piorFaixa: 'BAIXO' }] };
     expect(textoVeredito(r, SP)).toEqual({ titulo: 'Pode ir, com atenção', detalhe: 'Fique de olho na Mooca até umas 17h.' });
     expect(textoVeredito({ ...r, horas: [] }, SP).detalhe).toBe('Fique de olho na Mooca.');
+    // Volta ao BAIXO no meio e Atenção de novo depois: a hora é a do fim da última Atenção.
+    const ida = (h: string, f: 'BAIXO' | 'MODERADO') => ({ inicioUtc: `2026-11-03T${h}:00:00Z`, piorFaixa: f });
+    expect(textoVeredito({ ...r, horas: [ida('19', 'MODERADO'), ida('20', 'BAIXO'), ida('21', 'MODERADO'), ida('22', 'BAIXO')] }, SP).detalhe)
+      .toBe('Fique de olho na Mooca até umas 19h.');
+    // Atenção até o fim do horizonte: sem hora.
+    expect(textoVeredito({ ...r, horas: [ida('19', 'BAIXO'), ida('20', 'MODERADO')] }, SP).detalhe).toBe('Fique de olho na Mooca.');
   });
 
   it('Esperar com horário, sem horário e com CGE', () => {

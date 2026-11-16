@@ -16,8 +16,8 @@ describe('AlagamentosCge', () => {
   it('um ponto: via, referência, sem passagem e a fonte', () => {
     render(<AlagamentosCge pontos={[ponto('Tn Dirce Camargo')]} />);
     expect(screen.getByText('Alagamento agora')).toBeInTheDocument();
-    expect(screen.getByText('Tn Dirce Camargo')).toBeInTheDocument();
-    expect(screen.getByRole('listitem')).toHaveTextContent(/perto de R Olivia Feder\. Desde \d\d:\d\d, sem passagem/);
+    expect(screen.getByText('Túnel Dirce Camargo')).toBeInTheDocument();
+    expect(screen.getByRole('listitem')).toHaveTextContent(/perto de Rua Olivia Feder\. Desde \d\d:\d\d, sem passagem/);
     expect(screen.getByText(/Fonte: CGE/)).toBeInTheDocument();
   });
 

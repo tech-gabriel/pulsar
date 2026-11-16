@@ -33,6 +33,8 @@ const CHAVE_MAPTILER = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
 const COR_BUSCA = '#00BCFF';
 // Saída da rota: o "você está aqui", --color-pulsar-500 (#00A6F4), com halo a 18%.
 const COR_ORIGEM = '#00A6F4';
+/** Saída num lugar (Casa, endereço): o mesmo ponto, mais escuro e sem o halo do "você está aqui". */
+const COR_ORIGEM_LUGAR = '#0069A8';
 const COR_ORIGEM_HALO = 'rgba(0, 166, 244, 0.18)';
 // Borda branca da saída: o branco do texto sobre o azul da marca, lê nos dois temas.
 const COR_BORDA_ORIGEM = '#ffffff';
@@ -301,6 +303,7 @@ export default function MapaGL(props: PropsMapa) {
       initialViewState={{ longitude: SP[0], latitude: SP[1], zoom: ZOOM.sp }}
       style={{ width: '100%', height: '100%' }}
       attributionControl={false}
+      locale={{ 'AttributionControl.ToggleAttribution': 'Créditos do mapa' }}
       // Sempre: o react-map-gl só lê o transformRequest ao criar o mapa, e a reserva pode entrar depois.
       // O comChaveMapTiler não mexe em URL que não seja do MapTiler.
       transformRequest={CHAVE_MAPTILER ? (url) => ({ url: comChaveMapTiler(url, CHAVE_MAPTILER) }) : undefined}
@@ -346,6 +349,7 @@ export default function MapaGL(props: PropsMapa) {
             zonaEmFoco={zonaEmFoco}
             atenuado={overlayAlagamento}
             ocultos={ocultos}
+            onSelecionar={onSelecionarSub}
           />
         </>
       )}
@@ -367,10 +371,10 @@ export default function MapaGL(props: PropsMapa) {
           <Layer id="pulsar-rota-linha" type="line" beforeId={idPrimeiroSimbolo} filter={['==', ['geometry-type'], 'LineString']}
             layout={{ 'line-cap': 'round', 'line-join': 'round' }}
             paint={{ 'line-color': ['get', 'cor'], 'line-width': 7, 'line-dasharray': [0, 12 / 7], 'line-opacity': reduzido && !destinoNasceu ? 0 : 1, 'line-opacity-transition': { duration: 200, delay: 0 } }} />
-          <Layer id="pulsar-rota-origem-halo" type="circle" filter={['==', ['get', 'papel'], 'origem']}
+          <Layer id="pulsar-rota-origem-halo" type="circle" filter={['all', ['==', ['get', 'papel'], 'origem'], ['==', ['get', 'aqui'], true]]}
             paint={{ 'circle-radius': 15, 'circle-color': COR_ORIGEM_HALO }} />
           <Layer id="pulsar-rota-origem" type="circle" filter={['==', ['get', 'papel'], 'origem']}
-            paint={{ 'circle-radius': 8, 'circle-color': COR_ORIGEM, 'circle-stroke-color': COR_BORDA_ORIGEM, 'circle-stroke-width': 3 }} />
+            paint={{ 'circle-radius': 8, 'circle-color': ['case', ['==', ['get', 'aqui'], true], COR_ORIGEM, COR_ORIGEM_LUGAR], 'circle-stroke-color': COR_BORDA_ORIGEM, 'circle-stroke-width': 3 }} />
         </Source>
       )}
       {/* A chegada nasce quando a linha termina (com menos movimento, só aparece). */}
@@ -392,7 +396,7 @@ export default function MapaGL(props: PropsMapa) {
           draggable
           onDragEnd={(e) => onMoverPonto(e.lngLat.lat, e.lngLat.lng)}
         >
-          <div title="Arraste para ajustar o ponto">
+          <div title="Arraste para ajustar o ponto" role="img" aria-label="Ponto buscado. Arraste para ajustar.">
             <PinBusca />
           </div>
         </Marker>

@@ -154,10 +154,10 @@ body {
   opacity: 0.5;
 }
 
-/* Scrollbar customizada do painel (width 4px, thumb pulsar-700) */
+/* Scrollbar do painel: fina e neutra. Azul, parecia um indicador de foco (crítica de 15/11). */
 .painel-scroll {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-pulsar-700) transparent;
+  scrollbar-color: color-mix(in srgb, var(--text-primary) 22%, transparent) transparent;
 }
 .painel-scroll::-webkit-scrollbar {
   width: 4px;
@@ -166,7 +166,7 @@ body {
   background: transparent;
 }
 .painel-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-pulsar-700);
+  background: color-mix(in srgb, var(--text-primary) 22%, transparent);
   border-radius: 4px;
 }
 
@@ -307,12 +307,16 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 .pulsar-score-circle.selecionado {
   border-color: rgba(255, 255, 255, 0.95);
 }
+/* Alagamento do CGE no tema escuro: o rosa claro do token era um bloco de tema claro no painel escuro. */
+html:not(.light) .cge-alag { background: color-mix(in srgb, #ef4444 16%, transparent); color: #fecaca; box-shadow: inset 0 0 0 1px color-mix(in srgb, #ef4444 35%, transparent); }
+.pulsar-score-circle:focus-visible { outline: 3px solid var(--color-pulsar-500); outline-offset: 2px; }
 /* Casa e trabalho no mapa (F4b): ponto na vista ampla, etiqueta de perto. A área de toque tem
    44 px mesmo com o ponto de 24 px; o pé da etiqueta é o ponto exato salvo. */
 .lugar-marcador { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; background: none; border: 0; padding: 0; cursor: pointer; }
 /* De perto, a etiqueta abre para o lado oposto ao círculo da região (F4b-P1): pé no ponto exato,
    haste horizontal e a pílula. "direita" = pílula à direita do ponto. */
-.lugar-marcador[data-modo="etiqueta"] { flex-direction: row-reverse; justify-content: flex-start; min-height: 0; }
+.lugar-marcador[data-modo="etiqueta"] { flex-direction: row-reverse; justify-content: flex-start; min-height: 0; position: relative; }
+.lugar-marcador[data-modo="etiqueta"]::after { content: ''; position: absolute; inset: -5px 0; } /* toque de 44 px sem mexer no desenho */
 .lugar-marcador[data-modo="etiqueta"][data-lado="esquerda"] { flex-direction: row; }
 .lugar-marcador[data-modo="etiqueta"] .lugar-haste { height: 2px; } /* largura vem do componente */
 .lugar-marcador[data-modo="etiqueta"] .lugar-pe { margin-top: 0; }
@@ -678,7 +682,7 @@ html:not(.light) .det-hero .det-hero-frase { color: var(--text-primary); }
 .prev-barra i { display: block; width: 100%; max-width: 22px; border-radius: 6px 6px 3px 3px; background: var(--prev-chuva); opacity: .85; }
 .prev-barra.forte i { background: var(--prev-forte); opacity: 1; }
 .prev-valor { font: 600 10.5px var(--font-body); color: var(--text-primary); font-variant-numeric: tabular-nums; min-height: 14px; }
-.prev-hora { font: 500 10.5px var(--font-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.prev-hora { font: 500 11px var(--font-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 /* Detalhe no desenho de 14/11/2026 (entrega 4 do H3). Resumo em cima (risco e linhas), o resto
    abre ao puxar a alça no celular; as ações ficam presas no pé nas duas alturas. */
 .det-alca { flex-shrink: 0; width: 100%; height: 44px; margin-bottom: -22px; padding-top: 8.5px; position: relative; z-index: 0; display: flex; align-items: flex-start; justify-content: center; touch-action: none; cursor: grab; }
@@ -742,7 +746,7 @@ button.det-faixa-de::after { content: ''; position: absolute; inset: -14px 0; }
 .det-pe { flex-shrink: 0; display: flex; gap: 8px; padding: 10px 16px 12px; border-top: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); }
 /* 44 px: alvo de toque mínimo (crítica de 15/11; eram 38). */
 .det-acao { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 12px; font: 600 13px var(--font-body); color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 7%, transparent); white-space: nowrap; }
-.det-acao.forte { flex: 1.7; background: var(--color-pulsar-600); color: #fff; }
+.det-acao.forte { flex: 1.7; background: var(--color-pulsar-700); color: #fff; }
 .det-acao.ligado { color: var(--text-accent); }
 .det-acao:active { transform: scale(.97); transition: transform 100ms ease-out; }
 
@@ -893,7 +897,8 @@ button.det-faixa-de::after { content: ''; position: absolute; inset: -14px 0; }
 
 /* Botão principal com gradiente (ETAPA 5.3) */
 .btn-gradient {
-  background: linear-gradient(135deg, #0084D1, #00A6F4);
+  /* Branco passa de 4,5:1 nas duas pontas (o #00A6F4 ficava em 3:1). */
+  background: linear-gradient(135deg, #0069A8, #0077BD);
   color: #fff;
   font-weight: 600;
   border-radius: 8px;
@@ -1160,10 +1165,11 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 .avatar-conta {
   width: 36px; height: 36px; margin-left: 4px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--color-pulsar-600); color: #fff;
+  background: var(--color-pulsar-700); color: #fff; position: relative;
   font: 700 13px var(--font-heading); letter-spacing: .02em;
   transition: transform 120ms ease-out, box-shadow 200ms ease;
 }
+.avatar-conta::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; } /* toque de 44 px */
 .avatar-conta:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-pulsar-500) 25%, transparent); }
 .avatar-conta:active { transform: scale(.94); }
 .menu-conta { width: 240px; padding: 6px; }
@@ -1214,8 +1220,9 @@ body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-
   align-items: center;
   gap: 2px;
   padding: 0 2px;
-  color: var(--text-muted);
-  font-size: 10px;
+  /* --text-secondary e 11 px: o muted em 10 px ficava em 2,8:1 (crítica de 15/11). */
+  color: var(--text-secondary);
+  font-size: 11px;
   transition: color 200ms;
 }
 /* Rótulos por extenso ("Histórico", "Dashboard") em telas estreitas: cortar com
@@ -1229,7 +1236,7 @@ body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-
 .tabbar-item { border-radius: 18px; }
 /* Aba ativa: a mesma pílula da aba ativa do cabeçalho do computador. */
 .tabbar-item.ativa {
-  color: var(--color-pulsar-600);
+  color: var(--color-pulsar-700);
   font-weight: 600;
   background: color-mix(in srgb, var(--color-pulsar-500) 13%, transparent);
 }

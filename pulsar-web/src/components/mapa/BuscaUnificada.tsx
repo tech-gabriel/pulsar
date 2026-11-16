@@ -37,15 +37,20 @@ interface Props {
   textoBusca?: string | null;
   /** Avisa quando a lista de resultados abre e fecha (o convite de alertas sai do caminho). */
   onListaAberta?: (aberta: boolean) => void;
+  /** Avisa quando a dica da localização está na tela: o mapa não empilha outro aviso junto. */
+  onDicaVisivel?: (visivel: boolean) => void;
 }
 
 const MIN_CHARS = 3;
 
 // Ícone por categoria do resultado, para o usuário distinguir lugar × rua × bairro.
+const AREAS = new Set(['place', 'neighbourhood', 'locality', 'municipal_district', 'municipality', 'county', 'region', 'subregion', 'postal_code']);
+
 function iconePara(tipo: string) {
   if (tipo === 'poi') return Landmark;
-  if (tipo === 'address') return MapPin;
-  return Building2; // place, neighbourhood, locality, municipal_district…
+  // Bairro, cidade, distrito: o prédio. Rua e endereço (o MapTiler manda "address", "street", "road"...): o pino.
+  if (AREAS.has(tipo)) return Building2;
+  return MapPin;
 }
 
 // Remove o nome repetido do início da descrição, deixando só o contexto.
@@ -62,7 +67,7 @@ function contextoDe(r: EnderecoBusca): string {
  * Busca unificada sobreposta ao mapa (SP3): subprefeituras pelo nome primeiro, depois
  * endereços (geocoding via backend), num campo só.
  */
-export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, onAbrirRota, embutida = false, semDica = false, dicaTrecho = false, onDispensarDicaTrecho, aviso = null, textoBusca = null, onListaAberta }: Props) {
+export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, onAbrirRota, embutida = false, semDica = false, dicaTrecho = false, onDispensarDicaTrecho, aviso = null, textoBusca = null, onListaAberta, onDicaVisivel }: Props) {
   const { termo, setTermo, resultados, carregando, erro, limpar } = useBuscaEndereco();
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -114,6 +119,8 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
 
   const mostrarDropdown = aberto && (subs.length > 0 || termo.trim().length >= MIN_CHARS);
   useEffect(() => { onListaAberta?.(mostrarDropdown); }, [mostrarDropdown, onListaAberta]);
+  const dicaNaTela = !aviso && !dicaTrecho && !!onUsarLocalizacao && mostrarDica && !mostrarDropdown && !embutida;
+  useEffect(() => { onDicaVisivel?.(dicaNaTela); }, [dicaNaTela, onDicaVisivel]);
 
   // O mapa trocou o texto (pino arrastado): o campo mostra o mesmo lugar que a rota vai usar.
   const [textoAplicado, setTextoAplicado] = useState(textoBusca);
@@ -145,7 +152,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
           }}
           onFocus={() => setAberto(true)}
           onKeyDown={onKeyDown}
-          placeholder="Subprefeitura, rua ou lugar…"
+          placeholder="Buscar rua ou região"
           aria-label="Buscar subprefeitura ou endereço"
           className="mapa-input flex-1 h-11 bg-transparent text-sm outline-none min-w-0"
         />
@@ -215,7 +222,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
           </button>
         </div>
       )}
-      {!aviso && !dicaTrecho && onUsarLocalizacao && mostrarDica && !mostrarDropdown && !embutida && (
+      {dicaNaTela && (
         <div className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-xs">
           <LocateFixed size={13} className="mapa-txt-suave flex-shrink-0" />
           <span className="flex-1">Toque no alvo para ver a sua subprefeitura</span>

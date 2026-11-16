@@ -3,6 +3,9 @@ import { Info } from 'lucide-react';
 import type { Camada } from '../../utils/camadas';
 import { PALETA, comAlfa } from '../../utils/paleta';
 import MiniIconeOcorrencia from './MiniIconeOcorrencia';
+import { corLabelFaixa } from '../../utils/risco';
+import { fundoParaTextoBranco, opaca } from '../../utils/contraste';
+import type { FaixaRisco } from '../../types';
 
 // ── Legenda dinâmica do mapa (ETAPA 6.1/6.3) ───────────────────────────────────
 // Card glassmorphism no canto inferior do mapa. O conteúdo (título, barra de
@@ -74,19 +77,52 @@ interface Props {
   isMobile: boolean;
   /** Overlay de alagamentos ligado: acrescenta a chave das ocorrências. */
   overlayAlagamento?: boolean;
+  /** Trechos (hexágonos) no mapa: a legenda diz o que eles são. */
+  comTrechos?: boolean;
+}
+
+// O risco não é contínuo no mapa: são três faixas, com os nomes que o detalhe usa e as cores
+// exatas dos círculos (crítica de 15/11: o degradê de 0 a 100 não batia com nada desenhado).
+const FAIXAS: { faixa: FaixaRisco; nome: string; de: string }[] = [
+  { faixa: 'BAIXO', nome: 'Tranquilo', de: '0 a 30' },
+  { faixa: 'MODERADO', nome: 'Atenção', de: '31 a 60' },
+  { faixa: 'ALTO', nome: 'Alerta', de: '61 a 100' },
+];
+
+function FaixasRisco({ comTrechos }: { comTrechos: boolean }) {
+  return (
+    <div key="faixas" className="legend-fade">
+      <p style={{ ...TITULO, marginBottom: 6 }}>Risco</p>
+      <ul className="flex flex-col" style={{ gap: 5 }}>
+        {FAIXAS.map(({ faixa, nome, de }) => (
+          <li key={faixa} className="flex items-center" style={{ gap: 8 }}>
+            <span aria-hidden="true" className="flex-shrink-0 rounded-full"
+              style={{ width: 12, height: 12, background: fundoParaTextoBranco(opaca(corLabelFaixa(faixa))) }} />
+            <span style={{ ...TITULO, fontSize: 12 }}>{nome}</span>
+            <span style={{ ...LABEL, marginLeft: 'auto' }}>{de}</span>
+          </li>
+        ))}
+      </ul>
+      {comTrechos && <p style={{ ...LABEL, fontFamily: 'var(--font-body)', marginTop: 6 }}>Hexágono = trecho de cerca de 1 km</p>}
+    </div>
+  );
 }
 
 /** Conteúdo interno (título + barra + labels). A key força o fade ao trocar a camada. */
-function ConteudoLegenda({ config, overlayAlagamento }: { config: LegendaConfig; overlayAlagamento: boolean }) {
+function ConteudoLegenda({ config, overlayAlagamento, risco, comTrechos }: { config: LegendaConfig; overlayAlagamento: boolean; risco: boolean; comTrechos: boolean }) {
   return (
     <div key={config.titulo} className="legend-fade">
-      <p style={{ ...TITULO, marginBottom: 6 }}>{config.titulo}</p>
-      <div style={{ height: 8, borderRadius: 4, background: config.gradiente }} />
-      <div className="flex justify-between" style={{ marginTop: 4 }}>
-        {config.labels.map((l) => (
-          <span key={l} style={LABEL}>{l}</span>
-        ))}
-      </div>
+      {risco ? <FaixasRisco comTrechos={comTrechos} /> : (
+        <>
+          <p style={{ ...TITULO, marginBottom: 6 }}>{config.titulo}</p>
+          <div style={{ height: 8, borderRadius: 4, background: config.gradiente }} />
+          <div className="flex justify-between" style={{ marginTop: 4 }}>
+            {config.labels.map((l) => (
+              <span key={l} style={LABEL}>{l}</span>
+            ))}
+          </div>
+        </>
+      )}
 
       {overlayAlagamento && (
         <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid rgba(0, 188, 255, 0.15)' }}>
@@ -112,7 +148,8 @@ function ConteudoLegenda({ config, overlayAlagamento }: { config: LegendaConfig;
   );
 }
 
-export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = false }: Props) {
+export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = false, comTrechos = false }: Props) {
+  const risco = camadaAtiva === 'score';
   const config = LEGENDAS[camadaAtiva];
   const [expandido, setExpandido] = useState(false);
   // Com o overlay ligado ele é a informação nova no mapa: o pill colapsado do
@@ -127,7 +164,7 @@ export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = f
         style={{ padding: '10px 14px', minWidth: 160 }}
         aria-label={`Legenda: ${config.titulo}`}
       >
-        <ConteudoLegenda config={config} overlayAlagamento={overlayAlagamento} />
+        <ConteudoLegenda config={config} overlayAlagamento={overlayAlagamento} risco={risco} comTrechos={comTrechos} />
       </div>
     );
   }
@@ -145,7 +182,7 @@ export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = f
           aria-expanded
           aria-label={`Recolher legenda: ${tituloPill}`}
         >
-          <ConteudoLegenda config={config} overlayAlagamento={overlayAlagamento} />
+          <ConteudoLegenda config={config} overlayAlagamento={overlayAlagamento} risco={risco} comTrechos={comTrechos} />
         </button>
       ) : (
         <button

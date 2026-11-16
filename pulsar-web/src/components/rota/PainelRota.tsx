@@ -191,6 +191,8 @@ function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, av
           <div className="grid grid-cols-2 gap-2 mt-2">{outros.map(secundario)}</div>
         </>
       )}
+      {/* A linha do mapa só liga saída e chegada pelas áreas do caminho: o trajeto vem do app de navegação. */}
+      <p className="mt-2.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>A linha no mapa liga a saída à chegada. O trajeto é o do app que você abrir.</p>
     </>
   );
 }

@@ -23,36 +23,30 @@ public class AvaliadorRotaTests
     {
         var r = AvaliadorRota.Avaliar([T(Mooca, FaixaRisco.BAIXO), T(Se, FaixaRisco.BAIXO)], Agora);
         r.Estado.Should().Be(EstadoRota.PodeIr);
-        r.TranquiloAteUtc.Should().BeNull();
         r.Horas.Should().BeEmpty();
     }
 
+    // A medida manda (16/11/2026): atenção medida agora vira "com atenção", sem a faixa de horas.
     [Fact]
-    public void TodosTranquilos_PrevisaoBaixaAte22h_PodeIr_TranquiloAte22h()
-    {
-        var r = AvaliadorRota.Avaliar([T(Mooca, FaixaRisco.BAIXO, false, Baixas(21, 22))], Agora);
-        r.Estado.Should().Be(EstadoRota.PodeIr);
-        r.TranquiloAteUtc.Should().Be(H(22));
-    }
-
-    [Fact]
-    public void UmTrechoModeradoAgora_ComAtencao_ComHoras()
+    public void UmTrechoModeradoAgora_ComAtencao_SemHoras()
     {
         var r = AvaliadorRota.Avaliar([
             T(Mooca, FaixaRisco.MODERADO, false, Baixas(21, 22, 23, 24)),
             T(Se, FaixaRisco.BAIXO, false, Baixas(21, 22, 23, 24))], Agora);
         r.Estado.Should().Be(EstadoRota.ComAtencao);
-        r.Horas.Should().HaveCount(4);
-        r.Horas[0].PiorFaixa.Should().Be(FaixaRisco.MODERADO);
-        r.Horas[0].InicioUtc.Should().Be(H(20));
+        r.TrechoDecisivoId.Should().Be(Mooca);
+        r.Horas.Should().BeEmpty();
     }
 
+    // Chuva só prevista não muda o veredito: com tudo tranquilo agora, pode ir.
     [Fact]
-    public void ProximaHoraAlta_SemAlertaAgora_ComAtencao()
+    public void ChuvaSoPrevista_NaoMudaOVeredito()
     {
-        var r = AvaliadorRota.Avaliar([T(Mooca, FaixaRisco.BAIXO, false, P(21, FaixaRisco.ALTO), P(22, FaixaRisco.BAIXO))], Agora);
-        r.Estado.Should().Be(EstadoRota.ComAtencao);
-        r.TrechoDecisivoId.Should().Be(Mooca);
+        var r = AvaliadorRota.Avaliar([
+            T(Mooca, FaixaRisco.BAIXO, false, P(21, FaixaRisco.ALTO), P(22, FaixaRisco.BAIXO)),
+            T(Se, FaixaRisco.BAIXO, false, P(21, FaixaRisco.ALTO), P(22, FaixaRisco.BAIXO))], Agora);
+        r.Estado.Should().Be(EstadoRota.PodeIr);
+        r.Horas.Should().BeEmpty();
     }
 
     [Fact]
@@ -84,16 +78,6 @@ public class AvaliadorRotaTests
         r.Estado.Should().Be(EstadoRota.Esperar);
         r.EsperarAteUtc.Should().BeNull();
         r.Horas.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void PodeIr_TranquiloAte_ParaNaPrimeiraHoraSemCobertura()
-    {
-        var r = AvaliadorRota.Avaliar([
-            T(Mooca, FaixaRisco.BAIXO, false, Baixas(21, 22, 23)),
-            T(Se, FaixaRisco.BAIXO, false, Baixas(21, 22))], Agora);
-        r.Estado.Should().Be(EstadoRota.PodeIr);
-        r.TranquiloAteUtc.Should().Be(H(22));
     }
 
     [Fact]
@@ -129,16 +113,6 @@ public class AvaliadorRotaTests
     public void FaixaPrevista_ChuvaForteNaHora_DaAlto()
         => AvaliadorRota.FaixaPrevista(new Dictionary<DateTime, double> { [H(21)] = 40 }, H(21), 0, "Mooca")
             .Should().Be(FaixaRisco.ALTO);
-
-    [Fact]
-    public void ChuvaForteSoEmUmDeDoisTrechos_ComAtencao_ComODecisivoCorreto()
-    {
-        var r = AvaliadorRota.Avaliar([
-            T(Mooca, FaixaRisco.BAIXO, false, Baixas(21, 22)),
-            T(Se, FaixaRisco.BAIXO, false, P(21, FaixaRisco.ALTO), P(22, FaixaRisco.BAIXO))], Agora);
-        r.Estado.Should().Be(EstadoRota.ComAtencao);
-        r.TrechoDecisivoId.Should().Be(Se);
-    }
 
     [Fact]
     public void CgeEmUmDeDoisTrechos_Esperar_ComODecisivoCorretoEHoraMinima()

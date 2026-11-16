@@ -13,12 +13,12 @@ public record HoraPrevista(DateTime InicioUtc, FaixaRisco Faixa);
 
 public record HoraRota(DateTime InicioUtc, FaixaRisco PiorFaixa);
 
-public record ResultadoRota(EstadoRota Estado, Guid? TrechoDecisivoId, DateTime? TranquiloAteUtc,
-    DateTime? EsperarAteUtc, IReadOnlyList<HoraRota> Horas);
+public record ResultadoRota(EstadoRota Estado, Guid? TrechoDecisivoId, DateTime? EsperarAteUtc, IReadOnlyList<HoraRota> Horas);
 
 /// <summary>
-/// Veredito de um caminho (lista de subprefeituras em ordem) a partir do score de agora e da
-/// previsão por hora. Puro: sem banco, sem relógio, sem rede.
+/// Veredito de um caminho (lista de subprefeituras em ordem). Quem decide é a chuva medida agora
+/// (decisão de 16/11/2026): a previsão por hora só entra para estimar até quando esperar, quando
+/// a medida já mandou esperar. Puro: sem banco, sem relógio, sem rede.
 /// </summary>
 public static class AvaliadorRota
 {
@@ -26,15 +26,11 @@ public static class AvaliadorRota
     {
         var horaAtual = new DateTime(agoraUtc.Year, agoraUtc.Month, agoraUtc.Day, agoraUtc.Hour, 0, 0, DateTimeKind.Utc);
 
-        // Pior faixa prevista por hora cheia. "uniao" tem toda hora que algum trecho prevê (serve para
-        // avisar de chuva); "futuras" só as horas que TODOS os trechos preveem: hora sem previsão num
-        // trecho não é hora tranquila, então não pode liberar espera nem aparecer como livre.
-        var porHora = trechos.SelectMany(t => t.Proximas)
+        // Pior faixa prevista por hora cheia, só nas horas que TODOS os trechos preveem: hora sem
+        // previsão num trecho não é hora tranquila, então não pode liberar a espera.
+        var futuras = trechos.SelectMany(t => t.Proximas)
             .GroupBy(h => h.InicioUtc)
             .OrderBy(g => g.Key)
-            .ToList();
-        var uniao = porHora.Select(g => new HoraRota(g.Key, g.Max(h => h.Faixa))).ToList();
-        var futuras = porHora
             .Where(g => trechos.All(t => t.Proximas.Any(h => h.InicioUtc == g.Key)))
             .Select(g => new HoraRota(g.Key, g.Max(h => h.Faixa)))
             .ToList();
@@ -48,32 +44,20 @@ public static class AvaliadorRota
                 .Where(h => h.InicioUtc <= limite && h.PiorFaixa <= FaixaRisco.MODERADO
                     && (!temCge || h.InicioUtc >= agoraUtc.AddHours(1)))
                 .Select(h => (DateTime?)h.InicioUtc).FirstOrDefault();
-            return new(EstadoRota.Esperar, critico.SubprefeituraId, null, ate, Faixa(trechos, horaAtual, futuras));
+            return new(EstadoRota.Esperar, critico.SubprefeituraId, ate, Faixa(trechos, horaAtual, futuras));
         }
 
         // Sem dado nunca vira "pode ir": o silêncio não é sinal de tranquilidade.
         var semDado = trechos.FirstOrDefault(t => t.FaixaAgora is null);
         if (semDado is not null)
-            return new(EstadoRota.SemDado, semDado.SubprefeituraId, null, null, []);
+            return new(EstadoRota.SemDado, semDado.SubprefeituraId, null, []);
 
-        // Chuva forte na próxima hora vira "com atenção" e não "esperar": o conselho útil é sair já.
+        // Atenção medida agora em algum trecho. Chuva só prevista não muda o veredito.
         var moderadoAgora = trechos.FirstOrDefault(t => t.FaixaAgora == FaixaRisco.MODERADO);
-        var proximaHora = uniao.Count > 0 ? uniao[0] : null;
-        var chuvaForteNaProxima = proximaHora is not null && proximaHora.PiorFaixa >= FaixaRisco.MODERADO;
-        if (moderadoAgora is not null || chuvaForteNaProxima)
-        {
-            var id = moderadoAgora?.SubprefeituraId
-                ?? trechos.First(t => t.Proximas.Any(h => h.InicioUtc == proximaHora!.InicioUtc && h.Faixa >= FaixaRisco.MODERADO)).SubprefeituraId;
-            return new(EstadoRota.ComAtencao, id, null, null, Faixa(trechos, horaAtual, futuras));
-        }
+        if (moderadoAgora is not null)
+            return new(EstadoRota.ComAtencao, moderadoAgora.SubprefeituraId, null, []);
 
-        DateTime? tranquiloAte = null;
-        foreach (var h in futuras)
-        {
-            if (h.PiorFaixa != FaixaRisco.BAIXO) break;
-            tranquiloAte = h.InicioUtc;
-        }
-        return new(EstadoRota.PodeIr, null, tranquiloAte, null, []);
+        return new(EstadoRota.PodeIr, null, null, []);
     }
 
     /// <summary>Hora atual (pior faixa de agora) mais as próximas, até HorasNaFaixa. Vazia sem previsão.</summary>

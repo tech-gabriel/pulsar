@@ -128,37 +128,4 @@ public class RiscoTrechoTests
         area.Chuva3hMedidaMm.Should().BeNull();
         area.Alagamento.Valor.Should().BeApproximately(DoModelo(1.25), 1e-9);
     }
-    // O posto do CGE da área entra na conta: vale a maior das duas (crítica de 15/11).
-    private static readonly EntradaScore Seco = new(0, 0, 0, 0, 20, "Campo Limpo");
-    private static AlagamentoArea Area(double valor, double? mm3h) => new(ComponenteScore.De(valor), mm3h);
-
-    [Fact]
-    public void ComPosto_PostoMediuMais_GanhaENomeiaOPosto()
-    {
-        var r = RiscoTrecho.ComPosto(Area(10, 4), Seco, new PostoNaArea("Ipiranga", 12.3, 15.8));
-        r.Posto.Should().Be("Ipiranga");
-        r.Chuva3hMedidaMm.Should().Be(15.8);
-        r.Alagamento.Valor.Should().BeGreaterThan(10);
-    }
-
-    [Fact]
-    public void ComPosto_TrechosMaisAltos_FicamOsTrechos()
-    {
-        var trechos = Area(90, 40);
-        RiscoTrecho.ComPosto(trechos, Seco, new PostoNaArea("Ipiranga", 1, 2)).Should().BeSameAs(trechos);
-    }
-
-    [Fact]
-    public void ComPosto_SemPosto_FicamOsTrechos()
-    {
-        var trechos = Area(30, 9.4);
-        RiscoTrecho.ComPosto(trechos, Seco, null).Should().BeSameAs(trechos);
-    }
-
-    [Fact]
-    public void ComPosto_EmpateEmZero_ValeAChuvaMaior()
-    {
-        var r = RiscoTrecho.ComPosto(Area(0, 0.2), Seco, new PostoNaArea("Ipiranga", 0.1, 0.4));
-        r.Posto.Should().Be("Ipiranga");
-    }
 }

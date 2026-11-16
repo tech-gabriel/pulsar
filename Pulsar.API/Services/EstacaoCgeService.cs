@@ -119,6 +119,26 @@ public class EstacaoCgeService : IEstacaoCgeService
         return resultado;
     }
 
+    public const string PrefixoCod = "cge:";
+
+    public async Task<IReadOnlyList<EstacaoChuva>> ObterEstacoesComChuvaAsync(DateTime agoraUtc, CancellationToken ct = default)
+    {
+        var desde = agoraUtc.AddMinutes(-JanelaLeituraMinutos);
+        var porPosto = (await _db.LeiturasEstacaoCge.AsNoTracking()
+                .Where(l => l.ColetadoEm >= desde && l.ColetadoEm <= agoraUtc)
+                .OrderBy(l => l.ColetadoEm)
+                .ToListAsync(ct))
+            .ToLookup(l => l.Posto);
+        var estacoes = new List<EstacaoChuva>();
+        foreach (var posto in PostosCge.Todos)
+        {
+            var leituras = porPosto[posto.Id].ToList();
+            if (leituras.Count == 0 || Medir(posto, Guid.Empty, leituras, agoraUtc) is not { } m) continue;
+            if (EstacaoChuva.Criar(PrefixoCod + posto.Id, posto.Lat, posto.Lon, m.Mm60, m.Mm180, null) is { } e) estacoes.Add(e);
+        }
+        return estacoes;
+    }
+
     /// <summary>Null quando o posto não tem dado válido agora (sem leitura, velha ou parado).</summary>
     private static ChuvaMedidaRegiao? Medir(PostoCge posto, Guid subId, IReadOnlyList<LeituraEstacaoCge> leituras, DateTime agora)
     {

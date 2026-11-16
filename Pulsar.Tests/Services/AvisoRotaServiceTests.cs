@@ -35,7 +35,7 @@ public class AvisoRotaServiceTests
         _push.Setup(p => p.NotificarUsuarioAsync(It.IsAny<Guid>(), It.IsAny<CriterioOptIn>(), It.IsAny<PushPayload>(), It.IsAny<CancellationToken>()))
              .ReturnsAsync(1);
         _rota.Setup(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), It.IsAny<CaminhoRota?>(), It.IsAny<CancellationToken>()))
-             .ReturnsAsync(new RotaAvaliacaoDto(estado, null, null, null, [], []));
+             .ReturnsAsync(new RotaAvaliacaoDto(estado, null, null, [], []));
         return new AvisoRotaService(ctx, _rota.Object, _push.Object, NullLogger<AvisoRotaService>.Instance);
     }
 

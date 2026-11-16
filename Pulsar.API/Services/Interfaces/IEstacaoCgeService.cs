@@ -16,6 +16,12 @@ public interface IEstacaoCgeService
     Task ColetarAsync(CancellationToken ct = default);
 
     /// <summary>
+    /// Os postos com 1 h e 3 h válidas, como estação com endereço (cod "cge:{posto}"), para a conta
+    /// por trecho: o posto do CGE manda no trecho perto dele como as estações do CEMADEN.
+    /// </summary>
+    Task<IReadOnlyList<Pulsar.API.Domain.Chuva.EstacaoChuva>> ObterEstacoesComChuvaAsync(DateTime agoraUtc, CancellationToken ct = default);
+
+    /// <summary>
     /// Uma entrada por subprefeitura ativa com dado medido válido (posto próprio ou vizinho próximo).
     /// Subprefeitura ausente = sem dado medido agora (a tela mostra "estimado").
     /// </summary>

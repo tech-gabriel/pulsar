@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Pulsar.API.Domain.Chuva;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Repositories.Data;
@@ -80,6 +81,28 @@ public class EstacaoCgeServiceTests : IDisposable
         await Servico(client.Object).ColetarAsync();
 
         (await _ctx.LeiturasEstacaoCge.CountAsync()).Should().Be(30);
+    }
+
+    // O posto vira estação com endereço para a conta por trecho: 1 h e 3 h, na posição do SAISP.
+    [Fact]
+    public async Task ObterEstacoesComChuva_PostoCom3h_VemComPosicaoECodCge()
+    {
+        await Semear(Lapa, (180, 1.0), (120, 2.0), (60, 4.0), (30, 6.0), (15, 7.5), (0, 9.0));
+
+        var e = (await Servico().ObterEstacoesComChuvaAsync(Agora)).Single();
+
+        e.Cod.Should().Be($"cge:{Lapa}");
+        e.Mm1h.Should().Be(5.0);
+        e.Mm3h.Should().Be(8.0);
+        e.Lat.Should().Be(PostosCge.Todos.Single(p => p.Id == Lapa).Lat);
+    }
+
+    [Fact]
+    public async Task ObterEstacoesComChuva_SemTresHoras_NaoEntra()
+    {
+        await Semear(Lapa, (30, 2.0), (15, 5.0), (0, 9.0));
+
+        (await Servico().ObterEstacoesComChuvaAsync(Agora)).Should().BeEmpty();
     }
 
     [Fact]

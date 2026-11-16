@@ -22,9 +22,12 @@ public class RiscoCelulasService : IRiscoCelulasService
     private readonly IGradeCelulas _grade;
     private readonly ICemadenService _cemaden;
     private readonly ILogger<RiscoCelulasService> _logger;
+    private readonly IEstacaoCgeService? _cge;
 
-    public RiscoCelulasService(PulsarDbContext db, IGradeCelulas grade, ICemadenService cemaden, ILogger<RiscoCelulasService> logger)
+    public RiscoCelulasService(PulsarDbContext db, IGradeCelulas grade, ICemadenService cemaden, ILogger<RiscoCelulasService> logger,
+        IEstacaoCgeService? cge = null)
     {
+        _cge = cge;
         _db = db;
         _grade = grade;
         _cemaden = cemaden;
@@ -39,7 +42,7 @@ public class RiscoCelulasService : IRiscoCelulasService
         if (_estacoes is not null) return _estacoes;
         try
         {
-            _estacoes = await _cemaden.ObterEstacoesComChuvaAsync(DateTime.UtcNow, ct);
+            _estacoes = await EstacoesMedidas.TodasAsync(_cemaden, _cge, DateTime.UtcNow, ct);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -93,8 +96,10 @@ public class RiscoCelulasService : IRiscoCelulasService
         var codigos = usadas.Select(e => e.Cod).ToList();
         var nomes = await _db.EstacoesCemaden.AsNoTracking().Where(e => codigos.Contains(e.CodEstacao))
             .ToDictionaryAsync(e => e.CodEstacao, e => e.Nome, ct);
+        foreach (var p in PostosCge.Todos) nomes[EstacaoCgeService.PrefixoCod + p.Id] = p.Nome;
         return new CelulasAgoraDto(agora,
-            usadas.Select(e => new EstacaoAgoraDto(e.Cod, e.Mm1h, e.Mm3h, nomes.GetValueOrDefault(e.Cod) ?? e.Cod)).ToList(), celulas);
+            usadas.Select(e => new EstacaoAgoraDto(e.Cod, e.Mm1h, e.Mm3h, nomes.GetValueOrDefault(e.Cod) ?? e.Cod,
+                e.Cod.StartsWith(EstacaoCgeService.PrefixoCod) ? "cge" : "cemaden", e.Lat, e.Lon)).ToList(), celulas);
     }
 
     public async Task<ResumoCelulas?> RegistrarAsync(Subprefeitura sub, ScorePerigo score, CancellationToken ct = default)

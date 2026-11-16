@@ -61,7 +61,6 @@ public class PublicoController : ControllerBase
                         PerigoPrincipal = resumo.ScoreAtual?.PerigoPrincipal,
                         Chuva3hMm = resumo.ScoreAtual?.Chuva3hMm,
                         Chuva3hMedidaMm = resumo.ScoreAtual?.Chuva3hMedidaMm,
-                        PostoChuvaMedida = resumo.ScoreAtual?.PostoChuvaMedida,
                         VentoKmH = resumo.UltimaLeitura?.VentoKmH,
                         SensacaoTermica = resumo.UltimaLeitura?.SensacaoTermica,
                         AlagamentosCge = [.. pontos[s.Id].Select(PontoAlagamentoCgeDto.De)],

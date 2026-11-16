@@ -56,29 +56,10 @@ public static class RiscoTrecho
         double? chuvaMedida = topo.Count > 0 && medidas.Count * 2 >= topo.Count ? medidas.Average() : null;
         return new AlagamentoArea(alagamento, chuvaMedida);
     }
-
-    /// <summary>
-    /// O posto do CGE da própria área também mede (crítica de 15/11: o posto marcava mais que as
-    /// estações e ficava de fora). Ele não tem coordenada publicada, então não entra em trecho:
-    /// vira uma conta da área inteira, com o fator dela, e vale a maior das duas. No empate de
-    /// risco, vale a chuva maior, para a tela não mostrar um número menor do que o posto mediu.
-    /// </summary>
-    public static AlagamentoArea ComPosto(AlagamentoArea pelosTrechos, EntradaScore modelo, PostoNaArea? posto)
-    {
-        if (posto is null) return pelosTrechos;
-        var risco = CalculadoraScore.Calcular(modelo with { Chuva1hMm = posto.Mm1h, Chuva3hMm = posto.Mm3h }, CalibracaoScore.Atual).Alagamento;
-        var ganha = risco.Valor > pelosTrechos.Alagamento.Valor
-            || (risco.Valor == pelosTrechos.Alagamento.Valor && posto.Mm3h > (pelosTrechos.Chuva3hMedidaMm ?? 0));
-        return ganha ? new AlagamentoArea(risco, posto.Mm3h, posto.Nome) : pelosTrechos;
-    }
 }
 
-/// <summary>Chuva de 1 h e 3 h do posto do CGE da própria área.</summary>
-public sealed record PostoNaArea(string Nome, double Mm1h, double Mm3h);
-
 /// <summary>Alagamento da área pelos trechos e a chuva medida de 3 h que o explica (null = modelo).</summary>
-/// <param name="Posto">Nome do posto do CGE quando foi ele que fez o número; null = estações dos trechos ou modelo.</param>
-public sealed record AlagamentoArea(ComponenteScore Alagamento, double? Chuva3hMedidaMm, string? Posto = null);
+public sealed record AlagamentoArea(ComponenteScore Alagamento, double? Chuva3hMedidaMm);
 
 /// <summary>Um trecho com o risco de alagamento dele e a estação que mandou na conta (null = modelo).</summary>
 public readonly record struct TrechoRisco(CelulaGrade Celula, ComponenteScore Risco, EstacaoChuva? Estacao);

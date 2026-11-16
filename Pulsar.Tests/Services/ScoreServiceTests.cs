@@ -112,7 +112,7 @@ public class ScoreServiceTests
     }
 
     // Chuva forte de modelo (ALTO pela área) com vento de 60 km/h, para o principal poder trocar.
-    private static (ScoreService svc, Guid subId) ComTrechos(Mock<IRiscoCelulasService> celulas, Func<Guid, IEstacaoCgeService>? cge = null)
+    private static (ScoreService svc, Guid subId) ComTrechos(Mock<IRiscoCelulasService> celulas)
     {
         var subId = Guid.NewGuid();
         var ultima = L(0, 20, vento: 60);
@@ -121,7 +121,7 @@ public class ScoreServiceTests
         subRepo.Setup(r => r.ObterComUltimaLeituraAsync(subId)).ReturnsAsync(sub);
         var leituraRepo = new Mock<ILeituraRepository>();
         leituraRepo.Setup(r => r.ObterHistoricoAsync(subId, 48)).ReturnsAsync([L(15, 20, vento: 60), ultima]);
-        return (new ScoreService(subRepo.Object, leituraRepo.Object, new Mock<IScoreRepository>().Object, celulas.Object, NullLogger<ScoreService>.Instance, cge?.Invoke(subId)), subId);
+        return (new ScoreService(subRepo.Object, leituraRepo.Object, new Mock<IScoreRepository>().Object, celulas.Object, NullLogger<ScoreService>.Instance), subId);
     }
 
     // O número oficial da área é o meio-termo dos trechos: estações marcando zero derrubam
@@ -182,34 +182,5 @@ public class ScoreServiceTests
         var score = await svc.CalcularEPersistirAsync(subId);
 
         score.FaixaAlagamento.Should().Be(FaixaRisco.ALTO);
-    }
-
-    // O posto do CGE da própria área mediu mais que as estações dos trechos: o número e a chuva
-    // que o explica passam a ser os dele. Posto vizinho não conta.
-    [Theory]
-    [InlineData(false, "Ipiranga")]
-    [InlineData(true, null)]
-    public async Task CalcularEPersistir_PostoDaAreaMediuMais_ValeOPosto(bool vizinho, string? posto)
-    {
-        var celulas = new Mock<IRiscoCelulasService>();
-        celulas.Setup(c => c.AlagamentoDaAreaAsync("Sé", It.IsAny<EntradaScore>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AlagamentoArea(ComponenteScore.De(0), 0));
-        var (svc, subId) = ComTrechos(celulas, id =>
-        {
-            var cge = new Mock<IEstacaoCgeService>();
-            cge.Setup(c => c.ObterPorSubprefeituraAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new Dictionary<Guid, ChuvaMedidaRegiao> { [id] = new(id, 1, "Ipiranga", vizinho, 3, 6, 30, 50, DateTime.UtcNow, 45) });
-            return cge.Object;
-        });
-
-        var score = await svc.CalcularEPersistirAsync(subId);
-
-        score.PostoChuvaMedida.Should().Be(posto);
-        if (posto is null) score.ValorAlagamento.Should().Be(0);
-        else
-        {
-            score.Chuva3hMedidaMm.Should().Be(45);
-            score.FaixaAlagamento.Should().Be(FaixaRisco.ALTO);
-        }
     }
 }

@@ -55,3 +55,11 @@ describe('rótulo do destino num trecho tocado', () => {
     expect(rotuloDoTrecho('Butantã', null)).toBe('Trecho no Butantã');
   });
 });
+
+describe('rótulo do destino: abreviações e palavras femininas', () => {
+  it('abreviação com ponto e ponte levam "da"', () => {
+    expect(rotuloDoTrecho('Sé', 'Av. Paulista')).toBe('Trecho perto da Av. Paulista, Sé');
+    expect(rotuloDoTrecho('Sé', 'Praça da Sé')).toBe('Trecho perto da Praça da Sé, Sé');
+    expect(rotuloDoTrecho('Mooca', 'Ponte Pequena')).toBe('Trecho perto da Ponte Pequena, Mooca');
+  });
+});

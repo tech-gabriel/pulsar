@@ -66,6 +66,10 @@ export default function ChuvaMedidaLinha({ nome, medida, chuva24h, numeroPelaMed
             {janelas.map((j) => <div key={j.quando}><b>{numero(j.mm)}<span>mm</span></b><i>{j.quando}</i></div>)}
           </div>
         ) : <p className="det-faixa-frase">{parou ? 'Parou de chover aqui' : frase}</p>}
+        {/* Frase-ponte (15/11): o topo diz que choveu num ponto da área e este posto está seco. */}
+        {numeroPelaMedida && !choveu && !parou && (
+          <p className="det-faixa-ponte">{`A chuva forte foi em outro ponto ${deNomeDe(nome)}.`}</p>
+        )}
       </div>
 
       <FolhaInferior aberta={aberta} onFechar={() => setAberta(false)} tituloId="titulo-folha-medida">

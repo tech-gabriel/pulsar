@@ -94,4 +94,15 @@ public class MapTilerGeocodingClientTests
     [InlineData("{\"features\":[]}")]
     public void ParseFeatureCollection_VazioOuSemFeatures_RetornaVazio(string json)
         => MapTilerGeocodingClient.ParseFeatureCollection(json).Should().BeEmpty();
+
+    // O endereço reverso só nomeia o destino se estiver perto do ponto tocado.
+    [Fact]
+    public void RuaSePerto_EnderecoAte300m_DevolveARua()
+        => MapTilerGeocodingClient.RuaSePerto(new("Rua do Oratório", -23.5564, -46.5991, "Rua do Oratório", "address"), -23.5560, -46.5990)
+            .Should().Be("Rua do Oratório");
+
+    [Fact]
+    public void RuaSePerto_EnderecoLonge_ENull()
+        => MapTilerGeocodingClient.RuaSePerto(new("Rua Longe", -23.5660, -46.5990, "Rua Longe", "address"), -23.5560, -46.5990)
+            .Should().BeNull();
 }

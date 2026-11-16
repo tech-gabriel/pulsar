@@ -17,6 +17,7 @@ describe('motivoDoRisco', () => {
   it('alagamento pela chuva medida cita a medida, não o modelo', () => {
     expect(motivoDoRisco({ faixa: 'ALTO', perigoPrincipal: 'ALAGAMENTO', chuva3hMm: 27, chuva3hMedidaMm: 38, nome: 'Mooca' }))
       .toBe('Choveu 38,0 mm em 3 h num ponto da Mooca');
+    expect(motivoDoRisco({ faixa: 'MODERADO', perigoPrincipal: 'ALAGAMENTO', chuva3hMm: 12, chuva3hMedidaMm: 0 })).toBe('Por chuva: 12,0 mm nas últimas 3h');
     expect(motivoDoRisco({ faixa: 'ALTO', perigoPrincipal: 'ALAGAMENTO', chuva3hMm: 27, chuva3hMedidaMm: 38 }))
       .toBe('Choveu 38,0 mm em 3 h num ponto da região');
   });

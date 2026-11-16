@@ -147,3 +147,13 @@ describe('numeroFaltando', () => {
     expect(numeroFaltando('Rua X 100', r('Rua X 1000'))).toBe('100');
   });
 });
+
+describe('numeroFaltando: rua com número no nome e CEP', () => {
+  const r = (nome: string, descricao = '') => ({ nome, descricao } as EnderecoBusca);
+  it('o número da casa é o último digitado', () => {
+    expect(numeroFaltando('Rua 25 de Março 100', r('Rua 25 de Março', 'Rua 25 de Março, São Paulo'))).toBe('100');
+  });
+  it('o CEP do resultado não conta como o número', () => {
+    expect(numeroFaltando('Rua X 100', r('Rua X', 'Rua X, São Paulo 01000-100'))).toBe('100');
+  });
+});

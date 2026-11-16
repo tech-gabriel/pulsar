@@ -7,7 +7,8 @@ import type { SubprefeituraMapaDto } from '../../types';
 import type { PontoRota } from './tipos';
 
 // Logradouros femininos: "perto da Rua", "perto da Av."; o resto, "perto do" (Viaduto, Largo...).
-const FEMININOS = /^(rua|r\.|avenida|av\.|alameda|al\.|travessa|tv\.|praça|pça\.|estrada|rodovia|ladeira|via|marginal|passarela)\b/i;
+// Fim por espaço ou fim do texto, não por \b: \b falha depois de "." e de "ç" ("Av. Paulista").
+const FEMININOS = /^(rua|r\.|avenida|av\.|alameda|al\.|travessa|tv\.|praça|pça\.|estrada|est\.|rodovia|rod\.|ladeira|via|marginal|passarela|ponte)(?=\s|$)/i;
 
 /**
  * Nome do destino quando a rota vai a um trecho tocado: a rua mais perto do centro dele, que diz

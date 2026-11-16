@@ -82,6 +82,15 @@ public class BuscaControllerTests : IClassFixture<PulsarWebApplicationFactory>
     }
 
     [Fact]
+    public async Task RuaPerto_NaN_Retorna400()
+    {
+        var token = await TokenAsync();
+        var response = await EnviarAsync("/api/busca/rua?lat=NaN&lon=NaN", token);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task RuaPerto_SemToken_Retorna401()
         => (await _client.GetAsync("/api/busca/rua?lat=-23.555&lon=-46.59")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 

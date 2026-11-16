@@ -59,9 +59,14 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
   const push = usePushSubscription(prefs, aberta);
   const { showToast } = useToast();
 
+  // O traçado depende só das coordenadas: trocar o rótulo (a rua do trecho chega depois) não
+  // refaz o corredor nem redesenha a linha.
+  const [oLat, oLon, dLat, dLon] = [origem?.lat, origem?.lon, destino?.lat, destino?.lon];
+  const origemPos = useMemo(() => (oLat != null && oLon != null ? { lat: oLat, lon: oLon, rotulo: '' } : null), [oLat, oLon]);
+  const destinoPos = useMemo(() => (dLat != null && dLon != null ? { lat: dLat, lon: dLon, rotulo: '' } : null), [dLat, dLon]);
   const corredor = useMemo(
-    () => (origem && destino && geojson ? tracarCorredor(origem, destino, geojson) : null),
-    [origem, destino, geojson],
+    () => (origemPos && destinoPos && geojson ? tracarCorredor(origemPos, destinoPos, geojson) : null),
+    [origemPos, destinoPos, geojson],
   );
   const ids = useMemo(
     () => (corredor?.ok && subs.length > 0 ? idsDosTrechos(corredor.nomes, subs) : []),
@@ -132,7 +137,7 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
   }, [chave, resultado]);
 
   const linha = useMemo<FeatureCollection | null>(() => {
-    if (!corredor?.ok || !origem || !destino) return null;
+    if (!corredor?.ok || !origemPos || !destinoPos) return null;
     const faixaPorNome = new Map((resultado?.trechos ?? []).map((t) => [normalizarNome(t.nome), t.faixa]));
     const trechos: Feature[] = corredor.segmentos.map((seg, i) => {
       // O segmento seguinte começa onde o anterior termina, para a linha não ter vão na divisa.
@@ -147,8 +152,8 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
     const ponto = (p: PontoRota, papel: 'origem' | 'destino', subId: string | undefined): Feature => ({
       type: 'Feature', properties: { papel, subId }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
     });
-    return { type: 'FeatureCollection', features: [...trechos, ponto(origem, 'origem', ids[0]), ponto(destino, 'destino', ids[ids.length - 1])] };
-  }, [corredor, resultado, origem, destino, ids]);
+    return { type: 'FeatureCollection', features: [...trechos, ponto(origemPos, 'origem', ids[0]), ponto(destinoPos, 'destino', ids[ids.length - 1])] };
+  }, [corredor, resultado, origemPos, destinoPos, ids]);
 
   const pedirAviso = useCallback(async () => {
     if (!chave || !destino) return;

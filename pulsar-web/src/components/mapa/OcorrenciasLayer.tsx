@@ -98,10 +98,12 @@ export default function OcorrenciasLayer({ ocorrencias }: { ocorrencias: Ocorren
           filter={['has', 'point_count']}
           paint={{
             'circle-color': COR_BOLHA,
-            'circle-stroke-color': 'rgba(255, 255, 255, 0.92)',
-            'circle-stroke-width': 2,
-            // Diâmetros 40, 46 e 54 px (menos de 10, menos de 50, mais), nunca abaixo de 40 para o toque.
-            'circle-radius': ['step', ['get', 'point_count'], 20, 10, 23, 50, 27],
+            // Bola pequena da família do mapa, com um halo do mesmo azul que cresce com a quantidade
+            // (F2, escolhida em 16/11/2026, como os agrupamentos do Apple Maps). Com o halo, o toque
+            // fica entre 36 e 56 px.
+            'circle-stroke-color': comAlfa(PALETA.azulProfundo, 0.28),
+            'circle-stroke-width': ['step', ['get', 'point_count'], 5, 10, 8, 50, 11],
+            'circle-radius': ['step', ['get', 'point_count'], 13, 10, 15, 50, 17],
           }}
         />
         <Layer
@@ -111,7 +113,7 @@ export default function OcorrenciasLayer({ ocorrencias }: { ocorrencias: Ocorren
           layout={{
             'text-field': ['get', 'point_count_abbreviated'],
             'text-font': ['Noto Sans Bold'],
-            'text-size': ['step', ['get', 'point_count'], 13, 10, 14, 50, 15],
+            'text-size': 11,
             'text-allow-overlap': true,
           }}
           paint={{ 'text-color': '#ffffff' }}

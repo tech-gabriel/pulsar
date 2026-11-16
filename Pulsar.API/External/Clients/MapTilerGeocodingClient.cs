@@ -57,7 +57,7 @@ public class MapTilerGeocodingClient : IGeocodingClient
         return ParseFeatureCollection(json);
     }
 
-    public async Task<string?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
+    public async Task<RuaProxima?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
     {
         var apiKey = _configuration["MapTiler:ApiKey"];
         if (string.IsNullOrWhiteSpace(apiKey)) return null;
@@ -65,21 +65,25 @@ public class MapTilerGeocodingClient : IGeocodingClient
         var client = _httpClientFactory.CreateClient("maptiler");
         var c = System.Globalization.CultureInfo.InvariantCulture;
         var url = string.Create(c, $"{lon:0.######},{lat:0.######}.json") +
-            $"?key={apiKey}&language=pt&types=address&limit=1";
+            $"?key={apiKey}&language=pt&types=address&limit=5";
 
         using var response = await client.GetAsync(url, ct);
         response.EnsureSuccessStatusCode();
-        var primeiro = ParseFeatureCollection(await response.Content.ReadAsStringAsync(ct)).FirstOrDefault();
-        return RuaSePerto(primeiro, lat, lon);
+        // O primeiro do MapTiler é o mais relevante, não o mais perto: entre os 5, vale o mais perto
+        // do ponto (o pino arrastado ao lado de uma rua não pode ganhar o nome de outra).
+        return RuaMaisPerto(ParseFeatureCollection(await response.Content.ReadAsStringAsync(ct)), lat, lon);
     }
 
-    /// <summary>Endereço reverso a mais de uns 300 m não é "a rua daqui": melhor o nome da região.</summary>
-    public const double AlcanceRuaMetros = 300;
+    /// <summary>Endereço reverso fora do trecho (o trecho tem uns 530 m do centro à borda) não é "a rua daqui": melhor o nome da região.</summary>
+    public const double AlcanceRuaMetros = 500;
 
-    public static string? RuaSePerto(EnderecoGeocodificado? r, double lat, double lon)
-        => r is null || string.IsNullOrWhiteSpace(r.Nome)
-            || Pulsar.API.Services.GeoDistancia.HaversineMetros(lat, lon, r.Latitude, r.Longitude) > AlcanceRuaMetros
-            ? null : r.Nome;
+    public static RuaProxima? RuaMaisPerto(IEnumerable<EnderecoGeocodificado> resultados, double lat, double lon)
+        => resultados
+            .Where(r => !string.IsNullOrWhiteSpace(r.Nome))
+            .Select(r => new RuaProxima(r.Nome, Pulsar.API.Services.GeoDistancia.HaversineMetros(lat, lon, r.Latitude, r.Longitude)))
+            .Where(r => r.Metros <= AlcanceRuaMetros)
+            .OrderBy(r => r.Metros)
+            .FirstOrDefault();
 
     /// <summary>
     /// Faz o parse da FeatureCollection do MapTiler em resultados de endereço.

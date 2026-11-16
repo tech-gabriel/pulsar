@@ -20,7 +20,7 @@ describe('subprefeituraIdDoPonto', () => {
 describe('pontoDoLocal e rótulos', () => {
   it('converte sem fonte', () => {
     const p = pontoDoLocal({ tipo: 'CASA', latitude: 1, longitude: 2, rotulo: 'R', subprefeituraId: 'm', subprefeituraNome: 'Mooca' });
-    expect(p).toEqual({ lat: 1, lon: 2, rotulo: 'R' });
+    expect(p).toEqual({ lat: 1, lon: 2, rotulo: 'Casa: R' });
     expect(ROTULO_TIPO.TRABALHO).toBe('Trabalho');
   });
 });

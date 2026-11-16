@@ -12,11 +12,23 @@ const FEMININOS = /^(rua|r\.|avenida|av\.|alameda|al\.|travessa|tv\.|praça|pça
 
 /**
  * Nome do destino quando a rota vai a um trecho tocado: a rua mais perto do centro dele, que diz
- * para onde a rota vai ("Trecho perto da Rua Taquari, Mooca"). Sem a rua, a região ("Trecho na Mooca").
+ * para onde a rota vai ("Perto da Rua Taquari": curto para caber no campo Para; a região está no mapa).
  */
 export function rotuloDoTrecho(nomeArea: string, rua: string | null): string {
   if (!rua) return `Trecho ${emNomeDe(nomeArea)}`;
-  return `Trecho perto ${FEMININOS.test(rua) ? 'da' : 'do'} ${rua}, ${nomeArea}`;
+  return pertoDe(rua);
+}
+
+function pertoDe(rua: string): string {
+  return `Perto ${FEMININOS.test(rua) ? 'da' : 'do'} ${rua}`;
+}
+
+/** Até aqui o pino está na rua; mais longe, só perto dela (o endereço que a nomeou fica a essa distância). */
+export const PINO_NA_RUA_METROS = 60;
+
+/** Nome de onde o pino arrastado caiu: "Rua X, Mooca" em cima da rua, "Perto da Rua X, Mooca" longe dela. */
+export function rotuloDoPino(nomeArea: string, rua: string, metros: number): string {
+  return `${metros <= PINO_NA_RUA_METROS ? rua : pertoDe(rua)}, ${nomeArea}`;
 }
 
 /**

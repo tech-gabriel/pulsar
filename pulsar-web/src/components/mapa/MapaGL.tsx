@@ -2,11 +2,11 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
 import Map, { AttributionControl, Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre';
 import type { GeoJSONSource, StyleSpecification } from 'maplibre-gl';
-import { Flag } from 'lucide-react';
+import { CloudRain, Flag } from 'lucide-react';
 import maplibregl from './maplibre';
 import { comChaveMapTiler, estiloBaseCompartilhado, urlReservaMapTiler } from './estiloBase';
 import { circuloGeojson, deslocamentoDoPainel, paddingDaRota, paddingDoPainel } from './geometria';
-import { ZOOM, ZOOM_TRECHOS } from './zoom';
+import { ZOOM, ZOOM_TRECHOS, zoomCidade } from './zoom';
 import ZoomControles from './ZoomControles';
 import RegioesLayer from './RegioesLayer';
 import TrechosLayer from './TrechosLayer';
@@ -28,11 +28,15 @@ import MarcadoresLugares from './MarcadoresLugares';
 const ZOOM_LUGAR = ZOOM.sub - 0.5;
 
 const SP: [number, number] = [-46.6333, -23.5505]; // lon, lat
+/** Celular estreito: a cidade anda um pouco para a esquerda, longe da coluna de botões da direita. */
+const centroCidade = (largura: number): [number, number] => (largura < 360 ? [SP[0] + 0.1, SP[1]] : SP);
 const ESPERA_ESTILO_MS = 8000;
 const CHAVE_MAPTILER = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
 const COR_BUSCA = '#00BCFF';
 // Saída da rota: o "você está aqui", --color-pulsar-500 (#00A6F4), com halo a 18%.
 const COR_ORIGEM = '#00A6F4';
+/** Saída num lugar (Casa, endereço): o mesmo ponto, mais escuro e sem o halo do "você está aqui". */
+const COR_ORIGEM_LUGAR = '#0069A8';
 const COR_ORIGEM_HALO = 'rgba(0, 166, 244, 0.18)';
 // Borda branca da saída: o branco do texto sobre o azul da marca, lê nos dois temas.
 const COR_BORDA_ORIGEM = '#ffffff';
@@ -75,7 +79,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, destinoSemRota = null, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, destinoSemRota = null, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto, pontoMedida = null } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -84,6 +88,7 @@ export default function MapaGL(props: PropsMapa) {
   const [carregou, setCarregou] = useState(false);
   const [idPrimeiroSimbolo, setIdPrimeiroSimbolo] = useState<string | undefined>();
   const reduzido = !!useReducedMotion();
+  const larguraInicial = typeof window === 'undefined' ? 1024 : window.innerWidth;
   const estilo = reserva ? (CHAVE_MAPTILER ? urlReservaMapTiler(theme, CHAVE_MAPTILER) : null) : estiloOfm;
 
   // Estilo base do tema; se o OpenFreeMap falhar, a reserva do MapTiler vale até sair do mapa.
@@ -124,7 +129,8 @@ export default function MapaGL(props: PropsMapa) {
   useEffect(() => {
     if (!carregou) return;
     if (!zonaEmFoco) {
-      voar(SP, ZOOM.sp, 600);
+      const largura = mapRef.current?.getContainer().clientWidth ?? 1024;
+      voar(centroCidade(largura), zoomCidade(largura), 600);
       return;
     }
     if (subSelRef.current) return;
@@ -298,14 +304,17 @@ export default function MapaGL(props: PropsMapa) {
       ref={mapRef}
       mapLib={maplibregl}
       mapStyle={estilo}
-      initialViewState={{ longitude: SP[0], latitude: SP[1], zoom: ZOOM.sp }}
+      initialViewState={{ longitude: centroCidade(larguraInicial)[0], latitude: SP[1], zoom: zoomCidade(larguraInicial) }}
       style={{ width: '100%', height: '100%' }}
       attributionControl={false}
+      locale={{ 'AttributionControl.ToggleAttribution': 'Créditos do mapa' }}
       // Sempre: o react-map-gl só lê o transformRequest ao criar o mapa, e a reserva pode entrar depois.
       // O comChaveMapTiler não mexe em URL que não seja do MapTiler.
       transformRequest={CHAVE_MAPTILER ? (url) => ({ url: comChaveMapTiler(url, CHAVE_MAPTILER) }) : undefined}
       onLoad={(e) => {
         performance.mark('mapa-base');
+        // O crédito do mapa abre sozinho; aqui começa recolhido (pedido de 15/11), o "i" abre.
+        e.target.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
         setCarregou(true);
         setIdPrimeiroSimbolo(primeiroSimbolo(e.target));
         e.target.once('idle', () => performance.mark('mapa-pronto'));
@@ -334,7 +343,7 @@ export default function MapaGL(props: PropsMapa) {
             idPrimeiroSimbolo={idPrimeiroSimbolo}
             comTrechos={!!trechos}
           />
-          {trechos && onTocarTrecho && (
+          {trechos && (
             <TrechosLayer dados={trechos} selecionado={trechoSelecionado} onTocar={onTocarTrecho} idPrimeiroSimbolo={idPrimeiroSimbolo} />
           )}
           <ScoreLabel
@@ -344,6 +353,7 @@ export default function MapaGL(props: PropsMapa) {
             zonaEmFoco={zonaEmFoco}
             atenuado={overlayAlagamento}
             ocultos={ocultos}
+            onSelecionar={onSelecionarSub}
           />
         </>
       )}
@@ -365,16 +375,24 @@ export default function MapaGL(props: PropsMapa) {
           <Layer id="pulsar-rota-linha" type="line" beforeId={idPrimeiroSimbolo} filter={['==', ['geometry-type'], 'LineString']}
             layout={{ 'line-cap': 'round', 'line-join': 'round' }}
             paint={{ 'line-color': ['get', 'cor'], 'line-width': 7, 'line-dasharray': [0, 12 / 7], 'line-opacity': reduzido && !destinoNasceu ? 0 : 1, 'line-opacity-transition': { duration: 200, delay: 0 } }} />
-          <Layer id="pulsar-rota-origem-halo" type="circle" filter={['==', ['get', 'papel'], 'origem']}
+          <Layer id="pulsar-rota-origem-halo" type="circle" filter={['all', ['==', ['get', 'papel'], 'origem'], ['==', ['get', 'aqui'], true]]}
             paint={{ 'circle-radius': 15, 'circle-color': COR_ORIGEM_HALO }} />
           <Layer id="pulsar-rota-origem" type="circle" filter={['==', ['get', 'papel'], 'origem']}
-            paint={{ 'circle-radius': 8, 'circle-color': COR_ORIGEM, 'circle-stroke-color': COR_BORDA_ORIGEM, 'circle-stroke-width': 3 }} />
+            paint={{ 'circle-radius': 8, 'circle-color': ['case', ['==', ['get', 'aqui'], true], COR_ORIGEM, COR_ORIGEM_LUGAR], 'circle-stroke-color': COR_BORDA_ORIGEM, 'circle-stroke-width': 3 }} />
         </Source>
       )}
       {/* A chegada nasce quando a linha termina (com menos movimento, só aparece). */}
       {destinoRota && destinoNasceu && desenho?.chave === chaveRota && (
         <Marker longitude={destinoRota[0]} latitude={destinoRota[1]} anchor="bottom" offset={[0, 5]} style={{ pointerEvents: 'none' }}>
           <PinoChegada />
+        </Marker>
+      )}
+      {/* O ponto da medida: o vermelho do trecho tem um lugar no mapa (crítica de 15/11). */}
+      {pontoMedida && !rota && (
+        <Marker longitude={pontoMedida.lon} latitude={pontoMedida.lat} anchor="center" style={{ pointerEvents: 'none' }}>
+          <div className="ponto-medida" role="img" aria-label={pontoMedida.rotulo} title={pontoMedida.rotulo}>
+            <CloudRain size={14} strokeWidth={2.4} aria-hidden="true" />
+          </div>
         </Marker>
       )}
       {destinoSemRota && !rota && (
@@ -390,7 +408,7 @@ export default function MapaGL(props: PropsMapa) {
           draggable
           onDragEnd={(e) => onMoverPonto(e.lngLat.lat, e.lngLat.lng)}
         >
-          <div title="Arraste para ajustar o ponto">
+          <div title="Arraste para ajustar o ponto" role="img" aria-label="Ponto buscado. Arraste para ajustar.">
             <PinBusca />
           </div>
         </Marker>

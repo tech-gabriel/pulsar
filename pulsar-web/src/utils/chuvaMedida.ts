@@ -17,13 +17,17 @@ export function fraseChuvaMedida(m: ChuvaMedida): string | null {
 export const temChuvaMedida = (medida: ChuvaMedida | null | undefined): medida is ChuvaMedida =>
   !!medida && fraseChuvaMedida(medida) !== null;
 
-export const km = (v: number) => `${v.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km`;
+/** Distância sempre com uma casa ("2,0 km", "0,4 km"), igual em todo o app. */
+export const km = (v: number) => `${v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
+
+/** O CEMADEN cola o número no nome ("Penha3"): para ler, "Penha 3". Comparações usam o nome cru. */
+export const nomeEstacao = (nome: string) => nome.replace(/(\p{L})(\d+)$/u, '$1 $2');
 
 /**
  * De onde é a leitura, curto, ao lado de "Medida agora" (opção A, escolhida em 15/11): o lugar e,
  * quando se sabe, a distância. CGE ou CEMADEN fica para a folha do toque.
  */
 export function ondeMediu(m: ChuvaMedida): string {
-  if (m.fonte === 'cemaden') return `Estação ${m.posto}${m.distanciaKm != null ? ` · ${km(m.distanciaKm)}` : ''}`;
+  if (m.fonte === 'cemaden') return `Estação ${nomeEstacao(m.posto)}${m.distanciaKm != null ? ` · ${km(m.distanciaKm)}` : ''}`;
   return `Posto ${m.posto}${m.vizinho ? ' · vizinho' : ''}`;
 }

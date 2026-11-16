@@ -29,3 +29,19 @@ export function listaNomes(nomes: string[]): string {
   if (nomes.length === 2) return `${nomes[0]} e ${nomes[1]}`;
   return `${nomes[0]}, ${nomes[1]} e mais ${nomes.length - 2}`;
 }
+
+// Abreviações do CGE no começo do logradouro e no meio do nome ("R Sto Arcadio").
+const ABREVIACOES: Record<string, string> = {
+  r: 'Rua', av: 'Avenida', tn: 'Túnel', al: 'Alameda', tv: 'Travessa', trav: 'Travessa', pca: 'Praça', pç: 'Praça',
+  estr: 'Estrada', rod: 'Rodovia', lgo: 'Largo', vd: 'Viaduto', pte: 'Ponte',
+  sto: 'Santo', sta: 'Santa', sao: 'São', dr: 'Doutor', prof: 'Professor', pres: 'Presidente',
+  gal: 'General', cel: 'Coronel', eng: 'Engenheiro', mal: 'Marechal', brig: 'Brigadeiro',
+};
+
+/** Endereço do CGE por extenso, para ler: "R Sto Arcadio" vira "Rua Santo Arcadio". */
+export function porExtenso(endereco: string): string {
+  return endereco.replace(/(^|\s)([A-Za-zÀ-ÿ]+)\.?(?=\s|$)/g, (todo, antes: string, palavra: string) => {
+    const cheia = ABREVIACOES[palavra.toLowerCase()];
+    return cheia ? `${antes}${cheia}` : todo;
+  });
+}

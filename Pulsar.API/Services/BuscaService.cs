@@ -38,28 +38,89 @@ public class BuscaService : IBuscaService
         var dtos = resultados
             .Select(r => new EnderecoBuscaDto
             {
-                Nome = string.IsNullOrWhiteSpace(r.Nome) ? r.Descricao : r.Nome,
-                Descricao = r.Descricao,
+                Nome = SemCaixaAlta(string.IsNullOrWhiteSpace(r.Nome) ? r.Descricao : r.Nome),
+                Descricao = SemCaixaAlta(r.Descricao),
                 Tipo = r.Tipo,
                 Latitude = r.Latitude,
                 Longitude = r.Longitude,
             })
+            // O MapTiler repete a mesma rua com outra grafia ("Rua da Mooca" e "RUA  DA MOOCA", CEPs
+            // diferentes): para quem lê é o mesmo resultado, então fica só o primeiro (crítica de 15/11).
+            .DistinctBy(d => ChaveDeDuplicata(d.Descricao))
             .ToList();
+        // Um ponto de interesse que é só a rua com número ("Rua da Mooca 1001") repete o endereço
+        // que já está na lista: sai.
+        var ruas = dtos.Where(d => d.Tipo == "address").Select(d => ChaveDeDuplicata(d.Nome)).ToList();
+        dtos.RemoveAll(d => d.Tipo == "poi" && ruas.Any(r => ChaveDeDuplicata(d.Nome).StartsWith(r + " ")));
 
         _cache.Set(chave, (IReadOnlyList<EnderecoBuscaDto>)dtos, CacheTtl);
         return dtos;
+    }
+
+    private static readonly HashSet<string> Conectivos = ["da", "de", "do", "das", "dos", "e"];
+
+    /// <summary>
+    /// Trecho escrito todo em maiúsculas ("RUA DA MOOCA") vira "Rua da Mooca"; o resto fica como veio.
+    /// Vale por pedaço entre vírgulas, para "SP" e nomes já bem escritos não mudarem.
+    /// </summary>
+    public static string SemCaixaAlta(string texto)
+    {
+        if (string.IsNullOrEmpty(texto)) return texto;
+        var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+        return string.Join(",", texto.Split(',').Select(pedaco =>
+        {
+            var palavras = pedaco.Split(' ');
+            if (palavras.Count(p => p.Any(char.IsLetter)) < 2) return pedaco;
+            if (pedaco != pedaco.ToUpper(pt))
+            {
+                // Já em caixa mista: só o conectivo com inicial maiúscula no meio ("Domingos De Morais").
+                var inicio = true;
+                return string.Join(" ", palavras.Select(p =>
+                {
+                    var meio = !inicio && p.Length > 0;
+                    if (p.Length > 0) inicio = false;
+                    return meio && p != "E" && Conectivos.Contains(p.ToLower(pt)) ? p.ToLower(pt) : p;
+                }));
+            }
+            var primeira = true;
+            return string.Join(" ", palavras.Select(p =>
+            {
+                if (p.Length == 0) return p;
+                var baixa = p.ToLower(pt);
+                var conectivo = !primeira && Conectivos.Contains(baixa);
+                primeira = false;
+                return conectivo ? baixa : char.ToUpper(baixa[0], pt) + baixa[1..];
+            }));
+        }));
+    }
+
+    /// <summary>Descrição sem CEP, acento, caixa e espaço repetido: dois resultados com a mesma chave são o mesmo para quem lê.</summary>
+    public static string ChaveDeDuplicata(string descricao)
+    {
+        var semCep = System.Text.RegularExpressions.Regex.Replace(descricao ?? string.Empty, @"\b\d{5}-?\d{3}\b", " ");
+        var semAcento = new string(semCep.Normalize(System.Text.NormalizationForm.FormD)
+            .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+            .ToArray());
+        return System.Text.RegularExpressions.Regex.Replace(semAcento.ToLowerInvariant(), @"\s+", " ").Trim();
     }
 
     /// <summary>
     /// A rua não muda: o cache vale um dia, pelo ponto arredondado a uns 10 m (o centro de um trecho
     /// é sempre o mesmo, então cada trecho custa uma consulta ao MapTiler por dia).
     /// </summary>
-    public async Task<string?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
+    public async Task<RuaProxima?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
     {
         var chave = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"rua:{lat:0.0000},{lon:0.0000}");
-        if (_cache.TryGetValue(chave, out string? cached)) return cached;
+        if (CacheRuas.TryGetValue(chave, out RuaProxima? cached)) return cached;
         var rua = await _geocodingClient.RuaPertoAsync(lat, lon, ct);
-        _cache.Set(chave, rua, TimeSpan.FromDays(1));
+        CacheRuas.Set(chave, rua, new MemoryCacheEntryOptions { Size = 1, AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1) });
         return rua;
     }
+
+    /// <summary>
+    /// Cache próprio e com teto para as ruas: o ponto vem do app e pode ser qualquer um dentro de
+    /// São Paulo, então sem teto um cliente encheria a memória da API. Os 2.277 centros de trecho
+    /// cabem com folga; acima do teto o cache descarta os mais antigos.
+    /// </summary>
+    private static readonly MemoryCache CacheRuas = new(new MemoryCacheOptions { SizeLimit = 10_000, CompactionPercentage = 0.2 });
 }

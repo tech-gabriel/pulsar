@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FeatureCollection } from 'geojson';
-import { escolherDestinoComoChegar, rotuloDoTrecho } from '../../../features/rota/destino';
+import { escolherDestinoComoChegar, rotuloDoPino, rotuloDoTrecho } from '../../../features/rota/destino';
 import type { SubprefeituraMapaDto } from '../../../types';
 
 const leve = JSON.parse(
@@ -47,8 +47,8 @@ describe('destino do "Como chegar"', () => {
 
 describe('rótulo do destino num trecho tocado', () => {
   it('com a rua: perto da rua, com o artigo certo', () => {
-    expect(rotuloDoTrecho('Mooca', 'Rua Taquari')).toBe('Trecho perto da Rua Taquari, Mooca');
-    expect(rotuloDoTrecho('Mooca', 'Viaduto Bresser')).toBe('Trecho perto do Viaduto Bresser, Mooca');
+    expect(rotuloDoTrecho('Mooca', 'Rua Taquari')).toBe('Perto da Rua Taquari');
+    expect(rotuloDoTrecho('Mooca', 'Viaduto Bresser')).toBe('Perto do Viaduto Bresser');
   });
   it('sem a rua: a região, com a preposição dela', () => {
     expect(rotuloDoTrecho('Mooca', null)).toBe('Trecho na Mooca');
@@ -56,10 +56,17 @@ describe('rótulo do destino num trecho tocado', () => {
   });
 });
 
+describe('rótulo do pino arrastado', () => {
+  it('em cima da rua leva o nome dela; longe, só perto', () => {
+    expect(rotuloDoPino('Mooca', 'Rua Taquari', 20)).toBe('Rua Taquari, Mooca');
+    expect(rotuloDoPino('Mooca', 'Rua Taquari', 200)).toBe('Perto da Rua Taquari, Mooca');
+  });
+});
+
 describe('rótulo do destino: abreviações e palavras femininas', () => {
   it('abreviação com ponto e ponte levam "da"', () => {
-    expect(rotuloDoTrecho('Sé', 'Av. Paulista')).toBe('Trecho perto da Av. Paulista, Sé');
-    expect(rotuloDoTrecho('Sé', 'Praça da Sé')).toBe('Trecho perto da Praça da Sé, Sé');
-    expect(rotuloDoTrecho('Mooca', 'Ponte Pequena')).toBe('Trecho perto da Ponte Pequena, Mooca');
+    expect(rotuloDoTrecho('Sé', 'Av. Paulista')).toBe('Perto da Av. Paulista');
+    expect(rotuloDoTrecho('Sé', 'Praça da Sé')).toBe('Perto da Praça da Sé');
+    expect(rotuloDoTrecho('Mooca', 'Ponte Pequena')).toBe('Perto da Ponte Pequena');
   });
 });

@@ -10,7 +10,6 @@ import { idDaArea } from '../features/cidade/cidade';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { normalizarNome } from '../utils/texto';
 import { coresParaFaixa, labelFaixa } from '../utils/risco';
-import { fundoParaTextoBranco } from '../utils/contraste';
 
 /** Lista de todas as subprefeituras com busca; clicar abre o histórico 24h. */
 export default function HistoricoListPage() {
@@ -92,7 +91,7 @@ export default function HistoricoListPage() {
                 {/* Score pill */}
                 <span
                   className="inline-flex items-center justify-center rounded-full flex-shrink-0"
-                  style={{ background: fundoParaTextoBranco(cores.fill), color: '#FFFFFF', width: 44, height: 44, fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15, boxShadow: `0 0 10px ${cores.fill}55` }}
+                  style={{ background: cores.fill, color: '#FFFFFF', textShadow: 'var(--contorno-numero)', width: 44, height: 44, fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15, boxShadow: `0 0 10px ${cores.fill}55` }}
                 >
                   {score != null ? Math.round(score) : '—'}
                 </span>

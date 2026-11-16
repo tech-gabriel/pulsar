@@ -33,15 +33,24 @@ interface Props {
    * No celular ele vive aqui, embaixo da busca: o cartão do pé do mapa fica atrás da folha.
    */
   aviso?: string | null;
+  /** Texto que o mapa põe no campo (a rua de onde o pino caiu, depois do arraste). */
+  textoBusca?: string | null;
+  /** Avisa quando a lista de resultados abre e fecha (o convite de alertas sai do caminho). */
+  onListaAberta?: (aberta: boolean) => void;
+  /** Avisa quando a dica da localização está na tela: o mapa não empilha outro aviso junto. */
+  onDicaVisivel?: (visivel: boolean) => void;
 }
 
 const MIN_CHARS = 3;
 
 // Ícone por categoria do resultado, para o usuário distinguir lugar × rua × bairro.
+const AREAS = new Set(['place', 'neighbourhood', 'locality', 'municipal_district', 'municipality', 'county', 'region', 'subregion', 'postal_code']);
+
 function iconePara(tipo: string) {
   if (tipo === 'poi') return Landmark;
-  if (tipo === 'address') return MapPin;
-  return Building2; // place, neighbourhood, locality, municipal_district…
+  // Bairro, cidade, distrito: o prédio. Rua e endereço (o MapTiler manda "address", "street", "road"...): o pino.
+  if (AREAS.has(tipo)) return Building2;
+  return MapPin;
 }
 
 // Remove o nome repetido do início da descrição, deixando só o contexto.
@@ -58,12 +67,14 @@ function contextoDe(r: EnderecoBusca): string {
  * Busca unificada sobreposta ao mapa (SP3): subprefeituras pelo nome primeiro, depois
  * endereços (geocoding via backend), num campo só.
  */
-export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, onAbrirRota, embutida = false, semDica = false, dicaTrecho = false, onDispensarDicaTrecho, aviso = null }: Props) {
+export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, isMobile, onUsarLocalizacao, localizando = false, onAbrirRota, embutida = false, semDica = false, dicaTrecho = false, onDispensarDicaTrecho, aviso = null, textoBusca = null, onListaAberta, onDicaVisivel }: Props) {
   const { termo, setTermo, resultados, carregando, erro, limpar } = useBuscaEndereco();
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const dicaLocalizacao = useDicaLocalizacao();
-  const mostrarDica = dicaLocalizacao.mostrarDica && !semDica;
+  // Quem já achou o lugar pela busca não precisa da dica do alvo agora (volta numa próxima visita).
+  const [buscou, setBuscou] = useState(false);
+  const mostrarDica = dicaLocalizacao.mostrarDica && !semDica && !buscou;
   const { dispensar } = dicaLocalizacao;
 
   // Fecha o dropdown ao clicar fora do componente.
@@ -84,6 +95,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
 
   function selecionar(endereco: EnderecoBusca) {
     onSelecionar(endereco, numeroFaltando(termo, endereco));
+    setBuscou(true);
     setTermo(endereco.nome || endereco.descricao);
     setAberto(false);
   }
@@ -92,6 +104,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
 
   function selecionarArea(area: Area) {
     onSelecionarArea(area);
+    setBuscou(true);
     setTermo(area.nome);
     setAberto(false);
   }
@@ -109,6 +122,16 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
   }
 
   const mostrarDropdown = aberto && (subs.length > 0 || termo.trim().length >= MIN_CHARS);
+  useEffect(() => { onListaAberta?.(mostrarDropdown); }, [mostrarDropdown, onListaAberta]);
+  const dicaNaTela = !aviso && !dicaTrecho && !!onUsarLocalizacao && mostrarDica && !mostrarDropdown && !embutida;
+  useEffect(() => { onDicaVisivel?.(dicaNaTela); }, [dicaNaTela, onDicaVisivel]);
+
+  // O mapa trocou o texto (pino arrastado): o campo mostra o mesmo lugar que a rota vai usar.
+  const [textoAplicado, setTextoAplicado] = useState(textoBusca);
+  if (textoBusca !== textoAplicado) {
+    setTextoAplicado(textoBusca);
+    if (textoBusca) setTermo(textoBusca);
+  }
 
   return (
     <div
@@ -133,8 +156,9 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
           }}
           onFocus={() => setAberto(true)}
           onKeyDown={onKeyDown}
-          placeholder="Subprefeitura, rua ou lugar…"
+          placeholder="Buscar rua ou região"
           aria-label="Buscar subprefeitura ou endereço"
+          id="busca-mapa"
           className="mapa-input flex-1 h-11 bg-transparent text-sm outline-none min-w-0"
         />
         {carregando && (
@@ -184,13 +208,13 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
 
       {/* Com os resultados abertos a dica sai, para a lista colar na busca. */}
       {aviso && !mostrarDropdown && !embutida && (
-        <div role="status" className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
+        <div role="status" className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-xs">
           <MapPin size={13} className="mapa-txt-suave flex-shrink-0" />
           <span className="flex-1">{aviso}</span>
         </div>
       )}
       {!aviso && dicaTrecho && !mostrarDropdown && !embutida && (
-        <div className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
+        <div className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-xs">
           <Hexagon size={13} className="mapa-txt-suave flex-shrink-0" />
           <span className="flex-1">Toque num trecho para ver o risco daquele pedaço</span>
           <button
@@ -203,8 +227,8 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
           </button>
         </div>
       )}
-      {!aviso && !dicaTrecho && onUsarLocalizacao && mostrarDica && !mostrarDropdown && !embutida && (
-        <div className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-[11px]">
+      {dicaNaTela && (
+        <div className="superficie rounded-2xl mapa-txt mt-1.5 flex items-center gap-2 px-3 py-2 text-xs">
           <LocateFixed size={13} className="mapa-txt-suave flex-shrink-0" />
           <span className="flex-1">Toque no alvo para ver a sua subprefeitura</span>
           <button
@@ -228,7 +252,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
                   <button type="button" onClick={() => selecionarArea(a)} className="mapa-item flex w-full items-center gap-2 px-3 py-2.5 text-left min-h-11">
                     <span className="min-w-0 flex-1 leading-snug">
                       <span className="mapa-txt block truncate text-xs font-semibold">{a.nome}</span>
-                      <span className="mapa-txt-suave block truncate text-[11px]">{a.zona}</span>
+                      <span className="mapa-txt-suave block truncate text-xs">{a.zona}</span>
                     </span>
                     <BadgeRisco faixa={a.faixaRisco} size="sm" />
                   </button>
@@ -259,7 +283,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
                       {r.nome || r.descricao}
                     </span>
                     {contexto && (
-                      <span className="mapa-txt-suave block truncate text-[11px]">{contexto}</span>
+                      <span className="mapa-txt-suave block truncate text-xs">{contexto}</span>
                     )}
                   </span>
                 </button>

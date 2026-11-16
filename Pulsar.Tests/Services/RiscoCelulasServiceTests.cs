@@ -476,6 +476,21 @@ public class RiscoCelulasServiceTests : IDisposable
         r.Celulas[0].DistanciaKm.Should().BeApproximately(2, 0.11);
         r.Celulas[1].Valor.Should().BeGreaterThanOrEqualTo(r.Celulas[0].Valor);
         r.Estacoes.Should().ContainSingle().Which.Mm3h.Should().Be(60);
+        r.Estacoes[0].Nome.Should().Be("E"); // sem cadastro, o código no lugar do nome
+    }
+
+    // O detalhe do trecho mostra de qual estação é a leitura: o nome vem do cadastro.
+    [Fact]
+    public async Task Agora_EstacaoComCadastro_LevaONome()
+    {
+        await SemearLeiturasAsync(17.5 / 3);
+        _estacoes.Add(Estacao(2, 40, 60, 80));
+        _ctx.EstacoesCemaden.Add(new EstacaoCemaden { CodEstacao = "E", CodIbge = "3550308", Nome = "Vila Ema", Latitude = -23.5, Longitude = -46.4 });
+        await _ctx.SaveChangesAsync();
+
+        var r = await Servico(1, 1.25).AgoraAsync();
+
+        r.Estacoes.Should().ContainSingle().Which.Nome.Should().Be("Vila Ema");
     }
 
     [Fact]

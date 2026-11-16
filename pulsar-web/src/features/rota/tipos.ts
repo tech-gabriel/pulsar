@@ -19,7 +19,6 @@ export interface HoraRota {
 export interface RotaAvaliacao {
   estado: EstadoRota;
   trechoDecisivoId: string | null;
-  tranquiloAteUtc: string | null;
   esperarAteUtc: string | null;
   trechos: TrechoRota[];
   horas: HoraRota[];

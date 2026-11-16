@@ -1,13 +1,10 @@
-import { useState } from 'react';
-import { Info } from 'lucide-react';
 import type { Camada } from '../../utils/camadas';
 import { PALETA, comAlfa } from '../../utils/paleta';
 import MiniIconeOcorrencia from './MiniIconeOcorrencia';
 
 // ── Legenda dinâmica do mapa (ETAPA 6.1/6.3) ───────────────────────────────────
-// Card glassmorphism no canto inferior do mapa. O conteúdo (título, barra de
-// gradiente e labels) muda conforme a camada ativa. No desktop é sempre visível;
-// no mobile vira um pill colapsável (toque para expandir/recolher).
+// O conteúdo (título, barra de gradiente e labels) muda conforme a camada ativa. Aparece dentro
+// do seletor de camadas (LayerControl), não sobre o mapa.
 
 interface LegendaConfig {
   titulo: string;
@@ -24,8 +21,9 @@ function gradiente(...tons: string[]): string {
 
 const LEGENDAS: Record<Camada, LegendaConfig> = {
   score: {
-    titulo: 'Score de Perigo',
-    gradiente: gradiente(PALETA.verde, PALETA.amarelo, PALETA.vermelho),
+    titulo: 'Risco',
+    // O semáforo da Defesa Civil SP, em degradê (escolha de 16/11/2026).
+    gradiente: gradiente(PALETA.riscoVerde, PALETA.riscoAmarelo, PALETA.riscoVermelho),
     labels: ['0', '30', '60', '100'],
   },
   temperatura: {
@@ -56,7 +54,7 @@ const TITULO: React.CSSProperties = {
 const LABEL: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
   fontWeight: 400,
-  fontSize: 10,
+  fontSize: 11,
   color: 'var(--mapa-controle-texto-suave)',
 };
 
@@ -71,7 +69,6 @@ const ITENS_ALAGAMENTO: { tipo: 'ALAGAMENTO' | 'INUNDACAO'; rotulo: string }[] =
 
 interface Props {
   camadaAtiva: Camada;
-  isMobile: boolean;
   /** Overlay de alagamentos ligado: acrescenta a chave das ocorrências. */
   overlayAlagamento?: boolean;
 }
@@ -112,53 +109,77 @@ function ConteudoLegenda({ config, overlayAlagamento }: { config: LegendaConfig;
   );
 }
 
-export default function MapLegend({ camadaAtiva, isMobile, overlayAlagamento = false }: Props) {
+/**
+ * A legenda da camada ativa, sem posição própria. Mora no seletor de camadas (escolha de 16/11/2026):
+ * aparece só quando a pessoa está escolhendo o que ver, como no Google Maps e no Apple Maps, e não
+ * fica parada sobre o mapa.
+ */
+export default function MapLegend({ camadaAtiva, overlayAlagamento = false }: Props) {
   const config = LEGENDAS[camadaAtiva];
-  const [expandido, setExpandido] = useState(false);
-  // Com o overlay ligado ele é a informação nova no mapa: o pill colapsado do
-  // mobile anuncia os alagamentos, não a escala da camada.
-  const tituloPill = overlayAlagamento ? 'Alagamentos' : config.titulo;
-
-  // ── Desktop / tablet: card fixo no canto inferior direito (margin 16px) ──────
-  if (!isMobile) {
-    return (
-      <div
-        className="superficie rounded-2xl legenda-mapa pointer-events-auto"
-        style={{ padding: '10px 14px', minWidth: 160 }}
-        aria-label={`Legenda: ${config.titulo}`}
-      >
-        <ConteudoLegenda config={config} overlayAlagamento={overlayAlagamento} />
-      </div>
-    );
-  }
-
-  // ── Mobile: pill colapsável. Posicionado acima do drawer (que ocupa ~3.5rem) ──
-  // para não sobrepor o handle; lado esquerdo para liberar o FAB (à direita).
   return (
-    <div className="legenda-pill absolute z-[1000] pointer-events-auto" style={{ left: 8, bottom: 'var(--topo-folha)' }}>
-      {expandido ? (
-        <button
-          type="button"
-          onClick={() => setExpandido(false)}
-          className="superficie rounded-2xl block text-left active:scale-[0.98] transition-transform"
-          style={{ padding: '10px 14px', minWidth: 160 }}
-          aria-expanded
-          aria-label={`Recolher legenda: ${tituloPill}`}
-        >
-          <ConteudoLegenda config={config} overlayAlagamento={overlayAlagamento} />
-        </button>
+    <div style={{ padding: "10px 14px", minWidth: 160 }} aria-label={`Legenda: ${config.titulo}`}>
+      <ConteudoLegenda config={config} overlayAlagamento={overlayAlagamento} />
+    </div>
+  );
+}
+
+// Cartão "Como ler" do computador (escolha de 16/11/2026, opção C): abre pelo botão "i" da pílula
+// de camadas e explica a camada ativa. No risco, a barra marca onde muda a faixa e dá o nome dela.
+const COMO_LER: Record<Camada, { titulo: string; texto: string }> = {
+  score: { titulo: 'Como ler o risco', texto: 'Número de 0 a 100 em cada região, com as cores da Defesa Civil.' },
+  temperatura: { titulo: 'Como ler a temperatura', texto: 'Temperatura agora em cada região, em °C.' },
+  chuva: { titulo: 'Como ler a chuva', texto: 'Chuva agora em cada região, em milímetros por hora.' },
+  vento: { titulo: 'Como ler o vento', texto: 'Vento agora em cada região, em km/h.' },
+};
+
+/** Divisões das faixas do risco (ClassificacaoRisco no backend: até 30, até 60, acima). */
+const CORTES_RISCO = [30, 60];
+
+export function CartaoComoLer({ camadaAtiva, overlayAlagamento = false }: Props) {
+  const config = LEGENDAS[camadaAtiva];
+  const texto = COMO_LER[camadaAtiva];
+  const risco = camadaAtiva === 'score';
+  const marca = (pct: number): React.CSSProperties => ({ position: 'absolute', left: `${pct}%`, translate: '-50% 0' });
+  return (
+    <div key={camadaAtiva} className="legend-fade">
+      <p style={{ font: '700 14px var(--font-heading)', color: 'var(--text-primary)', margin: 0 }}>{texto.titulo}</p>
+      <p style={{ font: '400 12.5px/1.4 var(--font-body)', color: 'var(--text-secondary)', margin: '2px 0 10px' }}>{texto.texto}</p>
+      <div style={{ position: 'relative', height: 8, borderRadius: 4, background: config.gradiente }}>
+        {risco && CORTES_RISCO.map((c) => (
+          <i key={c} aria-hidden="true" style={{ position: 'absolute', left: `${c}%`, top: -2, bottom: -2, width: 2, background: 'var(--superficie)' }} />
+        ))}
+      </div>
+      {risco ? (
+        <>
+          <div style={{ position: 'relative', height: 15, marginTop: 4, ...LABEL, color: 'var(--text-secondary)' }}>
+            <span style={{ position: 'absolute', left: 0 }}>0</span>
+            {CORTES_RISCO.map((c) => <span key={c} style={marca(c)}>{c}</span>)}
+            <span style={{ position: 'absolute', right: 0 }}>100</span>
+          </div>
+          <div style={{ position: 'relative', height: 17, marginTop: 5, font: '500 11.5px var(--font-body)', color: 'var(--text-secondary)' }}>
+            <span style={{ position: 'absolute', left: 0 }}>Tranquilo</span>
+            <span style={marca(45)}>Atenção</span>
+            <span style={{ position: 'absolute', right: 0 }}>Alerta</span>
+          </div>
+        </>
       ) : (
-        <button
-          type="button"
-          onClick={() => setExpandido(true)}
-          className="mapa-controle flex items-center gap-1.5 active:scale-[0.98] transition-transform"
-          style={{ padding: '8px 12px', minHeight: 44, minWidth: 120 }}
-          aria-expanded={false}
-          aria-label={`Expandir legenda: ${tituloPill}`}
-        >
-          <Info size={16} className="mapa-txt-suave flex-shrink-0" />
-          <span className="truncate" style={TITULO}>{tituloPill}</span>
-        </button>
+        <div className="flex justify-between" style={{ marginTop: 4, ...LABEL, color: 'var(--text-secondary)' }}>
+          {config.labels.map((l) => <span key={l}>{l}</span>)}
+        </div>
+      )}
+      {overlayAlagamento && (
+        <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border-glass)' }}>
+          <p style={{ font: '600 12.5px var(--font-body)', color: 'var(--text-primary)', margin: '0 0 6px' }}>Alagamentos dos últimos 12 meses</p>
+          <div className="flex flex-col" style={{ gap: 4 }}>
+            {ITENS_ALAGAMENTO.map(({ tipo, rotulo }) => (
+              <div key={rotulo} className="flex items-center" style={{ gap: 6 }}>
+                <span className="flex-shrink-0 inline-flex"><MiniIconeOcorrencia tipo={tipo} lado={16} /></span>
+                <span style={{ font: '500 12px var(--font-body)', color: 'var(--text-secondary)' }}>{rotulo}</span>
+              </div>
+            ))}
+            <p style={{ font: '400 12px var(--font-body)', color: 'var(--text-secondary)', margin: '2px 0 0' }}>Número na bola = ocorrências agrupadas</p>
+          </div>
+        </div>
       )}
     </div>
   );

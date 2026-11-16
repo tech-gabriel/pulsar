@@ -84,7 +84,7 @@ html.light {
   --text-primary: #0F172A;
   --text-secondary: #475569;
   --text-muted: rgba(71, 85, 105, 0.6);
-  --text-accent: #0084D1;
+  --text-accent: #0069A8; /* o #0084D1 dava 3,9:1 em texto pequeno sobre o branco */
   --glow-cyan: 0 0 12px rgba(0, 132, 209, 0.15);
   --glass-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
@@ -154,10 +154,10 @@ body {
   opacity: 0.5;
 }
 
-/* Scrollbar customizada do painel (width 4px, thumb pulsar-700) */
+/* Scrollbar do painel: fina e neutra. Azul, parecia um indicador de foco (crítica de 15/11). */
 .painel-scroll {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-pulsar-700) transparent;
+  scrollbar-color: color-mix(in srgb, var(--text-primary) 22%, transparent) transparent;
 }
 .painel-scroll::-webkit-scrollbar {
   width: 4px;
@@ -166,7 +166,7 @@ body {
   background: transparent;
 }
 .painel-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-pulsar-700);
+  background: color-mix(in srgb, var(--text-primary) 22%, transparent);
   border-radius: 4px;
 }
 
@@ -307,12 +307,33 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 .pulsar-score-circle.selecionado {
   border-color: rgba(255, 255, 255, 0.95);
 }
+/* Alagamento do CGE no tema escuro: o rosa claro do token era um bloco de tema claro no painel escuro. */
+html:not(.light) .cge-alag { background: color-mix(in srgb, #ef4444 16%, transparent); color: #fecaca; box-shadow: inset 0 0 0 1px color-mix(in srgb, #ef4444 35%, transparent); }
+/* Atalho de teclado para a busca: só aparece com o foco. */
+.pular-para-busca { position: absolute; left: 12px; top: calc(var(--topo-app) + 8px); z-index: 1300; padding: 10px 14px; border-radius: 12px; background: var(--color-pulsar-700); color: #fff; font: 600 14px var(--font-body); }
+.pular-para-busca:not(:focus) { width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* O campo da busca não tem contorno próprio: o foco do teclado aparece na cápsula inteira. */
+.mapa-controle:has(.mapa-input:focus-visible), .busca-embutida :has(> .mapa-input:focus-visible) { box-shadow: 0 0 0 2px var(--color-pulsar-500); }
+/* "i" dos créditos do mapa: 24 px de desenho, 44 px de toque. */
+.maplibregl-ctrl-attrib-button { position: relative; }
+.maplibregl-ctrl-attrib-button::after { content: ''; position: absolute; inset: -10px; }
+/* 320 px: "Dashboard" cortava por 2 px. */
+@media (max-width: 340px) { .tabbar-mobile { padding: 4px 2px; gap: 0; } .tabbar-item { padding: 0; letter-spacing: -.02em; } }
+/* Ponto da medida (estação do CEMADEN ou posto do CGE) do risco aberto. */
+.ponto-medida { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #0F172A; color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
+/* Bola do mapa (16/11/2026): cor pura da faixa, borda na mesma cor mais fechada (D1, dá
+   profundidade sem o branco), número branco com contorno para ler até no amarelo. */
+:root { --contorno-numero: 0 0 2px rgba(0, 0, 0, .75), 0 0 1px rgba(0, 0, 0, .9); }
+.pulsar-score-circle.bola { background: var(--cor); color: #fff; border: 2px solid color-mix(in srgb, var(--cor) 70%, #000); text-shadow: var(--contorno-numero); box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
+.pulsar-score-circle.bola.selecionado { border-color: #fff; }
+.pulsar-score-circle:focus-visible { outline: 3px solid var(--color-pulsar-500); outline-offset: 2px; }
 /* Casa e trabalho no mapa (F4b): ponto na vista ampla, etiqueta de perto. A área de toque tem
    44 px mesmo com o ponto de 24 px; o pé da etiqueta é o ponto exato salvo. */
 .lugar-marcador { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; background: none; border: 0; padding: 0; cursor: pointer; }
 /* De perto, a etiqueta abre para o lado oposto ao círculo da região (F4b-P1): pé no ponto exato,
    haste horizontal e a pílula. "direita" = pílula à direita do ponto. */
-.lugar-marcador[data-modo="etiqueta"] { flex-direction: row-reverse; justify-content: flex-start; min-height: 0; }
+.lugar-marcador[data-modo="etiqueta"] { flex-direction: row-reverse; justify-content: flex-start; min-height: 0; position: relative; }
+.lugar-marcador[data-modo="etiqueta"]::after { content: ''; position: absolute; inset: -5px 0; } /* toque de 44 px sem mexer no desenho */
 .lugar-marcador[data-modo="etiqueta"][data-lado="esquerda"] { flex-direction: row; }
 .lugar-marcador[data-modo="etiqueta"] .lugar-haste { height: 2px; } /* largura vem do componente */
 .lugar-marcador[data-modo="etiqueta"] .lugar-pe { margin-top: 0; }
@@ -360,101 +381,42 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 
 /* ── Tooltip do mapa (superfície sólida) ──────────────────────────────────────────────────────*/
 /* Popup do MapLibre com a classe pulsar-tooltip: o conteúdo vence o default
-   (.maplibregl-popup-content { background:#fff }) por especificidade. */
+   (.maplibregl-popup-content { background:#fff }) por especificidade. Cartão sólido e compacto
+   (C1, 16/11/2026): nome e número na cor da faixa; chuva, calor e vento uma por linha. */
+.pulsar-tooltip { pointer-events: none; z-index: 5; } /* acima dos pinos de Casa e Trabalho */
 .pulsar-tooltip .maplibregl-popup-content {
   background: var(--superficie);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
   color: #ffffff;
   /* Texto em alto contraste sobre o fundo escuro (light sobrescreve abaixo). */
   --text-primary: #ffffff;
   --text-secondary: #cfeaff;
   font-family: var(--font-body);
-  line-height: 1.45;
-  padding: 12px 14px;
-  min-width: 220px;
-  max-width: 280px;
+  line-height: 1.4;
+  padding: 9px 11px 5px;
+  width: 232px;
   white-space: normal;
 }
-.pulsar-tooltip .maplibregl-popup-tip {
-  display: none; /* setinha oculta: o tooltip segue o mouse */
-}
-.pulsar-tooltip { pointer-events: none; }
-.pulsar-tooltip .pt-titulo {
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  color: var(--text-primary);
-}
-.pulsar-tooltip .pt-regiao {
-  font-size: 11px;
-  color: var(--text-secondary);
-  opacity: 0.8;
-  margin-top: 1px;
-}
-.pulsar-tooltip .pt-vazio {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 6px;
-}
-
+.pulsar-tooltip .maplibregl-popup-tip { display: none; } /* setinha oculta: o tooltip segue o mouse */
+.pulsar-tooltip .pt-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pulsar-tooltip .pt-titulo { font: 700 13.5px var(--font-heading); letter-spacing: -0.01em; color: var(--text-primary); min-width: 0; }
+.pulsar-tooltip .pt-score { font: 800 20px/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--c); }
+.pulsar-tooltip .pt-vazio { font-size: 12px; color: var(--text-secondary); margin: 6px 0 4px; }
 /* Alagamento oficial do CGE: usa a cor de ALTO pela classe pt-ALTO. */
-.pulsar-tooltip .pt-cge {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c);
-  margin: -2px 0 10px;
-}
-
-/* Cores por faixa (sobrescritas com tons mais escuros no tema claro). */
-.pulsar-tooltip .pt-BAIXO { --c: #4ade80; }
-.pulsar-tooltip .pt-MODERADO { --c: #fbbf24; }
-.pulsar-tooltip .pt-ALTO { --c: #f87171; }
+.pulsar-tooltip .pt-cge { font-size: 12px; font-weight: 600; color: var(--c); margin-top: 4px; }
+.pulsar-tooltip .pt-dados { margin-top: 6px; }
+.pulsar-tooltip .pt-dado { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-top: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent); }
+.pulsar-tooltip .pt-dado svg { width: 14px; height: 14px; color: var(--text-accent); flex-shrink: 0; }
+.pulsar-tooltip .pt-rot { font-size: 11.5px; color: var(--text-secondary); width: 42px; flex-shrink: 0; }
+.pulsar-tooltip .pt-dado b { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pulsar-tooltip .pt-medido { font: 500 10.5px var(--font-body); font-style: normal; color: var(--text-secondary); margin-left: auto; }
+/* As cores da faixa são as da Defesa Civil, iguais às do mapa. */
+.pulsar-tooltip .pt-BAIXO { --c: #1E9E4A; }
+.pulsar-tooltip .pt-MODERADO { --c: #F2C200; }
+.pulsar-tooltip .pt-ALTO { --c: #D62C2C; }
 .pulsar-tooltip .pt-SEM { --c: #cbd5e1; }
-
-/* Cabeçalho: nome e zona à esquerda, score à direita. Depois a faixa (pílula) e uma linha com
-   os três dados que mexem no risco. Prévia curta: o resto está a um clique, no detalhe. */
-.pulsar-tooltip .pt-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.pulsar-tooltip .pt-score {
-  font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 22px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  color: var(--c);
-}
-.pulsar-tooltip .pt-score-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
-.pulsar-tooltip .pt-faixa {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 9px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c);
-  background: color-mix(in srgb, var(--c) 16%, transparent);
-}
-.pulsar-tooltip .pt-faixa::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
-.pulsar-tooltip .pt-motivo { font-size: 12px; color: var(--text-secondary); }
-.pulsar-tooltip .pt-linha {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  color: var(--text-primary);
-}
-.pulsar-tooltip .pt-linha span { display: inline-flex; align-items: center; gap: 4px; }
-/* A chuva medida é mais longa que o mm/h e não cabe na linha: desce para uma linha só dela,
-   com temperatura e vento em cima (duas linhas, não três empilhadas). */
-.pulsar-tooltip .pt-linha .pt-chuva-medida { order: 1; flex-basis: 100%; }
-.pulsar-tooltip .pt-medido { font: 600 10.5px var(--font-body); font-style: normal; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); }
-.pulsar-tooltip .pt-linha svg { width: 14px; height: 14px; color: var(--text-secondary); flex-shrink: 0; }
 
 /* ── Mapa: layout do tablet e do computador (direção A, espelhada) ──────────────────────────
    Celular (< 768): busca no topo, folha que sobe de baixo, cards centrados acima dela.
@@ -471,9 +433,6 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
   bottom: var(--topo-folha);
   width: min(28rem, calc(100% - 1.5rem));
 }
-/* Celular: a legenda e o convite de alertas ocupam o mesmo canto. Uma peça por vez: enquanto o
-   convite está na tela, a legenda some e volta quando ele é aceito ou fechado. */
-body:has(.convite-push) .legenda-pill { display: none; }
 /* Pilha de avisos + legenda: no celular não existe (cada peça se posiciona sozinha). */
 .pilha-mapa { display: contents; }
 @media (min-width: 768px) {
@@ -482,11 +441,9 @@ body:has(.convite-push) .legenda-pill { display: none; }
     right: 12px; top: calc(var(--topo-app) + 8px); width: min(24rem, calc(100% - 24px)); pointer-events: none;
   }
   .pilha-mapa > * { position: static !important; margin: 0 !important; transform: none !important; inset: auto !important; width: 100% !important; pointer-events: auto; }
-  .pilha-mapa > .legenda-mapa { width: auto !important; order: -1; }
 }
 @media (min-width: 1024px) {
   .pilha-mapa { right: auto; left: 12px; top: auto; bottom: 16px; align-items: flex-start; }
-  .pilha-mapa > .legenda-mapa { order: 1; }
 }
 
 /* Camadas em pílula (tablet e computador). No topo, centrada na parte do mapa que o painel não cobre. */
@@ -495,12 +452,24 @@ body:has(.convite-push) .legenda-pill { display: none; }
   top: calc(var(--topo-app) + 8px); left: 50%; translate: -50% 0;
 }
 .camadas-pilula .layer-btn { border-radius: 999px !important; padding: 0 16px !important; min-height: 40px; }
+/* Botão "i" e cartão "Como ler" da pílula de camadas (16/11/2026, opção C). */
+.camadas-info { display: grid; place-items: center; width: 40px; min-height: 40px; margin-left: 2px; border-radius: 999px; flex-shrink: 0; color: var(--text-accent); background: color-mix(in srgb, var(--text-accent) 12%, transparent); transition: background-color 150ms ease-out; }
+.camadas-info:hover, .camadas-info.aberto { background: color-mix(in srgb, var(--text-accent) 22%, transparent); }
+.camadas-info:active { transform: scale(.96); }
+.camadas-como-ler { position: absolute; left: 50%; translate: -50% 0; top: calc(100% + 10px); width: 300px; padding: 14px 16px 12px; border-radius: 18px; box-shadow: 0 8px 28px rgba(0, 0, 0, .22); }
 @media (min-width: 1024px) {
   .camadas-pilula { left: calc((100% - var(--largura-painel) - 26px) / 2); }
+  /* O "i" do crédito do mapa ficaria embaixo do painel: vai para a esquerda dele. */
+  .maplibregl-map .maplibregl-ctrl-bottom-right { right: calc(var(--largura-painel) + 26px); }
+}
+/* No tablet o painel ocupa a base inteira: o "i" do crédito vai para baixo da legenda, no alto. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .maplibregl-map .maplibregl-ctrl-bottom-right { bottom: auto; top: calc(var(--topo-app) + 82px); }
 }
 /* No pé, a partir de 1280: centrada na tela (cabe entre a coluna da esquerda e o painel). */
 @media (min-width: 1280px) {
   .camadas-pilula { top: auto; bottom: 20px; left: 50%; }
+  .camadas-como-ler { top: auto; bottom: calc(100% + 10px); }
 }
 /* Alagamentos logo abaixo do zoom (2 x 40 px + margens). */
 .alag-toggle { position: absolute; z-index: 1000; left: 12px; top: calc(var(--topo-app) + 104px); border-radius: 999px !important; }
@@ -643,6 +612,8 @@ body:has(.convite-push) .legenda-pill { display: none; }
 html.light .score-ring-valor {
   color: var(--c-escura);
 }
+/* A faixa por extenso no topo do detalhe: no escuro o âmbar puro dava 4,47:1 sobre o fundo tingido. */
+html:not(.light) .det-hero-faixa.score-ring-valor { color: color-mix(in srgb, var(--c) 80%, #fff); }
 /* Título do perigo em "O que fazer agora": o mesmo par de cores, ou o vermelho escuro some no
    fundo vinho do tema escuro. */
 /* No escuro a cor viva pura dá 3,9:1 no texto de 12,5 px (crítica 15/11); clareada, passa de 4,5:1. */
@@ -661,7 +632,9 @@ html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
 }
 .det-hero-num { font: 800 52px/1 var(--font-heading); letter-spacing: -.04em; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .det-hero-faixa { font: 700 17px/1.2 var(--font-heading); }
-.det-hero-frase { font-size: 13.5px; line-height: 1.4; color: var(--text-secondary); margin-top: 2px; }
+.det-hero-frase { font-size: 13.5px; line-height: 1.4; color: var(--text-secondary); margin-top: 2px; text-wrap: pretty; }
+/* No escuro, o texto secundário sobre o fundo tingido da faixa (verde do Tranquilo) caía a 3,8:1. */
+html:not(.light) .det-hero .det-hero-frase { color: var(--text-primary); }
 .det-medida-fonte { font-size: 11.5px; color: var(--text-secondary); }
 .med-item { display: grid; gap: 2px; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent); }
 .med-item b { font: 600 16px/1.35 var(--font-body); font-variant-numeric: tabular-nums; color: var(--text-primary); }
@@ -670,13 +643,16 @@ html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
 .prev-barra i { display: block; width: 100%; max-width: 22px; border-radius: 6px 6px 3px 3px; background: var(--prev-chuva); opacity: .85; }
 .prev-barra.forte i { background: var(--prev-forte); opacity: 1; }
 .prev-valor { font: 600 10.5px var(--font-body); color: var(--text-primary); font-variant-numeric: tabular-nums; min-height: 14px; }
-.prev-hora { font: 500 10.5px var(--font-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.prev-hora { font: 500 11px var(--font-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 /* Detalhe no desenho de 14/11/2026 (entrega 4 do H3). Resumo em cima (risco e linhas), o resto
    abre ao puxar a alça no celular; as ações ficam presas no pé nas duas alturas. */
-.det-alca { flex-shrink: 0; width: 100%; height: 22px; display: flex; align-items: center; justify-content: center; touch-action: none; cursor: grab; }
+.det-alca { flex-shrink: 0; width: 100%; height: 44px; margin-bottom: -22px; padding-top: 8.5px; position: relative; z-index: 0; display: flex; align-items: flex-start; justify-content: center; touch-action: none; cursor: grab; }
 .det-alca span { width: 36px; height: 5px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary) 22%, transparent); }
 .det-cab { flex-shrink: 0; display: flex; align-items: flex-start; gap: 8px; padding: 14px 16px 10px; }
-.det-alca + .det-cab { padding-top: 2px; }
+/* Alça de 44 px (crítica de 15/11): ela desce 22 px por trás do cabeçalho, que deixa o toque
+   passar (menos nos botões). A borda da folha cortava qualquer área extra para cima. */
+.det-alca + .det-cab { padding-top: 2px; position: relative; z-index: 1; pointer-events: none; }
+.det-alca + .det-cab :is(button, a) { pointer-events: auto; }
 .det-cab h2 { font: 800 24px/1.15 var(--font-heading); letter-spacing: -.03em; color: var(--text-primary); }
 .det-cab p { font-size: 12.5px; color: var(--text-secondary); }
 .det-fechar { flex-shrink: 0; width: 44px; height: 44px; margin: -8px -8px -8px 0; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--text-secondary); }
@@ -689,6 +665,7 @@ html.light { --prev-chuva: #3b82f6; --prev-forte: #1d4ed8; }
 .det-linha span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Frases-ponte: por que o número de um lugar difere do de outro (15/11). Secundárias, quebram linha. */
 .det-linha-ponte { display: block; margin-top: 2px; white-space: normal; font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
+.det-faixa-modelo { font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
 .det-faixa-ponte { margin-top: 4px; font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
 .det-resto > :first-child { margin-top: 14px; }
 .det-sec { margin-top: 20px; }
@@ -709,10 +686,11 @@ button.det-faixa-de::after { content: ''; position: absolute; inset: -14px 0; }
 .det-par { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .det-par b { display: block; font: 700 22px/1.15 var(--font-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--text-primary); }
 .det-par.menor b { font-size: 17px; }
+.det-par.um { grid-template-columns: 1fr; }
 .det-par b span { font: 500 13px var(--font-body); letter-spacing: 0; color: var(--text-secondary); margin-left: 3px; }
 .det-par i { font-style: normal; font-size: 12px; color: var(--text-secondary); }
 .det-aviso { font-size: 12px; line-height: 1.4; color: var(--text-secondary); margin-top: 8px; }
-.det-faixa .prev-barras { padding: 4px 0 0; height: 104px; }
+.det-faixa .prev-barras { padding: 4px 0 0; height: 84px; }
 .det-quad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .det-quad > div { padding: 11px 4px; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
 .det-quad > div + div { border-left: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); }
@@ -727,8 +705,9 @@ button.det-faixa-de::after { content: ''; position: absolute; inset: -14px 0; }
 .det-tel strong { font: 700 15px var(--font-heading); font-variant-numeric: tabular-nums; }
 .det-fim-nota { font-size: 12.5px; line-height: 1.45; color: var(--text-secondary); }
 .det-pe { flex-shrink: 0; display: flex; gap: 8px; padding: 10px 16px 12px; border-top: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent); }
-.det-acao { flex: 1; min-width: 0; min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 12px; font: 600 13px var(--font-body); color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 7%, transparent); white-space: nowrap; }
-.det-acao.forte { flex: 1.7; background: var(--color-pulsar-600); color: #fff; }
+/* 44 px: alvo de toque mínimo (crítica de 15/11; eram 38). */
+.det-acao { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 12px; font: 600 13px var(--font-body); color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 7%, transparent); white-space: nowrap; }
+.det-acao.forte { flex: 1.7; background: var(--color-pulsar-700); color: #fff; }
 .det-acao.ligado { color: var(--text-accent); }
 .det-acao:active { transform: scale(.97); transition: transform 100ms ease-out; }
 
@@ -879,7 +858,8 @@ button.det-faixa-de::after { content: ''; position: absolute; inset: -14px 0; }
 
 /* Botão principal com gradiente (ETAPA 5.3) */
 .btn-gradient {
-  background: linear-gradient(135deg, #0084D1, #00A6F4);
+  /* Branco passa de 4,5:1 nas duas pontas (o #00A6F4 ficava em 3:1). */
+  background: linear-gradient(135deg, #0069A8, #0077BD);
   color: #fff;
   font-weight: 600;
   border-radius: 8px;
@@ -1108,7 +1088,7 @@ html.sem-transparencia :is(.app-header, .mapa-controle, .tabbar-mobile) { backgr
 /* Controle ligado (ex.: Alagamentos): azul sólido e sem vidro, com anel, para ler o estado de
    longe. Três classes para vencer também o `html.sem-transparencia :is(...)`. */
 .mapa-controle.layer-btn.ativo {
-  background: var(--color-pulsar-600) !important;
+  background: var(--color-pulsar-700) !important;
   color: #FFFFFF !important;
   backdrop-filter: none;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-pulsar-500) 45%, transparent), 0 6px 16px -6px color-mix(in srgb, var(--color-pulsar-600) 60%, transparent) !important;
@@ -1136,7 +1116,7 @@ html.sem-transparencia :is(.app-header, .mapa-controle, .tabbar-mobile) { backgr
 }
 .nav-tab:hover { color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 6%, transparent); }
 .nav-tab.ativa {
-  color: var(--color-pulsar-600);
+  color: var(--color-pulsar-700);
   font-weight: 600;
   background: color-mix(in srgb, var(--color-pulsar-500) 13%, transparent);
 }
@@ -1146,10 +1126,11 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 .avatar-conta {
   width: 36px; height: 36px; margin-left: 4px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--color-pulsar-600); color: #fff;
+  background: var(--color-pulsar-700); color: #fff; position: relative;
   font: 700 13px var(--font-heading); letter-spacing: .02em;
   transition: transform 120ms ease-out, box-shadow 200ms ease;
 }
+.avatar-conta::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; } /* toque de 44 px */
 .avatar-conta:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-pulsar-500) 25%, transparent); }
 .avatar-conta:active { transform: scale(.94); }
 .menu-conta { width: 240px; padding: 6px; }
@@ -1185,8 +1166,9 @@ html:not(.light) .nav-tab.ativa { color: var(--color-pulsar-300); background: co
 /* Detalhe da subprefeitura: curta fica do tamanho do resumo; aberta ocupa a altura toda (a busca do topo continua à vista). */
 .folha-mapa[data-detalhe="aberta"] { height: calc(100dvh - var(--base-tabbar) - var(--topo-app) - 4.75rem); }
 /* Folha aberta: os cartões e a legenda que flutuam acima dela saem, para não cobri-la. */
-body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-pill) { display: none; }
+body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push) { display: none; }
 @media (max-width: 767px) { .mapa-app .maplibregl-ctrl-bottom-right { bottom: var(--topo-folha); } }
+/* Crédito do mapa aberto (largura toda no celular; duas linhas a 320 px, 44 px de altura): a legenda sobe para não cobri-lo. */
 /* Celular: o convite de alertas mora no mesmo pé do mapa; a atribuição (exigida pela licença do
    OpenStreetMap) sobe para não ficar coberta enquanto ele está aberto. */
 @media (max-width: 767px) { body:has(.convite-push) .mapa-app .maplibregl-ctrl-bottom-right { bottom: calc(var(--topo-folha) + 68px); } }
@@ -1198,8 +1180,9 @@ body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-
   align-items: center;
   gap: 2px;
   padding: 0 2px;
-  color: var(--text-muted);
-  font-size: 10px;
+  /* --text-secondary e 11 px: o muted em 10 px ficava em 2,8:1 (crítica de 15/11). */
+  color: var(--text-secondary);
+  font-size: 11px;
   transition: color 200ms;
 }
 /* Rótulos por extenso ("Histórico", "Dashboard") em telas estreitas: cortar com
@@ -1213,7 +1196,7 @@ body:has(.folha-mapa[data-aberta]) :is(.cartao-pe-mapa, .convite-push, .legenda-
 .tabbar-item { border-radius: 18px; }
 /* Aba ativa: a mesma pílula da aba ativa do cabeçalho do computador. */
 .tabbar-item.ativa {
-  color: var(--color-pulsar-600);
+  color: var(--color-pulsar-700);
   font-weight: 600;
   background: color-mix(in srgb, var(--color-pulsar-500) 13%, transparent);
 }
@@ -1237,7 +1220,7 @@ html:not(.light) .tabbar-item.ativa { color: var(--color-pulsar-300); background
   height: 16px;
   padding: 0 4px;
   border-radius: 999px;
-  background: #ef4444;
+  background: #dc2626; /* o #ef4444 dava 3,8:1 com o branco */
   color: #fff;
   font-family: var(--font-mono);
   font-size: 10px;
@@ -1336,14 +1319,13 @@ html.light .pulsar-sub-nome {
 html.light .pulsar-tooltip .maplibregl-popup-content {
   background: var(--superficie);
   border: 1px solid rgba(0, 105, 168, 0.16);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.16);
   color: #0F172A;
   --text-primary: #0F172A;
   --text-secondary: #475569;
 }
-html.light .pulsar-tooltip .pt-BAIXO { --c: #15803d; }
-html.light .pulsar-tooltip .pt-MODERADO { --c: #b45309; }
-html.light .pulsar-tooltip .pt-ALTO { --c: #b91c1c; }
+/* No claro, o amarelo da Defesa Civil some no branco: o número ganha um contorno fino. */
+html.light .pulsar-tooltip .pt-score.pt-MODERADO { -webkit-text-stroke: 0.6px rgba(0, 0, 0, .55); }
 html.light .pulsar-tooltip .pt-SEM { --c: #475569; }
 
 /* Scrollbar no tema light */

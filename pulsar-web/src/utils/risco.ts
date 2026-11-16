@@ -35,22 +35,22 @@ const CORES: Record<FaixaRisco, RiscoCores> = {
   BAIXO: {
     bg: '#D4EDDA',
     text: '#155724',
-    border: PALETA.verde,
-    fill: PALETA.verde,
+    border: PALETA.riscoVerde,
+    fill: PALETA.riscoVerde,
     fillOpacity: 0.25,
   },
   MODERADO: {
     bg: '#FFF3CD',
     text: '#856404',
-    border: PALETA.ambar,
-    fill: PALETA.ambar,
+    border: PALETA.riscoAmarelo,
+    fill: PALETA.riscoAmarelo,
     fillOpacity: 0.35,
   },
   ALTO: {
     bg: '#F8D7DA',
     text: '#721C24',
-    border: PALETA.vermelho,
-    fill: PALETA.vermelho,
+    border: PALETA.riscoVermelho,
+    fill: PALETA.riscoVermelho,
     fillOpacity: 0.45,
   },
 };
@@ -105,9 +105,9 @@ export function estiloPoligono(faixa: FaixaRisco | null | undefined): EstiloPoli
 
 // ── Cor de fundo do label de score circular (ETAPA 2.4) ────────────────────────
 const COR_LABEL: Record<FaixaRisco, string> = {
-  BAIXO:    comAlfa(PALETA.verde, 0.85),
-  MODERADO: comAlfa(PALETA.amarelo, 0.85),
-  ALTO:     comAlfa(PALETA.vermelho, 0.85),
+  BAIXO:    comAlfa(PALETA.riscoVerde, 0.85),
+  MODERADO: comAlfa(PALETA.riscoAmarelo, 0.85),
+  ALTO:     comAlfa(PALETA.riscoVermelho, 0.85),
 };
 const COR_LABEL_SEM_DADO = comAlfa(PALETA.neutro, 0.85);
 
@@ -127,7 +127,10 @@ export function resumoAlertas(
   cidadeNome: string = CIDADE_ATUAL.nome,
 ): string {
   const alertas = areas.filter((r) => r.faixaRisco === 'ALTO').length;
-  if (alertas > 0) return `${alertas} ${alertas === 1 ? 'alerta ativo' : 'alertas ativos'}`;
+  // A mesma conta do "São Paulo agora" do painel: alerta e atenção, com as mesmas palavras.
+  const atencao = areas.filter((r) => r.faixaRisco === 'MODERADO').length;
+  if (alertas > 0) return `${alertas} em alerta${atencao > 0 ? `, ${atencao} em atenção` : ''}`;
+  if (atencao > 0) return `${atencao} em atenção`;
   if (areas.length === 0) return carregando ? 'Carregando o risco…' : 'Sem dados de risco agora';
   return `Tudo tranquilo em ${cidadeNome}`;
 }

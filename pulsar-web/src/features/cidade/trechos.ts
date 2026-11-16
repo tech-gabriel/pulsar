@@ -2,6 +2,7 @@ import type { Feature, FeatureCollection, Polygon } from 'geojson';
 import type { CelulasAgoraDto, ComponenteScoreDto, FaixaPrevisaoDto, FaixaRisco, TipoPerigo } from '../../types';
 import { estiloPoligono } from '../../utils/risco';
 import { pontoEmPoligono } from '../../utils/geo';
+import { km, nomeEstacao } from '../../utils/chuvaMedida';
 import { fraseDoRisco } from '../locais/estadoLugar';
 import type { Area } from './areas';
 
@@ -18,8 +19,11 @@ export interface Trecho {
   perigo: TipoPerigo;
   /** Só o alagamento, que é o que muda de um trecho para outro. */
   alagamento: ComponenteScoreDto;
-  /** Estação que mandou na conta do alagamento; null = chuva estimada pelo modelo. */
-  estacao: { cod: string; mm1h: number; mm3h: number; distanciaKm: number } | null;
+  /**
+   * Estação que mandou na conta do alagamento; null = chuva estimada pelo modelo. `nome` e `em`
+   * (ISO da conta) servem ao cartão "Chuva" do trecho, que mostra esta mesma estação.
+   */
+  estacao: { cod: string; mm1h: number; mm3h: number; distanciaKm: number; nome?: string; em?: string; fonte?: 'cemaden' | 'cge'; lat?: number; lon?: number } | null;
 }
 
 /**
@@ -47,17 +51,32 @@ export function trechosDe(agora: CelulasAgoraDto, areas: Area[]): Map<string, Tr
       faixa: maior.c.faixa,
       perigo: maior.perigo,
       alagamento,
-      estacao: e ? { ...e, distanciaKm: c.distanciaKm ?? 0 } : null,
+      estacao: e ? { ...e, distanciaKm: c.distanciaKm ?? 0, em: agora.calculadoEm } : null,
     });
   }
   return trechos;
+}
+
+/** A estação que mais mediu chuva em 3 h nos trechos da área: nomeia o ponto da "Chuva que gerou o risco". */
+export function estacaoMaisForte(trechos: Map<string, Trecho> | null, areaId: string): NonNullable<Trecho['estacao']> | null {
+  let melhor: NonNullable<Trecho['estacao']> | null = null;
+  for (const t of trechos?.values() ?? []) {
+    if (t.areaId === areaId && t.estacao && t.estacao.mm3h > (melhor?.mm3h ?? 0)) melhor = t.estacao;
+  }
+  return melhor;
+}
+
+/** Onde choveu mais, para quem lê: "no posto Itaquera do CGE" ou "perto da estação Penha 3". */
+export function ondeChoveuMais(e: NonNullable<Trecho['estacao']>): string {
+  const nome = e.nome || e.cod;
+  return e.fonte === 'cge' ? `no posto ${nome} do CGE` : `perto da estação ${nomeEstacao(nome)}`;
 }
 
 const mm = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 /** A leitura da estação que mandou no trecho, em uma frase. Fato medido, não estimativa. */
 export function fraseDaEstacao(e: NonNullable<Trecho['estacao']>): string {
-  const onde = e.distanciaKm < 0.1 ? 'Estação neste trecho' : `Estação a ${mm(e.distanciaKm)} km`;
+  const onde = e.distanciaKm < 0.1 ? 'Estação neste trecho' : `Estação a ${km(e.distanciaKm)}`;
   if (e.mm1h > 0) return `${onde} mediu ${mm(e.mm1h)} mm na última hora`;
   if (e.mm3h > 0) return `${onde} mediu ${mm(e.mm3h)} mm nas últimas 3 horas`;
   return `${onde} sem chuva nas últimas 3 horas`;

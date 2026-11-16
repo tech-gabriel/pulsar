@@ -24,11 +24,14 @@ public class RotaService : IRotaService
     private readonly IMemoryCache _cache;
     private readonly IGradeCelulas _grade;
     private readonly ICemadenService _cemaden;
+    private readonly IEstacaoCgeService? _cge;
     private readonly ILogger<RotaService> _logger;
 
     public RotaService(ISubprefeituraRepository subprefeituraRepo, IPontoAlagamentoCgeRepository pontosCge,
-        IChuvaReferenciaClient chuva, IMemoryCache cache, IGradeCelulas grade, ICemadenService cemaden, ILogger<RotaService> logger)
+        IChuvaReferenciaClient chuva, IMemoryCache cache, IGradeCelulas grade, ICemadenService cemaden, ILogger<RotaService> logger,
+        IEstacaoCgeService? cge = null)
     {
+        _cge = cge;
         _grade = grade;
         _cemaden = cemaden;
         _subprefeituraRepo = subprefeituraRepo;
@@ -81,7 +84,7 @@ public class RotaService : IRotaService
         }).ToList();
 
         var r = AvaliadorRota.Avaliar(trechos, agora);
-        return new RotaAvaliacaoDto(r.Estado, r.TrechoDecisivoId, r.TranquiloAteUtc, r.EsperarAteUtc,
+        return new RotaAvaliacaoDto(r.Estado, r.TrechoDecisivoId, r.EsperarAteUtc,
             [.. trechos.Select(t => new TrechoRotaDto(t.SubprefeituraId, t.Nome, t.FaixaAgora, t.AlagandoCge))],
             [.. r.Horas.Select(h => new HoraRotaDto(h.InicioUtc, h.PiorFaixa))]);
     }
@@ -114,7 +117,7 @@ public class RotaService : IRotaService
     {
         try
         {
-            return await _cemaden.ObterEstacoesComChuvaAsync(agora, ct);
+            return await EstacoesMedidas.TodasAsync(_cemaden, _cge, agora, ct);
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {

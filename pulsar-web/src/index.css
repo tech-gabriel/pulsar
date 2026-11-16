@@ -310,8 +310,6 @@ html.light .painel-glass .text-red-300 { color: #B91C1C !important; }
 /* Alagamento do CGE no tema escuro: o rosa claro do token era um bloco de tema claro no painel escuro. */
 html:not(.light) .cge-alag { background: color-mix(in srgb, #ef4444 16%, transparent); color: #fecaca; box-shadow: inset 0 0 0 1px color-mix(in srgb, #ef4444 35%, transparent); }
 /* Atalho de teclado para a busca: só aparece com o foco. */
-.pular-para-busca { position: absolute; left: 12px; top: calc(var(--topo-app) + 8px); z-index: 1300; padding: 10px 14px; border-radius: 12px; background: var(--color-pulsar-700); color: #fff; font: 600 14px var(--font-body); }
-.pular-para-busca:not(:focus) { width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* O campo da busca não tem contorno próprio: o foco do teclado aparece na cápsula inteira. */
 .mapa-controle:has(.mapa-input:focus-visible), .busca-embutida :has(> .mapa-input:focus-visible) { box-shadow: 0 0 0 2px var(--color-pulsar-500); }
 /* "i" dos créditos do mapa: 24 px de desenho, 44 px de toque. */

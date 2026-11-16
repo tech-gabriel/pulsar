@@ -159,6 +159,7 @@ export default function MapaGL(props: PropsMapa) {
     } else {
       voar([pontoBusca.lon, pontoBusca.lat], ZOOM.busca, 800);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pontoBusca, carregou]);
 
   // Fechar a folha do lugar devolve o mapa ao enquadramento de antes do primeiro toque.

@@ -73,6 +73,11 @@ describe('fraseDaEstacao', () => {
   it('estação dentro do trecho não ganha "a 0,0 km"', () => {
     expect(fraseDaEstacao(est(2, 2, 0.04))).toBe('Estação neste trecho mediu 2,0 mm na última hora');
   });
+  it('posto do CGE diz o nome e a fonte', () => {
+    const posto = { ...est(4.2, 6), fonte: 'cge' as const, nome: 'Penha' };
+    expect(fraseDaEstacao(posto)).toBe('Posto Penha do CGE, a 1,9 km, mediu 4,2 mm na última hora');
+    expect(fraseDaEstacao({ ...posto, distanciaKm: 0.04 })).toBe('Posto Penha do CGE, neste trecho, mediu 4,2 mm na última hora');
+  });
 });
 
 // Dois quadrados lado a lado no lugar dos hexágonos: a conta de ponto no polígono é a mesma.

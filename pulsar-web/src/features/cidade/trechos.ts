@@ -76,7 +76,10 @@ const mm = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, 
 
 /** A leitura da estação que mandou no trecho, em uma frase. Fato medido, não estimativa. */
 export function fraseDaEstacao(e: NonNullable<Trecho['estacao']>): string {
-  const onde = e.distanciaKm < 0.1 ? 'Estação neste trecho' : `Estação a ${km(e.distanciaKm)}`;
+  // O posto do CGE diz o nome: é dele que veio o Alerta, e no mapa ele não aparece (crítica 7).
+  const onde = e.fonte === 'cge'
+    ? `Posto ${e.nome || e.cod} do CGE${e.distanciaKm < 0.1 ? ', neste trecho,' : `, a ${km(e.distanciaKm)},`}`
+    : e.distanciaKm < 0.1 ? 'Estação neste trecho' : `Estação a ${km(e.distanciaKm)}`;
   if (e.mm1h > 0) return `${onde} mediu ${mm(e.mm1h)} mm na última hora`;
   if (e.mm3h > 0) return `${onde} mediu ${mm(e.mm3h)} mm nas últimas 3 horas`;
   return `${onde} sem chuva nas últimas 3 horas`;

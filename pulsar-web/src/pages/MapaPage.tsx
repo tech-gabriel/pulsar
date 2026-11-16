@@ -540,105 +540,14 @@ export default function MapaPage() {
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header />
-      {/* Teclado: a busca vem depois do mapa e dos 32 números; o atalho pula direto para ela. */}
-      <a href="#busca-mapa" className="pular-para-busca"
-        onClick={(e) => { e.preventDefault(); document.getElementById('busca-mapa')?.focus(); }}>Ir para a busca</a>
-
-      {/* ══════════════════════════════════════════
-          MAPA — camada de fundo absoluta
-          Abaixo do header (48px mobile / 64px desktop); no mobile termina
-          acima da tab bar inferior (48px).
-      ══════════════════════════════════════════ */}
-      <div data-transicao className={`mapa-app absolute inset-0 z-0 `}>
-        <MapaBase
-          geojson={geojson}
-          subprefeituras={subprefeituras}
-          subSelecionada={subSelecionada}
-          onSelecionarSub={handleSelecionarSub}
-          camadaAtiva={camadaAtiva}
-          zonaEmFoco={zonaEmFoco}
-          subSelecionadaAtiva={!!subSelecionada}
-          pontoBusca={rotaAberta ? null : pontoBusca}
-          onMoverPonto={handleMoverPonto}
-          overlayAlagamento={overlayAlagamento}
-          ocorrencias={ocorrencias}
-          rota={rotaAberta ? rota.linha : null}
-          destinoSemRota={rotaAberta && !rota.linha ? rota.destino : null}
-          semZoom={rotaNoCelular}
-          lugares={rotaAberta ? undefined : lugaresNoMapa}
-          onTocarLugar={abrirLugar}
-          lugarEmFoco={lugarEmFoco}
-          voltarDoLugar={voltarDoLugar}
-          lugaresEmAlerta={lugaresEmAlerta}
-          trechos={comTrechos ? dadosTrechos : null}
-          trechoSelecionado={rotaAberta
-            ? h3DoDestino
-            : trechoAberto?.h3 ?? null}
-          onTocarTrecho={rotaAberta ? undefined : handleTocarTrecho}
-          onPerto={setPerto}
-          pontoMedida={pontoMedida}
-        />
-
-        {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}
-        {isMobile && (rotaAberta ? camposRota(false) : buscaMapa(false))}
-
-        {/* Na rota do celular os controles do mapa saem: a tela é do caminho (voltam ao fechar). */}
-        {!rotaNoCelular && (
-          <>
-            {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
-            <LayerControl
-              camadaAtiva={camadaAtiva}
-              onChange={setCamadaAtiva}
-              isMobile={isMobile}
-              overlayAlagamento={overlayAlagamento}
-            />
-
-            {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
-            <OverlayAlagamentoToggle
-              ativo={overlayAlagamento}
-              onToggle={() => setOverlayAlagamento((v) => !v)}
-              isMobile={isMobile}
-            />
-          </>
-        )}
-
-        {/* Pilha da legenda e dos avisos (tablet: à direita, no alto; computador: à esquerda, no pé).
-            No celular a pilha some (display: contents) e cada peça se posiciona sozinha. */}
-        <div className="pilha-mapa">
-          {/* Aviso do ponto buscado. Só no computador: no celular ele fica embaixo da busca. */}
-          {avisoBusca && !isMobile && (
-            <div className="superficie rounded-2xl mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">
-              {avisoBusca}
-            </div>
-          )}
-
-          {/* Convite para ativar notificações push. Sem favorita o push não tem o que mandar:
-              primeiro escolher, depois ativar. Com a rota aberta ele sai: o mapa é do caminho. */}
-          {!rotaAberta && !mostrarDicaTrecho && !buscaAberta && !(isMobile && dicaLocalNaTela) && (semFavoritas
-            ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
-            : <ConvitePush favoritas={favoritas} />)}
-
-          {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
-          {proximas && (
-            <CardAlagamentoProximo dados={proximas} onFechar={() => setProximas(null)} />
-          )}
-        </div>
-      </div>
-
-      {/* Banner de erro sobre o mapa */}
-      {erro && !subSelecionada && (
-        <div className="absolute top-[calc(var(--topo-app)+0.5rem)] left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
-          <div className="pointer-events-auto">
-            <ErrorBanner mensagem={erro} onRetry={recarregar} />
-          </div>
-        </div>
-      )}
 
       {/* ══════════════════════════════════════════
           PAINEL FLUTUANTE — tablet e computador
           Cartão de vidro do tamanho do conteúdo, com a busca dentro (pesquisou, a resposta
           aparece embaixo). Tablet: no pé do mapa, recolhível. Computador: à direita.
           A altura anima ao trocar lista, detalhe e resultados (useAlturaFluida).
+          Vem antes do mapa no DOM: no Tab, a busca chega logo depois do cabeçalho, não depois
+          dos 32 números (o z-index do painel, não a ordem, o põe sobre o mapa).
       ══════════════════════════════════════════ */}
       <aside
         ref={painelRef}
@@ -691,6 +600,95 @@ export default function MapaPage() {
         </div>
       </aside>
 
+      {/* ══════════════════════════════════════════
+          MAPA — camada de fundo absoluta
+          Abaixo do header (48px mobile / 64px desktop); no mobile termina
+          acima da tab bar inferior (48px).
+      ══════════════════════════════════════════ */}
+      <div data-transicao className={`mapa-app absolute inset-0 z-0 `}>
+        {/* Celular: busca sobreposta ao mapa, antes dele no Tab. Tablet e computador: ela mora no painel. */}
+        {isMobile && (rotaAberta ? camposRota(false) : buscaMapa(false))}
+
+        <MapaBase
+          geojson={geojson}
+          subprefeituras={subprefeituras}
+          subSelecionada={subSelecionada}
+          onSelecionarSub={handleSelecionarSub}
+          camadaAtiva={camadaAtiva}
+          zonaEmFoco={zonaEmFoco}
+          subSelecionadaAtiva={!!subSelecionada}
+          pontoBusca={rotaAberta ? null : pontoBusca}
+          onMoverPonto={handleMoverPonto}
+          overlayAlagamento={overlayAlagamento}
+          ocorrencias={ocorrencias}
+          rota={rotaAberta ? rota.linha : null}
+          destinoSemRota={rotaAberta && !rota.linha ? rota.destino : null}
+          semZoom={rotaNoCelular}
+          lugares={rotaAberta ? undefined : lugaresNoMapa}
+          onTocarLugar={abrirLugar}
+          lugarEmFoco={lugarEmFoco}
+          voltarDoLugar={voltarDoLugar}
+          lugaresEmAlerta={lugaresEmAlerta}
+          trechos={comTrechos ? dadosTrechos : null}
+          trechoSelecionado={rotaAberta
+            ? h3DoDestino
+            : trechoAberto?.h3 ?? null}
+          onTocarTrecho={rotaAberta ? undefined : handleTocarTrecho}
+          onPerto={setPerto}
+          pontoMedida={pontoMedida}
+        />
+
+        {/* Na rota do celular os controles do mapa saem: a tela é do caminho (voltam ao fechar). */}
+        {!rotaNoCelular && (
+          <>
+            {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
+            <LayerControl
+              camadaAtiva={camadaAtiva}
+              onChange={setCamadaAtiva}
+              isMobile={isMobile}
+              overlayAlagamento={overlayAlagamento}
+            />
+
+            {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
+            <OverlayAlagamentoToggle
+              ativo={overlayAlagamento}
+              onToggle={() => setOverlayAlagamento((v) => !v)}
+              isMobile={isMobile}
+            />
+          </>
+        )}
+
+        {/* Pilha da legenda e dos avisos (tablet: à direita, no alto; computador: à esquerda, no pé).
+            No celular a pilha some (display: contents) e cada peça se posiciona sozinha. */}
+        <div className="pilha-mapa">
+          {/* Aviso do ponto buscado. Só no computador: no celular ele fica embaixo da busca. */}
+          {avisoBusca && !isMobile && (
+            <div className="superficie rounded-2xl mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">
+              {avisoBusca}
+            </div>
+          )}
+
+          {/* Convite para ativar notificações push. Sem favorita o push não tem o que mandar:
+              primeiro escolher, depois ativar. Com a rota aberta ele sai: o mapa é do caminho. */}
+          {!rotaAberta && !mostrarDicaTrecho && !buscaAberta && !(isMobile && dicaLocalNaTela) && (semFavoritas
+            ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
+            : <ConvitePush favoritas={favoritas} />)}
+
+          {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
+          {proximas && (
+            <CardAlagamentoProximo dados={proximas} onFechar={() => setProximas(null)} />
+          )}
+        </div>
+      </div>
+
+      {/* Banner de erro sobre o mapa */}
+      {erro && !subSelecionada && (
+        <div className="absolute top-[calc(var(--topo-app)+0.5rem)] left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
+          <div className="pointer-events-auto">
+            <ErrorBanner mensagem={erro} onRetry={recarregar} />
+          </div>
+        </div>
+      )}
       {/* ══════════════════════════════════════════
           FOLHA DO CELULAR: o mesmo cartão de vidro do computador, flutuando acima da barra de
           abas e do tamanho do conteúdo (useAlturaFluida anima a troca). Fechada, é só a linha do

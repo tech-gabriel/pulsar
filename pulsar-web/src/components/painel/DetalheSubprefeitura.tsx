@@ -123,7 +123,10 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
   const medida = temChuvaMedida(medidaDoCartao);
   // O número da área veio da chuva medida (num ponto dela): o cartão abre com essa leitura.
   const pelaMedida = !trecho && (s?.chuva3hMedidaMm ?? 0) > 0;
-  const modeloEmLinha = pelaMedida || !!trecho?.estacao;
+  // Em Tranquilo a chuva medida não gerou risco nenhum: uma faixa só, sem "gerou o risco" nem
+  // "chuva forte", e o modelo no bloco dele, como nas áreas sem medida (opção B, crítica 8).
+  const calma = pelaMedida && area.faixaRisco === 'BAIXO';
+  const modeloEmLinha = (pelaMedida && !calma) || !!trecho?.estacao;
   const choveuMedido = pelaMedida || (trecho?.estacao?.mm3h ?? 0) > 0;
   const pontos = area.alagamentosCge ?? [];
   const riscoVento = s?.componentes?.vento.faixa;
@@ -238,7 +241,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
               <h3 className="det-t">Chuva</h3>
               <div className="det-bloco">
                 {/* O número veio da chuva medida: a leitura que o fez vem primeiro (crítica de 15/11). */}
-                {pelaMedida && s?.chuva3hMedidaMm != null && (
+                {pelaMedida && !calma && s?.chuva3hMedidaMm != null && (
                   <div className="det-faixa">
                     <div className="det-faixa-cab"><span className="det-faixa-nome">Chuva que gerou o risco</span></div>
                     <div className="det-par um">
@@ -248,7 +251,8 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
                   </div>
                 )}
                 <ChuvaMedidaLinha nome={area.nome} medida={medidaDoCartao} chuva24h={trecho ? null : area.chuva24h}
-                  numeroPelaMedida={pelaMedida} doTrecho={!!trecho} mm3h={trecho?.estacao?.mm3h} />
+                  numeroPelaMedida={pelaMedida} doTrecho={!!trecho} mm3h={trecho?.estacao?.mm3h}
+                  calmaMm3h={calma ? s?.chuva3hMedidaMm ?? undefined : undefined} />
                 {/* Modelo em uma linha quando é a medida que manda (área pela medida, ou trecho com estação):
                     no trecho ele é da região inteira e não pode parecer o número do trecho (crítica de 15/11). */}
                 {s && modeloEmLinha && (

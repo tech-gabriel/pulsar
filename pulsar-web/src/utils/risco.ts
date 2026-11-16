@@ -105,7 +105,7 @@ export function estiloPoligono(faixa: FaixaRisco | null | undefined): EstiloPoli
 
 // ── Cor de fundo do label de score circular (ETAPA 2.4) ────────────────────────
 const COR_LABEL: Record<FaixaRisco, string> = {
-  BAIXO:    comAlfa(PALETA.riscoVerde, 0.85),
+  BAIXO:    comAlfa(PALETA.riscoVerdeBola, 0.85),
   MODERADO: comAlfa(PALETA.riscoAmarelo, 0.85),
   ALTO:     comAlfa(PALETA.riscoVermelho, 0.85),
 };

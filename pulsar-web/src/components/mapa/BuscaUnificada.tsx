@@ -218,7 +218,8 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
             className={[
               'mapa-txt-suave flex items-center justify-center w-11 h-11 -my-2 rounded-lg flex-shrink-0 transition-colors',
               localizando ? 'cursor-wait' : '',
-              mostrarDica ? 'ring-2 ring-pulsar-400/70 animate-pulse' : '',
+              // O anel só vem com a frase (celular): sozinho, no computador, parecia o foco do teclado (crítica 8).
+              dicaNaTela ? 'ring-2 ring-pulsar-400/70 animate-pulse' : '',
             ].filter(Boolean).join(' ')}
           >
             {localizando ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}

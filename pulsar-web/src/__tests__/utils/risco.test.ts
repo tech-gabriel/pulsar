@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { coresParaFaixa, labelFaixa, scoreFormatado } from '../../utils/risco';
+import { coresParaFaixa, corLabelFaixa, labelFaixa, scoreFormatado } from '../../utils/risco';
 
 describe('coresParaFaixa', () => {
   it('retorna cores verdes para BAIXO', () => {
@@ -49,4 +49,19 @@ describe('scoreFormatado', () => {
   it('formata zero', () => expect(scoreFormatado(0)).toBe('0.0'));
   it('retorna "—" para null', () => expect(scoreFormatado(null)).toBe('—'));
   it('retorna "—" para undefined', () => expect(scoreFormatado(undefined)).toBe('—'));
+});
+
+// Número branco na bola do mapa: 4,5:1 é o mínimo para texto pequeno (crítica 8). O amarelo
+// fica de fora de propósito: lá quem segura a leitura é o contorno escuro do número.
+describe('corLabelFaixa: contraste do número branco', () => {
+  const luminancia = (rgba: string) => {
+    const [r, g, b] = rgba.match(/\d+/g)!.slice(0, 3).map((v) => {
+      const c = Number(v) / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  it.each(['BAIXO', 'ALTO'] as const)('%s passa de 4,5:1', (faixa) => {
+    expect(1.05 / (luminancia(corLabelFaixa(faixa)) + 0.05)).toBeGreaterThanOrEqual(4.5);
+  });
 });

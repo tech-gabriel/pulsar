@@ -55,11 +55,6 @@ internal sealed class RainData
     public double OneHour { get; set; }
 }
 
-internal sealed class UviResponse
-{
-    [JsonPropertyName("value")]
-    public double Value { get; set; }
-}
 
 public class OpenWeatherMapClient : IWeatherClient
 {
@@ -86,7 +81,7 @@ public class OpenWeatherMapClient : IWeatherClient
         var client = _httpClientFactory.CreateClient("openweathermap");
 
         var weatherTask = ObterWeatherAsync(client, latitude, longitude, apiKey, ct);
-        var uviTask = ObterUviAsync(client, latitude, longitude, apiKey, ct);
+        var uviTask = ObterUviAsync(latitude, longitude, ct);
 
         await Task.WhenAll(weatherTask, uviTask);
 
@@ -120,13 +115,17 @@ public class OpenWeatherMapClient : IWeatherClient
             ?? throw new WeatherApiException("Resposta inválida da API /weather.");
     }
 
-    private async Task<double> ObterUviAsync(
-        HttpClient client, double lat, double lon, string apiKey, CancellationToken ct)
+    /// <summary>
+    /// UV de agora pelo Open-Meteo. O /uvi da OpenWeatherMap devolve o pico do dia, e a tela
+    /// mostrava "UV 13 extremo" às 20h (crítica de 15/11). À noite o Open-Meteo dá zero.
+    /// </summary>
+    private async Task<double> ObterUviAsync(double lat, double lon, CancellationToken ct)
     {
         try
         {
-            var url = $"uvi?lat={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)}&lon={lon.ToString(System.Globalization.CultureInfo.InvariantCulture)}&appid={apiKey}";
-            var response = await client.GetAsync(url, ct);
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            var url = $"forecast?latitude={lat.ToString(inv)}&longitude={lon.ToString(inv)}&current=uv_index";
+            var response = await _httpClientFactory.CreateClient("openmeteo").GetAsync(url, ct);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -134,14 +133,21 @@ public class OpenWeatherMapClient : IWeatherClient
                 return 0.0;
             }
 
-            var content = await response.Content.ReadAsStringAsync(ct);
-            var uvi = JsonSerializer.Deserialize<UviResponse>(content, _jsonOptions);
-            return uvi?.Value ?? 0.0;
+            return UvAtual(await response.Content.ReadAsStringAsync(ct));
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Erro ao obter índice UV. Usando 0.");
             return 0.0;
         }
+    }
+
+    /// <summary>O <c>current.uv_index</c> do Open-Meteo; sem o campo (ou nulo), zero.</summary>
+    public static double UvAtual(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        return doc.RootElement.TryGetProperty("current", out var atual)
+            && atual.TryGetProperty("uv_index", out var uv) && uv.ValueKind == JsonValueKind.Number
+            ? Math.Max(0, uv.GetDouble()) : 0.0;
     }
 }

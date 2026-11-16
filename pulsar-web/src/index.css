@@ -2389,3 +2389,6 @@ html.light .rota-aviso-ok { color: var(--color-pulsar-700); }
   .rota-chegada { animation: rota-surge .2s ease-out both; }
   .rota-botao, .rota-botao:active { transform: none; }
 }
+/* Linha da área inteira no cartão do trecho: o mesmo texto da .det-linha, tocável (abre a área). */
+.det-regiao { width: calc(100% - 8px); text-align: left; }
+.det-regiao:not(:disabled):active { opacity: .6; }

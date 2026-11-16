@@ -1,31 +1,32 @@
 import { useState, useCallback } from 'react';
 
-const STORAGE_KEY = 'pulsar-dica-localizacao-vista';
-
-function jaViu(): boolean {
+function jaViu(chave: string): boolean {
   if (typeof window === 'undefined') return true;
   try {
-    return localStorage.getItem(STORAGE_KEY) === '1';
+    return localStorage.getItem(chave) === '1';
   } catch {
     return true; // localStorage indisponível: não insiste na dica
   }
 }
 
 /**
- * Controla a dica sutil do botão "usar minha localização", mostrada só na 1ª
- * visita ao mapa. Mesmo padrão da marca local do onboarding (`features/ativacao/passos.ts`).
+ * Dica que aparece até a pessoa dispensar ou usar o que ela ensina, e não volta mais. Mesmo
+ * padrão da marca local do onboarding (`features/ativacao/passos.ts`).
  */
-export function useDicaLocalizacao() {
-  const [mostrarDica, setMostrarDica] = useState<boolean>(() => !jaViu());
+export function useDicaUnica(chave: string) {
+  const [mostrarDica, setMostrarDica] = useState<boolean>(() => !jaViu(chave));
 
   const dispensar = useCallback(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, '1');
+      localStorage.setItem(chave, '1');
     } catch {
       /* ignora cota/cache indisponível */
     }
     setMostrarDica(false);
-  }, []);
+  }, [chave]);
 
   return { mostrarDica, dispensar };
 }
+
+/** A dica sutil do botão "usar minha localização", mostrada só na 1ª visita ao mapa. */
+export const useDicaLocalizacao = () => useDicaUnica('pulsar-dica-localizacao-vista');

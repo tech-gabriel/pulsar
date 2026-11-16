@@ -30,6 +30,11 @@ export interface PropsMapa {
   ocorrencias: OcorrenciaAlagamentoDto[];
   /** Traçado da rota: linhas com `properties.cor` e os pontos `origem`/`destino`. */
   rota?: FeatureCollection | null;
+  /**
+   * Destino da rota antes de haver traçado (sem origem ainda, ou localização negada): a bandeira
+   * de chegada já marca no mapa para onde a rota vai.
+   */
+  destinoSemRota?: { lat: number; lon: number } | null;
   /** Esconde o zoom (rota no celular). */
   semZoom?: boolean;
   /** Casa e trabalho da conta (F4b). Vazio ou ausente: nada é desenhado. */
@@ -46,6 +51,8 @@ export interface PropsMapa {
   /** Trecho aberto no detalhe: contorno forte, e o mapa não voa para o centro da área. */
   trechoSelecionado?: string | null;
   onTocarTrecho?: (h3: string) => void;
+  /** Onde foi medida a chuva que fez o risco aberto (estação ou posto): o mapa marca o ponto. */
+  pontoMedida?: { lat: number; lon: number; rotulo: string } | null;
   /** Avisa quando o mapa chega perto o bastante para os trechos (só então vale baixar os dados). */
   onPerto?: (perto: boolean) => void;
 }

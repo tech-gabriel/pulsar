@@ -2,6 +2,7 @@ import type { Feature, FeatureCollection, Polygon } from 'geojson';
 import type { CelulasAgoraDto, ComponenteScoreDto, FaixaPrevisaoDto, FaixaRisco, TipoPerigo } from '../../types';
 import { estiloPoligono } from '../../utils/risco';
 import { pontoEmPoligono } from '../../utils/geo';
+import { km, nomeEstacao } from '../../utils/chuvaMedida';
 import { fraseDoRisco } from '../locais/estadoLugar';
 import type { Area } from './areas';
 
@@ -18,8 +19,11 @@ export interface Trecho {
   perigo: TipoPerigo;
   /** Só o alagamento, que é o que muda de um trecho para outro. */
   alagamento: ComponenteScoreDto;
-  /** Estação que mandou na conta do alagamento; null = chuva estimada pelo modelo. */
-  estacao: { cod: string; mm1h: number; mm3h: number; distanciaKm: number } | null;
+  /**
+   * Estação que mandou na conta do alagamento; null = chuva estimada pelo modelo. `nome` e `em`
+   * (ISO da conta) servem ao cartão "Chuva" do trecho, que mostra esta mesma estação.
+   */
+  estacao: { cod: string; mm1h: number; mm3h: number; distanciaKm: number; nome?: string; em?: string; fonte?: 'cemaden' | 'cge'; lat?: number; lon?: number } | null;
 }
 
 /**
@@ -47,17 +51,35 @@ export function trechosDe(agora: CelulasAgoraDto, areas: Area[]): Map<string, Tr
       faixa: maior.c.faixa,
       perigo: maior.perigo,
       alagamento,
-      estacao: e ? { ...e, distanciaKm: c.distanciaKm ?? 0 } : null,
+      estacao: e ? { ...e, distanciaKm: c.distanciaKm ?? 0, em: agora.calculadoEm } : null,
     });
   }
   return trechos;
+}
+
+/** A estação que mais mediu chuva em 3 h nos trechos da área: nomeia o ponto da "Chuva que gerou o risco". */
+export function estacaoMaisForte(trechos: Map<string, Trecho> | null, areaId: string): NonNullable<Trecho['estacao']> | null {
+  let melhor: NonNullable<Trecho['estacao']> | null = null;
+  for (const t of trechos?.values() ?? []) {
+    if (t.areaId === areaId && t.estacao && t.estacao.mm3h > (melhor?.mm3h ?? 0)) melhor = t.estacao;
+  }
+  return melhor;
+}
+
+/** Onde choveu mais, para quem lê: "no posto Itaquera do CGE" ou "perto da estação Penha 3". */
+export function ondeChoveuMais(e: NonNullable<Trecho['estacao']>): string {
+  const nome = e.nome || e.cod;
+  return e.fonte === 'cge' ? `no posto ${nome} do CGE` : `perto da estação ${nomeEstacao(nome)}`;
 }
 
 const mm = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 /** A leitura da estação que mandou no trecho, em uma frase. Fato medido, não estimativa. */
 export function fraseDaEstacao(e: NonNullable<Trecho['estacao']>): string {
-  const onde = e.distanciaKm < 0.1 ? 'Estação neste trecho' : `Estação a ${mm(e.distanciaKm)} km`;
+  // O posto do CGE diz o nome: é dele que veio o Alerta, e no mapa ele não aparece (crítica 7).
+  const onde = e.fonte === 'cge'
+    ? `Posto ${e.nome || e.cod} do CGE${e.distanciaKm < 0.1 ? ', neste trecho,' : `, a ${km(e.distanciaKm)},`}`
+    : e.distanciaKm < 0.1 ? 'Estação neste trecho' : `Estação a ${km(e.distanciaKm)}`;
   if (e.mm1h > 0) return `${onde} mediu ${mm(e.mm1h)} mm na última hora`;
   if (e.mm3h > 0) return `${onde} mediu ${mm(e.mm3h)} mm nas últimas 3 horas`;
   return `${onde} sem chuva nas últimas 3 horas`;
@@ -80,6 +102,19 @@ export function fraseDoTrecho(t: Trecho, area: Area, faixas: FaixaPrevisaoDto[])
 export function h3DoPonto(lat: number, lon: number, contorno: FeatureCollection | null): string | null {
   const h3 = pontoEmPoligono(lat, lon, contorno)?.properties?.h3;
   return typeof h3 === 'string' ? h3 : null;
+}
+
+/**
+ * O centro do trecho, para a rota até ele. Média dos vértices do anel (sem o que fecha): no
+ * hexágono regular é o centro exato. Null se o trecho não está no contorno.
+ */
+export function centroDoTrecho(h3: string, contorno: FeatureCollection | null): { lat: number; lon: number } | null {
+  const f = contorno?.features.find((x) => x.properties?.h3 === h3);
+  if (!f || f.geometry.type !== 'Polygon') return null;
+  const anel = f.geometry.coordinates[0].slice(0, -1);
+  const lon = anel.reduce((s, p) => s + p[0], 0) / anel.length;
+  const lat = anel.reduce((s, p) => s + p[1], 0) / anel.length;
+  return { lat, lon };
 }
 
 export interface PropsTrecho {

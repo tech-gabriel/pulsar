@@ -21,6 +21,7 @@ vi.mock('../../../hooks/useBuscaEndereco', () => ({
 }));
 
 import BuscaUnificada from '../../../components/mapa/BuscaUnificada';
+import { numeroFaltando } from '../../../utils/busca';
 import type { Area } from '../../../features/cidade/areas';
 
 const resultados: EnderecoBusca[] = [
@@ -55,7 +56,22 @@ describe('BuscaUnificada', () => {
     fireEvent.focus(screen.getByLabelText('Buscar subprefeitura ou endereço'));
     fireEvent.click(screen.getByText('Av. Paulista'));
 
-    expect(onSelecionar).toHaveBeenCalledWith(resultados[0]);
+    expect(onSelecionar).toHaveBeenCalledWith(resultados[0], undefined);
+  });
+
+  it('setas levam do campo para a lista e andam entre os itens; Escape volta ao campo', () => {
+    hookState = { termo: 'paulista', setTermo, resultados, carregando: false, erro: null, limpar };
+    render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={vi.fn()} isMobile={false} />);
+    const campo = screen.getByLabelText('Buscar subprefeitura ou endereço');
+    fireEvent.focus(campo);
+    fireEvent.keyDown(campo, { key: 'ArrowDown' });
+    const primeiro = screen.getByText('Av. Paulista').closest('button')!;
+    expect(primeiro).toHaveFocus();
+    fireEvent.keyDown(primeiro, { key: 'ArrowUp' });
+    expect(campo).toHaveFocus();
+    fireEvent.keyDown(campo, { key: 'ArrowDown' });
+    fireEvent.keyDown(primeiro, { key: 'Escape' });
+    expect(campo).toHaveFocus();
   });
 
   it('limpa a busca ao clicar no X', () => {
@@ -88,9 +104,15 @@ describe('BuscaEndereco — botão de localização', () => {
     expect(screen.queryByText('Toque no alvo para ver a sua subprefeitura')).not.toBeInTheDocument();
   });
 
-  it('dentro do painel não mostra a dica escrita: o alvo pulsando já basta', () => {
+  it('dentro do painel não mostra a dica nem o anel: sozinho ele parecia o foco do teclado (crítica 8)', () => {
     render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={() => {}} isMobile={false} onUsarLocalizacao={() => {}} embutida />);
     expect(screen.queryByText('Toque no alvo para ver a sua subprefeitura')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /usar minha localização/i })).not.toHaveClass('animate-pulse');
+  });
+
+  it('com a frase da dica, o alvo pulsa junto', () => {
+    render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={() => {}} isMobile onUsarLocalizacao={() => {}} />);
+    expect(screen.getByRole('button', { name: /usar minha localização/i })).toHaveClass('animate-pulse');
   });
 
   it('não mostra a dica quando ela já foi vista', () => {
@@ -127,5 +149,32 @@ describe('BuscaUnificada: rota', () => {
     expect(botao).toHaveTextContent(/^$/);
     fireEvent.click(botao);
     expect(onAbrirRota).toHaveBeenCalled();
+  });
+});
+
+// O MapTiler não conhece todo número: quem digitou "1000" e escolheu a rua precisa ajustar o pino.
+describe('numeroFaltando', () => {
+  const r = (nome: string, descricao = '') => ({ nome, descricao } as EnderecoBusca);
+  it('número digitado que o resultado não tem', () => {
+    expect(numeroFaltando('Rua da Mooca 1000', r('Rua da Mooca', 'Rua da Mooca, São Paulo 03104-000'))).toBe('1000');
+  });
+  it('resultado com o número: nada falta', () => {
+    expect(numeroFaltando('Rua da Mooca 1001', r('Rua Da Mooca 1001'))).toBeUndefined();
+  });
+  it('sem número digitado: nada falta', () => {
+    expect(numeroFaltando('Rua da Mooca', r('Rua da Mooca'))).toBeUndefined();
+  });
+  it('não confunde 100 com 1000', () => {
+    expect(numeroFaltando('Rua X 100', r('Rua X 1000'))).toBe('100');
+  });
+});
+
+describe('numeroFaltando: rua com número no nome e CEP', () => {
+  const r = (nome: string, descricao = '') => ({ nome, descricao } as EnderecoBusca);
+  it('o número da casa é o último digitado', () => {
+    expect(numeroFaltando('Rua 25 de Março 100', r('Rua 25 de Março', 'Rua 25 de Março, São Paulo'))).toBe('100');
+  });
+  it('o CEP do resultado não conta como o número', () => {
+    expect(numeroFaltando('Rua X 100', r('Rua X', 'Rua X, São Paulo 01000-100'))).toBe('100');
   });
 });

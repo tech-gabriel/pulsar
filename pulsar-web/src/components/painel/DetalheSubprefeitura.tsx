@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Bell, BellRing, CloudRain, Droplets, Map as IconeMapa, Phone, Route, Sun, Thermometer, TriangleAlert, Wind, X } from 'lucide-react';
@@ -13,15 +13,19 @@ import { blocosDeDicas } from '../../utils/dicas';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import { useArrastoFolha } from '../../motion/useArrastoFolha';
 import { CIDADE_ATUAL } from '../../features/cidade/cidade';
-import { fraseDoTrecho, type Trecho } from '../../features/cidade/trechos';
+import { fraseDoTrecho, ondeChoveuMais, type Trecho } from '../../features/cidade/trechos';
 import type { Area } from '../../features/cidade/areas';
-import type { TipoPerigo } from '../../types';
+import type { ChuvaMedida, FaixaRisco, TipoPerigo } from '../../types';
 import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
 import AlagamentosCge from './AlagamentosCge';
 import ChuvaMedidaLinha from './ChuvaMedidaLinha';
 import { temChuvaMedida } from '../../utils/chuvaMedida';
+import { porExtenso } from '../../utils/texto';
+import { deNomeDe } from '../../data/regioes-seo';
+
+const GRAVIDADE: Record<FaixaRisco, number> = { BAIXO: 0, MODERADO: 1, ALTO: 2 };
 
 const decimal = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const inteiro = (v: number) => Math.round(v).toLocaleString('pt-BR');
@@ -80,6 +84,8 @@ interface Props {
    * inteira vira uma linha. O resto (chuva, tempo, emergência) continua sendo da área.
    */
   trecho?: Trecho & { origem: OrigemTrecho };
+  /** Estação que mais mediu chuva na área: dá nome ao ponto quando o número veio da medida. */
+  estacaoMaisForte?: NonNullable<Trecho['estacao']> | null;
 }
 
 /**
@@ -88,7 +94,7 @@ interface Props {
  * pergunta: o que fazer agora, a chuva (medida, estimada e prevista, cada uma com nome), o
  * tempo agora e os telefones de emergência. As ações ficam presas no pé, sempre no mesmo lugar.
  */
-export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorito, onFechar, onComoChegar, folha, trecho }: Props) {
+export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorito, onFechar, onComoChegar, folha, trecho, estacaoMaisForte }: Props) {
   const navigate = useNavigate();
   const { prefs } = useNotificacoesPrefs();
   const push = usePushSubscription(prefs);
@@ -107,17 +113,46 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
     ? { ...s, valor: trecho.valor, faixa: trecho.faixa, perigoPrincipal: trecho.perigo, componentes: { ...s.componentes, alagamento: trecho.alagamento } }
     : s;
   const blocos = blocosDeDicas(scoreDasDicas, catalogo);
-  const medida = temChuvaMedida(area.chuvaMedida);
+  // No trecho, "Medida agora" é a estação do trecho (a mesma do topo dele), não a do centro da área.
+  const medidaDoTrecho: ChuvaMedida | null = trecho?.estacao ? {
+    fonte: trecho.estacao.fonte ?? 'cemaden', mm15: null, mm60: trecho.estacao.mm1h, acumuladoPeriodoMm: null,
+    posto: trecho.estacao.nome || trecho.estacao.cod, vizinho: false,
+    distanciaKm: trecho.estacao.distanciaKm, coletadoEm: trecho.estacao.em ?? '',
+  } : null;
+  const medidaDoCartao = trecho ? medidaDoTrecho : area.chuvaMedida;
+  const medida = temChuvaMedida(medidaDoCartao);
+  // O número da área veio da chuva medida (num ponto dela): o cartão abre com essa leitura.
+  const pelaMedida = !trecho && (s?.chuva3hMedidaMm ?? 0) > 0;
+  // Em Tranquilo a chuva medida não gerou risco nenhum: uma faixa só, sem "gerou o risco" nem
+  // "chuva forte", e o modelo no bloco dele, como nas áreas sem medida (opção B, crítica 8).
+  const calma = pelaMedida && area.faixaRisco === 'BAIXO';
+  const modeloEmLinha = (pelaMedida && !calma) || !!trecho?.estacao;
+  const choveuMedido = pelaMedida || (trecho?.estacao?.mm3h ?? 0) > 0;
   const pontos = area.alagamentosCge ?? [];
   const riscoVento = s?.componentes?.vento.faixa;
   const alca = useRef<HTMLButtonElement>(null);
   const aberta = folha?.aberta ?? true;
   useArrastoFolha(alca, { aberta, onMudar: folha?.onMudar, onFechar });
+  // Quem escolheu a área por um botão que sumiu (linha da busca, da lista) ficava com o foco no
+  // nada: o título recebe o foco e o leitor de tela anuncia onde a pessoa chegou (crítica 8).
+  const titulo = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (document.activeElement === document.body) titulo.current?.focus({ preventScroll: true });
+  }, [area.id]);
+  // Escape fecha o detalhe com o foco nele. A folha da chuva é portal: o evento dela passa pela
+  // árvore do React, mas não pelo DOM daqui, e ela cuida do próprio Escape.
+  function teclar(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== 'Escape' || e.defaultPrevented || !e.currentTarget.contains(e.target as Node)) return;
+    e.preventDefault();
+    onFechar();
+    document.getElementById('busca-mapa')?.focus();
+  }
 
   return (
     <motion.div
       className="det painel-glass flex flex-col h-full overflow-hidden"
       data-estado={aberta ? 'aberta' : 'curta'}
+      onKeyDown={teclar}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: DURACAO.media, ease: EASE_SUAVE }}
@@ -131,7 +166,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
 
       <div className="det-cab">
         <div className="flex-1 min-w-0">
-          <h2 className="truncate">{area.nome}</h2>
+          <h2 ref={titulo} tabIndex={-1} className="truncate outline-none">{area.nome}</h2>
           <p className="truncate">{trecho ? `${ROTULO_TRECHO[trecho.origem]} · Zona ${area.zona}` : `Zona ${area.zona} · ${CIDADE_ATUAL.nome}`}</p>
         </div>
         <BotaoFavorito ativo={isFavorito(area.id)} onToggle={() => onToggleFavorito(area.id)} size={20} />
@@ -149,16 +184,29 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             <p className="det-hero-frase">{trecho ? fraseDoTrecho(trecho, area, faixas) : fraseDoRisco(area, faixas)}</p>
           </div>
         </div>
-        {pontos.length > 0 && (
+        {/* Com o detalhe inteiro na tela, o cartão do CGE vem logo abaixo: a linha só resume a folha curta. */}
+        {pontos.length > 0 && folha && !folha.aberta && (
           <p className="det-linha">
             <TriangleAlert size={17} aria-hidden="true" className="text-risco-alto-text" />
-            <span>{pontos.length === 1 ? `Alagamento agora na ${pontos[0].via}` : `${pontos.length} pontos de alagamento agora`}</span>
+            <span>{pontos.length === 1 ? `Alagamento agora: ${porExtenso(pontos[0].via)}` : `${pontos.length} pontos de alagamento agora`}</span>
           </p>
         )}
         {trecho && (
           <p className="det-linha">
             <IconeMapa size={17} aria-hidden="true" style={{ color: coresParaFaixa(area.faixaRisco).fill }} />
-            <span>{`${area.nome} inteira em ${labelFaixa(area.faixaRisco)}`}</span>
+            <span>
+              {`${area.nome} inteira em ${labelFaixa(area.faixaRisco)}`}
+              {/* Trecho mais calmo que a área: diz por quê, para os dois números não brigarem. */}
+              {GRAVIDADE[trecho.faixa] < GRAVIDADE[area.faixaRisco ?? 'BAIXO'] && (
+                <small className="det-linha-ponte">
+                  {(s?.chuva3hMedidaMm ?? 0) > 0
+                    ? estacaoMaisForte && estacaoMaisForte.mm3h > 0
+                      ? `A chuva forte foi ${ondeChoveuMais(estacaoMaisForte)}: ${decimal(estacaoMaisForte.mm3h)} mm em 3 h.`
+                      : `A chuva forte foi em outro ponto ${deNomeDe(area.nome)}.`
+                    : `O risco maior está em outro ponto ${deNomeDe(area.nome)}.`}
+                </small>
+              )}
+            </span>
           </p>
         )}
 
@@ -173,7 +221,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
                 const { nome, Icon } = PERIGO[perigo];
                 return (
                   <div key={perigo} className="mb-3" style={{ '--c': coresParaFaixa(faixa).fill } as React.CSSProperties}>
-                    <h4 className="flex items-center gap-1.5 mb-1.5 mx-1" style={{ fontSize: 12.5, fontWeight: 600, color: coresParaFaixa(faixa).text }}>
+                    <h4 className="det-perigo-t flex items-center gap-1.5 mb-1.5 mx-1" style={{ fontSize: 12.5, fontWeight: 600, '--c-escura': coresParaFaixa(faixa).text } as React.CSSProperties}>
                       <Icon size={14} aria-hidden="true" />{`${nome} · ${labelFaixa(faixa)}`}
                     </h4>
                     {dicas.map((d) => (
@@ -192,8 +240,30 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             <section className="det-sec">
               <h3 className="det-t">Chuva</h3>
               <div className="det-bloco">
-                <ChuvaMedidaLinha nome={area.nome} medida={area.chuvaMedida} chuva24h={area.chuva24h} />
-                {s && (
+                {/* O número veio da chuva medida: a leitura que o fez vem primeiro (crítica de 15/11). */}
+                {pelaMedida && !calma && s?.chuva3hMedidaMm != null && (
+                  <div className="det-faixa">
+                    <div className="det-faixa-cab"><span className="det-faixa-nome">Chuva que gerou o risco</span></div>
+                    <div className="det-par um">
+                      <div><b>{decimal(s.chuva3hMedidaMm)}<span>mm</span></b><i>{estacaoMaisForte ? `em 3 h, mais forte ${ondeChoveuMais(estacaoMaisForte)}`
+                        : `em 3 h, num ponto ${deNomeDe(area.nome)}`}</i></div>
+                    </div>
+                  </div>
+                )}
+                <ChuvaMedidaLinha nome={area.nome} medida={medidaDoCartao} chuva24h={trecho ? null : area.chuva24h}
+                  numeroPelaMedida={pelaMedida} doTrecho={!!trecho} mm3h={trecho?.estacao?.mm3h}
+                  calmaMm3h={calma ? s?.chuva3hMedidaMm ?? undefined : undefined} />
+                {/* Modelo em uma linha quando é a medida que manda (área pela medida, ou trecho com estação):
+                    no trecho ele é da região inteira e não pode parecer o número do trecho (crítica de 15/11). */}
+                {s && modeloEmLinha && (
+                  <div className="det-faixa">
+                    <p className="det-faixa-modelo">{choveuMedido && (s.chuva3hMm ?? 0) < 1
+                      // "0 mm" ao lado de uma medida de chuva parece erro: diz que o modelo não viu.
+                      ? `O modelo não registrou essa chuva${trecho ? ` na região ${deNomeDe(area.nome)}` : ""}.`
+                      : `O modelo estimou ${decimal(s.chuva3hMm ?? 0)} mm em 3 h${trecho ? ` para toda a região ${deNomeDe(area.nome)}` : ""}.`}</p>
+                  </div>
+                )}
+                {s && !modeloEmLinha && (
                   <div className="det-faixa">
                     <div className="det-faixa-cab"><span className="det-faixa-nome">Estimada pelo modelo</span></div>
                     <div className={medida ? 'det-par menor' : 'det-par'}>

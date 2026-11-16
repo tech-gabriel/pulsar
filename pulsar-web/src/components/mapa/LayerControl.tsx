@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Activity, Thermometer, CloudRain, Wind, ChevronDown } from 'lucide-react';
+import { Activity, Thermometer, CloudRain, Wind, ChevronDown, Info, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Camada } from '../../utils/camadas';
+import MapLegend, { CartaoComoLer } from './MapLegend';
 
 // Botões de camada, na ordem da spec (ETAPA 3.1). Score é o default ativo.
 const ITENS: { id: Camada; label: string; Icon: LucideIcon }[] = [
@@ -15,6 +16,8 @@ interface Props {
   camadaAtiva: Camada;
   onChange: (camada: Camada) => void;
   isMobile: boolean;
+  /** Overlay de alagamentos ligado: a legenda ganha a chave das ocorrências. */
+  overlayAlagamento?: boolean;
 }
 
 // Geometria do card. As cores vivem em `.mapa-controle` (index.css), que segue
@@ -38,9 +41,12 @@ function estiloBotao(ativo: boolean): React.CSSProperties {
   };
 }
 
-export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props) {
+export default function LayerControl({ camadaAtiva, onChange, isMobile, overlayAlagamento = false }: Props) {
   const iconSize = isMobile ? 18 : 20;
   const [aberto, setAberto] = useState(false);
+  // Computador: o cartão "Como ler" abre pelo botão "i" e fica até a pessoa fechar.
+  const [comoLer, setComoLer] = useState(false);
+  const pilulaRef = useRef<HTMLDivElement>(null);
   const ativa = ITENS.find((i) => i.id === camadaAtiva) ?? ITENS[0];
   const mobileRef = useRef<HTMLDivElement>(null);
 
@@ -60,6 +66,23 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
       document.removeEventListener('keydown', aoTeclar);
     };
   }, [aberto]);
+
+  // O cartão fecha no clique fora da pílula e no Esc, como o menu do celular.
+  useEffect(() => {
+    if (!comoLer) return;
+    function aoClicarFora(e: PointerEvent) {
+      if (pilulaRef.current && !pilulaRef.current.contains(e.target as Node)) setComoLer(false);
+    }
+    function aoTeclar(e: KeyboardEvent) {
+      if (e.key === 'Escape') setComoLer(false);
+    }
+    document.addEventListener('pointerdown', aoClicarFora);
+    document.addEventListener('keydown', aoTeclar);
+    return () => {
+      document.removeEventListener('pointerdown', aoClicarFora);
+      document.removeEventListener('keydown', aoTeclar);
+    };
+  }, [comoLer]);
 
   // ─── Mobile: botão único "Camadas" que abre o seletor ───
   // Ancorado à esquerda, abaixo da faixa de busca+dica (que ocupam o topo em
@@ -104,6 +127,10 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
                 </button>
               );
             })}
+            {/* A legenda da camada mora aqui: aparece só quando a pessoa escolhe o que ver. */}
+            <div className="mt-1 pt-0.5" style={{ borderTop: '1px solid var(--border-glass)' }}>
+              <MapLegend camadaAtiva={camadaAtiva} overlayAlagamento={overlayAlagamento} />
+            </div>
           </div>
         )}
       </div>
@@ -112,11 +139,8 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
 
   // ─── Tablet/computador: pílula horizontal (posição em .camadas-pilula, index.css) ───
   return (
-    <div
-      role="radiogroup"
-      aria-label="Camada do mapa"
-      className="mapa-controle camadas-pilula"
-    >
+    <div ref={pilulaRef} className="mapa-controle camadas-pilula">
+      <div role="radiogroup" aria-label="Camada do mapa" className="flex" style={{ gap: 2 }}>
       {ITENS.map(({ id, label, Icon }) => {
         const ativo = id === camadaAtiva;
         return (
@@ -136,6 +160,23 @@ export default function LayerControl({ camadaAtiva, onChange, isMobile }: Props)
           </button>
         );
       })}
+      </div>
+      <button
+        type="button"
+        onClick={() => setComoLer((v) => !v)}
+        aria-expanded={comoLer}
+        aria-controls="como-ler-camada"
+        aria-label={comoLer ? 'Fechar a explicação da camada' : 'Como ler esta camada'}
+        title={comoLer ? 'Fechar' : 'Como ler esta camada'}
+        className={['camadas-info', comoLer ? 'aberto' : ''].join(' ')}
+      >
+        {comoLer ? <X size={18} strokeWidth={2} /> : <Info size={18} strokeWidth={2} />}
+      </button>
+      {comoLer && (
+        <div id="como-ler-camada" role="dialog" aria-label="Como ler esta camada" className="camadas-como-ler superficie">
+          <CartaoComoLer camadaAtiva={camadaAtiva} overlayAlagamento={overlayAlagamento} />
+        </div>
+      )}
     </div>
   );
 }

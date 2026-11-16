@@ -156,7 +156,8 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Avaliar_ComChuvaForteNaProximaHora_DevolveComAtencaoEFaixaDeHoras()
+    // A medida manda (16/11/2026): chuva forte só prevista não muda o veredito nem traz a faixa de horas.
+    public async Task Avaliar_ChuvaForteSoPrevista_PodeIrSemFaixaDeHoras()
     {
         using var f = new PulsarWebApplicationFactory();
         var agora = DateTime.UtcNow;
@@ -187,11 +188,8 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
 
         resp.StatusCode.Should().Be(HttpStatusCode.OK);
         using var json = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
-        json.RootElement.GetProperty("estado").GetString().Should().Be("ComAtencao");
-        var horas = json.RootElement.GetProperty("horas").EnumerateArray()
-            .Select(h => h.GetProperty("inicioUtc").GetDateTime()).ToList();
-        horas.Should().NotBeEmpty().And.BeInAscendingOrder();
-        horas.Count.Should().BeLessThanOrEqualTo(Pulsar.API.Services.Rota.LimiaresRota.HorasNaFaixa);
+        json.RootElement.GetProperty("estado").GetString().Should().Be("PodeIr");
+        json.RootElement.GetProperty("horas").GetArrayLength().Should().Be(0);
     }
 
     [Fact]

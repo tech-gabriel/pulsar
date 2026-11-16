@@ -98,8 +98,14 @@ export function recolorirEstilo(estilo: StyleSpecification, tom: Tom): StyleSpec
     }
     return camada as LayerSpecification;
   });
-  return { ...estilo, layers };
+  // O crédito em português: o TileJSON do OpenFreeMap traz "Data from". A licença pede os nomes
+  // e os links, não o idioma.
+  const sources = { ...estilo.sources };
+  if (sources.openmaptiles) sources.openmaptiles = { ...sources.openmaptiles, attribution: CREDITO } as typeof sources.openmaptiles;
+  return { ...estilo, layers, sources };
 }
+
+export const CREDITO = '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank">© OpenMapTiles</a> Dados do <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>';
 
 /** Baixa o Liberty e devolve recolorido no tom do tema. Lança se o OpenFreeMap não responder bem. */
 export async function carregarEstiloBase(tema: 'light' | 'dark', signal?: AbortSignal): Promise<StyleSpecification> {

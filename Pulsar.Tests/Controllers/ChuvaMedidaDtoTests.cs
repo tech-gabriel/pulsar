@@ -15,7 +15,8 @@ public class ChuvaMedidaDtoTests
     private static ChuvaCemadenRegiao Cemaden(double? mm1h = 2.5, double? mm24h = 12.0)
         => new(Sub,
             mm1h, mm1h is null ? null : "Butantã", mm1h is null ? null : Agora.AddMinutes(-3),
-            mm24h, mm24h is null ? null : "Jaraguá", mm24h is null ? null : Agora.AddMinutes(-3));
+            mm24h, mm24h is null ? null : "Jaraguá", mm24h is null ? null : Agora.AddMinutes(-3),
+            mm1h is null ? null : 4.2);
 
     [Fact]
     public void De_ComCge_OCgeFalaMesmoComCemadenPresente()
@@ -24,7 +25,8 @@ public class ChuvaMedidaDtoTests
 
         dto.Should().BeEquivalentTo(new
         {
-            Fonte = "cge", Mm15 = 4.0, Mm60 = (double?)null, AcumuladoPeriodoMm = 9.0, Posto = "Lapa", Vizinho = false, ColetadoEm = Agora,
+            Fonte = "cge", Mm15 = 4.0, Mm60 = (double?)null, AcumuladoPeriodoMm = 9.0, Posto = "Lapa", Vizinho = false,
+            DistanciaKm = (double?)null, ColetadoEm = Agora,
         });
     }
 
@@ -36,7 +38,7 @@ public class ChuvaMedidaDtoTests
         dto.Should().BeEquivalentTo(new
         {
             Fonte = "cemaden", Mm15 = (double?)null, Mm60 = 2.5, AcumuladoPeriodoMm = (double?)null,
-            Posto = "Butantã", Vizinho = false, ColetadoEm = Agora.AddMinutes(-3),
+            Posto = "Butantã", Vizinho = false, DistanciaKm = 4.2, ColetadoEm = Agora.AddMinutes(-3),
         });
         dto!.ColetadoEm.Kind.Should().Be(DateTimeKind.Utc);
     }

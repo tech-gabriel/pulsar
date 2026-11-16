@@ -43,4 +43,31 @@ public class BuscaController : ControllerBase
                 new { mensagem = "Não foi possível buscar endereços agora." });
         }
     }
+
+    /// <summary>
+    /// A rua mais perto de um ponto de São Paulo, para o rótulo do destino da rota tocado no mapa.
+    /// Sem rua (ou com o provedor fora do ar) responde 200 com <c>rua: null</c>: o app cai no nome da região.
+    /// </summary>
+    [HttpGet("rua")]
+    [EnableRateLimiting("busca")]
+    [ProducesResponseType(typeof(RuaPertoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RuaPerto([FromQuery] double lat, [FromQuery] double lon, CancellationToken ct)
+    {
+        // Retângulo largo da Grande São Paulo: barra coordenada trocada ou fora da cidade. Escrito
+        // como "dentro" negado, porque NaN falha toda comparação e passaria num "fora".
+        if (!(lat >= -24.1 && lat <= -23.2 && lon >= -47.0 && lon <= -46.2))
+            return BadRequest(new { mensagem = "Ponto fora de São Paulo." });
+
+        try
+        {
+            var rua = await _buscaService.RuaPertoAsync(lat, lon, ct);
+            return Ok(new RuaPertoDto(rua?.Nome, rua is null ? null : (int)Math.Round(rua.Metros)));
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested)
+        {
+            _logger.LogWarning(ex, "Falha na busca reversa de rua.");
+            return Ok(new RuaPertoDto(null, null));
+        }
+    }
 }

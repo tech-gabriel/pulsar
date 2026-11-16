@@ -16,6 +16,7 @@ export function motivoPerigo(
 }
 import { PALETA, comAlfa } from './paleta';
 import { CIDADE_ATUAL } from '../features/cidade/cidade';
+import { deNomeDe } from '../data/regioes-seo';
 
 export interface RiscoCores {
   bg: string;
@@ -34,22 +35,22 @@ const CORES: Record<FaixaRisco, RiscoCores> = {
   BAIXO: {
     bg: '#D4EDDA',
     text: '#155724',
-    border: PALETA.verde,
-    fill: PALETA.verde,
+    border: PALETA.riscoVerde,
+    fill: PALETA.riscoVerde,
     fillOpacity: 0.25,
   },
   MODERADO: {
     bg: '#FFF3CD',
     text: '#856404',
-    border: PALETA.ambar,
-    fill: PALETA.ambar,
+    border: PALETA.riscoAmarelo,
+    fill: PALETA.riscoAmarelo,
     fillOpacity: 0.35,
   },
   ALTO: {
     bg: '#F8D7DA',
     text: '#721C24',
-    border: PALETA.vermelho,
-    fill: PALETA.vermelho,
+    border: PALETA.riscoVermelho,
+    fill: PALETA.riscoVermelho,
     fillOpacity: 0.45,
   },
 };
@@ -104,9 +105,9 @@ export function estiloPoligono(faixa: FaixaRisco | null | undefined): EstiloPoli
 
 // ── Cor de fundo do label de score circular (ETAPA 2.4) ────────────────────────
 const COR_LABEL: Record<FaixaRisco, string> = {
-  BAIXO:    comAlfa(PALETA.verde, 0.85),
-  MODERADO: comAlfa(PALETA.amarelo, 0.85),
-  ALTO:     comAlfa(PALETA.vermelho, 0.85),
+  BAIXO:    comAlfa(PALETA.riscoVerdeBola, 0.85),
+  MODERADO: comAlfa(PALETA.riscoAmarelo, 0.85),
+  ALTO:     comAlfa(PALETA.riscoVermelho, 0.85),
 };
 const COR_LABEL_SEM_DADO = comAlfa(PALETA.neutro, 0.85);
 
@@ -126,7 +127,10 @@ export function resumoAlertas(
   cidadeNome: string = CIDADE_ATUAL.nome,
 ): string {
   const alertas = areas.filter((r) => r.faixaRisco === 'ALTO').length;
-  if (alertas > 0) return `${alertas} ${alertas === 1 ? 'alerta ativo' : 'alertas ativos'}`;
+  // A mesma conta do "São Paulo agora" do painel: alerta e atenção, com as mesmas palavras.
+  const atencao = areas.filter((r) => r.faixaRisco === 'MODERADO').length;
+  if (alertas > 0) return `${alertas} em alerta${atencao > 0 ? `, ${atencao} em atenção` : ''}`;
+  if (atencao > 0) return `${atencao} em atenção`;
   if (areas.length === 0) return carregando ? 'Carregando o risco…' : 'Sem dados de risco agora';
   return `Tudo tranquilo em ${cidadeNome}`;
 }
@@ -143,12 +147,19 @@ export function motivoDoRisco(r: {
   chuva3hMedidaMm?: number | null;
   ventoKmH?: number | null;
   sensacaoTermica?: number | null;
+  /** Nome da área, para a frase da chuva medida dizer de onde ela é ("num ponto da Mooca"). */
+  nome?: string | null;
 }): string | null {
   if (!r.faixa || r.faixa === 'BAIXO') return null;
   const inteiro = (v: number) => Math.round(v).toLocaleString('pt-BR');
   if (r.perigoPrincipal === 'VENTO' && r.ventoKmH != null) return `Por vento de ${inteiro(r.ventoKmH)} km/h`;
   if (r.perigoPrincipal === 'CALOR' && r.sensacaoTermica != null) return `Por calor: sensação de ${inteiro(r.sensacaoTermica)} °C`;
-  const medida = r.chuva3hMedidaMm != null;
+  // Medida zero não "choveu": a frase volta para a do modelo.
+  const medida = (r.chuva3hMedidaMm ?? 0) > 0;
   const mm = ((medida ? r.chuva3hMedidaMm : r.chuva3hMm) ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  return `Por chuva${medida ? ' medida' : ''}: ${mm} mm nas últimas 3h`;
+  // A medida que fez o número é a das estações da parte mais atingida da área, não a do centro:
+  // a frase diz que é "num ponto" dela, porque o "Medida agora" do detalhe pode ler outra estação
+  // na mesma chuva (decisão de 15/11, depois da crítica).
+  if (medida) return `Choveu ${mm} mm em 3 h num ponto ${r.nome ? deNomeDe(r.nome) : 'da região'}`;
+  return `Por chuva: ${mm} mm nas últimas 3h`;
 }

@@ -34,8 +34,11 @@ public class AlagamentoLugar : IAlagamentoLugar
     private readonly IGradeCelulas _grade;
     private readonly ICemadenService _cemaden;
 
-    public AlagamentoLugar(PulsarDbContext db, IGradeCelulas grade, ICemadenService cemaden)
+    private readonly IEstacaoCgeService? _cge;
+
+    public AlagamentoLugar(PulsarDbContext db, IGradeCelulas grade, ICemadenService cemaden, IEstacaoCgeService? cge = null)
     {
+        _cge = cge;
         _db = db;
         _grade = grade;
         _cemaden = cemaden;
@@ -47,7 +50,7 @@ public class AlagamentoLugar : IAlagamentoLugar
         IReadOnlyCollection<CelulaGrade> celulas, DateTime agoraUtc, CancellationToken ct = default)
     {
         if (celulas.Count == 0) return [];
-        var estacoes = await _cemaden.ObterEstacoesComChuvaAsync(agoraUtc, ct);
+        var estacoes = await EstacoesMedidas.TodasAsync(_cemaden, _cge, agoraUtc, ct);
         if (estacoes.Count == 0) return [];
 
         // Banco só quando alguma estação perto de um lugar mediu chuva: é o caso raro.

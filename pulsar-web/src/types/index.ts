@@ -136,6 +136,13 @@ export interface EstacaoAgoraDto {
   cod: string;
   mm1h: number;
   mm3h: number;
+  /** Nome no cadastro do CEMADEN ou do posto do CGE (o código, se faltar). */
+  nome?: string;
+  /** Rede da estação: o posto do CGE manda no trecho perto dele desde 15/11. */
+  fonte?: 'cemaden' | 'cge';
+  /** Onde ela fica: o mapa marca o ponto da medida do trecho aberto. */
+  lat?: number;
+  lon?: number;
 }
 
 /** Alagamento de um trecho (hexágono da grade) agora. `estacao` é o índice em `estacoes`; null = chuva estimada. */
@@ -211,6 +218,8 @@ export interface ChuvaMedida {
   posto: string;
   /** O posto é de outra subprefeitura (a região não tem posto próprio com leitura). */
   vizinho: boolean;
+  /** Do centro da região até a estação do CEMADEN, em km. Null no CGE (o posto não tem coordenada publicada). */
+  distanciaKm?: number | null;
   /** ISO UTC. No CGE é a nossa coleta; no CEMADEN, o instante da consulta lá. Nenhum é a hora em que choveu. */
   coletadoEm: string;
 }

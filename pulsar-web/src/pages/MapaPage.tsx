@@ -5,7 +5,6 @@ import type { GeoJsonObject, FeatureCollection } from 'geojson';
 import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
 import BuscaUnificada from '../components/mapa/BuscaUnificada';
 import LayerControl from '../components/mapa/LayerControl';
-import MapLegend from '../components/mapa/MapLegend';
 import PainelLateral from '../components/painel/PainelLateral';
 import DetalheSubprefeitura from '../components/painel/DetalheSubprefeitura';
 import FolhaLugar from '../components/painel/FolhaLugar';
@@ -15,6 +14,7 @@ import type { Camada } from '../utils/camadas';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
+import { useDicaUnica } from '../hooks/useDicaLocalizacao';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useNotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../hooks/usePushSubscription';
@@ -35,7 +35,8 @@ import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from
 import { useAlturaFluida } from '../motion/useAlturaFluida';
 import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
 import { useJsonPublico } from '../hooks/useJsonPublico';
-import { escolherDestinoComoChegar } from '../features/rota/destino';
+import { escolherDestinoComoChegar, rotuloDoPino, rotuloDoTrecho } from '../features/rota/destino';
+import { buscarRuaPerto } from '../api/busca';
 import CamposDePara from '../components/rota/CamposDePara';
 import PainelRota from '../components/rota/PainelRota';
 import { track } from '../analytics';
@@ -43,7 +44,7 @@ import type { PontoRota } from '../features/rota/tipos';
 import type { LocalSalvoDto, TipoLocal } from '../types';
 import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
 import { pontoDoLocal, subprefeituraIdDoPonto } from '../features/locais/regras';
-import { h3DoPonto, montarTrechos, trechosDe } from '../features/cidade/trechos';
+import { centroDoTrecho, estacaoMaisForte, h3DoPonto, montarTrechos, ondeChoveuMais, trechosDe } from '../features/cidade/trechos';
 import { useCelulasAgora } from '../hooks/useCelulasAgora';
 import type { OrigemTrecho } from '../components/painel/DetalheSubprefeitura';
 
@@ -121,6 +122,15 @@ export default function MapaPage() {
   // Modo rota: o De/Para toma o lugar da busca e o resultado, o do painel/folha.
   const [rotaAberta, setRotaAberta] = useState(false);
   const [rotuloBusca, setRotuloBusca] = useState<string | null>(null);
+  // Trecho de destino da rota aberta a partir de um toque: fica contornado com a rota aberta.
+  // Último ponto onde a pessoa soltou o pino: a rua dele chega depois e só vale se o pino não mudou.
+  const ultimoSolto = useRef<{ lat: number; lon: number } | null>(null);
+  // A rua de onde o pino caiu também vai para o campo da busca (crítica de 15/11).
+  const [textoArrastado, setTextoArrastado] = useState<string | null>(null);
+  // Lista da busca aberta: o convite de alertas sai do caminho.
+  const [buscaAberta, setBuscaAberta] = useState(false);
+  // Uma coisa por vez no celular: com a dica da localização na tela, o convite do push espera.
+  const [dicaLocalNaTela, setDicaLocalNaTela] = useState(false);
   // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
   const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
@@ -166,16 +176,31 @@ export default function MapaPage() {
   // Trechos (hexágonos da grade): só na camada de risco e fora da rota. Os dados vêm quando o
   // mapa chega perto ou quando há um ponto (busca, localização), nunca na abertura de longe.
   const [perto, setPerto] = useState(false);
-  const comTrechos = camadaAtiva === 'score' && !rotaAberta;
+  // Também com a rota aberta (crítica de 15/11): o que a pessoa viu antes de tocar em Rota continua
+  // no mapa, sem toque; o trecho de destino fica contornado.
+  const comTrechos = camadaAtiva === 'score';
   const ativoTrechos = comTrechos && (perto || !!pontoBusca);
   const contornoTrechos = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
-  const celulasAgora = useCelulasAgora(ativoTrechos, ultimaAtualizacao?.getTime() ?? null);
+  // Com uma área aberta as células também vêm: nomeiam a estação da chuva que gerou o risco dela.
+  const celulasAgora = useCelulasAgora(ativoTrechos || !!subSelecionada, ultimaAtualizacao?.getTime() ?? null);
   const trechos = useMemo(() => (celulasAgora ? trechosDe(celulasAgora, subprefeituras) : null), [celulasAgora, subprefeituras]);
   const dadosTrechos = useMemo(
     () => (contornoTrechos.dados && trechos ? montarTrechos(contornoTrechos.dados, trechos) : null),
     [contornoTrechos.dados, trechos],
   );
+  // Dica única de que o trecho é tocável: aparece quando os trechos surgem pela primeira vez.
+  const dicaTrecho = useDicaUnica('pulsar-dica-trecho-vista');
+  const mostrarDicaTrecho = dicaTrecho.mostrarDica && comTrechos && !rotaAberta && perto && !!dadosTrechos && !localAberto;
+  // Uma dica por sessão: depois da do trecho, a do alvo não entra logo no lugar dela.
+  const [dicaTrechoNaSessao, setDicaTrechoNaSessao] = useState(false);
+  if (mostrarDicaTrecho && !dicaTrechoNaSessao) setDicaTrechoNaSessao(true);
   // O trecho tocado ganha do trecho do ponto; os dois só valem se forem da área aberta.
+  // Na rota, o trecho do destino fica marcado, venha ele de um toque, de uma busca ou do campo Para.
+  const [dLat, dLon] = [rota.destino?.lat, rota.destino?.lon];
+  const h3DoDestino = useMemo(
+    () => (dLat != null && dLon != null ? h3DoPonto(dLat, dLon, contornoTrechos.dados) : null),
+    [dLat, dLon, contornoTrechos.dados],
+  );
   const h3DoPontoBusca = useMemo(
     () => (pontoBusca ? h3DoPonto(pontoBusca.lat, pontoBusca.lon, contornoTrechos.dados) : null),
     [pontoBusca, contornoTrechos.dados],
@@ -189,12 +214,20 @@ export default function MapaPage() {
       : pontoBusca?.ajustado ? 'ponto' : 'busca';
     return { ...t, origem };
   })();
+  // Onde foi medida a chuva do risco aberto: a estação do trecho, ou a que mais mediu na área
+  // quando o número dela veio da medida. O mapa marca esse ponto.
+  const estacaoDoRisco = trechoAberto?.estacao
+    ?? (subSelecionada && (subSelecionada.scoreAtual?.chuva3hMedidaMm ?? 0) > 0 ? estacaoMaisForte(trechos, subSelecionada.id) : null);
+  const pontoMedida = estacaoDoRisco?.lat != null && estacaoDoRisco.lon != null && estacaoDoRisco.mm3h > 0
+    ? { lat: estacaoDoRisco.lat, lon: estacaoDoRisco.lon, rotulo: `Chuva medida ${ondeChoveuMais(estacaoDoRisco)}` }
+    : null;
 
   function handleTocarTrecho(h3: string) {
     const t = trechos?.get(h3);
     const area = t && subprefeituras.find((s) => s.id === t.areaId);
     if (!t || !area) return;
     track.tocouTrecho(t.faixa);
+    dicaTrecho.dispensar(); // aprendeu: a dica não volta
     limparDeepLink();
     setLugarAberto(null);
     setSubSelecionada(area);
@@ -269,15 +302,40 @@ export default function MapaPage() {
     }
   }
 
+  // "Minha localização" no campo De: volta a sair de onde a pessoa está.
+  async function origemNaLocalizacao() {
+    try {
+      const { lat, lon } = await detectar();
+      rota.setOrigem({ lat, lon, rotulo: ROTULO_LOCALIZACAO });
+    } catch (err) {
+      showToast(err instanceof GeoError && err.tipo === 'negado'
+        ? 'Permita o acesso à localização no navegador para sair de onde você está.'
+        : 'Não consegui te localizar agora. Escolha o ponto de partida pelo endereço.', 'error');
+    }
+  }
+
   function fecharRota() {
     setRotaAberta(false);
     rota.setOrigem(null);
     rota.setDestino(null);
   }
 
-  // "Como chegar" no detalhe: o destino é o ponto buscado só se ele é desta subprefeitura; senão o centro dela.
+  // "Rota até aqui" no detalhe: a ordem dos destinos fica em escolherDestinoComoChegar.
   function comoChegar(sub: SubprefeituraMapaDto) {
-    void abrirRota('como_chegar', escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? (geojson as FeatureCollection | null)));
+    const centro = trechoAberto?.origem === 'toque' ? centroDoTrecho(trechoAberto.h3, contornoTrechos.dados) : null;
+    const destino = escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? (geojson as FeatureCollection | null), centro);
+    const paraOTrecho = !!centro && destino.lat === centro.lat && destino.lon === centro.lon;
+    // Trecho: o rótulo final é a rua, que chega em seguida; até lá diz que está buscando, em vez
+    // de mostrar um nome e trocá-lo depois.
+    void abrirRota('como_chegar', paraOTrecho ? { ...destino, rotulo: 'Buscando a rua…' } : destino);
+    // Destino no trecho: a rota abre com o nome da região e ganha a rua mais perto quando ela chega
+    // (só se a pessoa ainda não trocou o destino).
+    if (centro && paraOTrecho) {
+      // Sem rua por perto (ou com a busca fora do ar) fica o nome da região: "Trecho na Mooca".
+      void buscarRuaPerto(centro.lat, centro.lon).then((r) => {
+        rota.setDestino((d) => (d && d.lat === centro.lat && d.lon === centro.lon ? { ...d, rotulo: rotuloDoTrecho(sub.nome, r?.rua ?? null) } : d));
+      });
+    }
   }
 
   function fecharDetalhe() {
@@ -293,37 +351,53 @@ export default function MapaPage() {
   }
 
   // Núcleo compartilhado por busca e geolocalização: resolve o ponto para uma
-  // seleção de região (ou aviso) e aplica no estado do mapa. Devolve se caiu na área.
-  function selecionarPorPonto(ponto: PontoBusca, origem: 'busca' | 'localizacao') {
+  // seleção de região (ou aviso) e aplica no estado do mapa. Devolve a subprefeitura (null fora da área).
+  function selecionarPorPonto(ponto: PontoBusca, origem: 'busca' | 'localizacao'): SubprefeituraMapaDto | null {
     setPontoBusca(ponto);
     setTrechoTocado(null); // o trecho passa a ser o do ponto
     const sel = resolverSelecao(ponto.lat, ponto.lon, geojson as FeatureCollection | null, subprefeituras, origem);
     if (sel.aviso) {
       setSubSelecionada(null);
       setAvisoBusca(sel.aviso);
-      return false;
+      return null;
     }
     setAvisoBusca(null);
     setSubSelecionada(sel.sub);
     setPainelRecolhido(false);
     setZonaEmFoco(null);
     if (isMobile) setPainelMobileAberto(false);
-    return true;
+    return sel.sub;
   }
 
-  // Pin arrastado: o ponto passa a ser exato (sem círculo nem aviso) e o mapa não voa.
+  // Pin arrastado: o ponto passa a ser exato (sem círculo nem aviso) e o mapa não voa. O nome
+  // do destino passa a ser a rua de onde o pino caiu (escolha de 15/11), não o que foi digitado:
+  // o pino pode ter ido parar em outra rua.
   function handleMoverPonto(lat: number, lon: number) {
-    selecionarPorPonto({ lat, lon, ajustado: true }, 'busca');
+    const sub = selecionarPorPonto({ lat, lon, ajustado: true }, 'busca');
     setRotuloBusca(null);
+    ultimoSolto.current = { lat, lon };
+    if (sub) {
+      void buscarRuaPerto(lat, lon).then((r) => {
+        const agora = ultimoSolto.current;
+        if (r && agora && agora.lat === lat && agora.lon === lon) {
+          const rotulo = rotuloDoPino(sub.nome, r.rua, r.metros);
+          setRotuloBusca(rotulo);
+          setTextoArrastado(rotulo);
+        }
+      });
+    }
     void atualizarProximas(lat, lon);
   }
 
   // Seleção de um endereço na busca: marca o ponto no mapa, voa até ele e resolve
   // a subprefeitura/região correspondente (point-in-polygon sobre o GeoJSON já
   // carregado), abrindo o painel de detalhe. Fora dos polígonos → aviso.
-  function handleSelecionarEndereco(endereco: EnderecoBusca) {
-    selecionarPorPonto({ lat: endereco.latitude, lon: endereco.longitude }, 'busca');
+  function handleSelecionarEndereco(endereco: EnderecoBusca, numeroFaltando?: string) {
+    const dentro = selecionarPorPonto({ lat: endereco.latitude, lon: endereco.longitude }, 'busca');
     setRotuloBusca(endereco.nome || endereco.descricao);
+    ultimoSolto.current = null;
+    // O mapa não tem o número digitado: a rota vai exatamente para onde a pessoa soltar o pino.
+    if (dentro && numeroFaltando) setAvisoBusca(`O mapa não tem o número ${numeroFaltando}. Arraste o pino até a porta.`);
   }
 
   async function atualizarProximas(lat: number, lon: number) {
@@ -379,7 +453,13 @@ export default function MapaPage() {
       localizando={localizando}
       onAbrirRota={() => void abrirRota('chip')}
       embutida={embutida}
-      semDica={!!localAberto}
+      semDica={!!localAberto || dicaTrechoNaSessao}
+      dicaTrecho={mostrarDicaTrecho}
+      onDispensarDicaTrecho={dicaTrecho.dispensar}
+      aviso={isMobile ? avisoBusca : null}
+      textoBusca={textoArrastado}
+      onListaAberta={setBuscaAberta}
+      onDicaVisivel={setDicaLocalNaTela}
     />
   );
 
@@ -429,6 +509,7 @@ export default function MapaPage() {
       locais={locaisSalvos.locais}
       onSalvarLocal={salvarLocal}
       carregandoLocais={locaisSalvos.carregando}
+      onMinhaLocalizacao={() => void origemNaLocalizacao()}
     />
   );
 
@@ -444,6 +525,7 @@ export default function MapaPage() {
       avisoIndisponivel={rota.avisoIndisponivel}
       onTentarDeNovo={rota.tentarDeNovo}
       onCancelarAviso={() => void rota.cancelarAviso()}
+      faixaDaArea={(id) => subprefeituras.find((s) => s.id === id)?.faixaRisco}
       onTrocar={(ponto) => {
         (ponto === 'origem' ? rota.setOrigem : rota.setDestino)(null);
         // O De/Para é o mesmo no celular e no painel: um só está montado.
@@ -460,98 +542,12 @@ export default function MapaPage() {
       <Header />
 
       {/* ══════════════════════════════════════════
-          MAPA — camada de fundo absoluta
-          Abaixo do header (48px mobile / 64px desktop); no mobile termina
-          acima da tab bar inferior (48px).
-      ══════════════════════════════════════════ */}
-      <div data-transicao className={`mapa-app absolute inset-0 z-0 `}>
-        <MapaBase
-          geojson={geojson}
-          subprefeituras={subprefeituras}
-          subSelecionada={subSelecionada}
-          onSelecionarSub={handleSelecionarSub}
-          camadaAtiva={camadaAtiva}
-          zonaEmFoco={zonaEmFoco}
-          subSelecionadaAtiva={!!subSelecionada}
-          pontoBusca={rotaAberta ? null : pontoBusca}
-          onMoverPonto={handleMoverPonto}
-          overlayAlagamento={overlayAlagamento}
-          ocorrencias={ocorrencias}
-          rota={rotaAberta ? rota.linha : null}
-          semZoom={rotaNoCelular}
-          lugares={rotaAberta ? undefined : lugaresNoMapa}
-          onTocarLugar={abrirLugar}
-          lugarEmFoco={lugarEmFoco}
-          voltarDoLugar={voltarDoLugar}
-          lugaresEmAlerta={lugaresEmAlerta}
-          trechos={comTrechos ? dadosTrechos : null}
-          trechoSelecionado={trechoAberto?.h3 ?? null}
-          onTocarTrecho={handleTocarTrecho}
-          onPerto={setPerto}
-        />
-
-        {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}
-        {isMobile && (rotaAberta ? camposRota(false) : buscaMapa(false))}
-
-        {/* Na rota do celular os controles do mapa saem: a tela é do caminho (voltam ao fechar). */}
-        {!rotaNoCelular && (
-          <>
-            {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
-            <LayerControl
-              camadaAtiva={camadaAtiva}
-              onChange={setCamadaAtiva}
-              isMobile={isMobile}
-            />
-
-            {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
-            <OverlayAlagamentoToggle
-              ativo={overlayAlagamento}
-              onToggle={() => setOverlayAlagamento((v) => !v)}
-              isMobile={isMobile}
-            />
-          </>
-        )}
-
-        {/* Pilha da legenda e dos avisos (tablet: à direita, no alto; computador: à esquerda, no pé).
-            No celular a pilha some (display: contents) e cada peça se posiciona sozinha. */}
-        <div className="pilha-mapa">
-          {/* Legenda dinâmica: muda com a camada. Com o overlay ligado ganha a chave dos alagamentos. */}
-          <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} />
-
-          {/* Aviso quando o endereço cai fora da área coberta */}
-          {avisoBusca && (
-            <div className="superficie rounded-2xl mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">
-              {avisoBusca}
-            </div>
-          )}
-
-          {/* Convite para ativar notificações push. Sem favorita o push não tem o que mandar:
-              primeiro escolher, depois ativar. */}
-          {semFavoritas
-            ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
-            : <ConvitePush favoritas={favoritas} />}
-
-          {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
-          {proximas && (
-            <CardAlagamentoProximo dados={proximas} onFechar={() => setProximas(null)} />
-          )}
-        </div>
-      </div>
-
-      {/* Banner de erro sobre o mapa */}
-      {erro && !subSelecionada && (
-        <div className="absolute top-[calc(var(--topo-app)+0.5rem)] left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
-          <div className="pointer-events-auto">
-            <ErrorBanner mensagem={erro} onRetry={recarregar} />
-          </div>
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════
           PAINEL FLUTUANTE — tablet e computador
           Cartão de vidro do tamanho do conteúdo, com a busca dentro (pesquisou, a resposta
           aparece embaixo). Tablet: no pé do mapa, recolhível. Computador: à direita.
           A altura anima ao trocar lista, detalhe e resultados (useAlturaFluida).
+          Vem antes do mapa no DOM: no Tab, a busca chega logo depois do cabeçalho, não depois
+          dos 32 números (o z-index do painel, não a ordem, o põe sobre o mapa).
       ══════════════════════════════════════════ */}
       <aside
         ref={painelRef}
@@ -588,6 +584,7 @@ export default function MapaPage() {
               onToggleFavorito={toggleFavorito}
               onComoChegar={() => comoChegar(subSelecionada)}
               trecho={trechoAberto}
+              estacaoMaisForte={estacaoMaisForte(trechos, subSelecionada.id)}
             />
           ) : (
             <PainelLateral
@@ -603,6 +600,95 @@ export default function MapaPage() {
         </div>
       </aside>
 
+      {/* ══════════════════════════════════════════
+          MAPA — camada de fundo absoluta
+          Abaixo do header (48px mobile / 64px desktop); no mobile termina
+          acima da tab bar inferior (48px).
+      ══════════════════════════════════════════ */}
+      <div data-transicao className={`mapa-app absolute inset-0 z-0 `}>
+        {/* Celular: busca sobreposta ao mapa, antes dele no Tab. Tablet e computador: ela mora no painel. */}
+        {isMobile && (rotaAberta ? camposRota(false) : buscaMapa(false))}
+
+        <MapaBase
+          geojson={geojson}
+          subprefeituras={subprefeituras}
+          subSelecionada={subSelecionada}
+          onSelecionarSub={handleSelecionarSub}
+          camadaAtiva={camadaAtiva}
+          zonaEmFoco={zonaEmFoco}
+          subSelecionadaAtiva={!!subSelecionada}
+          pontoBusca={rotaAberta ? null : pontoBusca}
+          onMoverPonto={handleMoverPonto}
+          overlayAlagamento={overlayAlagamento}
+          ocorrencias={ocorrencias}
+          rota={rotaAberta ? rota.linha : null}
+          destinoSemRota={rotaAberta && !rota.linha ? rota.destino : null}
+          semZoom={rotaNoCelular}
+          lugares={rotaAberta ? undefined : lugaresNoMapa}
+          onTocarLugar={abrirLugar}
+          lugarEmFoco={lugarEmFoco}
+          voltarDoLugar={voltarDoLugar}
+          lugaresEmAlerta={lugaresEmAlerta}
+          trechos={comTrechos ? dadosTrechos : null}
+          trechoSelecionado={rotaAberta
+            ? h3DoDestino
+            : trechoAberto?.h3 ?? null}
+          onTocarTrecho={rotaAberta ? undefined : handleTocarTrecho}
+          onPerto={setPerto}
+          pontoMedida={pontoMedida}
+        />
+
+        {/* Na rota do celular os controles do mapa saem: a tela é do caminho (voltam ao fechar). */}
+        {!rotaNoCelular && (
+          <>
+            {/* Sidebar de camadas (ETAPA 3): vertical no desktop, horizontal no mobile */}
+            <LayerControl
+              camadaAtiva={camadaAtiva}
+              onChange={setCamadaAtiva}
+              isMobile={isMobile}
+              overlayAlagamento={overlayAlagamento}
+            />
+
+            {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
+            <OverlayAlagamentoToggle
+              ativo={overlayAlagamento}
+              onToggle={() => setOverlayAlagamento((v) => !v)}
+              isMobile={isMobile}
+            />
+          </>
+        )}
+
+        {/* Pilha da legenda e dos avisos (tablet: à direita, no alto; computador: à esquerda, no pé).
+            No celular a pilha some (display: contents) e cada peça se posiciona sozinha. */}
+        <div className="pilha-mapa">
+          {/* Aviso do ponto buscado. Só no computador: no celular ele fica embaixo da busca. */}
+          {avisoBusca && !isMobile && (
+            <div className="superficie rounded-2xl mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">
+              {avisoBusca}
+            </div>
+          )}
+
+          {/* Convite para ativar notificações push. Sem favorita o push não tem o que mandar:
+              primeiro escolher, depois ativar. Com a rota aberta ele sai: o mapa é do caminho. */}
+          {!rotaAberta && !mostrarDicaTrecho && !buscaAberta && !(isMobile && dicaLocalNaTela) && (semFavoritas
+            ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
+            : <ConvitePush favoritas={favoritas} />)}
+
+          {/* Card "perto de mim": contagem de alagamentos + risco elevado (Fase B) */}
+          {proximas && (
+            <CardAlagamentoProximo dados={proximas} onFechar={() => setProximas(null)} />
+          )}
+        </div>
+      </div>
+
+      {/* Banner de erro sobre o mapa */}
+      {erro && !subSelecionada && (
+        <div className="absolute top-[calc(var(--topo-app)+0.5rem)] left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-4 pointer-events-none">
+          <div className="pointer-events-auto">
+            <ErrorBanner mensagem={erro} onRetry={recarregar} />
+          </div>
+        </div>
+      )}
       {/* ══════════════════════════════════════════
           FOLHA DO CELULAR: o mesmo cartão de vidro do computador, flutuando acima da barra de
           abas e do tamanho do conteúdo (useAlturaFluida anima a troca). Fechada, é só a linha do
@@ -640,6 +726,7 @@ export default function MapaPage() {
               onToggleFavorito={toggleFavorito}
               onComoChegar={() => comoChegar(detalheNaFolha)}
               trecho={trechoAberto}
+              estacaoMaisForte={estacaoMaisForte(trechos, detalheNaFolha.id)}
               folha={{ aberta: detalheAberto, onMudar: (a) => setDetalheAbertoEm(a ? detalheNaFolha.id : null) }}
             />
           </div>

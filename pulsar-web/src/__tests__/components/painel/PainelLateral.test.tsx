@@ -18,7 +18,7 @@ describe('PainelLateral (B)', () => {
     render(<PainelLateral {...base} areas={[itaquera, mooca, penha]} favoritas={[penha]} onSelecionar={onSelecionar} />);
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('1 em alerta, 1 em atenção');
     expect(screen.getByText('Suas subprefeituras')).toBeInTheDocument();
-    expect(screen.getByText('Em atenção agora')).toBeInTheDocument();
+    expect(screen.getByText('Em risco agora')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Itaquera/ }));
     expect(onSelecionar).toHaveBeenCalledWith(itaquera);
   });
@@ -31,13 +31,13 @@ describe('PainelLateral (B)', () => {
 
   it('só favoritas em atenção: a seção em atenção some', () => {
     render(<PainelLateral {...base} areas={[mooca, penha]} favoritas={[mooca]} onSelecionar={vi.fn()} />);
-    expect(screen.queryByText('Em atenção agora')).not.toBeInTheDocument();
+    expect(screen.queryByText('Em risco agora')).not.toBeInTheDocument();
   });
 
   it('dia tranquilo: sem a seção em atenção', () => {
     render(<PainelLateral {...base} areas={[penha]} favoritas={[]} onSelecionar={vi.fn()} />);
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Tudo tranquilo em São Paulo');
-    expect(screen.queryByText('Em atenção agora')).not.toBeInTheDocument();
+    expect(screen.queryByText('Em risco agora')).not.toBeInTheDocument();
   });
 
   it('ver todas: lista completa, pior primeiro, com busca e voltar', () => {
@@ -48,7 +48,7 @@ describe('PainelLateral (B)', () => {
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'pen' } });
     expect(screen.queryByRole('button', { name: /Mooca/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Voltar' }));
-    expect(screen.getByText('Em atenção agora')).toBeInTheDocument();
+    expect(screen.getByText('Em risco agora')).toBeInTheDocument();
   });
 
   it('erro de carga aparece com o recarregar', () => {

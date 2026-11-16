@@ -17,6 +17,14 @@ export const PALETA = {
   ambar: '#f59e0b', // amber-500  — atenção
   vermelho: '#ef4444', // red-500    — risco alto
   roxo: '#9333ea', // purple-600 — UV extremo
+  // Risco no semáforo da Defesa Civil SP (escolha de 16/11/2026; a SEMIL publica só os nomes das
+  // cores, os tons são de referência). Só o risco usa: temperatura e vento seguem com os de cima.
+  riscoVerde: '#1E9E4A',
+  // Só a bola do número (crítica 8, opção A): branco no #1E9E4A dava 3,5:1; aqui dá 5,0:1.
+  // A área e o trecho seguem no riscoVerde.
+  riscoVerdeBola: '#15803D',
+  riscoAmarelo: '#F2C200',
+  riscoVermelho: '#D62C2C',
   voce: '#00BCFF', // pulsar-400 — a pessoa no mapa (ponto e raio), igual ao --color-pulsar-400
 } as const;
 

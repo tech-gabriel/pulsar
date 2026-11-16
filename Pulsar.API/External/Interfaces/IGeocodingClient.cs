@@ -7,7 +7,13 @@ namespace Pulsar.API.External.Interfaces;
 public interface IGeocodingClient
 {
     Task<IReadOnlyList<EnderecoGeocodificado>> BuscarAsync(string consulta, CancellationToken ct = default);
+
+    /// <summary>A rua mais perto de um ponto (geocoding reverso). Null sem chave, sem resultado ou fora de alcance.</summary>
+    Task<RuaProxima?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default);
 }
+
+/// <summary>Rua mais perto de um ponto e a distância até o endereço que a nomeou, em metros.</summary>
+public sealed record RuaProxima(string Nome, double Metros);
 
 /// <summary>
 /// Resultado bruto de geocoding, independente do provedor.

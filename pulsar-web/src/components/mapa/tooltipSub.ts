@@ -1,9 +1,9 @@
 import type { FaixaRisco, SubprefeituraMapaDto } from '../../types';
-import { labelFaixa, motivoPerigo } from '../../utils/risco';
+import { labelFaixa } from '../../utils/risco';
 
 /**
- * HTML do tooltip ao passar o mouse sobre o polígono da subprefeitura (redesenho 11/2026):
- * nome e zona, o score, a faixa e uma linha com temperatura, chuva e vento. É uma prévia;
+ * HTML do tooltip ao passar o mouse sobre o polígono da subprefeitura (C1 compacta, 16/11/2026):
+ * o nome, o número na cor da faixa e uma linha por dado (chuva, calor, vento). É uma prévia;
  * umidade, UV e visibilidade ficam no detalhe, a um clique. A cor da faixa vem de classes
  * (pt-BAIXO…), para o tema claro usar tons mais escuros sem mexer no markup.
  */
@@ -41,17 +41,17 @@ export function tooltipSubprefeituraHtml(
 ): string {
   const nome = esc(sub?.nome ?? nomeFallback ?? 'Subprefeitura');
   const cls = classeFaixa(sub?.faixaRisco);
-  const score = sub?.scoreAtual ? `<span class="pt-score ${cls}">${Math.round(sub.scoreAtual.valor)}</span>` : '';
-  const cabecalho = `<div class="pt-head"><div><div class="pt-titulo">${nome}</div>${
-    sub ? `<div class="pt-regiao">Zona ${esc(sub.zona)}</div>` : ''
-  }</div>${score}</div>`;
+  // O número na cor da faixa diz o risco sozinho (escolha de 16/11/2026: sem a linha "Tranquilo · Sul").
+  const score = sub?.scoreAtual
+    ? `<span class="pt-score ${cls}" aria-label="Risco ${Math.round(sub.scoreAtual.valor)}, ${labelFaixa(sub.faixaRisco)}">${Math.round(sub.scoreAtual.valor)}</span>`
+    : '';
+  const cabecalho = `<div class="pt-head"><div class="pt-titulo">${nome}</div>${score}</div>`;
 
   if (!sub) {
     return `<div class="pt">${cabecalho}<div class="pt-vazio">Ainda sem dados</div></div>`;
   }
 
   const l = sub.ultimaLeitura;
-  const motivo = motivoPerigo(sub.scoreAtual?.perigoPrincipal, sub.faixaRisco);
   const pontosCge = sub.alagamentosCge?.length ?? 0;
   // Dado oficial, não estimativa: aparece em vermelho mesmo com o score baixo.
   const linhaCge = pontosCge === 0 ? '' : `<div class="pt-cge pt-ALTO">${
@@ -59,20 +59,14 @@ export function tooltipSubprefeituraHtml(
   }, segundo o CGE</div>`;
   // Com leitura do CGE a chuva da prévia é a medida, e diz que é; sem ela, a do modelo.
   const mm15 = sub.chuvaMedida?.mm15;
-  const chuva = mm15 == null
-    ? `${num(l?.chuvaMmH ?? 0, 1)} mm/h`
-    : `${num(mm15, 1)} mm em 15 min <em class="pt-medido">medido</em>`;
-  const linha = l
-    ? `<div class="pt-linha"><span>${ICONE.temperatura}${num(l.temperaturaC, 1)} °C</span><span${mm15 == null ? '' : ' class="pt-chuva-medida"'}>${ICONE.chuva}${chuva}</span><span>${ICONE.vento}${num(l.ventoKmH, 0)} km/h</span></div>`
+  const chuva = mm15 == null ? `${num(l?.chuvaMmH ?? 0, 1)} mm/h` : `${num(mm15, 1)} mm em 15 min`;
+  // Uma informação por linha: ícone, nome do dado e valor (C1 compacta, escolhida em 16/11/2026).
+  const dado = (icone: string, rotulo: string, valor: string, extra = '') =>
+    `<div class="pt-dado">${icone}<span class="pt-rot">${rotulo}</span><b>${valor}</b>${extra}</div>`;
+  const dados = l
+    ? `<div class="pt-dados">${dado(ICONE.chuva, 'Chuva', chuva, mm15 == null ? '' : '<em class="pt-medido">medida</em>')}${
+      dado(ICONE.temperatura, 'Calor', `${num(l.temperaturaC, 1)} °C`)}${dado(ICONE.vento, 'Vento', `${num(l.ventoKmH, 0)} km/h`)}</div>`
     : '<div class="pt-vazio">Sem leitura recente</div>';
 
-  return `<div class="pt">
-    ${cabecalho}
-    <div class="pt-score-row">
-      <span class="pt-faixa ${cls}">${labelFaixa(sub.faixaRisco)}</span>
-      ${motivo ? `<span class="pt-motivo">por ${motivo.rotulo}</span>` : ''}
-    </div>
-    ${linhaCge}
-    ${linha}
-  </div>`;
+  return `<div class="pt">${cabecalho}${linhaCge}${dados}</div>`;
 }

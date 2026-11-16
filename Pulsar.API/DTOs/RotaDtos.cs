@@ -18,5 +18,5 @@ public record TrechoRotaDto(Guid SubprefeituraId, string Nome, FaixaRisco? Faixa
 
 public record HoraRotaDto(DateTime InicioUtc, FaixaRisco PiorFaixa);
 
-public record RotaAvaliacaoDto(EstadoRota Estado, Guid? TrechoDecisivoId, DateTime? TranquiloAteUtc,
+public record RotaAvaliacaoDto(EstadoRota Estado, Guid? TrechoDecisivoId,
     DateTime? EsperarAteUtc, IReadOnlyList<TrechoRotaDto> Trechos, IReadOnlyList<HoraRotaDto> Horas);

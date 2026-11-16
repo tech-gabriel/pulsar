@@ -2,8 +2,12 @@ using Pulsar.API.Domain.Enums;
 
 namespace Pulsar.API.DTOs;
 
-/// <summary>Estação com chuva medida que mandou na conta de algum trecho.</summary>
-public record EstacaoAgoraDto(string Cod, double Mm1h, double Mm3h);
+/// <summary>
+/// Estação com chuva medida que mandou na conta de algum trecho. Nome: o do cadastro do CEMADEN
+/// ou o do posto do CGE (o código, se faltar). Fonte: "cemaden" ou "cge". Lat/Lon: onde ela fica,
+/// para o mapa marcar o ponto da medida.
+/// </summary>
+public record EstacaoAgoraDto(string Cod, double Mm1h, double Mm3h, string Nome = "", string Fonte = "cemaden", double Lat = 0, double Lon = 0);
 
 /// <summary>
 /// Risco de alagamento de um trecho da grade agora.

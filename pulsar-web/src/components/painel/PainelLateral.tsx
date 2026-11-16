@@ -47,7 +47,7 @@ export default function PainelLateral({
   const [verTodas, setVerTodas] = useState(false);
   const [busca, setBusca] = useState('');
   const resumo = useMemo(() => resumoCidade(areas), [areas]);
-  // Quem já está em "Suas subprefeituras" não se repete em "Em atenção agora".
+  // Quem já está em "Suas subprefeituras" não se repete em "Em risco agora".
   const atencao = useMemo(
     () => emAtencao(areas).filter((a) => !favoritas.some((f) => f.id === a.id)),
     [areas, favoritas],
@@ -100,7 +100,7 @@ export default function PainelLateral({
           <motion.div variants={containerStagger} initial="inicial" animate="animar">
             <motion.div variants={itemStagger} className="pt-1"><CidadeAgora resumo={resumo} cidadeNome={CIDADE_ATUAL.nome} /></motion.div>
             {favoritas.length > 0 && (<><Secao estrela>Suas subprefeituras</Secao>{linhas(favoritas)}</>)}
-            {atencao.length > 0 && (<><Secao>Em atenção agora</Secao>{linhas(atencao)}</>)}
+            {atencao.length > 0 && (<><Secao>Em risco agora</Secao>{linhas(atencao)}</>)}
             {areas.length > 0 && (
               <motion.button variants={itemStagger} type="button" onClick={() => setVerTodas(true)}
                 className="w-full min-h-11 mt-1 flex items-center justify-center gap-1 text-sm font-semibold" style={{ color: 'var(--text-accent)' }}>

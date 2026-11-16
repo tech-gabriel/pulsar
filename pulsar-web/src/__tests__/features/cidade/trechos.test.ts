@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { FeatureCollection } from 'geojson';
 import type { CelulaAgoraDto, CelulasAgoraDto } from '../../../types';
 import type { Area } from '../../../features/cidade/areas';
-import { fraseDaEstacao, fraseDoTrecho, h3DoPonto, montarTrechos, trechosDe } from '../../../features/cidade/trechos';
+import { centroDoTrecho, estacaoMaisForte, fraseDaEstacao, fraseDoTrecho, h3DoPonto, montarTrechos, trechosDe } from '../../../features/cidade/trechos';
 
 const componente = (valor: number, faixa: 'BAIXO' | 'MODERADO' | 'ALTO') => ({ valor, faixa });
 
@@ -50,7 +50,7 @@ describe('trechosDe', () => {
 
   it('a estação do trecho vem com a leitura e a distância', () => {
     const t = trechosDe(agora([celula({ estacao: 0, distanciaKm: 1.9 })]), [area()]).get('h1')!;
-    expect(t.estacao).toEqual({ cod: 'E1', mm1h: 4.2, mm3h: 6, distanciaKm: 1.9 });
+    expect(t.estacao).toEqual({ cod: 'E1', mm1h: 4.2, mm3h: 6, distanciaKm: 1.9, em: '' });
   });
 
   it('célula de área que o app não conhece fica de fora', () => {
@@ -73,6 +73,11 @@ describe('fraseDaEstacao', () => {
   it('estação dentro do trecho não ganha "a 0,0 km"', () => {
     expect(fraseDaEstacao(est(2, 2, 0.04))).toBe('Estação neste trecho mediu 2,0 mm na última hora');
   });
+  it('posto do CGE diz o nome e a fonte', () => {
+    const posto = { ...est(4.2, 6), fonte: 'cge' as const, nome: 'Penha' };
+    expect(fraseDaEstacao(posto)).toBe('Posto Penha do CGE, a 1,9 km, mediu 4,2 mm na última hora');
+    expect(fraseDaEstacao({ ...posto, distanciaKm: 0.04 })).toBe('Posto Penha do CGE, neste trecho, mediu 4,2 mm na última hora');
+  });
 });
 
 // Dois quadrados lado a lado no lugar dos hexágonos: a conta de ponto no polígono é a mesma.
@@ -83,6 +88,16 @@ const contorno: FeatureCollection = {
     { type: 'Feature', properties: { h3: 'h2' }, geometry: { type: 'Polygon', coordinates: [[[1, 0], [2, 0], [2, 1], [1, 1], [1, 0]]] } },
   ],
 };
+
+describe('centroDoTrecho', () => {
+  it('devolve o centro do trecho', () => {
+    expect(centroDoTrecho('h2', contorno)).toEqual({ lat: 0.5, lon: 1.5 });
+  });
+  it('trecho fora do contorno ou sem contorno devolve null', () => {
+    expect(centroDoTrecho('h9', contorno)).toBeNull();
+    expect(centroDoTrecho('h1', null)).toBeNull();
+  });
+});
 
 describe('h3DoPonto', () => {
   it('acha o trecho que contém o ponto', () => {
@@ -142,5 +157,14 @@ describe('fraseDoTrecho', () => {
   it('trecho tranquilo sem estação e sem previsão: nada fora do normal', () => {
     const t = trechosDe(agora([celula({ valor: 3, faixa: 'BAIXO' })]), [area()]).get('h1')!;
     expect(fraseDoTrecho(t, area(), [])).toBe('Nada fora do normal agora');
+  });
+});
+
+describe('estacaoMaisForte', () => {
+  it('fica com a estação que mais mediu em 3 h, só da área', () => {
+    const t = (h3: string, areaId: string, mm3h: number, nome: string) => [h3, { h3, areaId, estacao: { cod: nome, mm1h: 0, mm3h, distanciaKm: 1, nome } }] as const;
+    const mapa = new Map([t('a', 's1', 4, 'Vila Ema'), t('b', 's1', 9, 'Penha3'), t('c', 's2', 30, 'Outra')]) as unknown as Parameters<typeof estacaoMaisForte>[0];
+    expect(estacaoMaisForte(mapa, 's1')?.nome).toBe('Penha3');
+    expect(estacaoMaisForte(mapa, 's3')).toBeNull();
   });
 });

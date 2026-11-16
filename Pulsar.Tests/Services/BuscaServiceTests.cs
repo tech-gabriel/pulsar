@@ -21,6 +21,25 @@ public class BuscaServiceTests
             Chamadas++;
             return Task.FromResult(Resultado);
         }
+
+        public Task<RuaProxima?> RuaPertoAsync(double lat, double lon, CancellationToken ct = default)
+        {
+            Chamadas++;
+            return Task.FromResult<RuaProxima?>(new RuaProxima("Rua Taquari", 40));
+        }
+    }
+
+    // O centro de um trecho é sempre o mesmo: a rua dele custa uma consulta só.
+    [Fact]
+    public async Task RuaPerto_MesmoPonto_ConsultaOProvedorUmaVez()
+    {
+        var stub = new StubGeocodingClient();
+        var service = CriarService(stub);
+
+        (await service.RuaPertoAsync(-23.61101, -46.70101))!.Nome.Should().Be("Rua Taquari");
+        (await service.RuaPertoAsync(-23.61102, -46.70102))!.Nome.Should().Be("Rua Taquari");
+
+        stub.Chamadas.Should().Be(1);
     }
 
     private static BuscaService CriarService(IGeocodingClient client)
@@ -41,6 +60,53 @@ public class BuscaServiceTests
         resultado.Should().BeEmpty();
         stub.Chamadas.Should().Be(0);
     }
+
+    // A mesma rua com outra grafia e outro CEP aparece uma vez só.
+    [Fact]
+    public async Task BuscarEnderecos_MesmaRuaComOutraGrafia_FicaUmaVez()
+    {
+        var stub = new StubGeocodingClient
+        {
+            Resultado =
+            [
+                new("Rua da Mooca, São Paulo, São Paulo 03104-000, Brasil", -23.555, -46.604, "Rua da Mooca", "address"),
+                new("RUA  DA MOOCA, São Paulo, São Paulo 03114-000, Brasil", -23.556, -46.600, "RUA  DA MOOCA", "address"),
+                new("Rua Da Mooca 1001, São Paulo, São Paulo 03104-000, Brasil", -23.554, -46.615, "Rua Da Mooca 1001", "poi"),
+            ],
+        };
+
+        var resultado = await CriarService(stub).BuscarEnderecosAsync("rua da mooca dedupe");
+
+        // O POI "Rua Da Mooca 1001" é a mesma rua com número: sai também.
+        resultado.Select(r => r.Nome).Should().Equal("Rua da Mooca");
+    }
+
+    [Fact]
+    public async Task BuscarEnderecos_PoiDeOutroNome_Fica()
+    {
+        var stub = new StubGeocodingClient
+        {
+            Resultado =
+            [
+                new("Rua da Mooca, São Paulo", -23.555, -46.604, "Rua da Mooca", "address"),
+                new("Museu da Imigração, São Paulo", -23.554, -46.615, "Museu da Imigração", "poi"),
+            ],
+        };
+
+        var resultado = await CriarService(stub).BuscarEnderecosAsync("mooca poi outro");
+
+        resultado.Should().HaveCount(2);
+    }
+
+    [Theory]
+    [InlineData("RUA  DA MOOCA", "Rua  da Mooca")]
+    [InlineData("AVENIDA PAULISTA, São Paulo, SP", "Avenida Paulista, São Paulo, SP")]
+    [InlineData("Rua da Mooca", "Rua da Mooca")]
+    [InlineData("DE OLHO", "De Olho")]
+    [InlineData("Rua Domingos De Morais 168", "Rua Domingos de Morais 168")]
+    [InlineData("Rua E, São Paulo", "Rua E, São Paulo")]
+    public void SemCaixaAlta_SoMudaOTrechoTodoEmMaiusculas(string entrada, string esperado)
+        => BuscaService.SemCaixaAlta(entrada).Should().Be(esperado);
 
     [Fact]
     public async Task BuscarEnderecos_TermoValido_MapeiaResultados()

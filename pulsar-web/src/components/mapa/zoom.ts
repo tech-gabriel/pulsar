@@ -3,6 +3,14 @@
 export const ZOOM = { sp: 9, regiao: 10, sub: 12, busca: 15 } as const;
 
 /**
+ * A cidade inteira na tela: em celular estreito (320 px) o zoom 9 deixava a zona leste embaixo da
+ * coluna de botões à direita (crítica de 15/11). 8,5 ainda arredonda para 9 nos números.
+ */
+export function zoomCidade(largura: number): number {
+  return largura < 360 ? 8.5 : ZOOM.sp;
+}
+
+/**
  * Intervalo em que as áreas dão lugar aos trechos (opção B, escolhida no protótipo de 13/11):
  * abaixo de `de` só áreas, acima de `ate` só trechos, no meio as duas se cruzam. Os dados
  * começam a vir um pouco antes (`carregar`), para os trechos já estarem lá quando surgirem.

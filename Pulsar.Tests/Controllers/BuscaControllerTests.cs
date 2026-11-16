@@ -61,6 +61,39 @@ public class BuscaControllerTests : IClassFixture<PulsarWebApplicationFactory>
             !string.IsNullOrWhiteSpace(e.Descricao) && e.Latitude != 0 && e.Longitude != 0);
     }
 
+    [Fact]
+    public async Task RuaPerto_PontoEmSaoPaulo_DevolveARua()
+    {
+        var token = await TokenAsync();
+        var response = await EnviarAsync("/api/busca/rua?lat=-23.555&lon=-46.59", token);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var corpo = await response.Content.ReadFromJsonAsync<RuaPertoDto>(JsonOpts);
+        corpo!.Rua.Should().Be("Rua Taquari");
+    }
+
+    [Fact]
+    public async Task RuaPerto_ForaDeSaoPaulo_Retorna400()
+    {
+        var token = await TokenAsync();
+        var response = await EnviarAsync("/api/busca/rua?lat=-46.59&lon=-23.555", token); // trocadas
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task RuaPerto_NaN_Retorna400()
+    {
+        var token = await TokenAsync();
+        var response = await EnviarAsync("/api/busca/rua?lat=NaN&lon=NaN", token);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task RuaPerto_SemToken_Retorna401()
+        => (await _client.GetAsync("/api/busca/rua?lat=-23.555&lon=-46.59")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
     // ── Helpers ────────────────────────────────────────────────
 
     private async Task<string> TokenAsync()

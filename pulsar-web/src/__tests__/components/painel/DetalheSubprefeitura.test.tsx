@@ -127,13 +127,13 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
   const dia = { mm: 12, estacao: 'Vila Leopoldina', medidoEm: '2026-11-11T03:40:00Z' };
   const com = (m: object = {}, chuva24h: typeof dia | null = null) =>
     renderiza({ area: { ...itaquera, chuvaMedida: { ...medida, ...m }, chuva24h } as Area });
-  const abrir = () => fireEvent.click(screen.getByRole('button', { name: /posto|estação/ }));
+  const abrir = () => fireEvent.click(screen.getByRole('button', { name: /^(Posto|Estação) / }));
   const AVISO_ESTIMADA = 'Não há estação com leitura perto daqui agora. O risco usa a chuva estimada.';
 
   it('medida com o posto e os números; a estimada continua, sem o aviso', () => {
     com();
     expect(screen.getByText('Medida agora')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'posto Lapa do CGE' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Posto Lapa' })).toBeInTheDocument();
     expect(screen.getByText('2,4')).toBeInTheDocument();
     expect(screen.getByText('nos últimos 15 min')).toBeInTheDocument();
     expect(screen.getByText('12,4')).toBeInTheDocument();
@@ -166,7 +166,7 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
   it('posto de outra subprefeitura: a folha avisa que é o mais próximo', () => {
     com({ vizinho: true });
     abrir();
-    expect(screen.getByRole('dialog')).toHaveTextContent('Medida no posto mais próximo');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Medida no posto mais próximo, de outra região');
   });
 
   it('posto que marca zero vira uma frase, não um número', () => {
@@ -176,8 +176,8 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
   });
 
   it('CGE sem dado: fala o CEMADEN, pela última hora e nunca em 15 minutos', () => {
-    com({ fonte: 'cemaden', mm15: null, mm60: 5.8, acumuladoPeriodoMm: null, posto: 'Vila Leopoldina' });
-    expect(screen.getByRole('button', { name: 'estação Vila Leopoldina do CEMADEN' })).toBeInTheDocument();
+    com({ fonte: 'cemaden', mm15: null, mm60: 5.8, acumuladoPeriodoMm: null, posto: 'Vila Leopoldina', distanciaKm: 6.3 });
+    expect(screen.getByRole('button', { name: 'Estação Vila Leopoldina · 6,3 km' })).toBeInTheDocument();
     expect(screen.getByText('5,8')).toBeInTheDocument();
     expect(screen.getByText('na última hora')).toBeInTheDocument();
     expect(screen.queryByText('nos últimos 15 min')).not.toBeInTheDocument();
@@ -194,9 +194,86 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
     expect(screen.getByText('Sem chuva na última hora')).toBeInTheDocument();
   });
 
+  // O rótulo fica curto; o lugar (e a distância, quando se sabe) vai no botão ao lado.
+  it('o botão diz de onde é a leitura e o rótulo fica curto', () => {
+    com({ vizinho: true });
+    expect(screen.getByText('Medida agora')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Posto Lapa · vizinho' })).toBeInTheDocument();
+  });
+  it('CEMADEN: a folha explica que é a estação mais perto do centro e a distância', () => {
+    com({ fonte: 'cemaden', mm15: null, mm60: 0, posto: 'Ipiranga', distanciaKm: 4.2 });
+    abrir();
+    expect(screen.getByRole('dialog')).toHaveTextContent('Medida na estação mais perto do centro de Itaquera, a 4,2 km.');
+  });
+
+  // O topo diz que choveu num ponto da área; se esta estação marcou chuva no dia, ela "parou".
+  it('número pela medida e estação seca agora que choveu no dia: parou de chover', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 },
+      chuvaMedida: { ...medida, fonte: 'cemaden', mm15: null, mm60: 0, posto: 'Ipiranga' },
+      chuva24h: { mm: 18, estacao: 'Ipiranga', medidoEm: '2026-11-11T03:40:00Z' } } as unknown as Area });
+    expect(screen.getByText('Parou de chover aqui')).toBeInTheDocument();
+  });
+  it('posto do CGE com o mesmo nome de uma estação do CEMADEN não vira "parou"', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 },
+      chuvaMedida: { ...medida, mm15: 0, mm60: 0, posto: 'Mooca' },
+      chuva24h: { mm: 18, estacao: 'Mooca', medidoEm: '2026-11-11T03:40:00Z' } } as unknown as Area });
+    expect(screen.getByText('Sem chuva agora')).toBeInTheDocument();
+    // O topo diz que choveu num ponto da área e o posto está seco: a frase-ponte explica.
+    expect(screen.getByText('A chuva forte foi em outro ponto de Itaquera.')).toBeInTheDocument();
+  });
+  it('ponto mais forte num posto do CGE: a linha diz o posto', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 15.8, chuva3hMm: 3 } } as unknown as Area,
+      estacaoMaisForte: { cod: 'cge:1000864', nome: 'Itaquera', fonte: 'cge', mm1h: 9, mm3h: 15.8, distanciaKm: 1 } });
+    expect(screen.getByText('em 3 h, mais forte no posto Itaquera do CGE')).toBeInTheDocument();
+  });
+  it('número pela medida com a estação mais forte: a linha diz o nome dela', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22, chuva3hMm: 3 } } as unknown as Area,
+      estacaoMaisForte: { cod: '1', nome: 'Penha3', fonte: 'cemaden', mm1h: 2, mm3h: 22, distanciaKm: 1 } });
+    expect(screen.getByText('em 3 h, mais forte perto da estação Penha 3')).toBeInTheDocument();
+    expect(screen.getByText('O modelo estimou 3,0 mm em 3 h.')).toBeInTheDocument();
+  });
+  // Número pela medida: o cartão abre com a leitura que o fez e o modelo vira uma linha pequena.
+  it('número pela medida: "Chuva que gerou o risco" primeiro e o modelo em uma linha', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22, chuva3hMm: 0 } } as unknown as Area });
+    expect(screen.getByText('Chuva que gerou o risco')).toBeInTheDocument();
+    expect(screen.getByText('em 3 h, num ponto de Itaquera')).toBeInTheDocument();
+    expect(screen.getByText('O modelo não registrou essa chuva.')).toBeInTheDocument();
+    expect(screen.queryByText('Estimada pelo modelo')).not.toBeInTheDocument();
+  });
+  // Opção B da crítica 8: em Tranquilo a chuva medida não gerou risco nenhum.
+  it('área Tranquila pela medida: uma faixa "Chuva medida", sem "forte", e o modelo no bloco dele', () => {
+    renderiza({ area: { ...itaquera, faixaRisco: 'BAIXO', scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 4, chuva3hMm: 0.4 },
+      chuvaMedida: { ...medida, mm15: 0, mm60: 0, posto: 'Itaquera' } } as unknown as Area });
+    expect(screen.getByText('Chuva medida')).toBeInTheDocument();
+    expect(screen.getByText('em 3 h, no ponto de Itaquera que mais choveu')).toBeInTheDocument();
+    expect(screen.getByText('Sem chuva agora no posto Itaquera.')).toBeInTheDocument();
+    expect(screen.getByText('Estimada pelo modelo')).toBeInTheDocument();
+    expect(screen.queryByText('Chuva que gerou o risco')).not.toBeInTheDocument();
+    expect(screen.queryByText(/forte/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Medida agora')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Ver postos/ }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Chuva medida em Itaquera');
+  });
+  it('sem o número pela medida, o modelo continua como bloco', () => {
+    renderiza();
+    expect(screen.queryByText('Chuva que gerou o risco')).not.toBeInTheDocument();
+    expect(screen.getByText('Estimada pelo modelo')).toBeInTheDocument();
+  });
+
+  it('sem o número pela medida, o posto seco não ganha a frase-ponte', () => {
+    com({ mm15: 0, mm60: 0 });
+    expect(screen.queryByText(/em outro ponto/)).not.toBeInTheDocument();
+  });
+  it('estação seca o dia todo continua "sem chuva", mesmo com o número pela medida', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 },
+      chuvaMedida: { ...medida, fonte: 'cemaden', mm15: null, mm60: 0, posto: 'Ipiranga' },
+      chuva24h: { mm: 0, estacao: 'Ipiranga', medidoEm: '2026-11-11T03:40:00Z' } } as unknown as Area });
+    expect(screen.getByText('Sem chuva na última hora')).toBeInTheDocument();
+  });
+
   it('sem chuva medida, a estimada fala sozinha e avisa', () => {
     renderiza();
-    expect(screen.queryByText('Medida agora')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Medida agora/)).not.toBeInTheDocument();
     expect(screen.getByText('Estimada pelo modelo')).toBeInTheDocument();
     expect(screen.getByText('22,0')).toBeInTheDocument();
     expect(screen.getByText(AVISO_ESTIMADA)).toBeInTheDocument();
@@ -204,7 +281,7 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
 
   it('sem janela nenhuma não mostra a faixa nem "null mm"', () => {
     com({ mm15: null, mm60: null });
-    expect(screen.queryByText('Medida agora')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Medida agora/)).not.toBeInTheDocument();
     expect(screen.queryByText(/null/)).not.toBeInTheDocument();
   });
 });
@@ -221,7 +298,45 @@ describe('DetalheSubprefeitura: trecho', () => {
     expect(screen.getByText('Trecho que você tocou · Zona Leste')).toBeInTheDocument();
     expect(screen.getByLabelText('Score 34 de 100')).toBeInTheDocument();
     expect(screen.getByText('Atenção')).toBeInTheDocument();
-    expect(screen.getByText('Itaquera inteira em Alerta')).toBeInTheDocument();
+    expect(screen.getByText(/^Itaquera inteira em Alerta/)).toBeInTheDocument();
+  });
+
+  // Trecho mais calmo que a área: uma frase diz por quê (crítica de 15/11).
+  it('trecho mais calmo que a área: diz que o risco maior está em outro ponto', () => {
+    renderiza({ trecho: trecho() });
+    expect(screen.getByText('O risco maior está em outro ponto de Itaquera.')).toBeInTheDocument();
+  });
+  it('com o número da área pela chuva medida, diz que a chuva forte foi em outro ponto', () => {
+    renderiza({ area: { ...itaquera, scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 22 } } as unknown as Area, trecho: trecho() });
+    expect(screen.getByText('A chuva forte foi em outro ponto de Itaquera.')).toBeInTheDocument();
+  });
+  // No trecho, "Medida agora" é a estação do trecho, a mesma do topo (crítica de 15/11).
+  it('o cartão Chuva do trecho mostra a estação do trecho, não a do centro', () => {
+    renderiza({
+      area: { ...itaquera, chuvaMedida: { fonte: 'cge', mm15: 2.4, mm60: 12.4, acumuladoPeriodoMm: 30, posto: 'Centro', vizinho: false, coletadoEm: '2026-11-11T03:45:00Z' } } as unknown as Area,
+      trecho: trecho({ estacao: { cod: 'E1', nome: 'Vila Ema', mm1h: 0, mm3h: 0, distanciaKm: 2.3, em: '2026-11-11T03:40:00Z' } }),
+    });
+    expect(screen.getByRole('button', { name: 'Estação Vila Ema · 2,3 km' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Posto Centro/ })).not.toBeInTheDocument();
+  });
+  // No trecho com estação o modelo é da região inteira: uma linha pequena, e a frase usa 3 horas como o topo.
+  it('trecho com estação: modelo da região em uma linha e frase de 3 horas', () => {
+    renderiza({ trecho: trecho({ estacao: { cod: 'E1', nome: 'Vila Ema', mm1h: 0, mm3h: 0, distanciaKm: 2.3, em: '' } }) });
+    expect(screen.getByText('O modelo estimou 22,0 mm em 3 h para toda a região de Itaquera.')).toBeInTheDocument();
+    expect(screen.queryByText('Estimada pelo modelo')).not.toBeInTheDocument();
+    expect(screen.getByText('Sem chuva nas últimas 3 horas')).toBeInTheDocument();
+  });
+  it('trecho sem estação: o cartão não cita a estação do centro da área', () => {
+    renderiza({
+      area: { ...itaquera, chuvaMedida: { fonte: 'cge', mm15: 2.4, mm60: 12.4, acumuladoPeriodoMm: 30, posto: 'Centro', vizinho: false, coletadoEm: '2026-11-11T03:45:00Z' } } as unknown as Area,
+      trecho: trecho(),
+    });
+    expect(screen.queryByText(/^Medida agora/)).not.toBeInTheDocument();
+  });
+
+  it('trecho na mesma faixa da área não ganha a frase', () => {
+    renderiza({ trecho: trecho({ faixa: 'ALTO' }) });
+    expect(screen.queryByText(/em outro ponto/)).not.toBeInTheDocument();
   });
 
   it('localização e busca dizem de onde é o trecho', () => {
@@ -240,5 +355,19 @@ describe('DetalheSubprefeitura: trecho', () => {
   it('sem estação, a frase do risco segue a faixa do trecho, não a da área', () => {
     renderiza({ area: { ...itaquera, faixaRisco: 'BAIXO' } as Area, trecho: trecho() });
     expect(screen.getByText('Por chuva: 22,0 mm nas últimas 3h')).toBeInTheDocument();
+  });
+});
+
+describe('DetalheSubprefeitura: teclado (crítica 8)', () => {
+  it('abre com o foco no título quando o foco estava perdido', () => {
+    renderiza();
+    expect(screen.getByRole('heading', { level: 2, name: itaquera.nome })).toHaveFocus();
+  });
+
+  it('Escape com o foco no detalhe fecha', () => {
+    const onFechar = vi.fn();
+    renderiza({ onFechar });
+    fireEvent.keyDown(screen.getByRole('heading', { level: 2, name: itaquera.nome }), { key: 'Escape' });
+    expect(onFechar).toHaveBeenCalled();
   });
 });

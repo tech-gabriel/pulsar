@@ -31,8 +31,17 @@ export function paddingDoPainel(container: HTMLElement): Padding {
   const p = painel.getBoundingClientRect();
   if (p.width < m.width * 0.6) return { ...zero, right: Math.max(0, m.right - p.left) };
   const altura = Number(painel.dataset.alturaFinal) || p.height;
-  return { ...zero, bottom: Math.max(0, m.bottom - (p.bottom - altura)) };
+  // Celular: o cabeçalho e a busca flutuam no alto, e a lista aberta na hora do toque vira a folha
+  // curta do detalhe logo depois. Sem o topo e sem teto no pé, a área escolhida pela lista ia parar
+  // embaixo do cabeçalho (crítica de 15/11).
+  const topo = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--topo-app')) || 0) + BUSCA_NO_TOPO;
+  return { ...zero, top: topo, bottom: Math.min(m.height * TETO_FOLHA, Math.max(0, m.bottom - (p.bottom - altura))) };
 }
+
+/** A barra de busca do celular, abaixo do cabeçalho (44 px e as folgas). */
+const BUSCA_NO_TOPO = 56;
+/** A folha do celular nunca toma mais que isto do mapa no enquadramento. */
+const TETO_FOLHA = 0.45;
 
 /**
  * Deslocamento para o flyTo pôr o alvo no centro da parte visível do mapa. Usar no lugar do
@@ -40,7 +49,7 @@ export function paddingDoPainel(container: HTMLElement): Padding {
  * enquadramento seguinte (fitBounds da "minha região"), que então sai torto ou nem se move.
  */
 export function deslocamentoDoPainel(p: Padding): [number, number] {
-  return [-p.right / 2, -p.bottom / 2];
+  return [-(p.right - p.left) / 2, -(p.bottom - p.top) / 2];
 }
 
 // Folga em volta da rota enquadrada, para origem e destino não encostarem na borda nem nos controles.

@@ -11,7 +11,6 @@ const destino = { lat: -23.54, lon: -46.6, rotulo: 'Rua da Mooca, 1000' };
 const rota = (estado: EstadoRota): RotaAvaliacao => ({
   estado,
   trechoDecisivoId: 'mooca',
-  tranquiloAteUtc: '2026-11-03T18:00:00Z',
   esperarAteUtc: '2026-11-03T16:00:00Z',
   horas: [
     { inicioUtc: '2026-11-03T14:00:00Z', piorFaixa: 'MODERADO' },
@@ -42,13 +41,20 @@ describe('PainelRota', () => {
     expect(screen.getByText('Alerta')).toBeInTheDocument();
   });
 
-  it('a faixa de horas só aparece em ComAtencao e Esperar', () => {
-    for (const estado of ['PodeIr', 'SemDado'] as const) {
+  // A rota olha os trechos do caminho; se a área inteira está pior, a linha diz.
+  it('trecho do caminho mais calmo que a área: mostra a faixa da área embaixo', () => {
+    render(<PainelRota resultado={rota('Esperar')} origem={origem} destino={destino} carregando={false} erro={null}
+      avisoPedido={false} onPedirAviso={vi.fn()} faixaDaArea={(id) => (id === 'se' ? 'ALTO' : 'ALTO')} />);
+    expect(screen.getByText('área em Alerta')).toBeInTheDocument(); // só a Sé (Tranquilo no caminho)
+  });
+
+  it('a faixa de horas só aparece no Esperar (a previsão só estima até quando esperar)', () => {
+    for (const estado of ['PodeIr', 'SemDado', 'ComAtencao'] as const) {
       const { unmount } = monta(estado);
       expect(screen.queryByLabelText('Risco nas próximas horas')).not.toBeInTheDocument();
       unmount();
     }
-    for (const estado of ['ComAtencao', 'Esperar'] as const) {
+    for (const estado of ['Esperar'] as const) {
       const { unmount } = monta(estado);
       expect(screen.getByLabelText('Risco nas próximas horas')).toBeInTheDocument();
       unmount();

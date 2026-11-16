@@ -8,12 +8,18 @@ namespace Pulsar.API.Services.Interfaces;
 /// <param name="ColetadoEm">Horário da nossa última coleta do posto, em UTC.</param>
 public record ChuvaMedidaRegiao(
     Guid SubprefeituraId, int Posto, string NomePosto, bool Vizinho,
-    double? Mm15, double? Mm30, double? Mm60, double AcumuladoPeriodoMm, DateTime ColetadoEm);
+    double? Mm15, double? Mm30, double? Mm60, double AcumuladoPeriodoMm, DateTime ColetadoEm, double? Mm180 = null);
 
 public interface IEstacaoCgeService
 {
     /// <summary>Lê os postos do CGE-SP e grava uma leitura de cada. Posto que falha é pulado.</summary>
     Task ColetarAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Os postos com 1 h e 3 h válidas, como estação com endereço (cod "cge:{posto}"), para a conta
+    /// por trecho: o posto do CGE manda no trecho perto dele como as estações do CEMADEN.
+    /// </summary>
+    Task<IReadOnlyList<Pulsar.API.Domain.Chuva.EstacaoChuva>> ObterEstacoesComChuvaAsync(DateTime agoraUtc, CancellationToken ct = default);
 
     /// <summary>
     /// Uma entrada por subprefeitura ativa com dado medido válido (posto próprio ou vizinho próximo).

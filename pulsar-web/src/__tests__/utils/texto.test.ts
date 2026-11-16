@@ -41,3 +41,13 @@ describe('listaNomes', () => {
     expect(listaNomes(['Mooca', 'Penha', 'Sé', 'Lapa'])).toBe('Mooca, Penha e mais 2');
   });
 });
+
+describe('porExtenso', () => {
+  it('abre as abreviações do CGE sem mexer no resto', async () => {
+    const { porExtenso } = await import('../../utils/texto');
+    expect(porExtenso('R Sto Arcadio')).toBe('Rua Santo Arcadio');
+    expect(porExtenso('Av. Roque Petroni Junior')).toBe('Avenida Roque Petroni Junior');
+    expect(porExtenso('Rua Augusta')).toBe('Rua Augusta');
+    expect(porExtenso('Viaduto do Chá')).toBe('Viaduto do Chá');
+  });
+});

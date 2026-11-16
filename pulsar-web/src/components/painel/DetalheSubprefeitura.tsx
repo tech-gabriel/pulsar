@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Bell, BellRing, CloudRain, Droplets, Map as IconeMapa, Phone, Route, Sun, Thermometer, TriangleAlert, Wind, X } from 'lucide-react';
@@ -130,11 +130,26 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
   const alca = useRef<HTMLButtonElement>(null);
   const aberta = folha?.aberta ?? true;
   useArrastoFolha(alca, { aberta, onMudar: folha?.onMudar, onFechar });
+  // Quem escolheu a área por um botão que sumiu (linha da busca, da lista) ficava com o foco no
+  // nada: o título recebe o foco e o leitor de tela anuncia onde a pessoa chegou (crítica 8).
+  const titulo = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (document.activeElement === document.body) titulo.current?.focus({ preventScroll: true });
+  }, [area.id]);
+  // Escape fecha o detalhe com o foco nele. A folha da chuva é portal: o evento dela passa pela
+  // árvore do React, mas não pelo DOM daqui, e ela cuida do próprio Escape.
+  function teclar(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== 'Escape' || e.defaultPrevented || !e.currentTarget.contains(e.target as Node)) return;
+    e.preventDefault();
+    onFechar();
+    document.getElementById('busca-mapa')?.focus();
+  }
 
   return (
     <motion.div
       className="det painel-glass flex flex-col h-full overflow-hidden"
       data-estado={aberta ? 'aberta' : 'curta'}
+      onKeyDown={teclar}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: DURACAO.media, ease: EASE_SUAVE }}
@@ -148,7 +163,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
 
       <div className="det-cab">
         <div className="flex-1 min-w-0">
-          <h2 className="truncate">{area.nome}</h2>
+          <h2 ref={titulo} tabIndex={-1} className="truncate outline-none">{area.nome}</h2>
           <p className="truncate">{trecho ? `${ROTULO_TRECHO[trecho.origem]} · Zona ${area.zona}` : `Zona ${area.zona} · ${CIDADE_ATUAL.nome}`}</p>
         </div>
         <BotaoFavorito ativo={isFavorito(area.id)} onToggle={() => onToggleFavorito(area.id)} size={20} />

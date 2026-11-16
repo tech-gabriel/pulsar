@@ -46,7 +46,9 @@ interface Opcao { chave: string; rotulo: string; Icone: typeof House; peso: stri
 
 /** Um campo do De/Para: mostra o ponto escolhido e, ao digitar, sugere subprefeituras e endereços. */
 function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, alvoLista, alvoLinhas, onLinhas, locais, onSalvarLocal, carregandoLocais, onMinhaLocalizacao }: {
-  rotulo: string; ponto: PontoRota | null; placeholder: string; areas: Area[]; onEscolher: (p: PontoRota) => void; focar?: boolean;
+  rotulo: string; ponto: PontoRota | null; placeholder: string; areas: Area[]; onEscolher: (p: PontoRota) => void;
+  /** 'quieto': recebe o foco sem abrir as linhas (Rota até aqui: o seletor cobriria o resultado). */
+  focar?: boolean | 'quieto';
   /** No painel: a lista vai para baixo da cápsula inteira (largura do painel), não para dentro da coluna. */
   alvoLista: HTMLElement | null;
   /** Casa e Trabalho vão para dentro da cápsula, abaixo dos campos; onLinhas avisa quem está com elas abertas. */
@@ -67,7 +69,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
   const linhasRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // Foco devolvido pelo próprio campo (Escape numa linha, linha escolhida): não reabre as linhas.
-  const semLinhas = useRef(false);
+  const semLinhas = useRef(focar === 'quieto');
 
   useEffect(() => {
     function fora(e: MouseEvent) {
@@ -134,7 +136,15 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
   const enderecos = resultados.filter((r) => !nomesSubs.has(normalizarNome(r.nome || r.descricao)));
 
   // Ao digitar, subprefeituras e depois endereços. Uma lista só, para as setas andarem por todas.
+  // Casa e Trabalho salvos também respondem ao nome digitado ("cas", "trab"), antes de tudo.
+  const salvos = termo.length >= 2 && !salvando && comLocais
+    ? TIPOS.filter(({ tipo }) => locais[tipo] && normalizarNome(ROTULO_TIPO[tipo]).startsWith(normalizarNome(termo)))
+    : [];
   const opcoes: Opcao[] = [
+    ...salvos.map(({ tipo, Icone }) => ({
+      chave: `local-${tipo}`, rotulo: `${ROTULO_TIPO[tipo]} · ${locais[tipo]!.rotulo}`, Icone, peso: 'font-semibold',
+      acao: () => { track.usouLocal(tipo === 'CASA' ? 'casa' : 'trabalho'); escolher(pontoDoLocal(locais[tipo]!)); },
+    })),
     ...subs.map((a) => ({
       chave: `sub-${a.id}`, rotulo: a.nome, Icone: Building2, peso: 'font-semibold',
       acao: () => escolher({ lat: a.latitude, lon: a.longitude, rotulo: a.nome }),
@@ -251,7 +261,7 @@ function Campo({ rotulo, ponto, placeholder, areas, onEscolher, focar = false, a
           value={texto ?? ponto?.rotulo ?? ''}
           placeholder={TIPOS.find((t) => t.tipo === salvando)?.busca ?? placeholder}
           aria-label={rotulo}
-          autoFocus={focar}
+          autoFocus={!!focar}
           onFocus={(e) => {
             e.currentTarget.select();
             if (semLinhas.current) semLinhas.current = false;
@@ -285,8 +295,14 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
   // Com o destino escolhido, o foco vai para o De no mouse (crítica 7: o teclado caía no voltar).
   // No toque fica no voltar, para o teclado da tela não subir sem a pessoa pedir.
   const [ponteiroFino] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches);
+  // Escolheu o Para e falta o De: o foco segue para ele, como num formulário (crítica 8).
+  const raiz = useRef<HTMLDivElement>(null);
+  function escolherDestino(p: PontoRota) {
+    onDestino(p);
+    if (!origem) raiz.current?.querySelector<HTMLInputElement>('input[aria-label="De"]')?.focus();
+  }
   return (
-    <div data-campos-rota className={embutida ? 'busca-embutida relative z-[5] flex-shrink-0 px-3 pt-3'
+    <div ref={raiz} data-campos-rota className={embutida ? 'busca-embutida relative z-[5] flex-shrink-0 px-3 pt-3'
       : 'absolute top-[calc(var(--topo-app)+0.5rem)] left-3 right-3 z-[1100]'}>
       {/* Com as linhas abertas no celular, o vidro fica denso para o texto ler bem sobre o mapa (no painel ele já é). */}
       <div className={`mapa-controle flex flex-wrap items-center gap-1 px-1 py-2${linhasDe && !embutida ? ' vidro-painel' : ''}`}>
@@ -305,10 +321,10 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
           </i>
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-1.5 ml-1">
-          <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} focar={!!destino && ponteiroFino} alvoLista={alvo}
+          <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} focar={!!destino && ponteiroFino && 'quieto'} alvoLista={alvo}
             alvoLinhas={alvoLinhas} onLinhas={setLinhasDe} locais={locais} onSalvarLocal={onSalvarLocal} carregandoLocais={carregandoLocais}
             onMinhaLocalizacao={onMinhaLocalizacao} />
-          <Campo rotulo="Para" ponto={destino} placeholder="Para onde você vai?" areas={areas} onEscolher={onDestino} focar={!destino} alvoLista={alvo}
+          <Campo rotulo="Para" ponto={destino} placeholder="Para onde você vai?" areas={areas} onEscolher={escolherDestino} focar={!destino} alvoLista={alvo}
             alvoLinhas={alvoLinhas} onLinhas={setLinhasDe} locais={locais} onSalvarLocal={onSalvarLocal} carregandoLocais={carregandoLocais} />
         </div>
         {/* Logo depois dos campos na ordem do Tab, mas desenhado na linha de baixo, na largura toda. */}

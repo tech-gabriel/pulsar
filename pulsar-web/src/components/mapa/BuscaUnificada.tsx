@@ -109,9 +109,28 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
     setAberto(false);
   }
 
+  // Setas: do campo para a lista e entre os itens (botões de verdade); Escape volta ao campo.
+  const listaRef = useRef<HTMLUListElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  function andar(e: React.KeyboardEvent, passo: 1 | -1) {
+    const itens = [...(listaRef.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])];
+    if (itens.length === 0) return;
+    e.preventDefault();
+    const atual = itens.indexOf(document.activeElement as HTMLButtonElement);
+    if (atual === 0 && passo === -1) return inputRef.current?.focus();
+    itens[atual < 0 ? 0 : Math.min(atual + passo, itens.length - 1)].focus();
+  }
+  function teclarNaLista(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowDown') andar(e, 1);
+    else if (e.key === 'ArrowUp') andar(e, -1);
+    else if (e.key === 'Escape') { e.preventDefault(); setAberto(false); inputRef.current?.focus(); }
+  }
+
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') {
       setAberto(false);
+    } else if (e.key === 'ArrowDown') {
+      andar(e, 1);
     } else if (e.key === 'Enter' && subs.length > 0) {
       e.preventDefault();
       selecionarArea(subs[0]);
@@ -159,6 +178,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
           placeholder="Buscar rua ou região"
           aria-label="Buscar subprefeitura ou endereço"
           id="busca-mapa"
+          ref={inputRef}
           className="mapa-input flex-1 h-11 bg-transparent text-sm outline-none min-w-0"
         />
         {carregando && (
@@ -243,7 +263,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
       )}
 
       {mostrarDropdown && (
-        <ul className="superficie rounded-2xl mt-1.5 max-h-72 overflow-y-auto overflow-x-hidden">
+        <ul ref={listaRef} onKeyDown={teclarNaLista} className="superficie rounded-2xl mt-1.5 max-h-72 overflow-y-auto overflow-x-hidden">
           {subs.length > 0 && (
             <>
               <li className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wider mapa-txt-suave">Subprefeituras</li>

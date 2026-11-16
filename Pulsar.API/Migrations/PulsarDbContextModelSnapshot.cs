@@ -911,6 +911,10 @@ namespace Pulsar.API.Migrations
                     b.Property<int>("PerigoPrincipal")
                         .HasColumnType("integer");
 
+                    b.Property<string>("PostoChuvaMedida")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
                     b.Property<Guid>("SubprefeituraId")
                         .HasColumnType("uuid");
 

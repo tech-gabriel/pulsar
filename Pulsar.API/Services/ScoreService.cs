@@ -16,14 +16,18 @@ public class ScoreService : IScoreService
     private readonly IScoreRepository _scoreRepo;
     private readonly IRiscoCelulasService _riscoCelulas;
     private readonly ILogger<ScoreService> _logger;
+    private readonly IEstacaoCgeService? _estacoesCge;
+    private IReadOnlyDictionary<Guid, ChuvaMedidaRegiao>? _postos;
 
     public ScoreService(
         ISubprefeituraRepository subprefeituraRepo,
         ILeituraRepository leituraRepo,
         IScoreRepository scoreRepo,
         IRiscoCelulasService riscoCelulas,
-        ILogger<ScoreService> logger)
+        ILogger<ScoreService> logger,
+        IEstacaoCgeService? estacoesCge = null)
     {
+        _estacoesCge = estacoesCge;
         _subprefeituraRepo = subprefeituraRepo;
         _leituraRepo = leituraRepo;
         _scoreRepo = scoreRepo;
@@ -52,9 +56,11 @@ public class ScoreService : IScoreService
             Chuva48hMm = entrada.Chuva48hMm,
         };
         var daArea = CalculadoraScore.Calcular(entrada);
-        var pelosTrechos = await AlagamentoDosTrechosAsync(entrada, ct);
-        score.Aplicar(pelosTrechos is null ? daArea : daArea.ComAlagamento(pelosTrechos.Alagamento));
-        score.Chuva3hMedidaMm = pelosTrechos?.Chuva3hMedidaMm is { } mm ? Math.Round(mm, 1) : null;
+        var pelosTrechos = await AlagamentoDosTrechosAsync(entrada, ct) ?? new AlagamentoArea(daArea.Alagamento, null);
+        var alagamento = RiscoTrecho.ComPosto(pelosTrechos, entrada, await PostoDaAreaAsync(subprefeituraId, ct));
+        score.Aplicar(daArea.ComAlagamento(alagamento.Alagamento));
+        score.Chuva3hMedidaMm = alagamento.Chuva3hMedidaMm is { } mm ? Math.Round(mm, 1) : null;
+        score.PostoChuvaMedida = alagamento.Posto;
 
         await _scoreRepo.AdicionarAsync(score);
         await _scoreRepo.SalvarAsync();
@@ -81,6 +87,26 @@ public class ScoreService : IScoreService
             _logger.LogWarning(ex, "Falha na conta por trecho de {Nome}; o alagamento segue pela área inteira.", entrada.Subprefeitura);
             return null;
         }
+    }
+
+    /// <summary>
+    /// O posto do CGE da própria área (vizinho não fala pela área no score), com 1 h e 3 h
+    /// válidas. Lido uma vez por ciclo; se o CGE falhar, a área segue só com os trechos.
+    /// </summary>
+    private async Task<PostoNaArea?> PostoDaAreaAsync(Guid areaId, CancellationToken ct)
+    {
+        if (_estacoesCge is null) return null;
+        try
+        {
+            _postos ??= await _estacoesCge.ObterPorSubprefeituraAsync(DateTime.UtcNow, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Falha ao ler os postos do CGE; o score segue só com as estações dos trechos.");
+            _postos = new Dictionary<Guid, ChuvaMedidaRegiao>();
+        }
+        return _postos.TryGetValue(areaId, out var p) && !p.Vizinho && p.Mm60 is { } mm1h && p.Mm180 is { } mm3h
+            ? new PostoNaArea(p.NomePosto, mm1h, mm3h) : null;
     }
 
     /// <summary>

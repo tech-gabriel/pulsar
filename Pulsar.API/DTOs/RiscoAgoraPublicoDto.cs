@@ -18,6 +18,8 @@ public class RiscoAgoraPublicoDto
     public double? Chuva3hMm { get; set; }
     /// <summary>Chuva de 3 h medida pelas estações que fizeram o alagamento. Null = o número veio do modelo.</summary>
     public double? Chuva3hMedidaMm { get; set; }
+    /// <summary>Posto do CGE que mediu essa chuva; null = estações do CEMADEN.</summary>
+    public string? PostoChuvaMedida { get; set; }
     public double? VentoKmH { get; set; }
     public double? SensacaoTermica { get; set; }
     public IReadOnlyList<PontoAlagamentoCgeDto> AlagamentosCge { get; set; } = [];

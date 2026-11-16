@@ -34,6 +34,10 @@ public class ScorePerigo
     /// </summary>
     public double? Chuva3hMedidaMm { get; set; }
 
+    /// <summary>Posto do CGE quando foi ele (e não as estações dos trechos) que fez o alagamento.</summary>
+    [System.ComponentModel.DataAnnotations.MaxLength(80)]
+    public string? PostoChuvaMedida { get; set; }
+
     /// <summary>A chuva de 3 h que explica o alagamento: a medida quando foi ela que fez o número.</summary>
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public double Chuva3hDoAlagamentoMm => Chuva3hMedidaMm ?? Chuva3hMm;

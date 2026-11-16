@@ -20,8 +20,8 @@ public class EstacaoCgeService : IEstacaoCgeService
     /// </summary>
     public const double RaioVizinhoKm = 10.0;
 
-    /// <summary>Cobre a janela de 60 min com a folga da base e as leituras do "posto parado".</summary>
-    private const int JanelaLeituraMinutos = 135;
+    /// <summary>Cobre a janela de 3 h (que entra no score) com a folga da base; as 2 h do "posto parado" cabem nela.</summary>
+    private const int JanelaLeituraMinutos = 195;
 
     private readonly PulsarDbContext _db;
     private readonly ICgeEstacaoClient _client;
@@ -132,6 +132,6 @@ public class EstacaoCgeService : IEstacaoCgeService
         var ultima = leituras[^1];
         return new ChuvaMedidaRegiao(subId, posto.Id, posto.Nome, Vizinho: false,
             mm15, ChuvaMedida.MmNaJanela(emOrdem, agora, 30), ChuvaMedida.MmNaJanela(emOrdem, agora, 60),
-            ultima.ChuvaPeriodoMm, ultima.ColetadoEm);
+            ultima.ChuvaPeriodoMm, ultima.ColetadoEm, ChuvaMedida.MmNaJanela(emOrdem, agora, 180));
     }
 }

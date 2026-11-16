@@ -8,7 +8,7 @@ namespace Pulsar.API.Services.Interfaces;
 /// <param name="ColetadoEm">Horário da nossa última coleta do posto, em UTC.</param>
 public record ChuvaMedidaRegiao(
     Guid SubprefeituraId, int Posto, string NomePosto, bool Vizinho,
-    double? Mm15, double? Mm30, double? Mm60, double AcumuladoPeriodoMm, DateTime ColetadoEm);
+    double? Mm15, double? Mm30, double? Mm60, double AcumuladoPeriodoMm, DateTime ColetadoEm, double? Mm180 = null);
 
 public interface IEstacaoCgeService
 {

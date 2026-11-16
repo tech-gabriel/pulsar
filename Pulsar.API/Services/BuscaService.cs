@@ -70,7 +70,18 @@ public class BuscaService : IBuscaService
         return string.Join(",", texto.Split(',').Select(pedaco =>
         {
             var palavras = pedaco.Split(' ');
-            if (palavras.Count(p => p.Any(char.IsLetter)) < 2 || pedaco != pedaco.ToUpper(pt)) return pedaco;
+            if (palavras.Count(p => p.Any(char.IsLetter)) < 2) return pedaco;
+            if (pedaco != pedaco.ToUpper(pt))
+            {
+                // Já em caixa mista: só o conectivo com inicial maiúscula no meio ("Domingos De Morais").
+                var inicio = true;
+                return string.Join(" ", palavras.Select(p =>
+                {
+                    var meio = !inicio && p.Length > 0;
+                    if (p.Length > 0) inicio = false;
+                    return meio && p != "E" && Conectivos.Contains(p.ToLower(pt)) ? p.ToLower(pt) : p;
+                }));
+            }
             var primeira = true;
             return string.Join(" ", palavras.Select(p =>
             {

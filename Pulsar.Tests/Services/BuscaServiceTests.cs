@@ -103,6 +103,8 @@ public class BuscaServiceTests
     [InlineData("AVENIDA PAULISTA, São Paulo, SP", "Avenida Paulista, São Paulo, SP")]
     [InlineData("Rua da Mooca", "Rua da Mooca")]
     [InlineData("DE OLHO", "De Olho")]
+    [InlineData("Rua Domingos De Morais 168", "Rua Domingos de Morais 168")]
+    [InlineData("Rua E, São Paulo", "Rua E, São Paulo")]
     public void SemCaixaAlta_SoMudaOTrechoTodoEmMaiusculas(string entrada, string esperado)
         => BuscaService.SemCaixaAlta(entrada).Should().Be(esperado);
 

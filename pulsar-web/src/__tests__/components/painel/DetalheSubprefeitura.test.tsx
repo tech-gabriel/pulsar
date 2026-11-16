@@ -240,6 +240,20 @@ describe('DetalheSubprefeitura: chuva medida, a faixa "Medida agora" e os dados 
     expect(screen.getByText('O modelo não registrou essa chuva.')).toBeInTheDocument();
     expect(screen.queryByText('Estimada pelo modelo')).not.toBeInTheDocument();
   });
+  // Opção B da crítica 8: em Tranquilo a chuva medida não gerou risco nenhum.
+  it('área Tranquila pela medida: uma faixa "Chuva medida", sem "forte", e o modelo no bloco dele', () => {
+    renderiza({ area: { ...itaquera, faixaRisco: 'BAIXO', scoreAtual: { ...itaquera.scoreAtual, chuva3hMedidaMm: 4, chuva3hMm: 0.4 },
+      chuvaMedida: { ...medida, mm15: 0, mm60: 0, posto: 'Itaquera' } } as unknown as Area });
+    expect(screen.getByText('Chuva medida')).toBeInTheDocument();
+    expect(screen.getByText('em 3 h, no ponto de Itaquera que mais choveu')).toBeInTheDocument();
+    expect(screen.getByText('Sem chuva agora no posto Itaquera.')).toBeInTheDocument();
+    expect(screen.getByText('Estimada pelo modelo')).toBeInTheDocument();
+    expect(screen.queryByText('Chuva que gerou o risco')).not.toBeInTheDocument();
+    expect(screen.queryByText(/forte/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Medida agora')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Ver postos/ }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Chuva medida em Itaquera');
+  });
   it('sem o número pela medida, o modelo continua como bloco', () => {
     renderiza();
     expect(screen.queryByText('Chuva que gerou o risco')).not.toBeInTheDocument();

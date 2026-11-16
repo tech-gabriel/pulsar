@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.37.1',
+    data: '2026-11-16',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Trecho com o nome da rua',
+        descricao: 'Tocou num trecho do mapa? O cartão mostra a rua mais perto, a chuva como na região e um toque leva à região inteira.',
+      },
+    ],
+  },
+  {
     versao: '1.37.0',
     data: '2026-11-16',
     itens: [

@@ -282,13 +282,16 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
   // Casa e Trabalho entram num espaço da própria cápsula; qual campo está com elas abertas.
   const [alvoLinhas, setAlvoLinhas] = useState<HTMLDivElement | null>(null);
   const [linhasDe, setLinhasDe] = useState<string | null>(null);
+  // Com o destino escolhido, o foco vai para o De no mouse (crítica 7: o teclado caía no voltar).
+  // No toque fica no voltar, para o teclado da tela não subir sem a pessoa pedir.
+  const [ponteiroFino] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: fine)').matches);
   return (
     <div data-campos-rota className={embutida ? 'busca-embutida relative z-[5] flex-shrink-0 px-3 pt-3'
       : 'absolute top-[calc(var(--topo-app)+0.5rem)] left-3 right-3 z-[1100]'}>
       {/* Com as linhas abertas no celular, o vidro fica denso para o texto ler bem sobre o mapa (no painel ele já é). */}
       <div className={`mapa-controle flex flex-wrap items-center gap-1 px-1 py-2${linhasDe && !embutida ? ' vidro-painel' : ''}`}>
-        {/* Com o destino já escolhido, o foco entra na rota pelo voltar (o Para pede foco só quando está vazio). */}
-        <button type="button" onClick={onFechar} aria-label="Fechar a rota" autoFocus={!!destino}
+        {/* O Para pede foco quando está vazio; com destino, o De (mouse) ou o voltar (toque). */}
+        <button type="button" onClick={onFechar} aria-label="Fechar a rota" autoFocus={!!destino && !ponteiroFino}
           className="mapa-txt-suave flex items-center justify-center w-11 h-11 flex-shrink-0">
           <ArrowLeft size={18} />
         </button>
@@ -302,7 +305,7 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
           </i>
         </div>
         <div className="flex-1 min-w-0 flex flex-col gap-1.5 ml-1">
-          <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} alvoLista={alvo}
+          <Campo rotulo="De" ponto={origem} placeholder="De onde você sai?" areas={areas} onEscolher={onOrigem} focar={!!destino && ponteiroFino} alvoLista={alvo}
             alvoLinhas={alvoLinhas} onLinhas={setLinhasDe} locais={locais} onSalvarLocal={onSalvarLocal} carregandoLocais={carregandoLocais}
             onMinhaLocalizacao={onMinhaLocalizacao} />
           <Campo rotulo="Para" ponto={destino} placeholder="Para onde você vai?" areas={areas} onEscolher={onDestino} focar={!destino} alvoLista={alvo}

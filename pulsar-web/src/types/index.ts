@@ -136,8 +136,13 @@ export interface EstacaoAgoraDto {
   cod: string;
   mm1h: number;
   mm3h: number;
-  /** Nome no cadastro do CEMADEN (o código, se faltar). */
+  /** Nome no cadastro do CEMADEN ou do posto do CGE (o código, se faltar). */
   nome?: string;
+  /** Rede da estação: o posto do CGE manda no trecho perto dele desde 15/11. */
+  fonte?: 'cemaden' | 'cge';
+  /** Onde ela fica: o mapa marca o ponto da medida do trecho aberto. */
+  lat?: number;
+  lon?: number;
 }
 
 /** Alagamento de um trecho (hexágono da grade) agora. `estacao` é o índice em `estacoes`; null = chuva estimada. */
@@ -167,8 +172,6 @@ export interface ScoreDto {
   chuva48hMm?: number;
   /** Chuva de 3 h medida pelas estações que fizeram o alagamento ("a medida manda"). Null = o número veio do modelo. */
   chuva3hMedidaMm?: number | null;
-  /** Posto do CGE quando foi ele que mediu essa chuva; null = estações do CEMADEN nos trechos. */
-  postoChuvaMedida?: string | null;
 }
 
 export interface LeituraDto {
@@ -439,7 +442,6 @@ export interface RiscoAgoraPublico {
   chuva3hMm: number | null;
   /** Ausente em resposta de API antiga. */
   chuva3hMedidaMm?: number | null;
-  postoChuvaMedida?: string | null;
   ventoKmH: number | null;
   sensacaoTermica: number | null;
   alagamentosCge: PontoAlagamentoCge[];

@@ -37,7 +37,7 @@ const pSe = { lat: se.lat, lon: se.lon };
 const pMooca = { lat: mooca.lat, lon: mooca.lon };
 
 const avaliacao = (estado: RotaAvaliacao['estado'] = 'PodeIr'): RotaAvaliacao => ({
-  estado, trechoDecisivoId: null, tranquiloAteUtc: null, esperarAteUtc: null, horas: [],
+  estado, trechoDecisivoId: null, esperarAteUtc: null, horas: [],
   trechos: [
     { subprefeituraId: 'se', nome: 'Sé', faixa: 'BAIXO', alagandoCge: false },
     { subprefeituraId: 'mooca', nome: 'Mooca', faixa: 'ALTO', alagandoCge: false },

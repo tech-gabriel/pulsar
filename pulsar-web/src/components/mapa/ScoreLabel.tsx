@@ -3,7 +3,7 @@ import { Marker, useMap } from 'react-map-gl/maplibre';
 import type { SubprefeituraMapaDto } from '../../types';
 import { estiloCamada, type Camada } from '../../utils/camadas';
 import { nomeAbreviado } from '../../utils/nomesSub';
-import { fundoParaTextoBranco, opaca } from '../../utils/contraste';
+import { opaca } from '../../utils/contraste';
 import { normalizarNome } from '../../utils/texto';
 import { tamanhoParaZoom } from './zoom';
 import { labelFaixa } from '../../utils/risco';
@@ -21,13 +21,9 @@ interface Props {
   onSelecionar?: (sub: SubprefeituraMapaDto) => void;
 }
 
-// Glow do círculo: a cor da faixa com alpha ~0.5.
-function glowDaCor(cor: string): string {
-  return cor.replace(/[\d.]+\)$/, '0.5)');
-}
 
-// Legibilidade do número: o círculo é opaco e o fundo é fechado até o branco passar em 4,5:1
-// (ver utils/contraste). O preenchimento translúcido fica no polígono.
+// Legibilidade do número: bola na cor pura da faixa e número branco com contorno escuro (index.css,
+// .bola), que lê até no amarelo. O preenchimento translúcido fica no polígono.
 export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco, atenuado = false, ocultos, onSelecionar }: Props) {
   const { current: mapRef } = useMap();
   const [zoom, setZoom] = useState(() => mapRef?.getZoom() ?? 0);
@@ -54,7 +50,12 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
       {subprefeituras.filter((sub) => !ocultos?.has(sub.id)).map((sub) => {
         const estilo = estiloCamada(sub, camadaAtiva);
         const esmaecida = zona != null && normalizarNome(sub.zona) !== zona;
-        const classes = ['pulsar-score-circle', estilo.pulsa ? 'pulsa' : '', subSelecionada?.id === sub.id ? 'selecionado' : '']
+        // Bola pequena em todas as camadas (escolhas de 16/11/2026): no risco, o Tranquilo um pouco
+        // menor e Atenção e Alerta maiores (R2); nas outras camadas, o tamanho do meio.
+        const tranquilo = camadaAtiva === 'score' && sub.faixaRisco === 'BAIXO';
+        const fator = camadaAtiva !== 'score' ? 0.8 : tranquilo ? 0.69 : 0.875;
+        const bola = Math.round(diametro * fator);
+        const classes = ['pulsar-score-circle', 'bola', estilo.pulsa ? 'pulsa' : '', subSelecionada?.id === sub.id ? 'selecionado' : '']
           .filter(Boolean)
           .join(' ');
         return (
@@ -81,13 +82,14 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
                   onSelecionar(sub);
                 } : undefined}
                 style={{
-                  width: diametro,
-                  height: diametro,
-                  fontSize: fonte,
-                  background: fundoParaTextoBranco(opaca(estilo.corCirculo)),
-                  color: '#FFFFFF',
-                  boxShadow: `0 0 10px ${glowDaCor(estilo.corCirculo)}`,
-                }}
+                  // A bola menor fica no mesmo centro: a margem devolve a diferença para o diâmetro.
+                  width: bola,
+                  height: bola,
+                  margin: `${(diametro - bola) / 2}px 0`,
+                  fontSize: tranquilo ? fonte - 1 : fonte,
+                  // A cor pura da faixa; a borda (index.css, .bola) é a mesma cor mais fechada (D1).
+                  '--cor': opaca(estilo.corCirculo),
+                } as React.CSSProperties}
               >
                 {estilo.texto}
               </div>

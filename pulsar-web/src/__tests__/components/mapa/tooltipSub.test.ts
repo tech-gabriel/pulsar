@@ -24,11 +24,14 @@ const sub: SubprefeituraMapaDto = {
 };
 
 describe('tooltipSubprefeituraHtml', () => {
-  it('prévia: nome, zona, score arredondado e só temperatura, chuva e vento, em pt-BR', () => {
+  it('prévia: nome, score arredondado na cor da faixa e chuva, calor e vento, uma por linha', () => {
     const html = tooltipSubprefeituraHtml(sub, 'Fallback');
     expect(html).toContain('Sé');
-    expect(html).toContain('Zona Centro');
-    expect(html).toContain('43'); // score 42.7 arredondado
+    // Sem a linha "faixa · zona" (16/11/2026): o número na cor da faixa diz o risco.
+    expect(html).not.toContain('Zona Centro');
+    expect(html).toContain('class="pt-score pt-MODERADO"');
+    expect(html).toContain('>43<'); // score 42.7 arredondado
+    expect(html.match(/class="pt-dado"/g)).toHaveLength(3);
     expect(html).toContain('24,3 °C');
     expect(html).toContain('2,5 mm/h');
     expect(html).toContain('18 km/h'); // vento arredondado
@@ -51,11 +54,10 @@ describe('tooltipSubprefeituraHtml', () => {
     expect(html).toContain('Ainda sem dados');
   });
 
-  it('escapa HTML no nome e na zona', () => {
-    const html = tooltipSubprefeituraHtml({ ...sub, nome: '<img src=x onerror=alert(1)>', zona: '"x"' }, 'X');
+  it('escapa HTML no nome', () => {
+    const html = tooltipSubprefeituraHtml({ ...sub, nome: '<img src=x onerror=alert(1)>' }, 'X');
     expect(html).not.toContain('<img');
     expect(html).toContain('&#60;img');
-    expect(html).toContain('Zona &#34;x&#34;');
   });
 
   it('avisa quando não há leitura, sem score inventado', () => {
@@ -63,31 +65,18 @@ describe('tooltipSubprefeituraHtml', () => {
     expect(html).toContain('Sem leitura recente');
     expect(html).not.toMatch(/class="pt-score /);
   });
-  it('mostra o motivo quando o risco principal é vento ou calor', () => {
-    const html = tooltipSubprefeituraHtml({ ...sub, scoreAtual: { ...sub.scoreAtual!, perigoPrincipal: 'VENTO' } }, 'X');
-    expect(html).toContain('por vento');
-  });
-
-  it('não mostra motivo quando o principal é alagamento', () => {
-    const html = tooltipSubprefeituraHtml({ ...sub, scoreAtual: { ...sub.scoreAtual!, perigoPrincipal: 'ALAGAMENTO' } }, 'X');
-    expect(html).not.toContain(' por ');
-  });
-  it('não mostra motivo em faixa BAIXO', () => {
-    const html = tooltipSubprefeituraHtml({ ...sub, faixaRisco: 'BAIXO', scoreAtual: { ...sub.scoreAtual!, faixa: 'BAIXO', perigoPrincipal: 'VENTO' } }, 'X');
-    expect(html).not.toContain('por vento');
-  });
 
   const medida = { fonte: 'cge' as const, mm15: 2.4, mm60: 5.8, acumuladoPeriodoMm: 9, posto: 'Sé', vizinho: false, coletadoEm: '2026-11-11T03:45:00Z' };
   it('com leitura do CGE, a chuva da prévia é a medida, dita como medida', () => {
     const html = tooltipSubprefeituraHtml({ ...sub, chuvaMedida: medida }, 'X');
     expect(html).toContain('2,4 mm em 15 min');
-    expect(html).toContain('medido');
+    expect(html).toContain('>medida<');
     expect(html).not.toContain('mm/h');
   });
   it('sem leitura do CGE, ou sem a janela de 15 minutos, segue a chuva do modelo', () => {
     expect(tooltipSubprefeituraHtml({ ...sub, chuvaMedida: null }, 'X')).toContain('2,5 mm/h');
     const html = tooltipSubprefeituraHtml({ ...sub, chuvaMedida: { ...medida, mm15: null } }, 'X');
     expect(html).toContain('2,5 mm/h');
-    expect(html).not.toContain('medido');
+    expect(html).not.toContain('>medida<');
   });
 });

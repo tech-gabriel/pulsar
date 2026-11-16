@@ -72,7 +72,9 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const dicaLocalizacao = useDicaLocalizacao();
-  const mostrarDica = dicaLocalizacao.mostrarDica && !semDica;
+  // Quem já achou o lugar pela busca não precisa da dica do alvo agora (volta numa próxima visita).
+  const [buscou, setBuscou] = useState(false);
+  const mostrarDica = dicaLocalizacao.mostrarDica && !semDica && !buscou;
   const { dispensar } = dicaLocalizacao;
 
   // Fecha o dropdown ao clicar fora do componente.
@@ -93,6 +95,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
 
   function selecionar(endereco: EnderecoBusca) {
     onSelecionar(endereco, numeroFaltando(termo, endereco));
+    setBuscou(true);
     setTermo(endereco.nome || endereco.descricao);
     setAberto(false);
   }
@@ -101,6 +104,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
 
   function selecionarArea(area: Area) {
     onSelecionarArea(area);
+    setBuscou(true);
     setTermo(area.nome);
     setAberto(false);
   }
@@ -154,6 +158,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
           onKeyDown={onKeyDown}
           placeholder="Buscar rua ou região"
           aria-label="Buscar subprefeitura ou endereço"
+          id="busca-mapa"
           className="mapa-input flex-1 h-11 bg-transparent text-sm outline-none min-w-0"
         />
         {carregando && (

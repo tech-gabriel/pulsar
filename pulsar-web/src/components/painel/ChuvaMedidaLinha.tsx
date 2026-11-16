@@ -82,7 +82,7 @@ export default function ChuvaMedidaLinha({ nome, medida, chuva24h, numeroPelaMed
         <h2 id="titulo-folha-medida" style={{ font: '700 18px var(--font-heading)', color: 'var(--text-primary)' }}>Chuva medida em {nome}</h2>
         <p className="mt-0.5 mb-2.5" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
           {medida.vizinho ? 'Medida no posto mais próximo, de outra região. Não é previsão.'
-            : doTrecho ? `Medida na estação mais perto deste trecho${medida.distanciaKm != null ? `, a ${km(medida.distanciaKm)}` : ''}. Não é previsão.`
+            : doTrecho ? `Medida ${cge ? 'no posto' : 'na estação'} mais perto deste trecho${medida.distanciaKm != null ? `, a ${km(medida.distanciaKm)}` : ''}. Não é previsão.`
             : !cge ? `Medida na estação mais perto do centro ${deNomeDe(nome)}${medida.distanciaKm != null ? `, a ${km(medida.distanciaKm)}` : ''}. Não é previsão.`
             : 'Medida por pluviômetro, não é previsão.'}
         </p>

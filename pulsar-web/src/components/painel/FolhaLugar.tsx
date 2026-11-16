@@ -3,7 +3,7 @@ import { BriefcaseBusiness, Cloud, CloudRain, Droplets, House, Route, X } from '
 import type { LocalSalvoDto, SubprefeituraMapaDto } from '../../types';
 import { usePrevisaoSubprefeitura } from '../../hooks/usePrevisaoSubprefeitura';
 import { estiloCamada } from '../../utils/camadas';
-import { fundoParaTextoBranco, opaca } from '../../utils/contraste';
+import { opaca } from '../../utils/contraste';
 import { ROTULO_TIPO } from '../../features/locais/regras';
 import { fraseAlagamento, fraseChuvaAgora, fraseDoRisco, intensidadeChuva } from '../../features/locais/estadoLugar';
 import { deNomeDe } from '../../data/regioes-seo';
@@ -36,7 +36,7 @@ export default function FolhaLugar({ local, area, carregando = false, onFechar, 
   const leitura = area?.ultimaLeitura ?? null;
   const chuvendo = intensidadeChuva(leitura?.chuvaMmH) !== null;
   const score = area?.scoreAtual ?? null;
-  const corScore = area && score ? fundoParaTextoBranco(opaca(estiloCamada(area, 'score').corCirculo)) : undefined;
+  const corScore = area && score ? opaca(estiloCamada(area, 'score').corCirculo) : undefined;
   const alagado = (area?.alagamentosCge?.length ?? 0) > 0;
   const tituloId = `folha-lugar-${local.tipo.toLowerCase()}`;
   const esperando = !area && carregando;
@@ -112,7 +112,7 @@ export default function FolhaLugar({ local, area, carregando = false, onFechar, 
             <span aria-hidden="true" className="grid place-items-center w-5 flex-shrink-0">
               {score && corScore ? (
                 <span className="grid place-items-center w-5 h-5 rounded-full"
-                  style={{ background: corScore, color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 9.5, fontWeight: 700 }}>
+                  style={{ background: corScore, color: '#fff', textShadow: 'var(--contorno-numero)', fontFamily: 'var(--font-mono)', fontSize: 9.5, fontWeight: 700 }}>
                   {Math.round(score.valor)}
                 </span>
               ) : <span className="w-2 h-2 rounded-full" style={{ background: 'var(--text-muted)' }} />}

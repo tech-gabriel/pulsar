@@ -5,7 +5,6 @@ import type { GeoJsonObject, FeatureCollection } from 'geojson';
 import MapaBase, { type PontoBusca } from '../components/mapa/MapaBase';
 import BuscaUnificada from '../components/mapa/BuscaUnificada';
 import LayerControl from '../components/mapa/LayerControl';
-import MapLegend from '../components/mapa/MapLegend';
 import PainelLateral from '../components/painel/PainelLateral';
 import DetalheSubprefeitura from '../components/painel/DetalheSubprefeitura';
 import FolhaLugar from '../components/painel/FolhaLugar';
@@ -45,7 +44,7 @@ import type { PontoRota } from '../features/rota/tipos';
 import type { LocalSalvoDto, TipoLocal } from '../types';
 import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
 import { pontoDoLocal, subprefeituraIdDoPonto } from '../features/locais/regras';
-import { centroDoTrecho, estacaoMaisForte, h3DoPonto, montarTrechos, trechosDe } from '../features/cidade/trechos';
+import { centroDoTrecho, estacaoMaisForte, h3DoPonto, montarTrechos, ondeChoveuMais, trechosDe } from '../features/cidade/trechos';
 import { useCelulasAgora } from '../hooks/useCelulasAgora';
 import type { OrigemTrecho } from '../components/painel/DetalheSubprefeitura';
 
@@ -215,6 +214,13 @@ export default function MapaPage() {
       : pontoBusca?.ajustado ? 'ponto' : 'busca';
     return { ...t, origem };
   })();
+  // Onde foi medida a chuva do risco aberto: a estação do trecho, ou a que mais mediu na área
+  // quando o número dela veio da medida. O mapa marca esse ponto.
+  const estacaoDoRisco = trechoAberto?.estacao
+    ?? (subSelecionada && (subSelecionada.scoreAtual?.chuva3hMedidaMm ?? 0) > 0 ? estacaoMaisForte(trechos, subSelecionada.id) : null);
+  const pontoMedida = estacaoDoRisco?.lat != null && estacaoDoRisco.lon != null && estacaoDoRisco.mm3h > 0
+    ? { lat: estacaoDoRisco.lat, lon: estacaoDoRisco.lon, rotulo: `Chuva medida ${ondeChoveuMais(estacaoDoRisco)}` }
+    : null;
 
   function handleTocarTrecho(h3: string) {
     const t = trechos?.get(h3);
@@ -519,6 +525,7 @@ export default function MapaPage() {
       avisoIndisponivel={rota.avisoIndisponivel}
       onTentarDeNovo={rota.tentarDeNovo}
       onCancelarAviso={() => void rota.cancelarAviso()}
+      faixaDaArea={(id) => subprefeituras.find((s) => s.id === id)?.faixaRisco}
       onTrocar={(ponto) => {
         (ponto === 'origem' ? rota.setOrigem : rota.setDestino)(null);
         // O De/Para é o mesmo no celular e no painel: um só está montado.
@@ -533,6 +540,9 @@ export default function MapaPage() {
 
       {/* Header de navegação (ETAPA B.1): top bar + tab bar mobile no rodapé */}
       <Header />
+      {/* Teclado: a busca vem depois do mapa e dos 32 números; o atalho pula direto para ela. */}
+      <a href="#busca-mapa" className="pular-para-busca"
+        onClick={(e) => { e.preventDefault(); document.getElementById('busca-mapa')?.focus(); }}>Ir para a busca</a>
 
       {/* ══════════════════════════════════════════
           MAPA — camada de fundo absoluta
@@ -566,6 +576,7 @@ export default function MapaPage() {
             : trechoAberto?.h3 ?? null}
           onTocarTrecho={rotaAberta ? undefined : handleTocarTrecho}
           onPerto={setPerto}
+          pontoMedida={pontoMedida}
         />
 
         {/* Celular: busca sobreposta ao mapa. Tablet e computador: ela mora no painel. */}
@@ -579,6 +590,7 @@ export default function MapaPage() {
               camadaAtiva={camadaAtiva}
               onChange={setCamadaAtiva}
               isMobile={isMobile}
+              overlayAlagamento={overlayAlagamento}
             />
 
             {/* Overlay de alagamentos (12 meses) — liga/desliga independente das camadas */}
@@ -593,10 +605,6 @@ export default function MapaPage() {
         {/* Pilha da legenda e dos avisos (tablet: à direita, no alto; computador: à esquerda, no pé).
             No celular a pilha some (display: contents) e cada peça se posiciona sozinha. */}
         <div className="pilha-mapa">
-          {/* Legenda dinâmica: muda com a camada. Com o overlay ligado ganha a chave dos alagamentos. */}
-          {/* Com a rota aberta no celular a legenda sai: ela cobria o crédito do mapa, e o veredito já diz a faixa. */}
-          {!rotaNoCelular && <MapLegend camadaAtiva={camadaAtiva} isMobile={isMobile} overlayAlagamento={overlayAlagamento} comTrechos={comTrechos && !!dadosTrechos} />}
-
           {/* Aviso do ponto buscado. Só no computador: no celular ele fica embaixo da busca. */}
           {avisoBusca && !isMobile && (
             <div className="superficie rounded-2xl mapa-txt cartao-pe-mapa px-4 py-2.5 text-xs">

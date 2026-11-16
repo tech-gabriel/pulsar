@@ -17,6 +17,7 @@ export function subprefeituraIdDoPonto(
   return idsDosTrechos([regiao.subprefeituraNome], subs)[0] ?? null;
 }
 
+/** O ponto de Casa ou Trabalho na rota: o campo mostra "Casa: Rua X", para não perder qual lugar é. */
 export function pontoDoLocal(l: LocalSalvoDto): PontoRota {
-  return { lat: l.latitude, lon: l.longitude, rotulo: l.rotulo };
+  return { lat: l.latitude, lon: l.longitude, rotulo: `${ROTULO_TIPO[l.tipo]}: ${l.rotulo}` };
 }

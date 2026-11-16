@@ -287,7 +287,8 @@ export default function CamposDePara({ areas, origem, destino, onOrigem, onDesti
       : 'absolute top-[calc(var(--topo-app)+0.5rem)] left-3 right-3 z-[1100]'}>
       {/* Com as linhas abertas no celular, o vidro fica denso para o texto ler bem sobre o mapa (no painel ele já é). */}
       <div className={`mapa-controle flex flex-wrap items-center gap-1 px-1 py-2${linhasDe && !embutida ? ' vidro-painel' : ''}`}>
-        <button type="button" onClick={onFechar} aria-label="Fechar a rota"
+        {/* Com o destino já escolhido, o foco entra na rota pelo voltar (o Para pede foco só quando está vazio). */}
+        <button type="button" onClick={onFechar} aria-label="Fechar a rota" autoFocus={!!destino}
           className="mapa-txt-suave flex items-center justify-center w-11 h-11 flex-shrink-0">
           <ArrowLeft size={18} />
         </button>

@@ -159,7 +159,7 @@ describe('estacaoMaisForte', () => {
   it('fica com a estação que mais mediu em 3 h, só da área', () => {
     const t = (h3: string, areaId: string, mm3h: number, nome: string) => [h3, { h3, areaId, estacao: { cod: nome, mm1h: 0, mm3h, distanciaKm: 1, nome } }] as const;
     const mapa = new Map([t('a', 's1', 4, 'Vila Ema'), t('b', 's1', 9, 'Penha3'), t('c', 's2', 30, 'Outra')]) as unknown as Parameters<typeof estacaoMaisForte>[0];
-    expect(estacaoMaisForte(mapa, 's1')).toBe('Penha3');
+    expect(estacaoMaisForte(mapa, 's1')?.nome).toBe('Penha3');
     expect(estacaoMaisForte(mapa, 's3')).toBeNull();
   });
 });

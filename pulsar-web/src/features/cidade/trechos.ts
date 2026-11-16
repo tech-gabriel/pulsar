@@ -2,7 +2,7 @@ import type { Feature, FeatureCollection, Polygon } from 'geojson';
 import type { CelulasAgoraDto, ComponenteScoreDto, FaixaPrevisaoDto, FaixaRisco, TipoPerigo } from '../../types';
 import { estiloPoligono } from '../../utils/risco';
 import { pontoEmPoligono } from '../../utils/geo';
-import { km } from '../../utils/chuvaMedida';
+import { km, nomeEstacao } from '../../utils/chuvaMedida';
 import { fraseDoRisco } from '../locais/estadoLugar';
 import type { Area } from './areas';
 
@@ -23,7 +23,7 @@ export interface Trecho {
    * Estação que mandou na conta do alagamento; null = chuva estimada pelo modelo. `nome` e `em`
    * (ISO da conta) servem ao cartão "Chuva" do trecho, que mostra esta mesma estação.
    */
-  estacao: { cod: string; mm1h: number; mm3h: number; distanciaKm: number; nome?: string; em?: string } | null;
+  estacao: { cod: string; mm1h: number; mm3h: number; distanciaKm: number; nome?: string; em?: string; fonte?: 'cemaden' | 'cge'; lat?: number; lon?: number } | null;
 }
 
 /**
@@ -58,12 +58,18 @@ export function trechosDe(agora: CelulasAgoraDto, areas: Area[]): Map<string, Tr
 }
 
 /** A estação que mais mediu chuva em 3 h nos trechos da área: nomeia o ponto da "Chuva que gerou o risco". */
-export function estacaoMaisForte(trechos: Map<string, Trecho> | null, areaId: string): string | null {
+export function estacaoMaisForte(trechos: Map<string, Trecho> | null, areaId: string): NonNullable<Trecho['estacao']> | null {
   let melhor: NonNullable<Trecho['estacao']> | null = null;
   for (const t of trechos?.values() ?? []) {
     if (t.areaId === areaId && t.estacao && t.estacao.mm3h > (melhor?.mm3h ?? 0)) melhor = t.estacao;
   }
-  return melhor ? melhor.nome || melhor.cod : null;
+  return melhor;
+}
+
+/** Onde choveu mais, para quem lê: "no posto Itaquera do CGE" ou "perto da estação Penha 3". */
+export function ondeChoveuMais(e: NonNullable<Trecho['estacao']>): string {
+  const nome = e.nome || e.cod;
+  return e.fonte === 'cge' ? `no posto ${nome} do CGE` : `perto da estação ${nomeEstacao(nome)}`;
 }
 
 const mm = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });

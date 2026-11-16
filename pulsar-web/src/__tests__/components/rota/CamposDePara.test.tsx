@@ -245,7 +245,7 @@ describe('CamposDePara: casa e trabalho', () => {
     const { onDestino } = monta({ locais: { CASA } });
     fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
     fireEvent.click(screen.getByRole('button', { name: /^Casa/ }));
-    expect(onDestino).toHaveBeenCalledWith({ lat: -23.56, lon: -46.65, rotulo: 'Rua Augusta, 100' });
+    expect(onDestino).toHaveBeenCalledWith({ lat: -23.56, lon: -46.65, rotulo: 'Casa: Rua Augusta, 100' });
     expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
   });
 

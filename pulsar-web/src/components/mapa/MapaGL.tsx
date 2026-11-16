@@ -2,11 +2,11 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
 import Map, { AttributionControl, Layer, Marker, Source, type MapRef } from 'react-map-gl/maplibre';
 import type { GeoJSONSource, StyleSpecification } from 'maplibre-gl';
-import { Flag } from 'lucide-react';
+import { CloudRain, Flag } from 'lucide-react';
 import maplibregl from './maplibre';
 import { comChaveMapTiler, estiloBaseCompartilhado, urlReservaMapTiler } from './estiloBase';
 import { circuloGeojson, deslocamentoDoPainel, paddingDaRota, paddingDoPainel } from './geometria';
-import { ZOOM, ZOOM_TRECHOS } from './zoom';
+import { ZOOM, ZOOM_TRECHOS, zoomCidade } from './zoom';
 import ZoomControles from './ZoomControles';
 import RegioesLayer from './RegioesLayer';
 import TrechosLayer from './TrechosLayer';
@@ -28,6 +28,8 @@ import MarcadoresLugares from './MarcadoresLugares';
 const ZOOM_LUGAR = ZOOM.sub - 0.5;
 
 const SP: [number, number] = [-46.6333, -23.5505]; // lon, lat
+/** Celular estreito: a cidade anda um pouco para a esquerda, longe da coluna de botões da direita. */
+const centroCidade = (largura: number): [number, number] => (largura < 360 ? [SP[0] + 0.1, SP[1]] : SP);
 const ESPERA_ESTILO_MS = 8000;
 const CHAVE_MAPTILER = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
 const COR_BUSCA = '#00BCFF';
@@ -77,7 +79,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, destinoSemRota = null, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, rota, destinoSemRota = null, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto, pontoMedida = null } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -86,6 +88,7 @@ export default function MapaGL(props: PropsMapa) {
   const [carregou, setCarregou] = useState(false);
   const [idPrimeiroSimbolo, setIdPrimeiroSimbolo] = useState<string | undefined>();
   const reduzido = !!useReducedMotion();
+  const larguraInicial = typeof window === 'undefined' ? 1024 : window.innerWidth;
   const estilo = reserva ? (CHAVE_MAPTILER ? urlReservaMapTiler(theme, CHAVE_MAPTILER) : null) : estiloOfm;
 
   // Estilo base do tema; se o OpenFreeMap falhar, a reserva do MapTiler vale até sair do mapa.
@@ -126,7 +129,8 @@ export default function MapaGL(props: PropsMapa) {
   useEffect(() => {
     if (!carregou) return;
     if (!zonaEmFoco) {
-      voar(SP, ZOOM.sp, 600);
+      const largura = mapRef.current?.getContainer().clientWidth ?? 1024;
+      voar(centroCidade(largura), zoomCidade(largura), 600);
       return;
     }
     if (subSelRef.current) return;
@@ -300,7 +304,7 @@ export default function MapaGL(props: PropsMapa) {
       ref={mapRef}
       mapLib={maplibregl}
       mapStyle={estilo}
-      initialViewState={{ longitude: SP[0], latitude: SP[1], zoom: ZOOM.sp }}
+      initialViewState={{ longitude: centroCidade(larguraInicial)[0], latitude: SP[1], zoom: zoomCidade(larguraInicial) }}
       style={{ width: '100%', height: '100%' }}
       attributionControl={false}
       locale={{ 'AttributionControl.ToggleAttribution': 'Créditos do mapa' }}
@@ -381,6 +385,14 @@ export default function MapaGL(props: PropsMapa) {
       {destinoRota && destinoNasceu && desenho?.chave === chaveRota && (
         <Marker longitude={destinoRota[0]} latitude={destinoRota[1]} anchor="bottom" offset={[0, 5]} style={{ pointerEvents: 'none' }}>
           <PinoChegada />
+        </Marker>
+      )}
+      {/* O ponto da medida: o vermelho do trecho tem um lugar no mapa (crítica de 15/11). */}
+      {pontoMedida && !rota && (
+        <Marker longitude={pontoMedida.lon} latitude={pontoMedida.lat} anchor="center" style={{ pointerEvents: 'none' }}>
+          <div className="ponto-medida" role="img" aria-label={pontoMedida.rotulo} title={pontoMedida.rotulo}>
+            <CloudRain size={14} strokeWidth={2.4} aria-hidden="true" />
+          </div>
         </Marker>
       )}
       {destinoSemRota && !rota && (

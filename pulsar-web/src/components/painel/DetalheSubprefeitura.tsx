@@ -13,7 +13,7 @@ import { blocosDeDicas } from '../../utils/dicas';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import { useArrastoFolha } from '../../motion/useArrastoFolha';
 import { CIDADE_ATUAL } from '../../features/cidade/cidade';
-import { fraseDoTrecho, type Trecho } from '../../features/cidade/trechos';
+import { fraseDoTrecho, ondeChoveuMais, type Trecho } from '../../features/cidade/trechos';
 import type { Area } from '../../features/cidade/areas';
 import type { ChuvaMedida, FaixaRisco, TipoPerigo } from '../../types';
 import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
@@ -21,7 +21,7 @@ import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
 import AlagamentosCge from './AlagamentosCge';
 import ChuvaMedidaLinha from './ChuvaMedidaLinha';
-import { nomeEstacao, temChuvaMedida } from '../../utils/chuvaMedida';
+import { temChuvaMedida } from '../../utils/chuvaMedida';
 import { porExtenso } from '../../utils/texto';
 import { deNomeDe } from '../../data/regioes-seo';
 
@@ -85,7 +85,7 @@ interface Props {
    */
   trecho?: Trecho & { origem: OrigemTrecho };
   /** Estação que mais mediu chuva na área: dá nome ao ponto quando o número veio da medida. */
-  estacaoMaisForte?: string | null;
+  estacaoMaisForte?: NonNullable<Trecho['estacao']> | null;
 }
 
 /**
@@ -115,7 +115,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
   const blocos = blocosDeDicas(scoreDasDicas, catalogo);
   // No trecho, "Medida agora" é a estação do trecho (a mesma do topo dele), não a do centro da área.
   const medidaDoTrecho: ChuvaMedida | null = trecho?.estacao ? {
-    fonte: 'cemaden', mm15: null, mm60: trecho.estacao.mm1h, acumuladoPeriodoMm: null,
+    fonte: trecho.estacao.fonte ?? 'cemaden', mm15: null, mm60: trecho.estacao.mm1h, acumuladoPeriodoMm: null,
     posto: trecho.estacao.nome || trecho.estacao.cod, vizinho: false,
     distanciaKm: trecho.estacao.distanciaKm, coletadoEm: trecho.estacao.em ?? '',
   } : null;
@@ -182,7 +182,9 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
               {GRAVIDADE[trecho.faixa] < GRAVIDADE[area.faixaRisco ?? 'BAIXO'] && (
                 <small className="det-linha-ponte">
                   {(s?.chuva3hMedidaMm ?? 0) > 0
-                    ? `A chuva forte foi em outro ponto ${deNomeDe(area.nome)}.`
+                    ? estacaoMaisForte && estacaoMaisForte.mm3h > 0
+                      ? `A chuva forte foi ${ondeChoveuMais(estacaoMaisForte)}: ${decimal(estacaoMaisForte.mm3h)} mm em 3 h.`
+                      : `A chuva forte foi em outro ponto ${deNomeDe(area.nome)}.`
                     : `O risco maior está em outro ponto ${deNomeDe(area.nome)}.`}
                 </small>
               )}
@@ -225,8 +227,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
                   <div className="det-faixa">
                     <div className="det-faixa-cab"><span className="det-faixa-nome">Chuva que gerou o risco</span></div>
                     <div className="det-par um">
-                      <div><b>{decimal(s.chuva3hMedidaMm)}<span>mm</span></b><i>{s.postoChuvaMedida ? `em 3 h, no posto ${s.postoChuvaMedida} do CGE`
-                        : estacaoMaisForte ? `em 3 h, mais forte perto da estação ${nomeEstacao(estacaoMaisForte)}`
+                      <div><b>{decimal(s.chuva3hMedidaMm)}<span>mm</span></b><i>{estacaoMaisForte ? `em 3 h, mais forte ${ondeChoveuMais(estacaoMaisForte)}`
                         : `em 3 h, num ponto ${deNomeDe(area.nome)}`}</i></div>
                     </div>
                   </div>

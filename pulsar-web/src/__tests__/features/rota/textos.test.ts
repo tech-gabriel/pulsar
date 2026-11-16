@@ -3,7 +3,7 @@ import { textoVeredito, rotuloHora } from '../../../features/rota/textos';
 import type { RotaAvaliacao } from '../../../features/rota/tipos';
 
 const SP = 'America/Sao_Paulo';
-const base: RotaAvaliacao = { estado: 'PodeIr', trechoDecisivoId: null, tranquiloAteUtc: null, esperarAteUtc: null, trechos: [], horas: [] };
+const base: RotaAvaliacao = { estado: 'PodeIr', trechoDecisivoId: null, esperarAteUtc: null, trechos: [], horas: [] };
 const mooca = { subprefeituraId: 'm', nome: 'Mooca', faixa: 'ALTO' as const, alagandoCge: false };
 
 describe('textos do veredito', () => {
@@ -11,27 +11,15 @@ describe('textos do veredito', () => {
     expect(rotuloHora('2026-11-03T21:00:00Z', SP)).toBe('18h');
   });
 
-  it('PodeIr com e sem horário', () => {
-    const agora = Date.parse('2026-11-03T18:00:00Z');
-    expect(textoVeredito({ ...base, tranquiloAteUtc: '2026-11-03T21:00:00Z' }, SP, agora)).toEqual({
-      titulo: 'Pode ir: caminho tranquilo', detalhe: 'Sem chuva forte prevista no trajeto até umas 18h.' });
-    expect(textoVeredito(base, SP, agora).detalhe).toBe('Sem chuva forte prevista no trajeto agora.');
-    // Mais de 6 h à frente (fim do horizonte da previsão): a frase sem horário.
-    expect(textoVeredito({ ...base, tranquiloAteUtc: '2026-11-04T01:00:00Z' }, SP, agora).detalhe)
-      .toBe('Sem chuva forte prevista no trajeto agora.');
+  it('PodeIr fala da chuva medida, sem hora prevista', () => {
+    expect(textoVeredito(base, SP)).toEqual({ titulo: 'Pode ir: caminho tranquilo', detalhe: 'Sem chuva forte medida no caminho agora.' });
   });
 
-  it('ComAtencao com hora que volta a BAIXO e sem ela', () => {
+  it('ComAtencao sem hora prevista', () => {
     const r: RotaAvaliacao = { ...base, estado: 'ComAtencao', trechoDecisivoId: 'm', trechos: [mooca],
       horas: [{ inicioUtc: '2026-11-03T19:00:00Z', piorFaixa: 'MODERADO' }, { inicioUtc: '2026-11-03T20:00:00Z', piorFaixa: 'BAIXO' }] };
-    expect(textoVeredito(r, SP)).toEqual({ titulo: 'Pode ir, com atenção', detalhe: 'Fique de olho na Mooca até umas 17h.' });
-    expect(textoVeredito({ ...r, horas: [] }, SP).detalhe).toBe('Fique de olho na Mooca.');
-    // Volta ao BAIXO no meio e Atenção de novo depois: a hora é a do fim da última Atenção.
-    const ida = (h: string, f: 'BAIXO' | 'MODERADO') => ({ inicioUtc: `2026-11-03T${h}:00:00Z`, piorFaixa: f });
-    expect(textoVeredito({ ...r, horas: [ida('19', 'MODERADO'), ida('20', 'BAIXO'), ida('21', 'MODERADO'), ida('22', 'BAIXO')] }, SP).detalhe)
-      .toBe('Fique de olho na Mooca até umas 19h.');
-    // Atenção até o fim do horizonte: sem hora.
-    expect(textoVeredito({ ...r, horas: [ida('19', 'BAIXO'), ida('20', 'MODERADO')] }, SP).detalhe).toBe('Fique de olho na Mooca.');
+    // A previsão não entra no "com atenção": mesmo com horas, a frase não cita hora.
+    expect(textoVeredito(r, SP)).toEqual({ titulo: 'Pode ir, com atenção', detalhe: 'Está chovendo na Mooca. Fique de olho.' });
   });
 
   it('Esperar com horário, sem horário e com CGE', () => {

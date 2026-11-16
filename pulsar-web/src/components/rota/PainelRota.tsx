@@ -3,6 +3,7 @@ import { BellRing, Check, ExternalLink, Navigation } from 'lucide-react';
 import { track } from '../../analytics';
 import { linksNavegacao } from '../../features/rota/links';
 import type { PontoRota, RotaAvaliacao } from '../../features/rota/tipos';
+import type { FaixaRisco } from '../../types';
 import { coresParaFaixa, labelFaixa } from '../../utils/risco';
 import FaixaHorasRota from './FaixaHorasRota';
 import VereditoRota from './VereditoRota';
@@ -21,6 +22,11 @@ interface Props {
   onTentarDeNovo?: () => void;
   /** Ponto fora de SP: limpa e foca o campo daquele ponto. */
   onTrocar?: (ponto: 'origem' | 'destino') => void;
+  /**
+   * Faixa da área inteira, pelo id: a rota olha os trechos do caminho, e a área pode estar pior
+   * em outro ponto. A linha diz isso, para o mapa e a rota não parecerem discordar.
+   */
+  faixaDaArea?: (subprefeituraId: string) => FaixaRisco | null | undefined;
   /** Hora (epoch ms) da última avaliação recebida. */
   atualizadoEm?: number | null;
 }
@@ -40,6 +46,10 @@ const CHAVE_APP_ROTA = 'pulsar-app-rota';
 // Quem escuta a troca do app lembrado. A memória vale na sessão mesmo se o armazenamento falhar (aba privada).
 const ouvintes = new Set<() => void>();
 let appNaMemoria: App | null = null;
+
+const GRAVIDADE: Record<FaixaRisco, number> = { BAIXO: 0, MODERADO: 1, ALTO: 2 };
+const maisGrave = (area: FaixaRisco | null | undefined, caminho: FaixaRisco | null | undefined) =>
+  !!area && GRAVIDADE[area] > (caminho ? GRAVIDADE[caminho] : -1);
 
 function lerApp(): App {
   if (appNaMemoria) return appNaMemoria;
@@ -80,7 +90,7 @@ function useAppLembrado(): App {
  * a saída para o app de navegação. Um primário por estado: o app lembrado em Pode ir e Com
  * atenção, o aviso em Esperar e nenhum em Sem leitura. O traçado e os campos ficam fora daqui.
  */
-export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm }: Props) {
+export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm, faixaDaArea }: Props) {
   const app = useAppLembrado();
 
   if (erro) {
@@ -107,17 +117,19 @@ export default function PainelRota({ resultado, origem, destino, carregando, err
       {/* Mesmo lugar na árvore no carregando e no resultado: o cartão não desmonta, só muda. */}
       <VereditoRota resultado={pronto ? resultado : null} atualizadoEm={atualizadoEm} />
       {pronto && <Resultado resultado={resultado} links={linksNavegacao(origem, destino)} app={app} onApp={lembrarApp}
-        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso} />}
+        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso} faixaDaArea={faixaDaArea} />}
     </div>
   );
 }
 
-function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel, onCancelarAviso }: {
+function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel, onCancelarAviso, faixaDaArea }: {
   resultado: RotaAvaliacao; links: Record<App, string>; app: App; onApp: (a: App) => void;
   avisoPedido: boolean; onPedirAviso: () => void; avisoIndisponivel: boolean; onCancelarAviso?: () => void;
+  faixaDaArea?: Props['faixaDaArea'];
 }) {
   const esperar = resultado.estado === 'Esperar';
-  const comHoras = (resultado.estado === 'ComAtencao' || esperar) && resultado.horas.length > 0;
+  // A previsão por hora só ajuda a saber até quando esperar (16/11/2026).
+  const comHoras = esperar && resultado.horas.length > 0;
   const outros = APPS.filter((a) => a !== app);
   const abrir = (a: App) => () => { track.abriuAppRota(a); onApp(a); };
   // A cascata só toca quando o conjunto de trechos muda (a chave remonta a lista).
@@ -141,7 +153,8 @@ function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, av
             <span className="min-w-0 truncate">{t.nome}</span>
             {t.alagandoCge
               ? <span className="ml-auto flex-shrink-0 font-semibold" style={{ color: 'var(--text-primary)' }}>Alagando, CGE</span>
-              : <span className="ml-auto flex-shrink-0">{labelFaixa(t.faixa)}</span>}
+              : <span className="ml-auto flex-shrink-0 text-right">{labelFaixa(t.faixa)}{maisGrave(faixaDaArea?.(t.subprefeituraId), t.faixa)
+                ? <small className="block text-[11.5px]">{`área em ${labelFaixa(faixaDaArea?.(t.subprefeituraId))}`}</small> : null}</span>}
           </li>
         ))}
       </ul>

@@ -242,11 +242,27 @@ describe('CamposDePara: casa e trabalho', () => {
   });
 
   it('tocarCasaPreenchida_preencheOCampo', () => {
-    const { onDestino } = monta({ locais: { CASA } });
+    const { onDestino } = monta({ origem: { lat: -23.6, lon: -46.7, rotulo: 'Minha localização' }, locais: { CASA } });
     fireEvent.focus(screen.getByRole('combobox', { name: 'Para' }));
     fireEvent.click(screen.getByRole('button', { name: /^Casa/ }));
     expect(onDestino).toHaveBeenCalledWith({ lat: -23.56, lon: -46.65, rotulo: 'Casa: Rua Augusta, 100' });
     expect(screen.queryByRole('button', { name: /^Casa/ })).not.toBeInTheDocument();
+  });
+
+  it('digitar "cas" sugere a Casa salva antes da Casa Verde (crítica 8)', () => {
+    const { onDestino } = monta({ locais: { CASA } });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Para' }), { target: { value: 'cas' } });
+    const [primeira] = screen.getAllByRole('option');
+    expect(primeira).toHaveTextContent(/^Casa · /);
+    fireEvent.click(primeira);
+    expect(onDestino).toHaveBeenCalledWith({ lat: -23.56, lon: -46.65, rotulo: 'Casa: Rua Augusta, 100' });
+  });
+
+  it('escolher o Para com o De vazio leva o foco ao De', () => {
+    monta();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Para' }), { target: { value: 'Mooca' } });
+    fireEvent.click(screen.getByRole('option', { name: 'Mooca' }));
+    expect(screen.getByRole('combobox', { name: 'De' })).toHaveFocus();
   });
 
   it('Escape numa linha fecha as linhas e devolve o foco ao campo', () => {
@@ -261,7 +277,7 @@ describe('CamposDePara: casa e trabalho', () => {
   });
 
   it('escolher uma linha preenchida deixa o foco no campo, sem reabrir as linhas', () => {
-    const { onDestino } = monta({ locais: { CASA } });
+    const { onDestino } = monta({ origem: { lat: -23.6, lon: -46.7, rotulo: 'Minha localização' }, locais: { CASA } });
     const campo = screen.getByRole('combobox', { name: 'Para' });
     act(() => campo.focus());
     const casa = screen.getByRole('button', { name: /^Casa/ });

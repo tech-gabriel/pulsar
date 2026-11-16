@@ -343,3 +343,17 @@ describe('DetalheSubprefeitura: trecho', () => {
     expect(screen.getByText('Por chuva: 22,0 mm nas últimas 3h')).toBeInTheDocument();
   });
 });
+
+describe('DetalheSubprefeitura: teclado (crítica 8)', () => {
+  it('abre com o foco no título quando o foco estava perdido', () => {
+    renderiza();
+    expect(screen.getByRole('heading', { level: 2, name: itaquera.nome })).toHaveFocus();
+  });
+
+  it('Escape com o foco no detalhe fecha', () => {
+    const onFechar = vi.fn();
+    renderiza({ onFechar });
+    fireEvent.keyDown(screen.getByRole('heading', { level: 2, name: itaquera.nome }), { key: 'Escape' });
+    expect(onFechar).toHaveBeenCalled();
+  });
+});

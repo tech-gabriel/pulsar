@@ -59,6 +59,21 @@ describe('BuscaUnificada', () => {
     expect(onSelecionar).toHaveBeenCalledWith(resultados[0], undefined);
   });
 
+  it('setas levam do campo para a lista e andam entre os itens; Escape volta ao campo', () => {
+    hookState = { termo: 'paulista', setTermo, resultados, carregando: false, erro: null, limpar };
+    render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={vi.fn()} isMobile={false} />);
+    const campo = screen.getByLabelText('Buscar subprefeitura ou endereço');
+    fireEvent.focus(campo);
+    fireEvent.keyDown(campo, { key: 'ArrowDown' });
+    const primeiro = screen.getByText('Av. Paulista').closest('button')!;
+    expect(primeiro).toHaveFocus();
+    fireEvent.keyDown(primeiro, { key: 'ArrowUp' });
+    expect(campo).toHaveFocus();
+    fireEvent.keyDown(campo, { key: 'ArrowDown' });
+    fireEvent.keyDown(primeiro, { key: 'Escape' });
+    expect(campo).toHaveFocus();
+  });
+
   it('limpa a busca ao clicar no X', () => {
     hookState = { termo: 'paulista', setTermo, resultados: [], carregando: false, erro: null, limpar };
     render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={vi.fn()} isMobile={false} />);

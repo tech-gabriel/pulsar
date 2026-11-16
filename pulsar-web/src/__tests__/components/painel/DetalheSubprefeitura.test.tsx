@@ -292,13 +292,20 @@ describe('DetalheSubprefeitura: trecho', () => {
     alagamento: { valor: 34, faixa: 'MODERADO' as const }, estacao: null, origem: 'toque' as const, ...o,
   });
 
-  it('o topo é do trecho, com de onde ele veio, e a área inteira vira uma linha', () => {
-    renderiza({ trecho: trecho() });
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Itaquera');
-    expect(screen.getByText('Trecho que você tocou · Zona Leste')).toBeInTheDocument();
+  // Escolha A de 16/11/2026: o título diz de onde é o número; a área inteira é uma linha que abre a área.
+  it('o topo é do trecho, com a rua no título, e a linha da área inteira abre a área', () => {
+    const onVerRegiao = vi.fn();
+    renderiza({ trecho: { ...trecho(), titulo: 'Perto da Rua Taquari' }, onVerRegiao });
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Perto da Rua Taquari');
+    expect(screen.getByText('Itaquera · Zona Leste')).toBeInTheDocument();
     expect(screen.getByLabelText('Score 34 de 100')).toBeInTheDocument();
     expect(screen.getByText('Atenção')).toBeInTheDocument();
-    expect(screen.getByText(/^Itaquera inteira em Alerta/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Itaquera inteira/ }));
+    expect(onVerRegiao).toHaveBeenCalled();
+  });
+  it('sem a rua ainda, o título diz o trecho da área', () => {
+    renderiza({ trecho: trecho() });
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Trecho em Itaquera');
   });
 
   // Trecho mais calmo que a área: uma frase diz por quê (crítica de 15/11).
@@ -320,10 +327,10 @@ describe('DetalheSubprefeitura: trecho', () => {
     expect(screen.queryByRole('button', { name: /Posto Centro/ })).not.toBeInTheDocument();
   });
   // No trecho com estação o modelo é da região inteira: uma linha pequena, e a frase usa 3 horas como o topo.
-  it('trecho com estação: modelo da região em uma linha e frase de 3 horas', () => {
+  it('trecho com estação: Chuva nas três faixas da área (medida, modelo e previsão) e frase de 3 horas', () => {
     renderiza({ trecho: trecho({ estacao: { cod: 'E1', nome: 'Vila Ema', mm1h: 0, mm3h: 0, distanciaKm: 2.3, em: '' } }) });
-    expect(screen.getByText('O modelo estimou 22,0 mm em 3 h para toda a região de Itaquera.')).toBeInTheDocument();
-    expect(screen.queryByText('Estimada pelo modelo')).not.toBeInTheDocument();
+    expect(screen.getByText('Estimada pelo modelo')).toBeInTheDocument();
+    expect(screen.queryByText(/para toda a região/)).not.toBeInTheDocument();
     expect(screen.getByText('Sem chuva nas últimas 3 horas')).toBeInTheDocument();
   });
   it('trecho sem estação: o cartão não cita a estação do centro da área', () => {
@@ -339,12 +346,9 @@ describe('DetalheSubprefeitura: trecho', () => {
     expect(screen.queryByText(/em outro ponto/)).not.toBeInTheDocument();
   });
 
-  it('localização e busca dizem de onde é o trecho', () => {
-    const { unmount } = renderiza({ trecho: trecho({ origem: 'localizacao' }) });
-    expect(screen.getByText('Trecho onde você está · Zona Leste')).toBeInTheDocument();
-    unmount();
-    renderiza({ trecho: trecho({ origem: 'busca' }) });
-    expect(screen.getByText('Trecho do endereço buscado · Zona Leste')).toBeInTheDocument();
+  it('busca: o título é o endereço buscado', () => {
+    renderiza({ trecho: { ...trecho({ origem: 'busca' }), titulo: 'Rua da Mooca, 100' } });
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Rua da Mooca, 100');
   });
 
   it('com estação perto, a frase é a leitura dela', () => {

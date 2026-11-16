@@ -14,7 +14,6 @@ import type { Camada } from '../utils/camadas';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubprefeituras } from '../hooks/useSubprefeituras';
 import { useFavoritos } from '../hooks/useFavoritos';
-import { useDicaUnica } from '../hooks/useDicaLocalizacao';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useNotificacoesPrefs } from '../hooks/useNotificacoesPrefs';
 import { usePushSubscription } from '../hooks/usePushSubscription';
@@ -37,6 +36,7 @@ import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
 import { useJsonPublico } from '../hooks/useJsonPublico';
 import { escolherDestinoComoChegar, rotuloDoPino, rotuloDoTrecho } from '../features/rota/destino';
 import { buscarRuaPerto } from '../api/busca';
+import { useRuaPerto } from '../hooks/useRuaPerto';
 import CamposDePara from '../components/rota/CamposDePara';
 import PainelRota from '../components/rota/PainelRota';
 import { track } from '../analytics';
@@ -84,6 +84,8 @@ export default function MapaPage() {
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
   // Trecho tocado no mapa (índice H3). Toda outra forma de escolher a área o limpa.
   const [trechoTocado, setTrechoTocado] = useState<string | null>(null);
+  // Trecho de onde a pessoa subiu para a área inteira (linha da área no cartão): fica fechado até outro toque.
+  const [regiaoInteira, setRegiaoInteira] = useState<string | null>(null);
   // Casa ou trabalho aberto no mapa (F4b): a folha do lugar toma o lugar do detalhe. Declarado
   // aqui porque o ?regiao= abaixo precisa fechá-lo (alerta tocado com a casa aberta).
   const [lugarAberto, setLugarAberto] = useState<TipoLocal | null>(null);
@@ -188,12 +190,7 @@ export default function MapaPage() {
     () => (contornoTrechos.dados && trechos ? montarTrechos(contornoTrechos.dados, trechos) : null),
     [contornoTrechos.dados, trechos],
   );
-  // Dica única de que o trecho é tocável: aparece quando os trechos surgem pela primeira vez.
-  const dicaTrecho = useDicaUnica('pulsar-dica-trecho-vista');
-  const mostrarDicaTrecho = dicaTrecho.mostrarDica && comTrechos && !rotaAberta && perto && !!dadosTrechos && !localAberto;
-  // Uma dica por sessão: depois da do trecho, a do alvo não entra logo no lugar dela.
-  const [dicaTrechoNaSessao, setDicaTrechoNaSessao] = useState(false);
-  if (mostrarDicaTrecho && !dicaTrechoNaSessao) setDicaTrechoNaSessao(true);
+  // Sem dica do trecho (H1, 16/11/2026): de perto só há hexágonos para tocar, e o "Como ler" explica.
   // O trecho tocado ganha do trecho do ponto; os dois só valem se forem da área aberta.
   // Na rota, o trecho do destino fica marcado, venha ele de um toque, de uma busca ou do campo Para.
   const [dLat, dLon] = [rota.destino?.lat, rota.destino?.lon];
@@ -207,13 +204,24 @@ export default function MapaPage() {
   );
   const trechoAberto = (() => {
     const h3 = trechoTocado ?? h3DoPontoBusca;
-    const t = h3 ? trechos?.get(h3) : undefined;
+    const t = h3 && h3 !== regiaoInteira ? trechos?.get(h3) : undefined;
     if (!t || !subSelecionada || t.areaId !== subSelecionada.id) return undefined;
     const origem: OrigemTrecho = trechoTocado ? 'toque'
       : pontoBusca?.precisao !== undefined ? 'localizacao'
       : pontoBusca?.ajustado ? 'ponto' : 'busca';
     return { ...t, origem };
   })();
+  // O título do cartão do trecho: o endereço buscado ou a rua mais perto do ponto (escolha A, 16/11/2026).
+  const pontoDaRua = !trechoAberto ? null
+    : trechoAberto.origem === 'toque' ? centroDoTrecho(trechoAberto.h3, contornoTrechos.dados)
+    : trechoAberto.origem === 'localizacao' ? pontoBusca : null;
+  const ruaDoTrecho = useRuaPerto(pontoDaRua);
+  const trechoNoCartao = trechoAberto && subSelecionada ? {
+    ...trechoAberto,
+    titulo: (trechoAberto.origem === 'busca' || trechoAberto.origem === 'ponto') && rotuloBusca ? rotuloBusca
+      : ruaDoTrecho ? rotuloDoTrecho(subSelecionada.nome, ruaDoTrecho) : undefined,
+  } : undefined;
+  const verRegiaoInteira = () => { if (trechoAberto) setRegiaoInteira(trechoAberto.h3); setTrechoTocado(null); };
   // Onde foi medida a chuva do risco aberto: a estação do trecho, ou a que mais mediu na área
   // quando o número dela veio da medida. O mapa marca esse ponto.
   const estacaoDoRisco = trechoAberto?.estacao
@@ -227,10 +235,10 @@ export default function MapaPage() {
     const area = t && subprefeituras.find((s) => s.id === t.areaId);
     if (!t || !area) return;
     track.tocouTrecho(t.faixa);
-    dicaTrecho.dispensar(); // aprendeu: a dica não volta
     limparDeepLink();
     setLugarAberto(null);
     setSubSelecionada(area);
+    setRegiaoInteira(null);
     setTrechoTocado(h3);
     setPainelRecolhido(false);
     setZonaEmFoco(null);
@@ -453,9 +461,7 @@ export default function MapaPage() {
       localizando={localizando}
       onAbrirRota={() => void abrirRota('chip')}
       embutida={embutida}
-      semDica={!!localAberto || dicaTrechoNaSessao}
-      dicaTrecho={mostrarDicaTrecho}
-      onDispensarDicaTrecho={dicaTrecho.dispensar}
+      semDica={!!localAberto}
       aviso={isMobile ? avisoBusca : null}
       textoBusca={textoArrastado}
       onListaAberta={setBuscaAberta}
@@ -583,7 +589,8 @@ export default function MapaPage() {
               isFavorito={isFavorito}
               onToggleFavorito={toggleFavorito}
               onComoChegar={() => comoChegar(subSelecionada)}
-              trecho={trechoAberto}
+              trecho={trechoNoCartao}
+              onVerRegiao={verRegiaoInteira}
               estacaoMaisForte={estacaoMaisForte(trechos, subSelecionada.id)}
             />
           ) : (
@@ -670,7 +677,7 @@ export default function MapaPage() {
 
           {/* Convite para ativar notificações push. Sem favorita o push não tem o que mandar:
               primeiro escolher, depois ativar. Com a rota aberta ele sai: o mapa é do caminho. */}
-          {!rotaAberta && !mostrarDicaTrecho && !buscaAberta && !(isMobile && dicaLocalNaTela) && (semFavoritas
+          {!rotaAberta && !buscaAberta && !(isMobile && dicaLocalNaTela) && (semFavoritas
             ? <BannerEscolherSubprefeituras onEscolher={() => setPainelMobileAberto(true)} />
             : <ConvitePush favoritas={favoritas} />)}
 
@@ -725,7 +732,8 @@ export default function MapaPage() {
               isFavorito={isFavorito}
               onToggleFavorito={toggleFavorito}
               onComoChegar={() => comoChegar(detalheNaFolha)}
-              trecho={trechoAberto}
+              trecho={trechoNoCartao}
+              onVerRegiao={verRegiaoInteira}
               estacaoMaisForte={estacaoMaisForte(trechos, detalheNaFolha.id)}
               folha={{ aberta: detalheAberto, onMudar: (a) => setDetalheAbertoEm(a ? detalheNaFolha.id : null) }}
             />

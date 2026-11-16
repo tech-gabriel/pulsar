@@ -5,7 +5,7 @@ import { estiloCamada, type Camada } from '../../utils/camadas';
 import { nomeAbreviado } from '../../utils/nomesSub';
 import { opaca } from '../../utils/contraste';
 import { normalizarNome } from '../../utils/texto';
-import { tamanhoParaZoom } from './zoom';
+import { tamanhoParaZoom, ZOOM_TRECHOS } from './zoom';
 import { labelFaixa } from '../../utils/risco';
 
 interface Props {
@@ -19,12 +19,14 @@ interface Props {
   ocultos?: Set<string>;
   /** Teclado e leitor de tela: o número abre a área (o toque continua caindo no polígono). */
   onSelecionar?: (sub: SubprefeituraMapaDto) => void;
+  /** Há trechos no mapa: de perto, na camada de risco, a bola da área sai e fica só o nome. */
+  comTrechos?: boolean;
 }
 
 
 // Legibilidade do número: bola na cor pura da faixa e número branco com contorno escuro (index.css,
 // .bola), que lê até no amarelo. O preenchimento translúcido fica no polígono.
-export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco, atenuado = false, ocultos, onSelecionar }: Props) {
+export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva, zonaEmFoco, atenuado = false, ocultos, onSelecionar, comTrechos = false }: Props) {
   const { current: mapRef } = useMap();
   const [zoom, setZoom] = useState(() => mapRef?.getZoom() ?? 0);
 
@@ -44,6 +46,9 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
 
   const { diametro, fonte, nomeFonte } = tamanho;
   const zona = zonaEmFoco ? normalizarNome(zonaEmFoco) : null;
+  // De perto quem fala é o trecho (escolha A de 16/11/2026): a bola com o número da área por cima
+  // dos hexágonos abria o trecho de baixo e confundia. A área fica a um toque no cartão do trecho.
+  const soNome = comTrechos && camadaAtiva === 'score' && zoom >= ZOOM_TRECHOS.de;
 
   return (
     <>
@@ -69,7 +74,7 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
             style={{ pointerEvents: 'none' }}
           >
             <div className="pulsar-label-wrap" style={{ opacity: esmaecida ? 0.2 : 1 }}>
-              <div
+              {!soNome && <div
                 className={classes}
                 role={onSelecionar ? 'button' : undefined}
                 tabIndex={onSelecionar ? 0 : undefined}
@@ -92,7 +97,7 @@ export default function ScoreLabel({ subprefeituras, subSelecionada, camadaAtiva
                 } as React.CSSProperties}
               >
                 {estilo.texto}
-              </div>
+              </div>}
               {nomeFonte > 0 && (
                 <div className="pulsar-sub-nome" style={{ fontSize: nomeFonte }}>
                   {nomeAbreviado(sub.nome)}

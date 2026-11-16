@@ -104,9 +104,15 @@ describe('BuscaEndereco — botão de localização', () => {
     expect(screen.queryByText('Toque no alvo para ver a sua subprefeitura')).not.toBeInTheDocument();
   });
 
-  it('dentro do painel não mostra a dica escrita: o alvo pulsando já basta', () => {
+  it('dentro do painel não mostra a dica nem o anel: sozinho ele parecia o foco do teclado (crítica 8)', () => {
     render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={() => {}} isMobile={false} onUsarLocalizacao={() => {}} embutida />);
     expect(screen.queryByText('Toque no alvo para ver a sua subprefeitura')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /usar minha localização/i })).not.toHaveClass('animate-pulse');
+  });
+
+  it('com a frase da dica, o alvo pulsa junto', () => {
+    render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={() => {}} isMobile onUsarLocalizacao={() => {}} />);
+    expect(screen.getByRole('button', { name: /usar minha localização/i })).toHaveClass('animate-pulse');
   });
 
   it('não mostra a dica quando ela já foi vista', () => {

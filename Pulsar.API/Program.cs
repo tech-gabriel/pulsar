@@ -197,11 +197,16 @@ builder.Services.AddHttpClient("cemaden-token", client =>
     client.BaseAddress = new Uri("https://sgaa.cemaden.gov.br/SGAA/rest/");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+// No máximo 10 chamadas por minuto ao PED: com os 10 municípios (capital + Baixada) o CEMADEN
+// passou a responder 401 no meio do ciclo (limite não oficial de ~12 por minuto). Os testes zeram.
+builder.Services.AddKeyedSingleton("cemaden-ped", (sp, _) => new Pulsar.API.External.Http.RitmoChamadas(
+    TimeSpan.FromMilliseconds(sp.GetRequiredService<IConfiguration>().GetValue("Cemaden:IntervaloMinimoMs", 6000))));
 builder.Services.AddHttpClient("cemaden-ped", client =>
 {
     client.BaseAddress = new Uri("https://sws.cemaden.gov.br/PED/rest/");
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddHttpMessageHandler(sp => new Pulsar.API.External.Http.RitmoChamadasHandler(
+    sp.GetRequiredKeyedService<Pulsar.API.External.Http.RitmoChamadas>("cemaden-ped")));
 
 builder.Services.AddHttpClient("maptiler", client =>
 {

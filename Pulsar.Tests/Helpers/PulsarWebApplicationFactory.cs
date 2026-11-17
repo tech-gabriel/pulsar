@@ -56,6 +56,7 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
                 ["Admin:Emails:1"]      = EmailAdminSemDono,
                 // Sem o ritmo de 1,1 s do OpenWeatherMap: a coleta falsa de 41 áreas levaria 45 s por teste.
                 ["OpenWeatherMap:IntervaloMinimoMs"] = "0",
+                ["Cemaden:IntervaloMinimoMs"] = "0",
             });
         });
 

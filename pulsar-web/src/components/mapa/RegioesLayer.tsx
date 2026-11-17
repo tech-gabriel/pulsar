@@ -18,7 +18,7 @@ const FILL = 'pulsar-regioes-fill';
 const BORDA = 'pulsar-regioes-borda';
 const SEL = 'pulsar-regioes-sel';
 /** Camadas que, quando tocadas, não selecionam a subprefeitura de baixo (alagamentos e trechos). */
-const CAMADAS_POR_CIMA = ['pulsar-ocorr-cluster', 'pulsar-ocorr-ponto', ID_TRECHOS_FILL];
+const CAMADAS_POR_CIMA = ['pulsar-ocorr-cluster-toque', 'pulsar-ocorr-cluster', 'pulsar-ocorr-ponto', ID_TRECHOS_FILL];
 
 const HOVER: ExpressionSpecification = ['boolean', ['feature-state', 'hover'], false];
 const BASE_FILL: ExpressionSpecification = ['+', ['get', 'fillOpacity'], ['case', HOVER, 0.15, 0]];

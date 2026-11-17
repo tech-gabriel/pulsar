@@ -84,6 +84,39 @@ public static class GeracaoGrade
     }
 
     /// <summary>
+    /// Modo <c>grade-baixada</c>: gera <c>grade-baixada-santista.json</c> com as células H3 dos 9
+    /// municípios da Baixada. Sem backtest e com fator 1,0 em todas: o "costuma alagar" da
+    /// Baixada vem do SGB, na entrega 2 do projeto (não há GeoSampa lá). As células que já estão
+    /// na grade da capital ficam com ela (divisa de Marsilac), para o trecho não ter dois riscos.
+    /// </summary>
+    public static async Task BaixadaAsync(string raiz)
+    {
+        var repo = Path.GetFullPath(Path.Combine(raiz, ".."));
+        var geojson = await File.ReadAllTextAsync(Path.Combine(repo, "pulsar-web", "public", "baixada-santista-leve.geojson"));
+        var daCapital = CelulasGravadas(Path.Combine(repo, "Pulsar.API", "Domain", "Score", "grade-sao-paulo.json")).ToHashSet();
+
+        var areaDaCelula = GradeH3.Celulas(geojson, nome => nome)
+            .Where(c => !daCapital.Contains(c.Key))
+            .ToDictionary(c => c.Key, c => c.Value);
+        var municipios = new[] { "Santos", "São Vicente", "Guarujá", "Cubatão", "Praia Grande", "Bertioga", "Mongaguá", "Itanhaém", "Peruíbe" };
+        var semCelula = municipios.Except(areaDaCelula.Values).ToList();
+        if (semCelula.Count > 0)
+            throw new InvalidOperationException($"Municípios sem nenhuma célula: {string.Join(", ", semCelula)}. A grade NÃO foi gravada.");
+
+        var arquivo = Path.Combine(repo, "Pulsar.API", "Domain", "Score", "grade-baixada-santista.json");
+        await File.WriteAllTextAsync(arquivo, Json(areaDaCelula, areaDaCelula.Keys.ToDictionary(c => c, _ => 1.0)));
+        Console.WriteLine($"Grade da Baixada: {areaDaCelula.Count} células em {arquivo}");
+        foreach (var g in areaDaCelula.GroupBy(c => c.Value).OrderBy(g => g.Key))
+            Console.WriteLine($"  {g.Key}: {g.Count()}");
+    }
+
+    private static IEnumerable<string> CelulasGravadas(string arquivoGrade)
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(arquivoGrade));
+        return doc.RootElement.GetProperty("celulas").EnumerateArray().Select(c => c.GetProperty("h3").GetString()!).ToList();
+    }
+
+    /// <summary>
     /// Modo <c>contorno</c>: refaz só o desenho dos hexágonos a partir da grade gravada, sem
     /// rede e sem recalibrar. O mapa e a API precisam das mesmas células.
     /// </summary>
@@ -128,13 +161,15 @@ public static class GeracaoGrade
     }
 
     private static string Json(
-        IReadOnlyDictionary<string, string> areaDaCelula, IReadOnlyDictionary<string, double> fatores, DateOnly de, DateOnly ate)
+        IReadOnlyDictionary<string, string> areaDaCelula, IReadOnlyDictionary<string, double> fatores, DateOnly? de = null, DateOnly? ate = null)
     {
         var inv = CultureInfo.InvariantCulture;
         var sb = new StringBuilder();
         sb.Append("{\n");
         sb.Append(inv, $"  \"resolucao\": {GradeH3.Resolucao},\n");
-        sb.Append(inv, $"  \"periodo\": {{ \"de\": \"{de:yyyy-MM-dd}\", \"ate\": \"{ate:yyyy-MM-dd}\" }},\n");
+        // Sem período quando o fator não saiu de calibração (grade da Baixada, fator 1,0).
+        if (de is { } d && ate is { } a)
+            sb.Append(inv, $"  \"periodo\": {{ \"de\": \"{d:yyyy-MM-dd}\", \"ate\": \"{a:yyyy-MM-dd}\" }},\n");
         sb.Append("  \"celulas\": [\n");
         // Uma célula por linha, em ordem fixa, para o diff de uma recalibração ser legível.
         var linhas = areaDaCelula.Keys.OrderBy(c => c, StringComparer.Ordinal).Select(c =>

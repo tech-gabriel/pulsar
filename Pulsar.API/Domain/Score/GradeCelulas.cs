@@ -19,19 +19,27 @@ public interface IGradeCelulas
 }
 
 /// <summary>
-/// Grade em produção. O arquivo <c>grade-sao-paulo.json</c> é saída do Pulsar.Calibracao
-/// (modo <c>grade</c>), como <see cref="CalibracaoScore"/>: recalibrar = gerar de novo e
-/// commitar. A API só lê; não conhece H3.
+/// Grade em produção. Os arquivos <c>grade-sao-paulo.json</c> (modo <c>grade</c>) e
+/// <c>grade-baixada-santista.json</c> (modo <c>grade-baixada</c>) são saída do Pulsar.Calibracao,
+/// como <see cref="CalibracaoScore"/>: recalibrar = gerar de novo e commitar. A API só lê; não conhece H3.
 /// </summary>
 public sealed class GradeCelulas : IGradeCelulas
 {
-    private const string Recurso = "Pulsar.API.Domain.Score.grade-sao-paulo.json";
+    private static readonly string[] Recursos =
+    [
+        "Pulsar.API.Domain.Score.grade-sao-paulo.json",
+        "Pulsar.API.Domain.Score.grade-baixada-santista.json",
+    ];
     private static readonly JsonSerializerOptions Opcoes = new() { PropertyNameCaseInsensitive = true };
 
     private readonly Dictionary<string, List<CelulaGrade>> _porArea;
 
     public GradeCelulas(ILogger<GradeCelulas> logger)
-        : this(() => Assembly.GetExecutingAssembly().GetManifestResourceStream(Recurso), logger)
+        : this([.. Recursos.Select(r => (Func<Stream?>)(() => Assembly.GetExecutingAssembly().GetManifestResourceStream(r)))], logger)
+    {
+    }
+
+    public GradeCelulas(Func<Stream?> abrir, ILogger logger) : this([abrir], logger)
     {
     }
 
@@ -41,20 +49,27 @@ public sealed class GradeCelulas : IGradeCelulas
     /// conferência. Uma falha aqui não pode custar a coleta e o score. O teste que carrega
     /// o arquivo real é quem impede um arquivo quebrado de chegar à produção.
     /// </summary>
-    public GradeCelulas(Func<Stream?> abrir, ILogger logger)
+    /// <remarks>Cada arquivo falha sozinho: a grade de uma cidade quebrada não derruba a da outra.</remarks>
+    public GradeCelulas(IReadOnlyList<Func<Stream?>> arquivos, ILogger logger)
     {
-        try
+        var celulas = new List<CelulaGrade>();
+        foreach (var abrir in arquivos)
         {
-            using var stream = abrir() ?? throw new InvalidOperationException($"Recurso da grade não encontrado: {Recurso}");
-            var celulas = JsonSerializer.Deserialize<Arquivo>(stream, Opcoes)?.Celulas
-                ?? throw new InvalidOperationException("Arquivo da grade sem células.");
-            _porArea = celulas.GroupBy(c => c.Sub).ToDictionary(g => g.Key, g => g.ToList());
+            try
+            {
+                using var stream = abrir() ?? throw new InvalidOperationException("Recurso da grade não encontrado.");
+                var doArquivo = JsonSerializer.Deserialize<Arquivo>(stream, Opcoes)?.Celulas
+                    ?? throw new InvalidOperationException("Arquivo da grade sem células.");
+                if (doArquivo.Any(c => string.IsNullOrEmpty(c.Sub)))
+                    throw new InvalidOperationException("Arquivo da grade com célula sem área.");
+                celulas.AddRange(doArquivo);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Um arquivo da grade de células não carregou; o risco por trecho dessas áreas fica desligado.");
+            }
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Grade de células não carregou; o risco por trecho fica desligado.");
-            _porArea = [];
-        }
+        _porArea = celulas.GroupBy(c => c.Sub).ToDictionary(g => g.Key, g => g.ToList());
     }
 
     public IReadOnlyList<CelulaGrade> DaArea(string nomeSubprefeitura)

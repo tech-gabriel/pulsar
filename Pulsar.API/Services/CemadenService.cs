@@ -28,6 +28,24 @@ public class CemadenService : ICemadenService
     private const int FolgaRelogioMinutos = 15;
 
     private static readonly TimeSpan ValidadeCadastro = TimeSpan.FromHours(24);
+
+    // ponytail: lista à mão dos nomes de SP que o CEMADEN publica sem acento; nome novo errado entra aqui.
+    private static readonly Dictionary<string, string> Acentos = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Jardim Angela"] = "Jardim Ângela",
+        ["Jardim São Luis"] = "Jardim São Luís",
+        ["Chacara Dona Olivia"] = "Chácara Dona Olívia",
+        ["Jardim dos Alamos"] = "Jardim dos Álamos",
+        ["Jardim Valparaiso"] = "Jardim Valparaíso",
+    };
+
+    /// <summary>Nome do cadastro do CEMADEN como aparece na tela: sem espaço sobrando, com acento e "Itaquera2" como "Itaquera 2".</summary>
+    public static string NomeLegivel(string nome)
+    {
+        var limpo = System.Text.RegularExpressions.Regex.Replace(nome.Trim(), @"\s{2,}", " ");
+        limpo = System.Text.RegularExpressions.Regex.Replace(limpo, @"(\p{L})(\d+)$", "$1 $2");
+        return Acentos.GetValueOrDefault(limpo, limpo);
+    }
     private static readonly string[] MunicipiosPadrao = ["3550308"];
 
     private readonly PulsarDbContext _db;
@@ -95,7 +113,8 @@ public class CemadenService : ICemadenService
                 porCodigo[c.CodEstacao] = estacao;
             }
             estacao.CodIbge = codIbge;
-            estacao.Nome = c.Nome.Length > 120 ? c.Nome[..120] : c.Nome;
+            var nome = NomeLegivel(c.Nome);
+            estacao.Nome = nome.Length > 120 ? nome[..120] : nome;
             estacao.Latitude = c.Latitude;
             estacao.Longitude = c.Longitude;
         }

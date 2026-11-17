@@ -342,4 +342,13 @@ public class CemadenServiceTests : IDisposable
 
         (await Estacoes()).Should().ContainSingle().Which.Mm1h.Should().Be(1.0);
     }
+
+    [Theory]
+    [InlineData("Jardim São Luis", "Jardim São Luís")]
+    [InlineData("Centro ", "Centro")]
+    [InlineData("Itaquera2", "Itaquera 2")]
+    [InlineData("Cidade Tiradentes 2", "Cidade Tiradentes 2")]
+    [InlineData("Lapa", "Lapa")]
+    public void NomeLegivel_ArrumaONomeDoCadastro(string entrada, string esperado)
+        => CemadenService.NomeLegivel(entrada).Should().Be(esperado);
 }

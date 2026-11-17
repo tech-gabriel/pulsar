@@ -25,6 +25,27 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.37.2',
+    data: '2026-11-17',
+    itens: [
+      {
+        tipo: 'melhoria',
+        titulo: 'Casa e trabalho sempre à vista',
+        descricao: 'Na vista da cidade, a nota da região abre espaço para o ponto da sua casa e do trabalho, que fica no lugar exato.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Notas do mapa no mesmo desenho',
+        descricao: 'As bolas de risco agora têm o mesmo tamanho e o mesmo verde das de temperatura.',
+      },
+      {
+        tipo: 'correcao',
+        titulo: 'Endereços e estações com o nome certo',
+        descricao: 'A busca não mostra mais espaço dobrado nos endereços, e as estações de chuva aparecem com acento, como Jardim São Luís.',
+      },
+    ],
+  },
+  {
     versao: '1.37.1',
     data: '2026-11-16',
     itens: [

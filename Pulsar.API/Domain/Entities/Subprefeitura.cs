@@ -9,6 +9,10 @@ public class Subprefeitura
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public bool Ativa { get; set; } = true;
+
+    // Código IBGE do município quando a área é um município inteiro (Baixada Santista). Nulo nas
+    // subprefeituras da capital: o código é o da cidade.
+    public string? CodigoIbge { get; set; }
     public IList<LeituraClimatica> Leituras { get; set; } = new List<LeituraClimatica>();
     public IList<ScorePerigo> Scores { get; set; } = new List<ScorePerigo>();
     public DateTime CriadoEm { get; set; }

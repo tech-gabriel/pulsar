@@ -25,7 +25,7 @@ public class AgregadoDiarioRepositoryTests
 
         var regioes = await ctx.Regioes.ToListAsync();
 
-        regioes.Should().HaveCount(5);
+        regioes.Should().HaveCount(6); // 5 zonas da capital + Baixada Santista
         regioes.Should().OnlyContain(r => r.FusoHorario == "America/Sao_Paulo");
     }
 

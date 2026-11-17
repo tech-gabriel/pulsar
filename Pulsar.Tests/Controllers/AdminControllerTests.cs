@@ -301,9 +301,9 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var status = await response.Content.ReadFromJsonAsync<SistemaStatusDto>(JsonOpts);
-        // O seed traz 32 subprefeituras ativas.
-        status!.SubprefeiturasAtivas.Should().Be(32);
-        status.Subprefeituras.Should().HaveCount(32);
+        // O seed traz 41 áreas ativas: 32 subprefeituras da capital + 9 municípios da Baixada (escondida, mas coletada).
+        status!.SubprefeiturasAtivas.Should().Be(41);
+        status.Subprefeituras.Should().HaveCount(41);
     }
 
     [Fact]
@@ -357,12 +357,12 @@ public class AdminControllerTests : IClassFixture<PulsarWebApplicationFactory>
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var resultado = await response.Content.ReadFromJsonAsync<ColetaResultadoDto>(JsonOpts);
-        resultado!.SubprefeiturasProcessadas.Should().Be(32);
+        resultado!.SubprefeiturasProcessadas.Should().Be(41);
 
         // Após a coleta (fake weather client), todas as subprefeituras têm leitura.
         var status = await EnviarComTokenAsync(HttpMethod.Get, "/api/admin/sistema/status", token);
         var statusDto = await status.Content.ReadFromJsonAsync<SistemaStatusDto>(JsonOpts);
-        statusDto!.SubprefeiturasComLeitura.Should().Be(32);
+        statusDto!.SubprefeiturasComLeitura.Should().Be(41);
         statusDto.LeiturasUltimas24h.Should().BeGreaterThan(0);
     }
 

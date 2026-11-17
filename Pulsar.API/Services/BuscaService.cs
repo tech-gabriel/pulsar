@@ -62,11 +62,13 @@ public class BuscaService : IBuscaService
     /// <summary>
     /// Trecho escrito todo em maiúsculas ("RUA DA MOOCA") vira "Rua da Mooca"; o resto fica como veio.
     /// Vale por pedaço entre vírgulas, para "SP" e nomes já bem escritos não mudarem.
+    /// Espaço repetido do cadastro ("Rua  Ameiros") vira um só.
     /// </summary>
     public static string SemCaixaAlta(string texto)
     {
         if (string.IsNullOrEmpty(texto)) return texto;
         var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+        texto = System.Text.RegularExpressions.Regex.Replace(texto.Trim(), @"\s{2,}", " ");
         return string.Join(",", texto.Split(',').Select(pedaco =>
         {
             var palavras = pedaco.Split(' ');
@@ -115,7 +117,7 @@ public class BuscaService : IBuscaService
         var rua = await _geocodingClient.RuaPertoAsync(lat, lon, ct);
         // O provedor às vezes devolve o nome cru do cadastro ("RUA  COQUEIRAL"): o título do
         // cartão do trecho e o destino da rota mostram esse nome como veio.
-        if (rua is not null) rua = rua with { Nome = SemCaixaAlta(string.Join(' ', rua.Nome.Split(' ', StringSplitOptions.RemoveEmptyEntries))) };
+        if (rua is not null) rua = rua with { Nome = SemCaixaAlta(rua.Nome) };
         CacheRuas.Set(chave, rua, new MemoryCacheEntryOptions { Size = 1, AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1) });
         return rua;
     }

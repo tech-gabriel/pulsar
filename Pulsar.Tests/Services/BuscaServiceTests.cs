@@ -108,7 +108,8 @@ public class BuscaServiceTests
     }
 
     [Theory]
-    [InlineData("RUA  DA MOOCA", "Rua  da Mooca")]
+    [InlineData("RUA  DA MOOCA", "Rua da Mooca")]
+    [InlineData("Rua  Ameiros, São Paulo", "Rua Ameiros, São Paulo")]
     [InlineData("AVENIDA PAULISTA, São Paulo, SP", "Avenida Paulista, São Paulo, SP")]
     [InlineData("Rua da Mooca", "Rua da Mooca")]
     [InlineData("DE OLHO", "De Olho")]

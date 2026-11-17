@@ -7,6 +7,8 @@ import { formatarOcorrencia, LADO_ICONE, ocorrenciasGeojson, svgOcorrencia } fro
 
 const FONTE = 'pulsar-ocorr';
 const CLUSTER = 'pulsar-ocorr-cluster';
+/** Alvo invisível do toque na bola: no mínimo 44 px, mesmo quando a bola desenhada é menor. */
+const CLUSTER_TOQUE = 'pulsar-ocorr-cluster-toque';
 const CONTAGEM = 'pulsar-ocorr-contagem';
 const PONTO = 'pulsar-ocorr-ponto';
 const TIPOS: OcorrenciaAlagamentoDto['tipo'][] = ['ALAGAMENTO', 'INUNDACAO'];
@@ -70,17 +72,17 @@ export default function OcorrenciasLayer({ ocorrencias }: { ocorrencias: Ocorren
     const ponteiro = () => (mapa.getCanvas().style.cursor = 'pointer');
     const solto = () => (mapa.getCanvas().style.cursor = '');
 
-    mapa.on('click', CLUSTER, clicarBolha);
+    mapa.on('click', CLUSTER_TOQUE, clicarBolha);
     mapa.on('click', PONTO, clicarPonto);
-    for (const id of [CLUSTER, PONTO]) {
+    for (const id of [CLUSTER_TOQUE, PONTO]) {
       mapa.on('mouseenter', id, ponteiro);
       mapa.on('mouseleave', id, solto);
     }
     return () => {
       mapa.off('styledata', registrar);
-      mapa.off('click', CLUSTER, clicarBolha);
+      mapa.off('click', CLUSTER_TOQUE, clicarBolha);
       mapa.off('click', PONTO, clicarPonto);
-      for (const id of [CLUSTER, PONTO]) {
+      for (const id of [CLUSTER_TOQUE, PONTO]) {
         mapa.off('mouseenter', id, ponteiro);
         mapa.off('mouseleave', id, solto);
       }
@@ -99,12 +101,19 @@ export default function OcorrenciasLayer({ ocorrencias }: { ocorrencias: Ocorren
           paint={{
             'circle-color': COR_BOLHA,
             // Bola pequena da família do mapa, com um halo do mesmo azul que cresce com a quantidade
-            // (F2, escolhida em 16/11/2026, como os agrupamentos do Apple Maps). Com o halo, o toque
-            // fica entre 36 e 56 px.
+            // (F2, escolhida em 16/11/2026, como os agrupamentos do Apple Maps). Com o halo, a bola
+            // desenhada fica entre 36 e 56 px; o toque é a camada invisível logo abaixo.
             'circle-stroke-color': comAlfa(PALETA.azulProfundo, 0.28),
             'circle-stroke-width': ['step', ['get', 'point_count'], 5, 10, 8, 50, 11],
             'circle-radius': ['step', ['get', 'point_count'], 13, 10, 15, 50, 17],
           }}
+        />
+        <Layer
+          id={CLUSTER_TOQUE}
+          type="circle"
+          filter={['has', 'point_count']}
+          // Raio = bola + halo, com piso de 22 (44 px de toque, o mínimo da Apple e do WCAG).
+          paint={{ 'circle-opacity': 0, 'circle-radius': ['step', ['get', 'point_count'], 22, 10, 23, 50, 28] }}
         />
         <Layer
           id={CONTAGEM}

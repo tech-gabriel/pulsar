@@ -9,7 +9,7 @@ public class EstacaoCemaden
     /// <summary>Código da estação no CEMADEN (ex.: 355030846A).</summary>
     public string CodEstacao { get; set; } = string.Empty;
 
-    /// <summary>Código do IBGE do município, como está em Cemaden:Municipios.</summary>
+    /// <summary>Código do IBGE do município (o da área, ou o da cidade quando a área é subprefeitura).</summary>
     public string CodIbge { get; set; } = string.Empty;
 
     public string Nome { get; set; } = string.Empty;

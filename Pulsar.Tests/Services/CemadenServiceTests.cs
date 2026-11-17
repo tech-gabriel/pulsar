@@ -38,7 +38,7 @@ public class CemadenServiceTests : IDisposable
     }
 
     private CemadenService Servico(ICemadenClient client)
-        => new(_ctx, client, new ConfigurationBuilder().Build(), NullLogger<CemadenService>.Instance);
+        => new(_ctx, client, NullLogger<CemadenService>.Instance);
 
     private static Mock<ICemadenClient> Cliente(bool configurado = true)
     {
@@ -72,6 +72,20 @@ public class CemadenServiceTests : IDisposable
         client.Verify(c => c.ObterAcumuladosAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         client.Verify(c => c.ObterCadastroAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         (await _ctx.LeiturasEstacaoCemaden.CountAsync()).Should().Be(0);
+    }
+
+    // Os municípios saem das áreas cadastradas: a capital pelo código da cidade e cada município
+    // da Baixada pelo código da área. Outra cidade entra cadastrando as áreas, sem configuração.
+    [Fact]
+    public async Task Coletar_LeACapitalEOsNoveMunicipiosDaBaixada()
+    {
+        var client = Cliente();
+
+        await Servico(client.Object).ColetarAsync();
+
+        foreach (var codigo in new[] { "3550308", "3548500", "3551009", "3518701", "3513504", "3541000", "3506359", "3531100", "3522109", "3537602" })
+            client.Verify(c => c.ObterAcumuladosAsync(codigo, It.IsAny<CancellationToken>()), Times.Once, $"município {codigo}");
+        client.Verify(c => c.ObterAcumuladosAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(10));
     }
 
     [Fact]

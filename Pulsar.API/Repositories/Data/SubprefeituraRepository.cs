@@ -32,6 +32,10 @@ public class SubprefeituraRepository : ISubprefeituraRepository
             .Include(s => s.Regiao).ThenInclude(r => r.Cidade)
             .FirstOrDefaultAsync(s => s.Id == id);
 
+    public async Task<Subprefeitura?> ObterVisivelAsync(Guid id, bool incluirOcultas = false)
+        => await _context.Subprefeituras
+            .FirstOrDefaultAsync(s => s.Id == id && s.Ativa && (incluirOcultas || s.Regiao.Cidade.Publica));
+
     public async Task<IReadOnlyList<Subprefeitura>> ObterVisiveisAsync(bool incluirOcultas = false)
         => await _context.Subprefeituras
             .Where(s => s.Ativa && (incluirOcultas || s.Regiao.Cidade.Publica))

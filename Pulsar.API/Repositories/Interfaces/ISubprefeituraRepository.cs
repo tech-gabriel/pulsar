@@ -22,4 +22,7 @@ public interface ISubprefeituraRepository : IRepository<Subprefeitura>
 
     /// <summary>Como <see cref="ObterAtivasComResumoAsync"/>, só com as áreas que o usuário vê.</summary>
     Task<IReadOnlyList<Subprefeitura>> ObterVisiveisComResumoAsync(bool incluirOcultas = false);
+
+    /// <summary>Uma área pelo id, só se estiver ativa e visível para quem pede (rotas por id).</summary>
+    Task<Subprefeitura?> ObterVisivelAsync(Guid id, bool incluirOcultas = false);
 }

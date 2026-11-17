@@ -112,6 +112,39 @@ public class BaixadaEscondidaTests : IClassFixture<PulsarWebApplicationFactory>
         subs.TryGetProperty("santos", out _).Should().BeFalse();
     }
 
+    // Revisão final (I1): o PUT do lugar salvo aceitava o id de Santos com coordenadas da capital
+    // e ainda o punha nos favoritos, o que ligava push sobre a Baixada escondida.
+    [Fact]
+    public async Task LugarSalvo_NaoApontaParaAreaEscondida()
+    {
+        var cadastro = await _client.PostAsJsonAsync("/api/auth/cadastro",
+            new CadastroRequestDto { Nome = "Casa", Email = $"casa_baixada_{Guid.NewGuid()}@test.com", Senha = "Senha@123" });
+        var sessao = (await cadastro.Content.ReadFromJsonAsync<LoginResponseDto>(Json))!;
+        using var req = new HttpRequestMessage(HttpMethod.Put, $"/api/usuarios/{sessao.Usuario.Id}/locais/CASA")
+        {
+            Content = JsonContent.Create(new SalvarLocalRequestDto { Latitude = -23.55, Longitude = -46.63, Rotulo = "Rua X, 1", SubprefeituraId = Santos }),
+        };
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", sessao.Token);
+
+        var resposta = await _client.SendAsync(req);
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await resposta.Content.ReadAsStringAsync()).Should().Contain("Subprefeitura não encontrada.");
+    }
+
+    // Revisão final (I2): histórico e previsão por id abriam Santos para qualquer conta.
+    [Theory]
+    [InlineData("historico")]
+    [InlineData("previsao")]
+    public async Task PorId_UsuarioComumNaoLeSantos_AdminLe(string recurso)
+    {
+        var comum = await GetAsync($"/api/subprefeituras/{Santos}/{recurso}", await TokenUsuarioComumAsync());
+        var admin = await GetAsync($"/api/subprefeituras/{Santos}/{recurso}", (await SessaoAdmin.ObterAsync(_factory, _client)).Token);
+
+        comum.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        admin.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
     [Fact]
     public async Task Favorito_UsuarioComumNaoAcompanhaSantos()
     {

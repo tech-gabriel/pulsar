@@ -104,8 +104,8 @@ public class SubprefeiturasController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ObterPrevisao(Guid id, CancellationToken ct)
     {
-        var sub = await _subprefeituraRepository.ObterPorIdAsync(id);
-        if (sub is null || !sub.Ativa)
+        var sub = await _subprefeituraRepository.ObterVisivelAsync(id, incluirOcultas: User.IsInRole("ADMIN"));
+        if (sub is null)
             return NotFound(new { mensagem = "Subprefeitura não encontrada." });
 
         return Ok(await _previsaoService.ObterFaixasSubprefeituraAsync(id, MaxFaixasPrevisao, ct));

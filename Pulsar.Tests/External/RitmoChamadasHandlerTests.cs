@@ -29,10 +29,14 @@ public class RitmoChamadasHandlerTests
 
         await Task.WhenAll(http.GetAsync("a"), http.GetAsync("b"), http.GetAsync("c"));
 
+        // O horário anotado aqui é o do handler de dentro, que pode atrasar alguns ms por
+        // agendamento de thread e encurtar o intervalo seguinte na medição. O total das três
+        // compensa esse atraso; sem o ritmo, as três saem juntas (total perto de zero).
         var ordem = inicios.OrderBy(t => t).ToList();
         ordem.Should().HaveCount(3);
-        (ordem[1] - ordem[0]).Should().BeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(95));
-        (ordem[2] - ordem[1]).Should().BeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(95));
+        (ordem[2] - ordem[0]).Should().BeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(190));
+        (ordem[1] - ordem[0]).Should().BeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(60));
+        (ordem[2] - ordem[1]).Should().BeGreaterThanOrEqualTo(TimeSpan.FromMilliseconds(60));
     }
 
     // Uma chamada cancelada enquanto espera a vez não pode prender as seguintes.

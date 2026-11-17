@@ -60,8 +60,22 @@ jobs:
         run: npm ci
 
       # Só dependências que vão para o navegador; alerta de ferramenta de build não trava o PR.
+      # Exceção única: GHSA-fc5q-39xc-vjpf (ReDoS no picomatch, todas as versões, sem correção em
+      # 17/11/2026). Só roda no build, com padrões de arquivo do próprio projeto. Tirar daqui quando
+      # sair o picomatch corrigido. Qualquer outro alerta alto ou crítico continua barrando.
       - name: Audit
-        run: npm audit --omit=dev --audit-level=high
+        run: |
+          npm audit --omit=dev --json > audit.json || true
+          node -e '
+            const ignorar = new Set(["https://github.com/advisories/GHSA-fc5q-39xc-vjpf"]);
+            const j = JSON.parse(require("fs").readFileSync("audit.json", "utf8"));
+            const graves = new Set();
+            for (const v of Object.values(j.vulnerabilities ?? {}))
+              for (const x of v.via)
+                if (typeof x === "object" && ["high", "critical"].includes(x.severity) && !ignorar.has(x.url)) graves.add(x.name + " " + x.url);
+            if (graves.size) { console.error([...graves].join("\n")); process.exit(1); }
+            console.log("Audit ok (ignorado: " + [...ignorar].join(", ") + ")");
+          '
 
       - name: Lint
         run: npm run lint

@@ -356,6 +356,7 @@ export default function MapaGL(props: PropsMapa) {
             ocultos={ocultos}
             onSelecionar={onSelecionarSub}
             comTrechos={!!trechos}
+            pontosFixos={onTocarLugar ? lugares : undefined}
           />
         </>
       )}

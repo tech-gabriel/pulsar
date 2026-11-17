@@ -47,7 +47,7 @@ public class RotaService : IRotaService
             throw new ArgumentException("Há subprefeituras repetidas no caminho.");
 
         var agora = DateTime.UtcNow;
-        var ativas = (await _subprefeituraRepo.ObterAtivasComResumoAsync()).ToDictionary(s => s.Id);
+        var ativas = (await _subprefeituraRepo.ObterVisiveisComResumoAsync()).ToDictionary(s => s.Id);
         if (ids.Any(id => !ativas.ContainsKey(id)))
             throw new ArgumentException("Subprefeitura desconhecida no caminho.");
 

@@ -43,7 +43,7 @@ public class SubprefeiturasController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<SubprefeituraResumoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ObterTodas()
     {
-        var subs = await _subprefeituraRepository.ObterAtivasComResumoAsync();
+        var subs = await _subprefeituraRepository.ObterVisiveisComResumoAsync(incluirOcultas: User.IsInRole("ADMIN"));
         // Mesma validade que o aviso de Perigo usa: o mapa não mostra ponto que o push não mandaria.
         var pontos = (await _pontosCge.ObterAtivosAsync(DateTime.UtcNow - LimiaresNotificacao.ValidadePontoCge))
             .ToLookup(p => p.SubprefeituraId);

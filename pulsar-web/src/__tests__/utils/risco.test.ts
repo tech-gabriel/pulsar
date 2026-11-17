@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { coresParaFaixa, corLabelFaixa, labelFaixa, scoreFormatado } from '../../utils/risco';
+import { PALETA, comAlfa } from '../../utils/paleta';
 
 describe('coresParaFaixa', () => {
   it('retorna cores verdes para BAIXO', () => {
@@ -61,7 +62,13 @@ describe('corLabelFaixa: contraste do número branco', () => {
     });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
-  it.each(['BAIXO', 'ALTO'] as const)('%s passa de 4,5:1', (faixa) => {
-    expect(1.05 / (luminancia(corLabelFaixa(faixa)) + 0.05)).toBeGreaterThanOrEqual(4.5);
+  it('ALTO passa de 4,5:1', () => {
+    expect(1.05 / (luminancia(corLabelFaixa('ALTO')) + 0.05)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  // BAIXO usa o verde da temperatura por escolha (T1, 17/11/2026), sabendo que o branco fica em
+  // 2,3:1 e quem segura a leitura é o contorno escuro do número (.bola no index.css).
+  it('BAIXO é o mesmo verde da temperatura', () => {
+    expect(corLabelFaixa('BAIXO')).toBe(comAlfa(PALETA.verde, 0.85));
   });
 });

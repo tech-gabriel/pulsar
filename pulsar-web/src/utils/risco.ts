@@ -105,7 +105,9 @@ export function estiloPoligono(faixa: FaixaRisco | null | undefined): EstiloPoli
 
 // ── Cor de fundo do label de score circular (ETAPA 2.4) ────────────────────────
 const COR_LABEL: Record<FaixaRisco, string> = {
-  BAIXO:    comAlfa(PALETA.riscoVerdeBola, 0.85),
+  // A bola do Tranquilo no verde da temperatura (escolha T1 de 17/11/2026: risco e temperatura com o
+  // mesmo desenho). A área e o trecho seguem no riscoVerde.
+  BAIXO:    comAlfa(PALETA.verde, 0.85),
   MODERADO: comAlfa(PALETA.riscoAmarelo, 0.85),
   ALTO:     comAlfa(PALETA.riscoVermelho, 0.85),
 };

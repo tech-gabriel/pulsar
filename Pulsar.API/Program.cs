@@ -160,6 +160,10 @@ builder.Services.AddDbContext<PulsarDbContext>((sp, options) =>
            .AddInterceptors(sp.GetRequiredService<InvalidaSessaoInterceptor>()));
 
 // --- HTTP Clients ---
+// No máximo ~54 chamadas por minuto (teto do plano grátis: 60), valendo entre a coleta e a
+// previsão. Os testes zeram o intervalo (OpenWeatherMap:IntervaloMinimoMs).
+builder.Services.AddKeyedSingleton("openweathermap", (sp, _) => new Pulsar.API.External.Http.RitmoChamadas(
+    TimeSpan.FromMilliseconds(sp.GetRequiredService<IConfiguration>().GetValue("OpenWeatherMap:IntervaloMinimoMs", 1100))));
 builder.Services.AddHttpClient("openweathermap", (sp, client) =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
@@ -168,7 +172,8 @@ builder.Services.AddHttpClient("openweathermap", (sp, client) =>
     if (!client.BaseAddress.AbsoluteUri.EndsWith('/'))
         client.BaseAddress = new Uri(client.BaseAddress.AbsoluteUri + "/");
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddHttpMessageHandler(sp => new Pulsar.API.External.Http.RitmoChamadasHandler(
+    sp.GetRequiredKeyedService<Pulsar.API.External.Http.RitmoChamadas>("openweathermap")));
 
 // Segunda fonte de chuva, só para conferir a do OpenWeatherMap (PlausibilidadeChuva).
 builder.Services.AddHttpClient("openmeteo", client =>

@@ -55,7 +55,7 @@ public class AlertaOficialService : IAlertaOficialService
         var existentes = await _db.AlertasOficiais.Where(a => ids.Contains(a.Identificador))
             .ToDictionaryAsync(a => a.Identificador, ct);
 
-        int novos = 0, cancelados = 0;
+        int novos = 0, cancelados = 0, novosExtremos = 0;
         foreach (var a in alertas.OrderBy(a => a.EnviadoUtc))
         {
             // Cancel e Update encerram o alerta a que se referem; o Update segue como alerta novo.
@@ -88,6 +88,7 @@ public class AlertaOficialService : IAlertaOficialService
             _db.AlertasOficiais.Add(novo);
             existentes[a.Identificador] = novo;
             novos++;
+            if (novo.Gravidade == "Extreme") novosExtremos++;
         }
 
         var limite = agoraUtc - Retencao;
@@ -104,7 +105,7 @@ public class AlertaOficialService : IAlertaOficialService
             && (a.Emissor.Contains("São Paulo", StringComparison.OrdinalIgnoreCase) || a.Emissor.Contains("(SP)", StringComparison.Ordinal)));
         if (novos > 0 || cancelados > 0)
             _logger.LogInformation("Alertas oficiais: {Novos} novos, {Cancelados} cancelados ({Lidos} no feed).", novos, cancelados, alertas.Count);
-        return new ResultadoSincronizacao(true, novos, cancelados, haAlertaSp);
+        return new ResultadoSincronizacao(true, novos, cancelados, haAlertaSp, novosExtremos);
     }
 
     /// <summary>Corta no limite sem partir um emoji ao meio (surrogate solto o Postgres recusa em UTF-8).</summary>

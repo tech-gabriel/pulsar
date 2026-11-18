@@ -106,6 +106,7 @@ public static class GeracaoGrade
         var arquivo = Path.Combine(repo, "Pulsar.API", "Domain", "Score", "grade-baixada-santista.json");
         await File.WriteAllTextAsync(arquivo, Json(areaDaCelula, areaDaCelula.Keys.ToDictionary(c => c, _ => 1.0)));
         Console.WriteLine($"Grade da Baixada: {areaDaCelula.Count} células em {arquivo}");
+        await GravarContornoAsync(repo, areaDaCelula.Keys, "grade-baixada-santista.geojson");
         foreach (var g in areaDaCelula.GroupBy(c => c.Value).OrderBy(g => g.Key))
             Console.WriteLine($"  {g.Key}: {g.Count()}");
     }
@@ -130,9 +131,9 @@ public static class GeracaoGrade
         await GravarContornoAsync(repo, celulas);
     }
 
-    private static async Task GravarContornoAsync(string repo, IEnumerable<string> celulas)
+    private static async Task GravarContornoAsync(string repo, IEnumerable<string> celulas, string nome = "grade-sao-paulo.geojson")
     {
-        var arquivo = Path.Combine(repo, "pulsar-web", "public", "grade-sao-paulo.geojson");
+        var arquivo = Path.Combine(repo, "pulsar-web", "public", nome);
         await File.WriteAllTextAsync(arquivo, GradeH3.Contorno(celulas));
         Console.WriteLine($"Contorno: {arquivo}");
     }

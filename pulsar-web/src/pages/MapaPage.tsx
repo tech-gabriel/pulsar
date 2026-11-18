@@ -182,7 +182,19 @@ export default function MapaPage() {
   // no mapa, sem toque; o trecho de destino fica contornado.
   const comTrechos = camadaAtiva === 'score';
   const ativoTrechos = comTrechos && (perto || !!pontoBusca);
-  const contornoTrechos = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
+  const contornoCapital = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
+  // Baixada escondida: só quem a recebe na lista (o Admin) baixa o desenho dos trechos dela.
+  // ponytail: nome da zona fixo; vira dado da cidade na entrega 4 (mapa com as duas cidades).
+  const comBaixada = subprefeituras.some((a) => a.zona === 'Baixada Santista');
+  const contornoBaixada = useJsonPublico<FeatureCollection>('/grade-baixada-santista.geojson', ativoTrechos && comBaixada);
+  const contornoTrechos = useMemo(
+    () => ({
+      dados: contornoCapital.dados && contornoBaixada.dados
+        ? { ...contornoCapital.dados, features: [...contornoCapital.dados.features, ...contornoBaixada.dados.features] }
+        : contornoCapital.dados,
+    }),
+    [contornoCapital.dados, contornoBaixada.dados],
+  );
   // Com uma área aberta as células também vêm: nomeiam a estação da chuva que gerou o risco dela.
   const celulasAgora = useCelulasAgora(ativoTrechos || !!subSelecionada, ultimaAtualizacao?.getTime() ?? null);
   const trechos = useMemo(() => (celulasAgora ? trechosDe(celulasAgora, subprefeituras) : null), [celulasAgora, subprefeituras]);

@@ -175,4 +175,48 @@ public class GradeH3Tests
     [Fact]
     public void Metricas_SomaDasDobrasSomaCadaContagem()
         => (new Metricas(1, 2, 3, 4, 5) + new Metricas(10, 20, 30, 40, 50)).Should().Be(new Metricas(11, 22, 33, 44, 55));
+
+    // --- Fator do trecho da Baixada pelo SGB (entrega 2) ---
+
+    private static readonly string Celula = GradeH3.CelulaDe(-23.96, -46.33);
+    private static readonly NetTopologySuite.Geometries.Polygon Hex = GradeH3.Hexagono(Celula);
+    private static PoligonoSgb Sgb(string classe, NetTopologySuite.Geometries.Geometry forma) => new("Santos", classe, forma);
+
+    /// <summary>Metade oeste do hexágono (corte pela longitude do centro).</summary>
+    private static NetTopologySuite.Geometries.Geometry MetadeOeste()
+    {
+        var env = Hex.EnvelopeInternal;
+        var corte = Hex.Centroid.X;
+        return NetTopologySuite.Geometries.GeometryFactory.Default.ToGeometry(
+            new NetTopologySuite.Geometries.Envelope(env.MinX - 0.01, corte, env.MinY - 0.01, env.MaxY + 0.01));
+    }
+
+    [Fact]
+    public void PesoSgb_PorClasse()
+    {
+        var inteiro = Hex.Buffer(0.001);
+        GradeH3.PesoSgb([Celula], [Sgb("Alta", inteiro)])[Celula].Should().BeApproximately(1, 1e-6);
+        GradeH3.PesoSgb([Celula], [Sgb("Média", MetadeOeste())])[Celula].Should().BeInRange(0.2, 0.3);
+        GradeH3.PesoSgb([Celula], [Sgb("Enxurrada", inteiro)])[Celula].Should().BeApproximately(0.5, 1e-6);
+        // Média e enxurrada no mesmo lugar não somam: vale a maior, 0,5.
+        GradeH3.PesoSgb([Celula], [Sgb("Média", inteiro), Sgb("Enxurrada", inteiro)])[Celula].Should().BeApproximately(0.5, 1e-6);
+        GradeH3.PesoSgb([Celula], [])[Celula].Should().Be(0);
+        // Setor de risco mapeado em campo: encostar já basta.
+        GradeH3.PesoSgb([Celula], [Sgb("Setor", Hex.Centroid.Buffer(0.0005))])[Celula].Should().Be(1);
+    }
+
+    [Fact]
+    public void FatoresPorPeso_SobePeloRank_SemBaixarDoFatorDaArea()
+    {
+        var peso = new Dictionary<string, double> { ["a"] = 0, ["b"] = 0.2, ["c"] = 0.9, ["d"] = 0 };
+        var area = new Dictionary<string, string> { ["a"] = "Santos", ["b"] = "Santos", ["c"] = "Santos", ["d"] = "Cubatão" };
+        var fatorDaArea = new Dictionary<string, double> { ["Santos"] = 1.0, ["Cubatão"] = 0.9 };
+
+        var f = GradeH3.FatoresPorPeso(peso, area, fatorDaArea);
+
+        f["a"].Should().Be(1.0);
+        f["b"].Should().BeApproximately(1.125, 1e-9);
+        f["c"].Should().BeApproximately(1.25, 1e-9);
+        f["d"].Should().Be(0.9);
+    }
 }

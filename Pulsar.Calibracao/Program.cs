@@ -15,7 +15,9 @@ internal static class Principal
         //      dotnet run --project Pulsar.Calibracao -- grade-baixada
         if (args.Length > 0 && args[0] == "grade-baixada")
         {
-            await GeracaoGrade.BaixadaAsync(AppContext.BaseDirectory.Split("bin")[0]);
+            using var httpBaixada = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+            httpBaixada.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar-Calibracao/1.0 (app-pulsar.com.br)");
+            await GeracaoGrade.BaixadaAsync(httpBaixada, AppContext.BaseDirectory.Split("bin")[0]);
             return;
         }
         if (args.Length > 0 && args[0] == "contorno")

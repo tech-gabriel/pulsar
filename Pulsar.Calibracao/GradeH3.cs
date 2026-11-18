@@ -170,4 +170,61 @@ public static class GradeH3
             return Math.Round(p.Fator(areaDaCelula[kv.Key]) * m, 4);
         });
     }
+
+    public static Polygon Hexagono(string h3) => new H3Index(h3).GetCellBoundary();
+
+    /// <summary>
+    /// Peso do SGB em cada célula, de 0 a 1: fração coberta por suscetibilidade Alta mais metade
+    /// da fração coberta por Média ou enxurrada (fora da Alta, sem somar as duas). Célula que
+    /// encosta num setor de risco mapeado em campo (setorização) vale 1.
+    /// </summary>
+    public static Dictionary<string, double> PesoSgb(IEnumerable<string> celulas, IReadOnlyList<PoligonoSgb> poligonos)
+    {
+        var alta = Indice(poligonos.Where(p => p.Classe == "Alta"));
+        var meia = Indice(poligonos.Where(p => p.Classe is "Média" or "Enxurrada"));
+        var setor = Indice(poligonos.Where(p => p.Classe == "Setor"));
+        var r = new Dictionary<string, double>();
+        foreach (var c in celulas)
+        {
+            var hex = Hexagono(c);
+            if (setor.Query(hex.EnvelopeInternal).Any(g => g.Intersects(hex))) { r[c] = 1; continue; }
+            var emAlta = Recorte(alta, hex);
+            var emMeia = Recorte(meia, hex);
+            if (emMeia is not null && emAlta is not null) emMeia = emMeia.Difference(emAlta);
+            var peso = ((emAlta?.Area ?? 0) + 0.5 * (emMeia?.Area ?? 0)) / hex.Area;
+            r[c] = Math.Round(Math.Min(1, peso), 4);
+        }
+        return r;
+    }
+
+    private static NetTopologySuite.Index.Strtree.STRtree<Geometry> Indice(IEnumerable<PoligonoSgb> ps)
+    {
+        var t = new NetTopologySuite.Index.Strtree.STRtree<Geometry>();
+        foreach (var p in ps) t.Insert(p.Forma.EnvelopeInternal, p.Forma);
+        t.Build();
+        return t;
+    }
+
+    /// <summary>A parte do hexágono coberta pelos polígonos do índice, já unida (sem contar sobreposição duas vezes).</summary>
+    private static Geometry? Recorte(NetTopologySuite.Index.Strtree.STRtree<Geometry> t, Polygon hex)
+    {
+        var pedacos = t.Query(hex.EnvelopeInternal).Select(g => g.Intersection(hex)).Where(g => !g.IsEmpty).ToList();
+        return pedacos.Count == 0 ? null : NetTopologySuite.Operation.Union.UnaryUnionOp.Union(pedacos);
+    }
+
+    /// <summary>
+    /// Fator da célula = fator da área × m, com m pelo rank do peso entre os pesos positivos
+    /// distintos (a mesma régua de <see cref="Fatores"/> na capital). Peso zero fica com o da área.
+    /// </summary>
+    public static Dictionary<string, double> FatoresPorPeso(
+        IReadOnlyDictionary<string, double> peso, IReadOnlyDictionary<string, string> areaDaCelula,
+        IReadOnlyDictionary<string, double> fatorDaArea)
+    {
+        var distintos = peso.Values.Where(v => v > 0).Distinct().OrderBy(v => v).ToList();
+        return peso.ToDictionary(kv => kv.Key, kv =>
+        {
+            var m = kv.Value <= 0 ? 1.0 : 1 + AcrescimoMaximo * (distintos.IndexOf(kv.Value) + 1) / distintos.Count;
+            return Math.Round(fatorDaArea[areaDaCelula[kv.Key]] * m, 4);
+        });
+    }
 }

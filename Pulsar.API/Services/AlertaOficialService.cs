@@ -55,6 +55,11 @@ public class AlertaOficialService : IAlertaOficialService
         var existentes = await _db.AlertasOficiais.Where(a => ids.Contains(a.Identificador))
             .ToDictionaryAsync(a => a.Identificador, ct);
 
+        // Última leitura boa: um Extremo gravado antes, com início entre ela e agora, passou a valer nesta.
+        var anterior = await _db.ExecucoesSincronizacao
+            .Where(e => e.Fonte == ExecucaoSincronizacao.FonteIdap && e.Sucesso && e.IniciadoEm < agoraUtc)
+            .MaxAsync(e => (DateTime?)e.IniciadoEm, ct);
+
         int novos = 0, cancelados = 0, novosExtremos = 0;
         foreach (var a in alertas.OrderBy(a => a.EnviadoUtc))
         {
@@ -88,11 +93,16 @@ public class AlertaOficialService : IAlertaOficialService
             _db.AlertasOficiais.Add(novo);
             existentes[a.Identificador] = novo;
             novos++;
-            if (novo.Gravidade == "Extreme") novosExtremos++;
+            // O motor só vê o alerta a partir do início: Extremo com início futuro conta quando começa a valer.
+            if (novo.Gravidade == "Extreme" && novo.InicioUtc <= agoraUtc) novosExtremos++;
         }
 
         var limite = agoraUtc - Retencao;
         _db.AlertasOficiais.RemoveRange(await _db.AlertasOficiais.Where(a => a.ExpiraUtc < limite).ToListAsync(ct));
+
+        if (anterior is { } desde)
+            novosExtremos += await _db.AlertasOficiais.CountAsync(a => a.Gravidade == "Extreme" && a.CanceladoEmUtc == null
+                && a.RecebidoEmUtc <= desde && a.InicioUtc > desde && a.InicioUtc <= agoraUtc && a.ExpiraUtc > agoraUtc, ct);
 
         execucao.Sucesso = true;
         execucao.Lidas = alertas.Count;

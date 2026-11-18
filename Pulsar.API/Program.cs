@@ -297,6 +297,7 @@ builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionServi
 builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
 builder.Services.AddScoped<IAlagamentoCgeService, AlagamentoCgeService>();
+builder.Services.AddScoped<IAlertaOficialService, AlertaOficialService>();
 builder.Services.AddScoped<IEstacaoCgeService, EstacaoCgeService>();
 builder.Services.AddScoped<ICemadenService, CemadenService>();
 builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();

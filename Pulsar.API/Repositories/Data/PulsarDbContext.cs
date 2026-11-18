@@ -21,6 +21,7 @@ public class PulsarDbContext : DbContext
     public DbSet<EstacaoCemaden> EstacoesCemaden => Set<EstacaoCemaden>();
     public DbSet<LeituraEstacaoCemaden> LeiturasEstacaoCemaden => Set<LeituraEstacaoCemaden>();
     public DbSet<ExecucaoSincronizacao> ExecucoesSincronizacao => Set<ExecucaoSincronizacao>();
+    public DbSet<AlertaOficial> AlertasOficiais => Set<AlertaOficial>();
     public DbSet<PedidoAvisoRota> PedidosAvisoRota => Set<PedidoAvisoRota>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioSubprefeitura> UsuarioSubprefeituras => Set<UsuarioSubprefeitura>();
@@ -276,6 +277,27 @@ public class PulsarDbContext : DbContext
              .WithMany()
              .HasForeignKey(p => p.SubprefeituraId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AlertaOficial>(e =>
+        {
+            e.HasKey(a => a.Id);
+            e.HasIndex(a => a.Identificador).IsUnique();
+            e.HasIndex(a => a.ExpiraUtc);
+            e.Property(a => a.Identificador).IsRequired().HasMaxLength(100);
+            e.Property(a => a.Evento).IsRequired().HasMaxLength(120);
+            e.Property(a => a.Gravidade).IsRequired().HasMaxLength(20);
+            e.Property(a => a.Urgencia).IsRequired().HasMaxLength(20);
+            e.Property(a => a.Emissor).IsRequired().HasMaxLength(200);
+            e.Property(a => a.Titulo).IsRequired().HasMaxLength(500);
+            e.Property(a => a.Descricao).IsRequired().HasMaxLength(4000);
+        });
+
+        modelBuilder.Entity<AlertaOficialArea>(e =>
+        {
+            e.HasKey(x => new { x.AlertaOficialId, x.SubprefeituraId });
+            e.HasOne(x => x.AlertaOficial).WithMany(a => a.Areas).HasForeignKey(x => x.AlertaOficialId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Subprefeitura).WithMany().HasForeignKey(x => x.SubprefeituraId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ExecucaoSincronizacao>(e =>

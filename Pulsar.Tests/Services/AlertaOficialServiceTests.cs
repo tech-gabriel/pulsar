@@ -1,0 +1,128 @@
+using FluentAssertions;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Pulsar.API.Domain.Alertas;
+using Pulsar.API.Domain.Entities;
+using Pulsar.API.Domain.Score;
+using Pulsar.API.External.Clients;
+using Pulsar.API.External.Interfaces;
+using Pulsar.API.Repositories.Data;
+using Pulsar.API.Services;
+
+namespace Pulsar.Tests.Services;
+
+public class AlertaOficialServiceTests : IDisposable
+{
+    private static readonly Guid Se = new("20000000-0000-0000-0000-000000000001");
+    private static readonly Guid Santos = new("20000000-0000-0000-0000-000000000033");
+    // Entre o início (17:05Z) e o fim (20:00Z) dos alertas da amostra.
+    private static readonly DateTime Agora = new(2026, 11, 18, 18, 0, 0, DateTimeKind.Utc);
+
+    private readonly SqliteConnection _conn = new("Data Source=:memory:");
+    private readonly PulsarDbContext _db;
+
+    public AlertaOficialServiceTests()
+    {
+        _conn.Open();
+        _db = new PulsarDbContext(new DbContextOptionsBuilder<PulsarDbContext>().UseSqlite(_conn).Options);
+        _db.Database.EnsureCreated();
+    }
+
+    public void Dispose()
+    {
+        _db.Dispose();
+        _conn.Dispose();
+    }
+
+    private sealed class FeedFalso(IReadOnlyList<AlertaCap>? alertas) : IIdapClient
+    {
+        public IReadOnlyList<AlertaCap>? Alertas { get; set; } = alertas;
+        public Task<IReadOnlyList<AlertaCap>?> ObterAsync(CancellationToken ct = default) => Task.FromResult(Alertas);
+    }
+
+    private static IReadOnlyList<AlertaCap> Amostra(bool comCancel = true)
+    {
+        var todos = IdapClient.Parse(File.OpenRead(Path.Combine(AppContext.BaseDirectory, "External", "Fixtures", "idap-amostra.xml")));
+        return comCancel ? todos : todos.Where(a => a.TipoMensagem != "Cancel").ToList();
+    }
+
+    private AlertaOficialService Servico(IIdapClient feed)
+        => new(_db, feed, new GradeCelulas(NullLogger<GradeCelulas>.Instance), NullLogger<AlertaOficialService>.Instance);
+
+    // O ID da Sé no seed: o teste confere antes de usar.
+    [Fact]
+    public async Task Seed_TemSeESantosComOsIdsEsperados()
+    {
+        (await _db.Subprefeituras.FindAsync(Se))!.Nome.Should().Be("Sé");
+        (await _db.Subprefeituras.FindAsync(Santos))!.Nome.Should().Be("Santos");
+    }
+
+    [Fact]
+    public async Task Sincronizar_GravaSoOQueAtingeAreasDoPulsar()
+    {
+        var r = await Servico(new FeedFalso(Amostra(comCancel: false))).SincronizarAsync(Agora);
+
+        r.Ok.Should().BeTrue();
+        r.Novos.Should().Be(2); // capital (polígono sobre a Sé) e Santos (IBGE); o do interior fica de fora
+        r.HaAlertaSp.Should().BeTrue();
+        var ativos = await Servico(new FeedFalso([])).AtivosPorAreaAsync(Agora);
+        ativos[Se].Single().Identificador.Should().Be("198700/2026");
+        ativos[Santos].Single().Gravidade.Should().Be("Extreme");
+    }
+
+    // Lido de novo a cada ciclo, o mesmo alerta não duplica.
+    [Fact]
+    public async Task Sincronizar_DuasVezes_UmRegistroSo()
+    {
+        var feed = new FeedFalso(Amostra(comCancel: false));
+        await Servico(feed).SincronizarAsync(Agora);
+        var segunda = await Servico(feed).SincronizarAsync(Agora.AddMinutes(5));
+
+        segunda.Novos.Should().Be(0);
+        (await _db.AlertasOficiais.CountAsync()).Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Cancel_TiraOAlertaDosAtivos()
+    {
+        await Servico(new FeedFalso(Amostra(comCancel: false))).SincronizarAsync(Agora);
+        var r = await Servico(new FeedFalso(Amostra())).SincronizarAsync(Agora.AddMinutes(5));
+
+        r.Cancelados.Should().Be(1);
+        var ativos = await Servico(new FeedFalso([])).AtivosPorAreaAsync(Agora.AddMinutes(5));
+        ativos.Should().NotContainKey(Se);
+        ativos.Should().ContainKey(Santos);
+    }
+
+    [Fact]
+    public async Task Expirado_NaoApareceNosAtivos()
+    {
+        await Servico(new FeedFalso(Amostra(comCancel: false))).SincronizarAsync(Agora);
+
+        (await Servico(new FeedFalso([])).AtivosPorAreaAsync(new DateTime(2026, 11, 18, 23, 30, 0, DateTimeKind.Utc)))
+            .Should().BeEmpty();
+    }
+
+    // Feed fora do ar: nada é apagado, e o que estava gravado continua valendo até a validade.
+    [Fact]
+    public async Task FeedFora_NaoApagaNada()
+    {
+        await Servico(new FeedFalso(Amostra(comCancel: false))).SincronizarAsync(Agora);
+        var r = await Servico(new FeedFalso(null)).SincronizarAsync(Agora.AddMinutes(5));
+
+        r.Ok.Should().BeFalse();
+        (await Servico(new FeedFalso([])).AtivosPorAreaAsync(Agora.AddMinutes(5)))
+            .SelectMany(kv => kv.Value).Select(a => a.Identificador).Distinct().Should().HaveCount(2);
+        (await _db.ExecucoesSincronizacao.Where(e => e.Fonte == ExecucaoSincronizacao.FonteIdap).CountAsync()).Should().Be(2);
+    }
+
+    [Fact]
+    public async Task AlertaVencidoHaMaisDe30Dias_EApagado()
+    {
+        await Servico(new FeedFalso(Amostra(comCancel: false))).SincronizarAsync(Agora);
+        await Servico(new FeedFalso([])).SincronizarAsync(Agora.AddDays(31));
+
+        (await _db.AlertasOficiais.CountAsync()).Should().Be(0);
+    }
+}

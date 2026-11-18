@@ -108,7 +108,7 @@ public class RiscoCelulasService : IRiscoCelulasService
         if (celulas.Count == 0) return null;
 
         var estacoes = await EstacoesAsync(ct);
-        var medidas = celulas.Select(c => EstacaoChuva.MaisProxima(c.Lat, c.Lon, estacoes, RaioEstacaoKm)).ToList();
+        var medidas = celulas.Select(c => EstacaoChuva.DoTrecho(c.Lat, c.Lon, estacoes, RaioEstacaoKm)).ToList();
 
         // Sem chuva nas 48 h do modelo e sem chuva medida perto, o alagamento é zero em
         // qualquer trecho. É a maior parte do ano: sair aqui poupa a leitura do banco e 32

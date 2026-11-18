@@ -19,6 +19,8 @@ public interface ISubprefeituraRepository : IRepository<Subprefeitura>
     /// O motor (coleta, score, CEMADEN, avisos) continua usando as ativas.
     /// </summary>
     Task<IReadOnlyList<Subprefeitura>> ObterVisiveisAsync(bool incluirOcultas = false);
+    /// <summary>Nomes das cidades que a pessoa enxerga (todas para o Admin): a cobertura da busca e da rua perto.</summary>
+    Task<IReadOnlyList<string>> ObterNomesDasCidadesVisiveisAsync(bool incluirOcultas = false);
 
     /// <summary>Como <see cref="ObterAtivasComResumoAsync"/>, só com as áreas que o usuário vê.</summary>
     Task<IReadOnlyList<Subprefeitura>> ObterVisiveisComResumoAsync(bool incluirOcultas = false);

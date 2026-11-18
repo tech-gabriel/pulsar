@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
+using Pulsar.API.Domain.Cobertura;
 using Pulsar.API.DTOs;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Services.Interfaces;
@@ -24,17 +25,18 @@ public class BuscaService : IBuscaService
         _cache = cache;
     }
 
-    public async Task<IReadOnlyList<EnderecoBuscaDto>> BuscarEnderecosAsync(string? consulta, CancellationToken ct = default)
+    public async Task<IReadOnlyList<EnderecoBuscaDto>> BuscarEnderecosAsync(string? consulta, IReadOnlyCollection<string> cidades, CancellationToken ct = default)
     {
         var termo = consulta?.Trim() ?? string.Empty;
         if (termo.Length < MinChars)
             return [];
 
-        var chave = $"busca:{termo.ToLowerInvariant()}";
+        var bbox = CoberturaCidades.Bbox(cidades);
+        var chave = $"busca:{bbox}:{termo.ToLowerInvariant()}";
         if (_cache.TryGetValue(chave, out IReadOnlyList<EnderecoBuscaDto>? cached) && cached is not null)
             return cached;
 
-        var resultados = await _geocodingClient.BuscarAsync(termo, ct);
+        var resultados = await _geocodingClient.BuscarAsync(termo, bbox, ct);
         var dtos = resultados
             .Select(r => new EnderecoBuscaDto
             {

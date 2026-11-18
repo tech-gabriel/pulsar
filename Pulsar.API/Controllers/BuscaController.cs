@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Pulsar.API.Domain.Cobertura;
 using Pulsar.API.DTOs;
+using Pulsar.API.Repositories.Interfaces;
 using Pulsar.API.Services;
 using Pulsar.API.Services.Interfaces;
 
@@ -13,15 +15,17 @@ namespace Pulsar.API.Controllers;
 public class BuscaController : ControllerBase
 {
     private readonly IBuscaService _buscaService;
+    private readonly ISubprefeituraRepository _subprefeituras;
     private readonly ILogger<BuscaController> _logger;
 
-    public BuscaController(IBuscaService buscaService, ILogger<BuscaController> logger)
+    public BuscaController(IBuscaService buscaService, ISubprefeituraRepository subprefeituras, ILogger<BuscaController> logger)
     {
         _buscaService = buscaService;
+        _subprefeituras = subprefeituras;
         _logger = logger;
     }
 
-    /// <summary>Busca endereços/ruas de São Paulo por texto (autocomplete).</summary>
+    /// <summary>Busca endereços por texto (autocomplete), só nas cidades que a pessoa enxerga.</summary>
     [HttpGet("enderecos")]
     [EnableRateLimiting("busca")]
     [ProducesResponseType(typeof(IEnumerable<EnderecoBuscaDto>), StatusCodes.Status200OK)]
@@ -33,7 +37,7 @@ public class BuscaController : ControllerBase
 
         try
         {
-            var enderecos = await _buscaService.BuscarEnderecosAsync(q, ct);
+            var enderecos = await _buscaService.BuscarEnderecosAsync(q, await CidadesVisiveisAsync(), ct);
             return Ok(enderecos);
         }
         catch (Exception ex)
@@ -54,10 +58,10 @@ public class BuscaController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RuaPerto([FromQuery] double lat, [FromQuery] double lon, CancellationToken ct)
     {
-        // Retângulo largo da Grande São Paulo: barra coordenada trocada ou fora da cidade. Escrito
-        // como "dentro" negado, porque NaN falha toda comparação e passaria num "fora".
-        if (!(lat >= -24.1 && lat <= -23.2 && lon >= -47.0 && lon <= -46.2))
-            return BadRequest(new { mensagem = "Ponto fora de São Paulo." });
+        // Retângulo largo das cidades que a pessoa enxerga: barra coordenada trocada ou fora da
+        // cobertura. "Dentro" negado, porque NaN falha toda comparação e passaria num "fora".
+        if (!CoberturaCidades.Dentro(lat, lon, await CidadesVisiveisAsync()))
+            return BadRequest(new { mensagem = "Ponto fora da área coberta pelo Pulsar." });
 
         try
         {
@@ -70,4 +74,8 @@ public class BuscaController : ControllerBase
             return Ok(new RuaPertoDto(null, null));
         }
     }
+
+    /// <summary>A Baixada fica escondida até o lançamento: só o Admin a alcança.</summary>
+    private Task<IReadOnlyList<string>> CidadesVisiveisAsync()
+        => _subprefeituras.ObterNomesDasCidadesVisiveisAsync(incluirOcultas: User.IsInRole("ADMIN"));
 }

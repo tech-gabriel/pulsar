@@ -41,6 +41,9 @@ public class SubprefeituraRepository : ISubprefeituraRepository
             .Where(s => s.Ativa && (incluirOcultas || s.Regiao.Cidade.Publica))
             .ToListAsync();
 
+    public async Task<IReadOnlyList<string>> ObterNomesDasCidadesVisiveisAsync(bool incluirOcultas = false)
+        => await _context.Cidades.Where(c => incluirOcultas || c.Publica).Select(c => c.Nome).ToListAsync();
+
     public async Task<IReadOnlyList<Subprefeitura>> ObterVisiveisComResumoAsync(bool incluirOcultas = false)
         => await _context.Subprefeituras
             .Where(s => s.Ativa && (incluirOcultas || s.Regiao.Cidade.Publica))

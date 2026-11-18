@@ -135,6 +135,23 @@ export default function MapaPage() {
     }
   }
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
+  // Deep link /app?cidade=<nome> (linha "E mais N áreas" do sino, V1 C): troca o painel para a
+  // cidade e o abre no celular. Mesmo padrão do ?regiao= (ajuste no render); o efeito abaixo o tira da URL.
+  const cidadeParam = searchParams.get('cidade');
+  const [cidadeAplicada, setCidadeAplicada] = useState<string | null>(null);
+  if (cidadeParam !== cidadeAplicada && (subprefeituras.length > 0 || !cidadeParam)) {
+    setCidadeAplicada(cidadeParam);
+    if (cidadeParam && cidades.includes(cidadeParam)) {
+      trocarCidade(cidadeParam);
+      setPainelMobileAberto(true);
+    }
+  }
+  useEffect(() => {
+    if (!cidadeParam || cidadeAplicada !== cidadeParam) return;
+    const p = new URLSearchParams(searchParams);
+    p.delete('cidade');
+    setSearchParams(p, { replace: true });
+  }, [cidadeParam, cidadeAplicada, searchParams, setSearchParams]);
   // Tablet: o cartão do pé recolhe até só a busca, para devolver o mapa.
   const [painelRecolhido, setPainelRecolhido] = useState(false);
   const painelRef = useRef<HTMLElement>(null);
@@ -590,6 +607,7 @@ export default function MapaPage() {
       faixaDaArea={(id) => subprefeituras.find((s) => s.id === id)?.faixaRisco}
       cobertura={nomeDaCobertura(subprefeituras)}
       atravessaSerra={rota.atravessaSerra}
+      textoSerra={rota.textoSerra}
       onTrocar={(ponto) => {
         (ponto === 'origem' ? rota.setOrigem : rota.setDestino)(null);
         // O De/Para é o mesmo no celular e no painel: um só está montado.

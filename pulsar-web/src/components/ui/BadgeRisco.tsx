@@ -25,7 +25,7 @@ export default function BadgeRisco({ faixa, score, size = 'md' }: Props) {
       {label}
       {score != null && (
         <span className="font-mono font-semibold">
-          {score.toFixed(1)}
+          {Math.round(score)}
         </span>
       )}
     </span>

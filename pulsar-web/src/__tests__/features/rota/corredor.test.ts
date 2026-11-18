@@ -73,22 +73,23 @@ describe('rota entre cidades', () => {
     { id: 'santos', nome: 'Santos', cidade: 'Baixada Santista' },
     { id: 'sv', nome: 'São Vicente', cidade: 'Baixada Santista' },
     { id: 'itanhaem', nome: 'Itanhaém', cidade: 'Baixada Santista' },
+    { id: 'bertioga', nome: 'Bertioga', cidade: 'Baixada Santista' },
   ];
   const santos = { lat: -23.9608, lon: -46.3336, rotulo: 'Santos' };
 
   it('Sé para Santos: avalia as duas pontas e atravessa a serra', () => {
     const corredor = tracarCorredor(se, santos, juntos);
-    expect(idsDaRota(corredor, subs)).toEqual({ ids: ['se', 'santos'], atravessaSerra: true });
+    expect(idsDaRota(corredor, subs)).toEqual({ ids: ['se', 'santos'], atravessaSerra: true, textoSerra: 'A serra não é avaliada: confira a Ecovias antes de descer' });
   });
 
   it('Marsilac para Itanhaém: cidades diferentes, mesmo sendo vizinhas', () => {
     const corredor = tracarCorredor({ lat: -23.916332, lon: -46.727397, rotulo: 'Marsilac' }, { lat: -24.1831, lon: -46.7889, rotulo: 'Itanhaém' }, juntos);
-    expect(idsDaRota(corredor, subs)).toEqual({ ids: ['parelheiros', 'itanhaem'], atravessaSerra: true });
+    expect(idsDaRota(corredor, subs)).toEqual({ ids: ['parelheiros', 'itanhaem'], atravessaSerra: true, textoSerra: 'A serra não é avaliada: confira a Ecovias antes de descer' });
   });
 
   it('Sé para Mooca: igual a hoje', () => {
     const corredor = tracarCorredor(se, mooca, juntos);
-    expect(idsDaRota(corredor, subs)).toEqual({ ids: idsDosTrechos(corredor.ok ? corredor.nomes : [], subs), atravessaSerra: false });
+    expect(idsDaRota(corredor, subs)).toEqual({ ids: idsDosTrechos(corredor.ok ? corredor.nomes : [], subs), atravessaSerra: false, textoSerra: null });
   });
 
   it('conta comum (sem a Baixada no contorno): Santos fica fora', () => {
@@ -97,5 +98,16 @@ describe('rota entre cidades', () => {
 
   it('o texto da serra é o do desenho aprovado', () => {
     expect(TEXTO_SERRA).toBe('A serra não é avaliada: confira a Ecovias antes de descer');
+  });
+
+  // Decisão do user (18/11/2026): o texto segue o sentido; Bertioga (Mogi-Bertioga) não é da Ecovias.
+  it('subindo, o texto diz subir', () => {
+    const corredor = tracarCorredor(santos, se, juntos);
+    expect(idsDaRota(corredor, subs).textoSerra).toBe('A serra não é avaliada: confira a Ecovias antes de subir');
+  });
+
+  it('com Bertioga numa das pontas, a estrada não é a da Ecovias', () => {
+    const corredor = tracarCorredor(se, { lat: -23.8486, lon: -46.1396, rotulo: 'Bertioga' }, juntos);
+    expect(idsDaRota(corredor, subs).textoSerra).toBe('A serra não é avaliada: confira as condições da estrada antes de ir');
   });
 });

@@ -77,6 +77,8 @@ public static class CalibracaoScore
             ["Bertioga"] = 1, ["Cubatão"] = 1, ["Guarujá"] = 1, ["Itanhaém"] = 1, ["Mongaguá"] = 1,
             ["Peruíbe"] = 1, ["Praia Grande"] = 1, ["Santos"] = 1, ["São Vicente"] = 1,
         },
+        // k = 1,6: o aviso de chuva forte prevista sai a partir de 16 mm (decisão do user, 18/11/2026).
+        FatorChuva = 1.6,
     };
 
     /// <summary>Os parâmetros da cidade da área, pelo nome dela. Nome desconhecido fica com os da capital.</summary>

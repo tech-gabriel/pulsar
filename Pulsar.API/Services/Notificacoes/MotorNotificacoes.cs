@@ -56,7 +56,18 @@ public class MotorNotificacoes : IMotorNotificacoes
         _logger = logger;
     }
 
+    // Uma rodada por vez: o ciclo da coleta e o do alerta Extremo podem coincidir, e duas rodadas
+    // lendo o livro-caixa antes de qualquer uma gravar mandariam o mesmo push duas vezes.
+    private static readonly SemaphoreSlim UmaRodadaPorVez = new(1, 1);
+
     public async Task<int> AvaliarEDispararAsync(CancellationToken ct = default)
+    {
+        await UmaRodadaPorVez.WaitAsync(ct);
+        try { return await AvaliarEDispararSozinhoAsync(ct); }
+        finally { UmaRodadaPorVez.Release(); }
+    }
+
+    private async Task<int> AvaliarEDispararSozinhoAsync(CancellationToken ct)
     {
         // Sem chaves VAPID nada sai, então avaliar gatilhos e escrever no livro-caixa seria
         // pior que inútil: gravaria a chave de um push que não aconteceu e calaria o aviso de

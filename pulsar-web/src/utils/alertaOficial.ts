@@ -1,5 +1,7 @@
 import type { AlertaOficial } from '../types';
 import type { Area } from '../features/cidade/areas';
+import { cidadeDaArea } from '../features/cidade/cidade';
+import { horaCurta } from './data';
 
 /** Cor do nível na escala da Defesa Civil de SP (amarelo, laranja, vermelho). */
 export type CorOficial = 'amarelo' | 'laranja' | 'vermelho';
@@ -54,20 +56,54 @@ export function porGravidade(alertas: AlertaOficial[]): AlertaOficial[] {
     nivelOficial(b.gravidade).peso - nivelOficial(a.gravidade).peso || b.inicioUtc.localeCompare(a.inicioUtc));
 }
 
-export interface LinhaSinoOficial {
-  area: Area;
-  /** O alerta mais grave da área. */
-  alerta: AlertaOficial;
-}
+/**
+ * Uma linha do grupo "Defesa Civil" do sino: uma área (com o alerta mais grave dela) ou o resumo
+ * das outras áreas de uma cidade sob o mesmo alerta.
+ */
+export type LinhaSinoOficial =
+  | { tipo: 'area'; area: Area; alerta: AlertaOficial }
+  | { tipo: 'resumo'; cidade: string; n: number; alerta: AlertaOficial };
 
-/** Uma linha por área com alerta oficial (o mais grave dela): as acompanhadas primeiro, depois o mais grave. */
+/** Até quantas áreas não acompanhadas sob o mesmo alerta aparecem uma por linha antes de virar resumo. */
+const MAX_SOLTAS = 3;
+
+/**
+ * V1 C (escolha do user, 18/11/2026): as áreas acompanhadas uma por linha, primeiro; as outras com
+ * alerta também, até 3 por alerta e cidade; passando disso, uma linha só ("E mais 29 áreas da
+ * capital"). O resumo é por alerta, para o vendaval só da Sé não sumir dentro da linha das chuvas
+ * da capital inteira. Um alerta para a capital inteira não vira 32 linhas.
+ */
 export function alertasDoSinoOficial(areas: Area[], favoritasIds: string[]): LinhaSinoOficial[] {
   const fav = new Set(favoritasIds);
-  return areas
+  const comAlerta = areas
     .filter((a) => (a.alertasOficiais?.length ?? 0) > 0)
-    .map((area) => ({ area, alerta: porGravidade(area.alertasOficiais!)[0] }))
-    .sort((x, y) =>
-      Number(fav.has(y.area.id)) - Number(fav.has(x.area.id))
-      || nivelOficial(y.alerta.gravidade).peso - nivelOficial(x.alerta.gravidade).peso
-      || x.area.nome.localeCompare(y.area.nome, 'pt-BR'));
+    .map((area) => ({ tipo: 'area' as const, area, alerta: porGravidade(area.alertasOficiais!)[0] }));
+  const nome = (l: LinhaSinoOficial) => (l.tipo === 'area' ? l.area.nome : l.cidade);
+  const ordem = (x: LinhaSinoOficial, y: LinhaSinoOficial) =>
+    nivelOficial(y.alerta.gravidade).peso - nivelOficial(x.alerta.gravidade).peso || nome(x).localeCompare(nome(y), 'pt-BR');
+
+  const suas = comAlerta.filter((l) => fav.has(l.area.id)).sort(ordem);
+  const grupos = new Map<string, typeof comAlerta>();
+  for (const l of comAlerta.filter((x) => !fav.has(x.area.id))) {
+    const chave = `${cidadeDaArea(l.area)}|${l.alerta.identificador}`;
+    grupos.set(chave, [...(grupos.get(chave) ?? []), l]);
+  }
+  const resto: LinhaSinoOficial[] = [];
+  for (const linhas of grupos.values())
+    if (linhas.length <= MAX_SOLTAS) resto.push(...linhas);
+    else resto.push({ tipo: 'resumo', cidade: cidadeDaArea(linhas[0].area), n: linhas.length, alerta: linhas[0].alerta });
+  return [...suas, ...resto.sort(ordem)];
+}
+
+/** "E mais 29 áreas da capital", "E mais 6 áreas da Baixada Santista". */
+export function rotuloResumoSino(cidade: string, n: number): string {
+  return `E mais ${n} ${n === 1 ? 'área' : 'áreas'} ${cidade === 'São Paulo' ? 'da capital' : `da ${cidade}`}`;
+}
+
+const diaMes = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' });
+
+/** V2 B (escolha do user, 18/11/2026): "16:18" se for hoje; "21/11, 16:18" se for outro dia. */
+export function ateQuando(iso: string, agora: Date = new Date()): string {
+  const d = new Date(iso);
+  return d.toDateString() === agora.toDateString() ? horaCurta(iso) : `${diaMes.format(d)}, ${horaCurta(iso)}`;
 }

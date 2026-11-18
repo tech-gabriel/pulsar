@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Score;
 using System.Globalization;
 using Pulsar.API.Services.Push;
 
@@ -32,6 +33,8 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
         ContextoGatilho ctx, CancellationToken ct = default)
     {
         var limiteJanela = ctx.AgoraUtc.AddHours(LimiaresNotificacao.JanelaPrevisaoHoras);
+        // Na Baixada os limites de chuva sobem pelo fator da calibração dela (k = 1,6).
+        var fator = CalibracaoScore.Para(ctx.Subprefeitura.Nome).FatorChuva;
 
         // A primeira faixa QUALIFICADA, não a mais intensa nem simplesmente a primeira: o
         // valor de um aviso está em avisar do que chega primeiro, mas filtrar tem que vir
@@ -41,9 +44,9 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
         // crescente (ContextoGatilho.Previsao).
         var faixa = ctx.Previsao
             .Where(f => f.InstantePrevisto <= limiteJanela)
-            .Where(f => f.ChuvaMm >= LimiaresNotificacao.ChuvaFortePrevistaMm
+            .Where(f => f.ChuvaMm >= LimiaresNotificacao.ChuvaFortePrevistaMm * fator
                      && f.ProbabilidadeChuva >= LimiaresNotificacao.ProbabilidadeMinima)
-            .Where(f => ConfirmadaPeloOpenMeteo(ctx.ChuvaReferencia, f.InstantePrevisto))
+            .Where(f => ConfirmadaPeloOpenMeteo(ctx.ChuvaReferencia, f.InstantePrevisto, fator))
             .OrderBy(f => f.InstantePrevisto)
             .FirstOrDefault();
 
@@ -59,7 +62,7 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
         var horaLocal = FusoLocal.ConverterParaLocal(faixa.InstantePrevisto, ctx.Fuso);
 
         // Quem só assinou risco alto recebe o temporal, mas não a chuva meramente forte.
-        var criterio = faixa.ChuvaMm >= LimiaresNotificacao.ChuvaMuitoFortePrevistaMm
+        var criterio = faixa.ChuvaMm >= LimiaresNotificacao.ChuvaMuitoFortePrevistaMm * fator
             ? CriterioOptIn.RiscoAlto
             : CriterioOptIn.RiscoModerado;
 
@@ -97,11 +100,11 @@ public class GatilhoChuvaPrevista : IGatilhoNotificacao
     /// direção incerta da faixa (ver o doc da classe). Sem o Open-Meteo, não confirma: errar
     /// para o silêncio é o que corta o alarme falso.
     /// </summary>
-    private static bool ConfirmadaPeloOpenMeteo(IReadOnlyDictionary<DateTime, double>? referencia, DateTime instante)
+    private static bool ConfirmadaPeloOpenMeteo(IReadOnlyDictionary<DateTime, double>? referencia, DateTime instante, double fator)
     {
         if (referencia is null) return false;
         var folga = TimeSpan.FromHours(LimiaresNotificacao.FolgaConfirmacaoHoras);
         var soma = referencia.Where(h => h.Key >= instante - folga && h.Key <= instante + folga).Sum(h => h.Value);
-        return soma >= LimiaresNotificacao.ChuvaFortePrevistaMm * LimiaresNotificacao.FatorConfirmacaoOpenMeteo;
+        return soma >= LimiaresNotificacao.ChuvaFortePrevistaMm * fator * LimiaresNotificacao.FatorConfirmacaoOpenMeteo;
     }
 }

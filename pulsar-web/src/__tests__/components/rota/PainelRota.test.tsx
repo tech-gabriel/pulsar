@@ -297,6 +297,13 @@ describe('PainelRota entre cidades', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Sem chuva forte medida na saída e na chegada agora.');
   });
 
+  it('subindo: a linha visível e o texto para leitor de tela dizem subir', () => {
+    render(<PainelRota resultado={ateSantos()} origem={origem} destino={destino} carregando={false} erro={null}
+      avisoPedido={false} onPedirAviso={vi.fn()} atravessaSerra textoSerra="A serra não é avaliada: confira a Ecovias antes de subir" />);
+    expect(screen.getAllByRole('listitem')[1]).toHaveTextContent('Confira a Ecovias antes de subir');
+    expect(screen.getByText('A serra não é avaliada: confira a Ecovias antes de subir')).toHaveClass('sr-only');
+  });
+
   it('rota dentro da cidade: sem a serra e o texto de sempre', () => {
     monta('PodeIr');
     expect(screen.queryByText(/Serra do Mar/)).not.toBeInTheDocument();

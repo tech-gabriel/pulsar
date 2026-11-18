@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import AvisosOficiais, { LinhaAvisoOficial } from '../../../components/painel/AvisosOficiais';
 import type { AlertaOficial } from '../../../types';
 
@@ -12,6 +12,10 @@ const alerta = (o: Partial<AlertaOficial>): AlertaOficial => ({
 });
 
 describe('AvisosOficiais', () => {
+  // Relógio fixo no dia das datas do alerta: o "até" ganha a data quando o alerta vence em outro dia.
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-18T16:00:00Z')); });
+  afterEach(() => { vi.useRealTimers(); });
+
   it('some sem alertas (e sem o campo, como no snapshot do SSG)', () => {
     expect(render(<AvisosOficiais alertas={[]} />).container).toBeEmptyDOMElement();
     expect(render(<AvisosOficiais alertas={undefined} />).container).toBeEmptyDOMElement();
@@ -48,5 +52,17 @@ describe('AvisosOficiais', () => {
     render(<LinhaAvisoOficial alertas={[alerta({ gravidade: 'Moderate' }), alerta({ identificador: 'x', gravidade: 'Severe' })]} />);
     expect(screen.getByText(/^Defesa Civil: chuvas intensas até \d\d:\d\d$/)).toBeInTheDocument();
     expect(screen.getByText('Laranja')).toHaveClass('dc-laranja');
+  });
+
+  // O leitor de tela ouve o mesmo que a tela mostra, inclusive até quando o alerta vale.
+  it('o nome acessível da linha diz até quando o alerta vale', () => {
+    render(<AvisosOficiais alertas={[alerta({})]} />);
+    expect(screen.getByRole('button', { name: /Ler o alerta completo/ }).getAttribute('aria-label')).toMatch(/até \d\d:\d\d/);
+  });
+
+  // V2 B: alerta que vale até outro dia mostra a data em número.
+  it('alerta de vários dias mostra a data no "até"', () => {
+    render(<AvisosOficiais alertas={[alerta({ expiraUtc: '2099-11-21T19:18:00Z' })]} />);
+    expect(screen.getByRole('button', { name: /Ler o alerta completo/ })).toHaveTextContent(/até 21\/11, \d\d:\d\d/);
   });
 });

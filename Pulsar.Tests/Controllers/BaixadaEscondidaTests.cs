@@ -191,4 +191,40 @@ public class BaixadaEscondidaTests : IClassFixture<PulsarWebApplicationFactory>
         (await Avaliar(await TokenUsuarioComumAsync())).StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await Avaliar((await SessaoAdmin.ObterAsync(_factory, _client)).Token)).StatusCode.Should().Be(HttpStatusCode.OK);
     }
+
+    // E4b: o Admin confere a Baixada inteira antes da abertura (casa, trabalho, aviso de rota);
+    // para a conta comum ela segue fora.
+    [Fact]
+    public async Task CasaEmSantos_Admin_Aceita_ContaComum400()
+    {
+        async Task<HttpResponseMessage> Salvar(string token, Guid usuarioId)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Put, $"/api/usuarios/{usuarioId}/locais/casa")
+            {
+                Content = JsonContent.Create(new SalvarLocalRequestDto { Latitude = -23.9608, Longitude = -46.3336, Rotulo = "Avenida Ana Costa, 1", SubprefeituraId = Guid.Parse("20000000-0000-0000-0000-000000000033") }),
+            };
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return await _client.SendAsync(req);
+        }
+
+        var admin = await SessaoAdmin.ObterAsync(_factory, _client);
+        (await Salvar(admin.Token, admin.Usuario.Id)).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task PedirAvisoAteSantos_Admin204_ContaComum400()
+    {
+        async Task<HttpResponseMessage> Pedir(string token)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/rota/aviso")
+            {
+                Content = JsonContent.Create(new { subprefeituraIds = new[] { Guid.Parse("20000000-0000-0000-0000-000000000001"), Guid.Parse("20000000-0000-0000-0000-000000000033") }, destino = "Santos" }),
+            };
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return await _client.SendAsync(req);
+        }
+
+        (await Pedir(await TokenUsuarioComumAsync())).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await Pedir((await SessaoAdmin.ObterAsync(_factory, _client)).Token)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
 }

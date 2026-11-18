@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Pulsar.API.Domain.Score;
 using Microsoft.Extensions.Caching.Memory;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Services;
@@ -54,7 +55,10 @@ public class BuscaServiceTests
     }
 
     private static BuscaService CriarService(IGeocodingClient client)
-        => new(client, new MemoryCache(new MemoryCacheOptions()));
+        => new(client, new MemoryCache(new MemoryCacheOptions()), Grade);
+
+    // A grade real (a mesma da produção): o filtro de cobertura depende dos trechos de cada cidade.
+    private static readonly GradeCelulas Grade = new(Microsoft.Extensions.Logging.Abstractions.NullLogger<GradeCelulas>.Instance);
 
     [Theory]
     [InlineData(null)]
@@ -167,5 +171,40 @@ public class BuscaServiceTests
         await service.BuscarEnderecosAsync("avenida ana costa", ["São Paulo", "Baixada Santista"]);
 
         stub.Chamadas.Should().Be(2);
+    }
+
+    // A busca devolve só o que cai na cobertura de quem busca: o centro de Santos que o provedor
+    // manda (o contorno do município cruza a caixa da capital) não chega à conta comum.
+    [Fact]
+    public async Task Busca_DescartaResultadoForaDaCobertura()
+    {
+        var stub = new StubGeocodingClient
+        {
+            Resultado =
+            [
+                new EnderecoGeocodificado("Santos, São Paulo, Brasil", -23.96094, -46.31663, "Santos", "municipality"),
+                new EnderecoGeocodificado("Rua da Mooca, São Paulo", -23.556, -46.598, "Rua da Mooca", "address"),
+            ],
+        };
+        var resultado = await CriarService(stub).BuscarEnderecosAsync("santos e mooca", Capital);
+        resultado.Select(r => r.Nome).Should().Equal("Rua da Mooca");
+    }
+
+    // O retângulo da capital pega São Vicente, Praia Grande e a Zona Noroeste de Santos: quem decide
+    // a cidade do ponto é o trecho mais perto dele. A conta comum não recebe a Baixada; o Admin sim.
+    [Fact]
+    public async Task Busca_PontoDaBaixadaDentroDaCaixaDaCapital_SoParaQuemVeABaixada()
+    {
+        var stub = new StubGeocodingClient
+        {
+            Resultado =
+            [
+                new EnderecoGeocodificado("São Vicente, São Paulo, Brasil", -23.96642, -46.38614, "São Vicente", "municipality"),
+                new EnderecoGeocodificado("Praia Grande, São Paulo, Brasil", -24.00898, -46.41449, "Praia Grande", "municipality"),
+                new EnderecoGeocodificado("Rua da Mooca, São Paulo", -23.556, -46.598, "Rua da Mooca", "address"),
+            ],
+        };
+        (await CriarService(stub).BuscarEnderecosAsync("vicente", Capital)).Select(r => r.Nome).Should().Equal("Rua da Mooca");
+        (await CriarService(stub).BuscarEnderecosAsync("vicente", ["São Paulo", "Baixada Santista"])).Should().HaveCount(3);
     }
 }

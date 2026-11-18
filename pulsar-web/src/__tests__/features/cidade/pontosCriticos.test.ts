@@ -32,6 +32,24 @@ describe('pontos-criticos-baixada.json', () => {
         expect(distanciaKm(pontos[i], pontos[j]), `${pontos[i].nome} e ${pontos[j].nome}`).toBeGreaterThanOrEqual(0.05);
   });
 
+  // Quando o provedor só acha a cidade, ele devolve o ponto central do município: um ponto crítico
+  // ali não é um lugar que alaga. Centros do MapTiler conferidos em 18/11/2026 pela busca do app
+  // (Cubatão, Itanhaém e Peruíbe não voltam como município na busca).
+  const CENTROS = [
+    { nome: 'Santos', lat: -23.96094, lon: -46.31663 },
+    { nome: 'São Vicente', lat: -23.96642, lon: -46.38614 },
+    { nome: 'Guarujá', lat: -23.99278, lon: -46.25583 },
+    { nome: 'Praia Grande', lat: -24.00898, lon: -46.41449 },
+    { nome: 'Bertioga', lat: -23.84857, lon: -46.13959 },
+    { nome: 'Mongaguá', lat: -24.09595, lon: -46.62344 },
+  ];
+
+  it('nenhum ponto no centro de um município (resultado de "só achei a cidade")', () => {
+    for (const p of pontos)
+      for (const c of CENTROS)
+        expect(distanciaKm(p, c), `${p.nome} perto do centro de ${c.nome}`).toBeGreaterThanOrEqual(0.2);
+  });
+
   it('cobre ao menos 5 dos 9 municípios', () => {
     expect(new Set(pontos.map((p) => p.municipio)).size).toBeGreaterThanOrEqual(5);
   });

@@ -58,7 +58,7 @@ public class GatilhoAlertaOficialTests
         p.Prioridade.Should().Be(0); // mesmo nível do Perigo do CGE: fora do teto diário
         p.Criterio.Should().Be(CriterioOptIn.RiscoAlto);
         p.Cooldown.Should().BeNull();
-        p.Chave.Should().Be($"dc:198700/2026:{ctx.Subprefeitura.Id}");
+        p.Chave.Should().Be($"dc:3:198700/2026:{ctx.Subprefeitura.Id}");
         p.Payload.Corpo.Should().Contain("Defesa Civil").And.Contain("14h05").And.Contain("Chuva forte na capital");
         p.Payload.Corpo.Should().NotContain("Defesa Civil:14h05");
         p.Payload.Tag.Should().Be($"alerta-{ctx.Subprefeitura.Id}");
@@ -105,8 +105,8 @@ public class GatilhoAlertaOficialTests
         var ctx = Contexto(Alerta("Extreme"));
         var b = (await Avaliar(ctx)).Single().Chave;
 
-        a.Should().StartWith("dc:198700/2026:");
-        b.Should().Be($"dc:198700/2026:{ctx.Subprefeitura.Id}");
+        a.Should().StartWith("dc:3:198700/2026:");
+        b.Should().EndWith($":198700/2026:{ctx.Subprefeitura.Id}");
     }
 
     [Fact]
@@ -131,5 +131,38 @@ public class GatilhoAlertaOficialTests
         velho.ExpiraUtc = Agora.AddHours(20);
 
         (await Avaliar(Contexto(velho))).Should().BeEmpty();
+    }
+
+    // Decisão do user (18/11/2026): Minor e Unknown ficam só no app, sem push.
+    [Theory]
+    [InlineData("Minor")]
+    [InlineData("Unknown")]
+    public async Task MinorEUnknown_NaoNotificam(string gravidade)
+        => (await Avaliar(Contexto(Alerta(gravidade), alagamento: FaixaRisco.ALTO, chuvaMedida3h: 10))).Should().BeEmpty();
+
+    [Theory]
+    [InlineData("Moderate", 1, true)]
+    [InlineData("Severe", 2, true)]
+    [InlineData("Extreme", 3, false)]
+    public async Task Nivel_ChaveECooldown(string gravidade, int nivel, bool comCooldown)
+    {
+        var ctx = Contexto(Alerta(gravidade), alagamento: FaixaRisco.MODERADO);
+        var p = (await Avaliar(ctx)).Should().ContainSingle().Subject;
+        p.Nivel.Should().Be(nivel);
+        p.Chave.Should().Be($"dc:{nivel}:198700/2026:{ctx.Subprefeitura.Id}");
+        (p.Cooldown == TimeSpan.FromHours(3)).Should().Be(comCooldown);
+        if (!comCooldown) p.Cooldown.Should().BeNull();
+    }
+
+    // O corte do corpo não pode partir um emoji ao meio (o aparelho mostra um caractere quebrado).
+    [Fact]
+    public async Task CorpoLongoComEmoji_NaoPartePar()
+    {
+        var alerta = Alerta("Extreme");
+        alerta.Titulo = "Defesa Civil: " + new string('a', 140) + "🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️🌧️";
+        var corpo = (await Avaliar(Contexto(alerta))).Single().Payload.Corpo;
+        corpo.Length.Should().BeLessThanOrEqualTo(180);
+        for (var i = 0; i < corpo.Length; i++)
+            if (char.IsHighSurrogate(corpo[i])) (i + 1 < corpo.Length && char.IsLowSurrogate(corpo[i + 1])).Should().BeTrue();
     }
 }

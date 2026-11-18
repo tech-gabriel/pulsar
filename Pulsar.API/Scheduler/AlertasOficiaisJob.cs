@@ -8,7 +8,8 @@ namespace Pulsar.API.Scheduler;
 /// <summary>
 /// Lê os alertas oficiais da Defesa Civil num ritmo próprio, fora do ciclo de coleta: 5 min quando
 /// há algo acontecendo, 15 min no calmo (<see cref="RitmoAlertas"/>). O push sai pelo motor de
-/// notificações, no ciclo de coleta, a partir do que este job gravou.
+/// notificações, no ciclo de coleta, a partir do que este job gravou; alerta Extremo novo chama o
+/// motor na hora (decisão do desenho: Extremo avisa na hora).
 /// </summary>
 public class AlertasOficiaisJob : BackgroundService
 {
@@ -30,12 +31,12 @@ public class AlertasOficiaisJob : BackgroundService
             RitmoAlertas.Atento.TotalMinutes, RitmoAlertas.Calmo.TotalMinutes);
         while (!stoppingToken.IsCancellationRequested)
         {
-            var proximo = await ExecutarAsync(stoppingToken);
+            var proximo = await ExecutarUmCicloAsync(stoppingToken);
             await Task.Delay(proximo, stoppingToken).ConfigureAwait(false);
         }
     }
 
-    private async Task<TimeSpan> ExecutarAsync(CancellationToken ct)
+    public async Task<TimeSpan> ExecutarUmCicloAsync(CancellationToken ct)
     {
         try
         {
@@ -45,6 +46,11 @@ public class AlertasOficiaisJob : BackgroundService
             var agora = DateTime.UtcNow;
 
             var resultado = await servico.SincronizarAsync(agora, ct);
+            if (resultado.NovosExtremos > 0)
+            {
+                var enviados = await scope.ServiceProvider.GetRequiredService<IMotorNotificacoes>().AvaliarEDispararAsync(ct);
+                _logger.LogInformation("Alerta Extremo novo: motor de push rodou na hora ({Enviados} envio(s)).", enviados);
+            }
             var haAtivo = (await servico.AtivosPorAreaAsync(agora, ct)).Count > 0;
             var desde = agora - JanelaChuvaMedida;
             var haChuva = await db.ScoresPerigo.AnyAsync(s => s.Timestamp >= desde && s.Chuva3hMedidaMm > 0, ct);

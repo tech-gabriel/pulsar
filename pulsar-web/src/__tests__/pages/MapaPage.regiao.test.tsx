@@ -58,6 +58,16 @@ afterEach(() => {
 });
 
 describe('MapaPage deep-link', () => {
+
+  // V1 C: a linha "E mais N áreas" do sino abre a lista da cidade no painel (e enquadra a cidade).
+  it('?cidade=<nome> troca o painel para a cidade e enquadra o mapa nela', async () => {
+    SUBS.push({ ...ITAQUERA, id: 'b1', nome: 'Santos', zona: 'Baixada Santista', cidade: 'Baixada Santista' } as typeof ITAQUERA);
+    try {
+      render(<MemoryRouter initialEntries={['/app?cidade=Baixada%20Santista']}><MapaPage /></MemoryRouter>);
+      await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toHaveTextContent('|Baixada Santista'));
+      expect(screen.getAllByRole('button', { name: 'Baixada Santista', pressed: true }).length).toBeGreaterThan(0);
+    } finally { SUBS.pop(); }
+  });
   it('?regiao=<zona> enquadra a zona no mapa, sem painel de zona', async () => {
     render(<MemoryRouter initialEntries={['/app?regiao=zona-leste']}><MapaPage /></MemoryRouter>);
     await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toHaveTextContent('|Leste'));

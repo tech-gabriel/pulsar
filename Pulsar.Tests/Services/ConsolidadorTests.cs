@@ -689,4 +689,43 @@ public class ConsolidadorTests
 
         Consolidador.Consolidar(d, [Lugar(Mooca, "c1")], Agora).Should().NotBeNull();
     }
+
+    // ---------- Alertas oficiais (decisão do user, 18/11/2026): 1 por área a cada 3 h; subir de
+    // nível avisa na hora; o Extremo sempre passa; o mesmo alerta nunca avisa duas vezes.
+    private static NotificacaoPendente Dc(Guid sub, string local, int nivel, string id, bool extremo = false)
+        => P(sub, local, "alerta-oficial", extremo ? 0 : 1, CriterioOptIn.RiscoAlto,
+             extremo ? null : TimeSpan.FromHours(3), $"dc:{nivel}:{id}:{sub}") with { Nivel = nivel };
+
+    private static EnvioAnterior EnvioDc(Guid sub, int nivel, string id, double horasAtras)
+        => new(sub, "alerta-oficial", $"dc:{nivel}:{id}:{sub}", Guid.NewGuid(), Agora.AddHours(-horasAtras));
+
+    [Fact]
+    public void AlertaOficial_ReemissaoEm3h_NaoAvisa()
+        => Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 1, "A", 1)), [Dc(Mooca, "Mooca", 1, "B")], Agora).Should().BeNull();
+
+    [Fact]
+    public void AlertaOficial_SubirDeNivelEm3h_Avisa()
+        => Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 1, "A", 1)), [Dc(Mooca, "Mooca", 2, "B")], Agora).Should().NotBeNull();
+
+    [Fact]
+    public void AlertaOficial_DescerDeNivelEm3h_NaoAvisa()
+        => Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 2, "A", 1)), [Dc(Mooca, "Mooca", 1, "B")], Agora).Should().BeNull();
+
+    [Fact]
+    public void AlertaOficial_DepoisDe3h_OutroAlertaAvisa_MasOMesmoNao()
+    {
+        Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 1, "A", 4)), [Dc(Mooca, "Mooca", 1, "B")], Agora).Should().NotBeNull();
+        Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 1, "A", 4)), [Dc(Mooca, "Mooca", 1, "A")], Agora).Should().BeNull();
+    }
+
+    [Fact]
+    public void AlertaOficial_ExtremoReemitido_AvisaSempre()
+        => Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 3, "A", 0.5)), [Dc(Mooca, "Mooca", 3, "B", extremo: true)], Agora).Should().NotBeNull();
+
+    [Fact]
+    public void AlertaOficial_Agrupado_TituloCitaADefesaCivil()
+    {
+        var envio = Consolidador.Consolidar(D(), [Dc(Mooca, "Mooca", 1, "A"), Dc(Penha, "Penha", 1, "B")], Agora);
+        envio!.Payload.Titulo.Should().Be("Alerta da Defesa Civil na Mooca e na Penha");
+    }
 }

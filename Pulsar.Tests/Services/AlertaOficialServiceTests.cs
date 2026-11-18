@@ -159,4 +159,25 @@ public class AlertaOficialServiceTests : IDisposable
 
         (await _db.AlertasOficiais.CountAsync()).Should().Be(0);
     }
+
+    // Extremo novo avisa no ciclo da leitura (E4b): o serviço diz quantos extremos entraram agora.
+    [Fact]
+    public async Task Sincronizar_ContaOsExtremosNovos()
+    {
+        var feed = new FeedFalso(Amostra(comCancel: false));
+        (await Servico(feed).SincronizarAsync(Agora)).NovosExtremos.Should().Be(1); // Santos
+        (await Servico(feed).SincronizarAsync(Agora.AddMinutes(5))).NovosExtremos.Should().Be(0);
+    }
+
+    // Extremo com início marcado para depois da leitura: o motor só o vê a partir do início, então
+    // a chamada na hora vale na primeira leitura depois que ele passa a valer, e só nela.
+    [Fact]
+    public async Task Sincronizar_ExtremoComInicioFuturo_ContaNaLeituraEmQueComecaAValer()
+    {
+        var feed = new FeedFalso(Amostra(comCancel: false));
+        var antes = new DateTime(2026, 11, 18, 17, 0, 0, DateTimeKind.Utc); // a amostra começa às 17:05Z
+        (await Servico(feed).SincronizarAsync(antes)).NovosExtremos.Should().Be(0);
+        (await Servico(feed).SincronizarAsync(antes.AddMinutes(10))).NovosExtremos.Should().Be(1);
+        (await Servico(feed).SincronizarAsync(antes.AddMinutes(15))).NovosExtremos.Should().Be(0);
+    }
 }

@@ -55,7 +55,12 @@ public class AlertaOficialService : IAlertaOficialService
         var existentes = await _db.AlertasOficiais.Where(a => ids.Contains(a.Identificador))
             .ToDictionaryAsync(a => a.Identificador, ct);
 
-        int novos = 0, cancelados = 0;
+        // Última leitura boa: um Extremo gravado antes, com início entre ela e agora, passou a valer nesta.
+        var anterior = await _db.ExecucoesSincronizacao
+            .Where(e => e.Fonte == ExecucaoSincronizacao.FonteIdap && e.Sucesso && e.IniciadoEm < agoraUtc)
+            .MaxAsync(e => (DateTime?)e.IniciadoEm, ct);
+
+        int novos = 0, cancelados = 0, novosExtremos = 0;
         foreach (var a in alertas.OrderBy(a => a.EnviadoUtc))
         {
             // Cancel e Update encerram o alerta a que se referem; o Update segue como alerta novo.
@@ -88,10 +93,16 @@ public class AlertaOficialService : IAlertaOficialService
             _db.AlertasOficiais.Add(novo);
             existentes[a.Identificador] = novo;
             novos++;
+            // O motor só vê o alerta a partir do início: Extremo com início futuro conta quando começa a valer.
+            if (novo.Gravidade == "Extreme" && novo.InicioUtc <= agoraUtc) novosExtremos++;
         }
 
         var limite = agoraUtc - Retencao;
         _db.AlertasOficiais.RemoveRange(await _db.AlertasOficiais.Where(a => a.ExpiraUtc < limite).ToListAsync(ct));
+
+        if (anterior is { } desde)
+            novosExtremos += await _db.AlertasOficiais.CountAsync(a => a.Gravidade == "Extreme" && a.CanceladoEmUtc == null
+                && a.RecebidoEmUtc <= desde && a.InicioUtc > desde && a.InicioUtc <= agoraUtc && a.ExpiraUtc > agoraUtc, ct);
 
         execucao.Sucesso = true;
         execucao.Lidas = alertas.Count;
@@ -104,7 +115,7 @@ public class AlertaOficialService : IAlertaOficialService
             && (a.Emissor.Contains("São Paulo", StringComparison.OrdinalIgnoreCase) || a.Emissor.Contains("(SP)", StringComparison.Ordinal)));
         if (novos > 0 || cancelados > 0)
             _logger.LogInformation("Alertas oficiais: {Novos} novos, {Cancelados} cancelados ({Lidos} no feed).", novos, cancelados, alertas.Count);
-        return new ResultadoSincronizacao(true, novos, cancelados, haAlertaSp);
+        return new ResultadoSincronizacao(true, novos, cancelados, haAlertaSp, novosExtremos);
     }
 
     /// <summary>Corta no limite sem partir um emoji ao meio (surrogate solto o Postgres recusa em UTF-8).</summary>

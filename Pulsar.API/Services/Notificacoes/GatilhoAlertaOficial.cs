@@ -31,14 +31,18 @@ public partial class GatilhoAlertaOficial : IGatilhoNotificacao
             // que isso (menos uma hora de folga para o ciclo) já teve a chance dele e não volta a avisar.
             if (ctx.AgoraUtc - alerta.InicioUtc >= TimeSpan.FromHours(LimiaresNotificacao.JanelaTetoDiarioHoras - 1))
                 continue;
-            var extremo = alerta.Gravidade == "Extreme";
+            // Decisão do user (18/11/2026): Minor e Unknown só aparecem no app.
+            if (NivelDe(alerta.Gravidade) is not (> 0 and var nivel))
+                continue;
+            var extremo = nivel == 3;
             if (!extremo && (ctx.PontosCgeAtivos.Count > 0 || !TemSinalProprio(alerta, ctx.Estado.Score)))
                 continue;
 
             var em = NomesSubprefeitura.ComPreposicao(ctx.Subprefeitura.Nome);
             pendencias.Add(new NotificacaoPendente(
                 Gatilho: Nome,
-                Chave: $"dc:{alerta.Identificador}:{ctx.Subprefeitura.Id}",
+                // O nível vai na chave: o consolidador lê dela o nível do último envio da área.
+                Chave: $"dc:{nivel}:{alerta.Identificador}:{ctx.Subprefeitura.Id}",
                 Criterio: alerta.Gravidade is "Extreme" or "Severe" ? CriterioOptIn.RiscoAlto : CriterioOptIn.RiscoModerado,
                 Payload: new PushPayload(
                     Titulo: extremo ? $"Alerta extremo da Defesa Civil {em}" : $"Alerta da Defesa Civil {em}",
@@ -46,12 +50,18 @@ public partial class GatilhoAlertaOficial : IGatilhoNotificacao
                     Url: NomesSubprefeitura.UrlDetalhe(ctx.Subprefeitura.Nome),
                     Tag: $"alerta-{ctx.Subprefeitura.Id}"),
                 Prioridade: extremo ? LimiaresNotificacao.PrioridadeAlertaExtremo : LimiaresNotificacao.PrioridadeAlertaComSinal,
+                // Decisão do user (18/11/2026): 1 aviso por área a cada 3 h; o Extremo sempre passa.
+                Cooldown: extremo ? null : TimeSpan.FromHours(LimiaresNotificacao.CooldownAlertaOficialHoras),
+                Nivel: nivel,
                 SubprefeituraId: ctx.Subprefeitura.Id,
                 Local: ctx.Subprefeitura.Nome,
                 Perigo: PerigoDoEvento(alerta.Evento)));
         }
         return Task.FromResult<IReadOnlyList<NotificacaoPendente>>(pendencias);
     }
+
+    /// <summary>Nível do alerta pela gravidade do CAP: Moderate 1, Severe 2, Extreme 3; o resto 0 (sem push).</summary>
+    public static int NivelDe(string gravidade) => gravidade switch { "Moderate" => 1, "Severe" => 2, "Extreme" => 3, _ => 0 };
 
     /// <summary>O perigo do Pulsar que corresponde ao evento do alerta; null quando não há um só.</summary>
     public static TipoPerigo? PerigoDoEvento(string evento)
@@ -82,7 +92,11 @@ public partial class GatilhoAlertaOficial : IGatilhoNotificacao
         var hora = TimeZoneInfo.ConvertTimeFromUtc(alerta.InicioUtc, fuso);
         var texto = PrefixoDoTitulo().Replace(alerta.Titulo, "").Trim();
         var corpo = $"{alerta.Emissor}, {hora:HH}h{hora:mm}: {texto}";
-        return corpo.Length <= MaxCorpo ? corpo : corpo[..(MaxCorpo - 1)].TrimEnd() + "…";
+        if (corpo.Length <= MaxCorpo) return corpo;
+        // Sem partir um emoji (par de surrogates) ao meio no corte.
+        var fim = MaxCorpo - 1;
+        if (char.IsHighSurrogate(corpo[fim - 1])) fim--;
+        return corpo[..fim].TrimEnd() + "…";
     }
 
     // O título da IDAP começa com "Defesa Civil:" e às vezes com a hora ("14h05"), que o corpo já diz.

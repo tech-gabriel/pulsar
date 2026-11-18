@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { ChevronRight, Megaphone } from 'lucide-react';
 import type { AlertaOficial } from '../../types';
-import { horaCurta } from '../../utils/data';
-import { emissorCurto, emissorLegivel, eventoLegivel, nivelOficial, porGravidade } from '../../utils/alertaOficial';
+import { ateQuando, emissorCurto, emissorLegivel, eventoLegivel, nivelOficial, porGravidade } from '../../utils/alertaOficial';
 import FolhaInferior from '../ui/FolhaInferior';
 
 /** Selo do nível oficial: o desenho do BadgeRisco, com a cor da escala da Defesa Civil na bolinha. */
@@ -19,7 +18,7 @@ export function LinhaAvisoOficial({ alertas }: { alertas: AlertaOficial[] | unde
   return (
     <p className={`det-linha dc-linha dc-${nivel.cor}`}>
       <Megaphone size={17} aria-hidden="true" />
-      <span className="dc-texto">{`Defesa Civil: ${eventoLegivel(a.evento).toLocaleLowerCase('pt-BR')} até ${horaCurta(a.expiraUtc)}`}</span>
+      <span className="dc-texto">{`Defesa Civil: ${eventoLegivel(a.evento).toLocaleLowerCase('pt-BR')} até ${ateQuando(a.expiraUtc)}`}</span>
       <SeloNivelOficial gravidade={a.gravidade} />
     </p>
   );
@@ -41,10 +40,10 @@ export default function AvisosOficiais({ alertas }: { alertas: AlertaOficial[] |
         {porGravidade(alertas).map((a) => (
           <div key={a.identificador} className="det-faixa">
             <button type="button" className="dc-linha-alerta" onClick={() => setAberto(a)}
-              aria-label={`${eventoLegivel(a.evento)}, alerta ${nivelOficial(a.gravidade).rotulo.toLocaleLowerCase('pt-BR')} da ${emissorCurto(a.emissor)}. Ler o alerta completo`}>
+              aria-label={`${eventoLegivel(a.evento)}, alerta ${nivelOficial(a.gravidade).rotulo.toLocaleLowerCase('pt-BR')} da ${emissorCurto(a.emissor)}, até ${ateQuando(a.expiraUtc)}. Ler o alerta completo`}>
               <span>
                 <b>{eventoLegivel(a.evento)}</b>
-                <small>{`${emissorCurto(a.emissor)} · até ${horaCurta(a.expiraUtc)}`}</small>
+                <small>{`${emissorCurto(a.emissor)} · até ${ateQuando(a.expiraUtc)}`}</small>
               </span>
               <SeloNivelOficial gravidade={a.gravidade} />
               <ChevronRight size={16} aria-hidden="true" />
@@ -60,7 +59,7 @@ export default function AvisosOficiais({ alertas }: { alertas: AlertaOficial[] |
               <h2 id="titulo-folha-alerta">{eventoLegivel(aberto.evento)}</h2>
               <SeloNivelOficial gravidade={aberto.gravidade} />
             </div>
-            <p className="dc-folha-de">{`${emissorLegivel(aberto.emissor)} · de ${horaCurta(aberto.inicioUtc)} até ${horaCurta(aberto.expiraUtc)}`}</p>
+            <p className="dc-folha-de">{`${emissorLegivel(aberto.emissor)} · de ${ateQuando(aberto.inicioUtc)} até ${ateQuando(aberto.expiraUtc)}`}</p>
             <p className="dc-folha-texto">{aberto.descricao || aberto.titulo}</p>
             {aberto.instrucao && <p className="dc-folha-instrucao">{aberto.instrucao}</p>}
             <button type="button" data-foco-inicial onClick={() => setAberto(null)}

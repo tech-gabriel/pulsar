@@ -102,6 +102,16 @@ describe('TelaEscolher com duas cidades', () => {
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
+  // E4b: o foco acompanha a troca de tela (teclado e leitor de tela não ficam no vazio).
+  it('a pergunta é título, e o foco vai para a cidade escolhida e volta aos cartões', () => {
+    render(<TelaEscolher subprefeituras={duas} localizar={vi.fn()} onContinuar={vi.fn()} />);
+    expect(screen.getByRole('heading', { name: 'Em qual cidade?' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Baixada Santista/ }));
+    expect(document.activeElement).toHaveTextContent('Baixada Santista');
+    fireEvent.click(screen.getByRole('button', { name: 'Trocar cidade' }));
+    expect(document.activeElement).toBe(screen.getAllByRole('button', { name: /subprefeituras|municípios/ })[0]);
+  });
+
   it('a seleção vale entre as cidades', async () => {
     const onContinuar = vi.fn().mockResolvedValue(true);
     render(<TelaEscolher subprefeituras={duas} localizar={vi.fn()} onContinuar={onContinuar} />);

@@ -38,17 +38,20 @@ public class LocaisSalvosService : ILocaisSalvosService
         }).ToList();
     }
 
-    public async Task<SalvarLocalResponseDto> SalvarAsync(Guid usuarioId, TipoLocal tipo, SalvarLocalRequestDto req)
+    public async Task<SalvarLocalResponseDto> SalvarAsync(Guid usuarioId, TipoLocal tipo, SalvarLocalRequestDto req, bool incluirOcultas = false)
     {
         var rotulo = (req.Rotulo ?? string.Empty).Trim();
         if (rotulo.Length == 0 || rotulo.Length > LocalSalvo.MaxRotulo)
             throw new ArgumentException("Endereço inválido.");
-        if (!CoberturaCidades.Dentro(req.Latitude, req.Longitude, CoberturaCidades.Nomes))
+        // Só as cidades que a pessoa vê: a caixa da Baixada (que pega parte do ABC) não vale para
+        // quem não a vê. O Admin vê a cidade escondida para conferir antes da abertura.
+        var cidades = await _db.Cidades.Where(c => incluirOcultas || c.Publica).Select(c => c.Nome).ToListAsync();
+        if (!CoberturaCidades.Dentro(req.Latitude, req.Longitude, cidades))
             throw new ArgumentException("Esse endereço fica fora da área coberta pelo Pulsar.");
-        // Casa e trabalho só em área de cidade pública: senão a área escondida (Baixada em
-        // conferência) entrava nos favoritos e ligava push para ela.
+        // Área de cidade escondida só para o Admin: senão ela entrava nos favoritos e ligava push
+        // para quem não a vê.
         var sub = await _db.Subprefeituras.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == req.SubprefeituraId && s.Regiao.Cidade.Publica)
+            .FirstOrDefaultAsync(s => s.Id == req.SubprefeituraId && (incluirOcultas || s.Regiao.Cidade.Publica))
             ?? throw new ArgumentException("Subprefeitura não encontrada.");
 
         var agora = DateTime.UtcNow;

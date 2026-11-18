@@ -37,4 +37,7 @@ public record NotificacaoPendente(
     string? Intensidade = null,
     double? MedidoMm30 = null,
     string? LocalMedicao = null,
-    string? Celula = null);
+    string? Celula = null,
+    // Nível do alerta oficial (1 Moderado, 2 Severo, 3 Extremo; 0 nos outros gatilhos): no
+    // cooldown, um envio de nível menor não cobre um de nível maior (subir de nível avisa na hora).
+    int Nivel = 0);

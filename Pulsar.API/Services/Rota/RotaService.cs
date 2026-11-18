@@ -140,7 +140,7 @@ public class RotaService : IRotaService
 
         // A chuva de 1 h e 3 h vem da estação; do modelo só entram as 48 h, quando a estação não as manda.
         var modelo = new EntradaScore(0, 0, score.Chuva48hMm, 0, 0, nome);
-        return trechos.Max(t => EstacaoChuva.MaisProxima(t.Lat, t.Lon, estacoes, RiscoTrecho.RaioEstacaoKm) is { } estacao
+        return trechos.Max(t => EstacaoChuva.DoTrecho(t.Lat, t.Lon, estacoes, RiscoTrecho.RaioEstacaoKm) is { } estacao
             ? RiscoTrecho.ComChuvaMedida(modelo, estacao, t.Fator).Faixa
             : daArea);
     }

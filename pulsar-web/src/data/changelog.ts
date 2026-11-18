@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.37.3',
+    data: '2026-11-18',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Chuva medida certa em cada trecho',
+        descricao: 'Estação de chuva que parou de transmitir não deixa mais o trecho verde no meio da tempestade. Com mais de uma estação perto, vale a que mediu mais chuva.',
+      },
+    ],
+  },
+  {
     versao: '1.37.2',
     data: '2026-11-17',
     itens: [

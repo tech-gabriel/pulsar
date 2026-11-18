@@ -128,4 +128,17 @@ public class RiscoTrechoTests
         area.Chuva3hMedidaMm.Should().BeNull();
         area.Alagamento.Valor.Should().BeApproximately(DoModelo(1.25), 1e-9);
     }
+
+    // Decisão do user (18/11/2026): a estação seca ao lado não apaga o posto com chuva forte a 2,5 km.
+    [Fact]
+    public void DaArea_SecaPertoEChuvaA2Km_FicaComAChuva()
+    {
+        var seca = new EstacaoChuva("SECA", -23.5 + 1 * GrauPorKm, -46.4, 0, 0, 0);
+        var chuva = new EstacaoChuva("CHUVA", -23.5 + 2.5 * GrauPorKm, -46.4, 28, 31, 31);
+
+        var trecho = RiscoTrecho.DaArea(Modelo, [Celula(1)], [seca, chuva])[0];
+
+        trecho.Estacao!.Cod.Should().Be("CHUVA");
+        trecho.Risco.Faixa.Should().Be(FaixaRisco.ALTO);
+    }
 }

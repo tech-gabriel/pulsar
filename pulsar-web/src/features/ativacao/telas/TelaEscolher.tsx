@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Navigation, Search, X } from 'lucide-react';
+import { Check, ChevronRight, Navigation, Search, X } from 'lucide-react';
 import type { FaixaRisco } from '../../../types';
 import { normalizarNome } from '../../../utils/texto';
 import { emNomeDe, getSubprefeituraPorSlug } from '../../../data/regioes-seo';
 import { lerRegiaoPendente, limparRegiaoPendente } from '../regiaoPendente';
-import { zonaDaArea } from '../../cidade/cidade';
+import { areasDaCidade, cidadeDaArea, cidadesDasAreas, rotuloAreas, zonaDaArea } from '../../cidade/cidade';
 
 const MAX = 10;
 const COR: Record<FaixaRisco, string> = { BAIXO: '#22C55E', MODERADO: '#F59E0B', ALTO: '#EF4444' };
@@ -26,11 +26,19 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
   // Veio de uma página pública com a região escolhida: chega marcada (só marcada) assim que a
   // lista estiver carregada. Ajuste durante o render, como o deep-link do MapaPage.
   const [pendenteAplicado, setPendenteAplicado] = useState(false);
+  // D4 (escolha do user, 18/11/2026): com mais de uma cidade, a pessoa escolhe a cidade primeiro.
+  const [cidadeEscolhida, setCidadeEscolhida] = useState<string | null>(null);
+  const cidades = useMemo(() => cidadesDasAreas(subprefeituras), [subprefeituras]);
+  const variasCidades = cidades.length > 1;
+  const cidade = variasCidades ? cidadeEscolhida : cidades[0] ?? null;
+  const daCidade = useMemo(() => (cidade ? areasDaCidade(subprefeituras, cidade) : []), [subprefeituras, cidade]);
+  const singular = rotuloAreas(cidade ?? 'São Paulo', 1).slice(2);
   if (!pendenteAplicado && subprefeituras.length > 0) {
     setPendenteAplicado(true);
     const nome = getSubprefeituraPorSlug(lerRegiaoPendente() ?? '')?.nome;
     const sub = nome ? subprefeituras.find((s) => normalizarNome(s.nome) === normalizarNome(nome)) : undefined;
     if (sub) setSelecionadas([sub.id]);
+    if (sub) setCidadeEscolhida(cidadeDaArea(sub));
   }
   const [busca, setBusca] = useState('');
   const [gps, setGps] = useState<EstadoGps>('ocioso');
@@ -41,9 +49,9 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
   const porId = useMemo(() => new Map(subprefeituras.map((s) => [s.id, s])), [subprefeituras]);
   const visiveis = useMemo(() => {
     const q = normalizarNome(busca);
-    const lista = [...subprefeituras].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    const lista = [...daCidade].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
     return q ? lista.filter((s) => normalizarNome(s.nome).includes(q)) : lista;
-  }, [subprefeituras, busca]);
+  }, [daCidade, busca]);
 
   function alternar(id: string) {
     setErro(false);
@@ -56,6 +64,7 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
     const sub = id ? porId.get(id) : undefined;
     if (sub) {
       setDetectada(sub.nome);
+      setCidadeEscolhida(cidadeDaArea(sub));
       setGps('achou');
       setSelecionadas((atual) => atual.includes(sub.id) || atual.length >= MAX ? atual : [sub.id, ...atual]);
     } else {
@@ -78,7 +87,7 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
     : 'Usar minha localização';
   const subGps = gps === 'achou' ? 'Já marcamos para você'
     : gps === 'falhou' ? 'Não deu para usar a localização agora'
-    : 'Marca a subprefeitura onde você está';
+    : variasCidades ? 'Marca a área onde você está' : 'Marca a subprefeitura onde você está';
 
   return (
     <>
@@ -95,9 +104,34 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
         </span>
       </button>
 
+      {cidade === null ? (
+        <div style={{ marginTop: 14, flex: 1 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Em qual cidade?</p>
+          {cidades.map((c) => (
+            <button key={c} type="button" onClick={() => setCidadeEscolhida(c)}
+              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 14, padding: 16, marginTop: 10, borderRadius: 16, minHeight: 76,
+                background: 'color-mix(in srgb, var(--text-primary) 5%, transparent)', color: 'var(--text-primary)' }}>
+              <span aria-hidden="true" style={{ width: 44, height: 44, borderRadius: 12, display: 'grid', placeItems: 'center', flex: '0 0 auto', fontWeight: 800, fontFamily: 'var(--font-heading)', color: '#fff',
+                background: 'linear-gradient(135deg, var(--color-pulsar-600), var(--color-pulsar-500))' }}>{c.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>
+              <span style={{ flex: 1 }}>
+                <b style={{ display: 'block', fontFamily: 'var(--font-heading)', fontSize: 17 }}>{c}</b>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{rotuloAreas(c, areasDaCidade(subprefeituras, c).length)}</span>
+              </span>
+              <ChevronRight size={20} aria-hidden="true" style={{ color: 'var(--text-muted)' }} />
+            </button>
+          ))}
+        </div>
+      ) : (<>
+      {variasCidades && (
+        <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flex: '0 0 auto' }}>
+          <b style={{ fontFamily: 'var(--font-heading)', fontSize: 16 }}>{cidade}</b>
+          <button type="button" onClick={() => { setCidadeEscolhida(null); setBusca(''); }}
+            style={{ minHeight: 44, padding: '0 4px', fontSize: 14, fontWeight: 600, color: 'var(--color-pulsar-600)' }}>Trocar cidade</button>
+        </div>
+      )}
       <label style={{ marginTop: 12, minHeight: 44, borderRadius: 12, background: 'color-mix(in srgb, var(--text-primary) 5%, transparent)', display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', flex: '0 0 auto' }}>
         <Search size={16} style={{ color: 'var(--text-muted)' }} />
-        <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar subprefeitura" aria-label="Buscar subprefeitura"
+        <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder={`Buscar ${singular}`} aria-label={`Buscar ${singular}`}
           style={{ flex: 1, background: 'transparent', outline: 'none', fontSize: 15, minHeight: 44, color: 'inherit' }} />
       </label>
 
@@ -108,7 +142,7 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
             <li key={s.id}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 52, borderBottom: '1px solid color-mix(in srgb, var(--text-primary) 8%, transparent)', cursor: 'pointer' }}>
                 <span style={{ width: 8, height: 8, borderRadius: 8, background: COR[s.faixaRisco] }} aria-hidden="true" />
-                <span style={{ flex: 1, fontWeight: 600 }}>{s.nome}<span style={{ display: 'block', fontWeight: 400, fontSize: 12, color: 'var(--text-muted)' }}>{zonaDaArea(s)}</span></span>
+                <span style={{ flex: 1, fontWeight: 600 }}>{s.nome}{/* Na Baixada a zona repetiria a cidade escolhida. */}{zonaDaArea(s) !== cidade && <span style={{ display: 'block', fontWeight: 400, fontSize: 12, color: 'var(--text-muted)' }}>{zonaDaArea(s)}</span>}</span>
                 <input type="checkbox" checked={marcada} onChange={() => alternar(s.id)} aria-label={s.nome} className="sr-only" />
                 <span aria-hidden="true" style={{ width: 24, height: 24, borderRadius: 24, display: 'grid', placeItems: 'center', color: '#fff',
                   border: marcada ? 'none' : '1.5px solid color-mix(in srgb, var(--text-primary) 25%, transparent)', background: marcada ? 'var(--color-pulsar-600)' : 'transparent' }}>
@@ -119,6 +153,7 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
           );
         })}
       </ul>
+      </>)}
 
       <div style={{ position: 'sticky', bottom: 'calc(-1 * max(26px, env(safe-area-inset-bottom)))',
         // Cobre o padding inferior da tela: sem isso a lista aparece embaixo do botão ao rolar.

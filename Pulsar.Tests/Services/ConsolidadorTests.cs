@@ -779,4 +779,16 @@ public class ConsolidadorTests
         envio.Payload.Corpo.Should().Be("Toque para ver os avisos oficiais.");
         envio.Payload.Url.Should().Be("/app?regiao=Mooca");
     }
+
+    // Ressaca, deslizamento e maré caem todos em GERAL: um não é lembrete do outro.
+    [Fact]
+    public void AlertaOficial_PerigoGeral_NuncaELembrete()
+        => Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 2, "A", 4, "GERAL")), [Dc(Mooca, "Mooca", 1, "B", perigo: "GERAL")], Agora)!
+            .Payload.Corpo.Should().Be("Texto oficial B");
+
+    // Aviso do mesmo tipo de 7 h atrás é de outra onda: o alerta novo sai com o texto oficial, não "segue valendo".
+    [Fact]
+    public void AlertaOficial_AvisoAntigoDemais_NaoELembrete()
+        => Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 1, "A", 7)), [Dc(Mooca, "Mooca", 1, "B")], Agora)!
+            .Payload.Corpo.Should().Be("Texto oficial B");
 }

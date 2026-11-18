@@ -192,6 +192,15 @@ public static class LimiaresNotificacao
     public const int CooldownAlertaOficialHoras = 3;
 
     /// <summary>
+    /// Até quantas horas depois do último aviso do mesmo tipo o alerta novo sai como lembrete ("segue valendo").
+    /// Além disso é outra onda, e o texto oficial diz mais.
+    /// </summary>
+    public const int JanelaLembreteAlertaOficialHoras = 6;
+
+    /// <summary>Nome do gatilho da Defesa Civil: o job de alertas roda só ele no alerta Extremo.</summary>
+    public const string GatilhoAlertaOficial = "alerta-oficial";
+
+    /// <summary>
     /// Depois de um Alerta de um perigo, quanto tempo a Atenção DO MESMO PERIGO fica calada
     /// naquela subprefeitura. Alerta que vira Atenção é melhora, e um push "Atenção" logo
     /// depois do "Alerta" pareceria aviso novo. Perigo diferente não é afetado: é risco novo.

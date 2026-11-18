@@ -79,7 +79,7 @@ public static class Consolidador
             ChuvaComecou => PayloadChuvaComecou(grupo, d),
             ChuvaMedidaPerto => PayloadChuvaMedidaPerto(grupo, d),
             AlagamentoLugar => PayloadAlagamentoLugar(grupo, d),
-            AlertaOficial => PayloadAlertaOficial(grupo, d),
+            AlertaOficial => PayloadAlertaOficial(grupo, d, agoraUtc),
             _ => MontarPayload(grupo),
         };
         return new EnvioConsolidado(d.UsuarioId, lider.Criterio, payload, grupo);
@@ -89,7 +89,7 @@ public static class Consolidador
     private static int NivelDaChave(string chave)
         => chave.StartsWith("dc:", StringComparison.Ordinal) && chave.Length > 4 && chave[4] == ':' && char.IsDigit(chave[3]) ? chave[3] - '0' : 0;
 
-    private const string AlertaOficial = "alerta-oficial";
+    private const string AlertaOficial = LimiaresNotificacao.GatilhoAlertaOficial;
     private const int NivelExtremo = 3;
 
     /// <summary>Perigo gravado na chave do alerta oficial ("dc:1:ALAGAMENTO:id:sub"); null fora dela.</summary>
@@ -101,17 +101,24 @@ public static class Consolidador
     }
 
     /// <summary>
-    /// Lembrete (decisão do user, 18/11/2026): não Extremo, e a pessoa já foi avisada desse tipo de alerta
-    /// na área, no mesmo nível ou acima. Se passou de JaCoberta, aquele aviso tem mais de 3 h.
+    /// Lembrete (decisão do user, 18/11/2026): não Extremo, e a pessoa foi avisada desse tipo de alerta na
+    /// área, no mesmo nível ou acima, nas últimas 6 h. Se passou de JaCoberta, aquele aviso tem mais de 3 h.
+    /// GERAL (ressaca, deslizamento, maré...) junta perigos diferentes: nunca é lembrete.
     /// </summary>
-    private static bool EhLembrete(NotificacaoPendente p, IReadOnlyList<EnvioAnterior> recentes)
-        => p.Lembrete is not null && p.Nivel is > 0 and < NivelExtremo
-           && recentes.Any(r => r.SubprefeituraId == p.SubprefeituraId && r.Gatilho == p.Gatilho
-               && NivelDaChave(r.Chave) >= p.Nivel && PerigoDaChaveDc(r.Chave) == PerigoDaChaveDc(p.Chave));
-
-    private static PushPayload PayloadAlertaOficial(IReadOnlyList<NotificacaoPendente> grupo, DestinatarioPush d)
+    /// <remarks>ponytail: a janela de 6 h aproxima "o alerta anterior ainda vale" (a chave não guarda o fim);
+    /// guardar o fim no livro-caixa se o "segue valendo" errar na prática.</remarks>
+    private static bool EhLembrete(NotificacaoPendente p, IReadOnlyList<EnvioAnterior> recentes, DateTime agora)
     {
-        var lembretes = grupo.All(p => EhLembrete(p, d.Recentes));
+        var perigo = PerigoDaChaveDc(p.Chave);
+        var desde = agora.AddHours(-LimiaresNotificacao.JanelaLembreteAlertaOficialHoras);
+        return p.Lembrete is not null && p.Nivel is > 0 and < NivelExtremo && perigo is not (null or "GERAL")
+            && recentes.Any(r => r.SubprefeituraId == p.SubprefeituraId && r.Gatilho == p.Gatilho && r.EnviadoEm >= desde
+                && NivelDaChave(r.Chave) >= p.Nivel && PerigoDaChaveDc(r.Chave) == perigo);
+    }
+
+    private static PushPayload PayloadAlertaOficial(IReadOnlyList<NotificacaoPendente> grupo, DestinatarioPush d, DateTime agora)
+    {
+        var lembretes = grupo.All(p => EhLembrete(p, d.Recentes, agora));
         if (grupo.Count == 1) return lembretes ? grupo[0].Lembrete! : grupo[0].Payload;
 
         var nomes = grupo.Select(p => p.Local).Distinct().ToList();

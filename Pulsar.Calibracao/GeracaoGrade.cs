@@ -98,7 +98,7 @@ public static class GeracaoGrade
         var areaDaCelula = GradeH3.Celulas(geojson, nome => nome)
             .Where(c => !daCapital.Contains(c.Key))
             .ToDictionary(c => c.Key, c => c.Value);
-        var municipios = new[] { "Santos", "São Vicente", "Guarujá", "Cubatão", "Praia Grande", "Bertioga", "Mongaguá", "Itanhaém", "Peruíbe" };
+        var municipios = Baixada.Todas.Select(b => b.Nome);
         var semCelula = municipios.Except(areaDaCelula.Values).ToList();
         if (semCelula.Count > 0)
             throw new InvalidOperationException($"Municípios sem nenhuma célula: {string.Join(", ", semCelula)}. A grade NÃO foi gravada.");

@@ -38,6 +38,9 @@ public class BuscaService : IBuscaService
 
         var resultados = await _geocodingClient.BuscarAsync(termo, bbox, ct);
         var dtos = resultados
+            // O bbox do provedor é por interseção: o município de Santos inteiro cruza a caixa da
+            // capital e voltava para a conta comum. Só fica o ponto dentro da cobertura de quem busca.
+            .Where(r => CoberturaCidades.Dentro(r.Latitude, r.Longitude, cidades))
             .Select(r => new EnderecoBuscaDto
             {
                 Nome = SemCaixaAlta(string.IsNullOrWhiteSpace(r.Nome) ? r.Descricao : r.Nome),

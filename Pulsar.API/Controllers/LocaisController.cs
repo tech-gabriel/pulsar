@@ -43,7 +43,7 @@ public class LocaisController : ControllerBase
 
         try
         {
-            return Ok(await _locais.SalvarAsync(usuarioId, t, request));
+            return Ok(await _locais.SalvarAsync(usuarioId, t, request, incluirOcultas: User.IsInRole("ADMIN")));
         }
         catch (ArgumentException ex)
         {

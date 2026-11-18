@@ -67,7 +67,7 @@ public class RotaController : ControllerBase
         if (UsuarioId() is not { } usuarioId)
             return Unauthorized();
         // O pedido vira cálculo a cada ciclo do job: id que não é de subprefeitura ativa não entra.
-        var ativas = (await _subprefeituras.ObterVisiveisAsync()).Select(s => s.Id).ToHashSet();
+        var ativas = (await _subprefeituras.ObterVisiveisAsync(incluirOcultas: User.IsInRole("ADMIN"))).Select(s => s.Id).ToHashSet();
         if (req.SubprefeituraIds.Any(id => !ativas.Contains(id)))
             return BadRequest(new { mensagem = "Subprefeitura desconhecida no caminho." });
 

@@ -168,4 +168,21 @@ public class BuscaServiceTests
 
         stub.Chamadas.Should().Be(2);
     }
+
+    // A busca devolve só o que cai na cobertura de quem busca: o centro de Santos que o provedor
+    // manda (o contorno do município cruza a caixa da capital) não chega à conta comum.
+    [Fact]
+    public async Task Busca_DescartaResultadoForaDaCobertura()
+    {
+        var stub = new StubGeocodingClient
+        {
+            Resultado =
+            [
+                new EnderecoGeocodificado("Santos, São Paulo, Brasil", -23.96094, -46.31663, "Santos", "municipality"),
+                new EnderecoGeocodificado("Rua da Mooca, São Paulo", -23.556, -46.598, "Rua da Mooca", "address"),
+            ],
+        };
+        var resultado = await CriarService(stub).BuscarEnderecosAsync("santos e mooca", Capital);
+        resultado.Select(r => r.Nome).Should().Equal("Rua da Mooca");
+    }
 }

@@ -60,10 +60,15 @@ export function lugarDaArea(area: { zona: string } & ComCidade): string {
 /** A cidade de uma área; sem o campo (snapshot do SSG) é São Paulo. */
 export const cidadeDaArea = (area: ComCidade): string => area.cidade ?? 'São Paulo';
 
-/** As cidades das áreas, na ordem em que aparecem na lista da API (a capital vem primeiro). */
+/** As cidades das áreas, a com mais áreas primeiro (a capital); empate pelo nome. */
 export function cidadesDasAreas(areas: ComCidade[]): string[] {
-  return [...new Set(areas.map(cidadeDaArea))];
+  const n = new Map<string, number>();
+  for (const a of areas) n.set(cidadeDaArea(a), (n.get(cidadeDaArea(a)) ?? 0) + 1);
+  return [...n].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0], 'pt-BR')).map(([c]) => c);
 }
+
+/** "em São Paulo", "na Baixada Santista". */
+export const naCidade = (cidade: string): string => (cidade === BAIXADA ? `na ${cidade}` : `em ${cidade}`);
 
 export function areasDaCidade<A extends ComCidade>(areas: A[], cidade: string): A[] {
   return areas.filter((a) => cidadeDaArea(a) === cidade);

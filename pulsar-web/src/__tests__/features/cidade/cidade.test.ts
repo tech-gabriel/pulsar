@@ -41,8 +41,8 @@ describe('cidades no painel', () => {
   const santos = { id: 'b1', nome: 'Santos', zona: 'Baixada Santista', cidade: 'Baixada Santista' };
   const sv = { id: 'b2', nome: 'São Vicente', zona: 'Baixada Santista', cidade: 'Baixada Santista' };
 
-  it('as cidades na ordem em que aparecem; sem cidade conta como São Paulo', () => {
-    expect(cidadesDasAreas([sp, santos, se, sv])).toEqual(['São Paulo', 'Baixada Santista']);
+  it('a cidade com mais áreas primeiro (a API pode listar a Baixada antes); sem cidade conta como São Paulo', () => {
+    expect(cidadesDasAreas([santos, sp, se, sv, { ...sp, id: 's3' }])).toEqual(['São Paulo', 'Baixada Santista']);
     expect(cidadesDasAreas([se])).toEqual(['São Paulo']);
     expect(areasDaCidade([sp, santos, se, sv], 'São Paulo')).toEqual([sp, se]);
   });

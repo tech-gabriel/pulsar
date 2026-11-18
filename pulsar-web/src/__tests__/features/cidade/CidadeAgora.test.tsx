@@ -17,6 +17,11 @@ describe('CidadeAgora', () => {
     render(<CidadeAgora cidadeNome="São Paulo" resumo={r({ baixo: 32, pior: { ...itaquera, faixaRisco: 'BAIXO' } as Area })} />);
     expect(screen.getByRole('heading')).toHaveTextContent('Tudo tranquilo em São Paulo');
   });
+  it('na Baixada: preposição e o nome das áreas dela', () => {
+    render(<CidadeAgora cidadeNome="Baixada Santista" resumo={r({ baixo: 9 })} />);
+    expect(screen.getByRole('heading')).toHaveTextContent('Tudo tranquilo na Baixada Santista');
+    expect(screen.getByText('Nenhum município em atenção')).toBeInTheDocument();
+  });
   it('sem dados não finge que está tranquilo', () => {
     render(<CidadeAgora cidadeNome="São Paulo" resumo={r({ baixo: 0, semDados: true })} />);
     expect(screen.getByRole('heading')).toHaveTextContent('Sem dados de risco agora');

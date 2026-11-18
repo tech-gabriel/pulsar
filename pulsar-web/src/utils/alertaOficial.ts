@@ -105,5 +105,6 @@ const diaMes = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digi
 /** V2 B (escolha do user, 18/11/2026): "16:18" se for hoje; "21/11, 16:18" se for outro dia. */
 export function ateQuando(iso: string, agora: Date = new Date()): string {
   const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
   return d.toDateString() === agora.toDateString() ? horaCurta(iso) : `${diaMes.format(d)}, ${horaCurta(iso)}`;
 }

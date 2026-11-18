@@ -75,8 +75,12 @@ export default function MapaPage() {
   const areasDoPainel = useMemo(() => areasDaCidade(subprefeituras, cidade), [subprefeituras, cidade]);
   function lembrarCidade(c: string) {
     setCidadeLembrada(c);
-    try { localStorage.setItem(CHAVE_CIDADE, c); } catch { /* sem storage: vale só nesta visita */ }
   }
+  // Grava fora do render: o deep link (?cidade=, ?regiao=) troca a cidade durante o render.
+  useEffect(() => {
+    if (!cidadeLembrada) return;
+    try { localStorage.setItem(CHAVE_CIDADE, cidadeLembrada); } catch { /* sem storage: vale só nesta visita */ }
+  }, [cidadeLembrada]);
   const isMobile = useIsMobile(768);
   const navigate = useNavigate();
   const { search } = useLocation();

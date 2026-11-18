@@ -86,10 +86,12 @@ export default function CasaTrabalhoCard() {
   // Quem vê a Baixada (o Admin, até a abertura) também salva casa e trabalho nos municípios dela.
   const comBaixada = subprefeituras.some((s) => s.cidade === BAIXADA);
   const contornoBaixada = useJsonPublico<FeatureCollection>('/baixada-santista-leve.geojson', comBaixada);
-  const contorno = useMemo(
-    () => ({ dados: comBaixada && contornoCapital.dados && contornoBaixada.dados ? comContornosDaBaixada(contornoCapital.dados, contornoBaixada.dados) : contornoCapital.dados }),
-    [comBaixada, contornoCapital.dados, contornoBaixada.dados],
-  );
+  // Com a Baixada, espera os contornos dela (null = "carregando"); se falharem, a capital segue valendo.
+  const contorno = useMemo(() => {
+    const capital = contornoCapital.dados;
+    if (!capital || !comBaixada || contornoBaixada.erro) return { dados: capital };
+    return { dados: contornoBaixada.dados ? comContornosDaBaixada(capital, contornoBaixada.dados) : null };
+  }, [comBaixada, contornoCapital.dados, contornoBaixada.dados, contornoBaixada.erro]);
   const [editando, setEditando] = useState<TipoLocal | null>(null);
   const [folha, setFolha] = useState<Folha | null>(null);
   // A folha guarda o último conteúdo enquanto desliza para fora.

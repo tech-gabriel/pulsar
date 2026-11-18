@@ -75,5 +75,7 @@ describe('alertaOficial', () => {
     const agora = new Date('2026-11-18T14:00:00Z');
     expect(ateQuando('2026-11-18T15:18:00Z', agora)).toMatch(/^\d\d:\d\d$/);
     expect(ateQuando('2026-11-21T15:18:00Z', agora)).toMatch(/^21\/11, \d\d:\d\d$/);
+    // Data quebrada não derruba o sino (o cabeçalho inteiro): fica vazia, como a horaCurta.
+    expect(ateQuando('não é data', agora)).toBe('');
   });
 });

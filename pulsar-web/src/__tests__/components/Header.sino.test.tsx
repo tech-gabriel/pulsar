@@ -46,4 +46,24 @@ describe('Sino pessoal primeiro', () => {
     expect(screen.getByText('Tudo tranquilo em São Paulo')).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/regi(ão|ões)/i);
   });
+
+  // V1 C (escolha do user, 18/11/2026): alerta da capital inteira não vira 32 linhas no sino.
+  it('alerta oficial em muitas áreas: as suas uma a uma e o resto numa linha que abre a cidade', () => {
+    const alertaCapital = { identificador: 'x', evento: 'CHUVAS INTENSAS', gravidade: 'Moderate', emissor: 'Defesa Civil Estadual De São Paulo', titulo: 't', descricao: 'd', instrucao: '', inicioUtc: '2026-11-18T15:00:00Z', expiraUtc: '2099-11-18T19:00:00Z' };
+    dados.subs = Array.from({ length: 8 }, (_, i) => ({ ...s(`s${i}`, `Área ${i}`, 'BAIXO'), cidade: 'São Paulo', alertasOficiais: [alertaCapital] }));
+    dados.favs = [{ subprefeituraId: 's0' }];
+    render(<MemoryRouter><Header /></MemoryRouter>);
+    abrir();
+    expect(screen.getByRole('button', { name: /Área 0/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /E mais 7 áreas da capital/ }));
+    expect(navigate).toHaveBeenCalledWith('/app?cidade=S%C3%A3o%20Paulo');
+  });
+
+  it('com as duas cidades, o grupo das favoritas é "Suas áreas"', () => {
+    dados.subs = [{ ...s('s1', 'Itaquera', 'ALTO'), cidade: 'São Paulo' }, { ...s('b1', 'Santos', 'BAIXO'), cidade: 'Baixada Santista' }];
+    dados.favs = [{ subprefeituraId: 's1' }];
+    render(<MemoryRouter><Header /></MemoryRouter>);
+    abrir();
+    expect(screen.getByText('Suas áreas')).toBeInTheDocument();
+  });
 });

@@ -55,4 +55,10 @@ describe('AvisosOficiais', () => {
     render(<AvisosOficiais alertas={[alerta({})]} />);
     expect(screen.getByRole('button', { name: /Ler o alerta completo/ }).getAttribute('aria-label')).toMatch(/até \d\d:\d\d/);
   });
+
+  // V2 B: alerta que vale até outro dia mostra a data em número.
+  it('alerta de vários dias mostra a data no "até"', () => {
+    render(<AvisosOficiais alertas={[alerta({ expiraUtc: '2099-11-21T19:18:00Z' })]} />);
+    expect(screen.getByRole('button', { name: /Ler o alerta completo/ })).toHaveTextContent(/até 21\/11, \d\d:\d\d/);
+  });
 });

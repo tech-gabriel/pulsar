@@ -9,8 +9,8 @@ import { useFavoritos } from '../../hooks/useFavoritos';
 import { alertasDoSino, type Area } from '../../features/cidade/areas';
 import { slugify } from '../../data/regioes-seo';
 import { resumoAlertas } from '../../utils/risco';
-import { alertasDoSinoOficial, eventoLegivel } from '../../utils/alertaOficial';
-import { horaCurta } from '../../utils/data';
+import { alertasDoSinoOficial, ateQuando, eventoLegivel, rotuloResumoSino } from '../../utils/alertaOficial';
+import { cidadesDasAreas } from '../../features/cidade/cidade';
 import { SeloNivelOficial } from '../painel/AvisosOficiais';
 import { useTheme } from '../../hooks/useTheme';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
@@ -65,6 +65,7 @@ export default function Header() {
   const { favoritos } = useFavoritos();
   const sino = alertasDoSino(subprefeituras, favoritos.map((f) => f.subprefeituraId));
   // Alertas oficiais da Defesa Civil: grupo próprio no topo, uma linha por área (escolha do user, 18/11/2026).
+  const variasCidades = cidadesDasAreas(subprefeituras).length > 1;
   const oficiais = alertasDoSinoOficial(subprefeituras, favoritos.map((f) => f.subprefeituraId));
   const navigate = useNavigate();
 
@@ -103,6 +104,11 @@ export default function Header() {
   function abrirArea(area: Area) {
     setPainelAberto(false);
     navigate(`/app?regiao=${slugify(area.nome)}`);
+  }
+
+  function abrirCidade(cidade: string) {
+    setPainelAberto(false);
+    navigate(`/app?cidade=${encodeURIComponent(cidade)}`);
   }
 
   return (
@@ -206,14 +212,16 @@ export default function Header() {
                         <section>
                           <p className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Defesa Civil</p>
                           <ul>
-                            {oficiais.map(({ area: a, alerta }) => (
-                              <li key={a.id}>
-                                <button type="button" className="notif-item" onClick={() => abrirArea(a)}>
+                            {oficiais.map((l) => (
+                              <li key={l.tipo === 'area' ? l.area.id : `resumo-${l.cidade}`}>
+                                <button type="button" className="notif-item" onClick={() => (l.tipo === 'area' ? abrirArea(l.area) : abrirCidade(l.cidade))}>
                                   <div className="min-w-0 flex-1 text-left">
-                                    <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{a.nome}</p>
-                                    <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{`${eventoLegivel(alerta.evento)} até ${horaCurta(alerta.expiraUtc)}`}</p>
+                                    <p className="truncate" style={{ fontSize: 14, fontWeight: l.tipo === 'area' ? 600 : 500, color: 'var(--text-primary)' }}>
+                                      {l.tipo === 'area' ? l.area.nome : rotuloResumoSino(l.cidade, l.n)}
+                                    </p>
+                                    <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{`${eventoLegivel(l.alerta.evento)} até ${ateQuando(l.alerta.expiraUtc)}`}</p>
                                   </div>
-                                  <SeloNivelOficial gravidade={alerta.gravidade} />
+                                  <SeloNivelOficial gravidade={l.alerta.gravidade} />
                                   <ChevronRight size={16} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
                                 </button>
                               </li>
@@ -221,7 +229,7 @@ export default function Header() {
                           </ul>
                         </section>
                       )}
-                      {[{ titulo: 'Suas subprefeituras', itens: sino.suas, estrela: true }, { titulo: 'Na cidade', itens: sino.naCidade, estrela: false }]
+                      {[{ titulo: variasCidades ? 'Suas áreas' : 'Suas subprefeituras', itens: sino.suas, estrela: true }, { titulo: 'Na cidade', itens: sino.naCidade, estrela: false }]
                         .filter((g) => g.itens.length > 0)
                         .map((g) => (
                           <section key={g.titulo}>

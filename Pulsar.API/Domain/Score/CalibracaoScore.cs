@@ -58,4 +58,20 @@ public static class CalibracaoScore
             ["Vila Mariana"] = 0.925,
             ["Vila Prudente"] = 1.05,
         });
+
+    /// <summary>
+    /// Baixada Santista (entrega 2 do projeto, 17/11/2026). Provisório: os limiares da capital com
+    /// fator 1,0 nos 9 municípios, até a calibração da Baixada ser conferida pelo user.
+    /// </summary>
+    public static readonly ParametrosScore Baixada = Atual with
+    {
+        Fatores = new Dictionary<string, double>
+        {
+            ["Bertioga"] = 1, ["Cubatão"] = 1, ["Guarujá"] = 1, ["Itanhaém"] = 1, ["Mongaguá"] = 1,
+            ["Peruíbe"] = 1, ["Praia Grande"] = 1, ["Santos"] = 1, ["São Vicente"] = 1,
+        },
+    };
+
+    /// <summary>Os parâmetros da cidade da área, pelo nome dela. Nome desconhecido fica com os da capital.</summary>
+    public static ParametrosScore Para(string nomeArea) => Baixada.Fatores.ContainsKey(nomeArea) ? Baixada : Atual;
 }

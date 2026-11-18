@@ -40,4 +40,7 @@ public record NotificacaoPendente(
     string? Celula = null,
     // Nível do alerta oficial (1 Moderado, 2 Severo, 3 Extremo; 0 nos outros gatilhos): no
     // cooldown, um envio de nível menor não cobre um de nível maior (subir de nível avisa na hora).
-    int Nivel = 0);
+    int Nivel = 0,
+    // Alerta oficial: o texto curto de lembrete ("segue valendo ... até 16:30"). O consolidador o usa
+    // quando a pessoa já foi avisada desse tipo de alerta na área, no mesmo nível ou acima, antes das 3 h.
+    PushPayload? Lembrete = null);

@@ -70,7 +70,7 @@ const MAX_SOLTAS = 3;
 /**
  * V1 C (escolha do user, 18/11/2026): as áreas acompanhadas uma por linha, primeiro; as outras com
  * alerta também, até 3 por alerta e cidade; passando disso, uma linha só ("E mais 29 áreas da
- * capital"). O resumo é por alerta, para o vendaval só da Sé não sumir dentro da linha das chuvas
+ * capital"). O resumo é pelo que a linha mostra (evento, nível e fim), para o vendaval só da Sé não sumir dentro da linha das chuvas
  * da capital inteira. Um alerta para a capital inteira não vira 32 linhas.
  */
 export function alertasDoSinoOficial(areas: Area[], favoritasIds: string[]): LinhaSinoOficial[] {
@@ -85,7 +85,8 @@ export function alertasDoSinoOficial(areas: Area[], favoritasIds: string[]): Lin
   const suas = comAlerta.filter((l) => fav.has(l.area.id)).sort(ordem);
   const grupos = new Map<string, typeof comAlerta>();
   for (const l of comAlerta.filter((x) => !fav.has(x.area.id))) {
-    const chave = `${cidadeDaArea(l.area)}|${l.alerta.identificador}`;
+    // Pelo que a linha mostra: alertas iguais em polígonos diferentes não viram linhas repetidas.
+    const chave = [cidadeDaArea(l.area), eventoLegivel(l.alerta.evento), nivelOficial(l.alerta.gravidade).rotulo, ateQuando(l.alerta.expiraUtc)].join('|');
     grupos.set(chave, [...(grupos.get(chave) ?? []), l]);
   }
   const resto: LinhaSinoOficial[] = [];
@@ -105,5 +106,6 @@ const diaMes = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digi
 /** V2 B (escolha do user, 18/11/2026): "16:18" se for hoje; "21/11, 16:18" se for outro dia. */
 export function ateQuando(iso: string, agora: Date = new Date()): string {
   const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
   return d.toDateString() === agora.toDateString() ? horaCurta(iso) : `${diaMes.format(d)}, ${horaCurta(iso)}`;
 }

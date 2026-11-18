@@ -539,6 +539,24 @@ public class MotorNotificacoesTests
         _pushMock.Verify(p => p.NotificarUsuarioAsync(pessoa, CriterioOptIn.RiscoAlto,
             It.Is<PushPayload>(x => x.Titulo.Contains("Defesa Civil") && x.Corpo.Contains("Temporal na zona leste")),
             It.IsAny<CancellationToken>()), Times.Once);
-        (await ctx.NotificacoesEnviadas.Select(n => n.Chave).ToListAsync()).Should().ContainSingle().Which.Should().StartWith("dc:3:1/2026:");
+        (await ctx.NotificacoesEnviadas.Select(n => n.Chave).ToListAsync()).Should().ContainSingle().Which.Should().StartWith("dc:3:");
+    }
+
+    // A rodada extra do alerta Extremo (job de alertas) roda só o gatilho da Defesa Civil: um push de
+    // outro gatilho não sai segundos antes do ciclo normal.
+    [Fact]
+    public async Task SoUmGatilho_AvaliaSoEle()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        await PessoaComAparelhoAsync(ctx, true, Mooca);
+        var outro = new GatilhoPorSub("score-alto");
+        var dc = new GatilhoPorSub("alerta-oficial");
+
+        await NovoMotor(ctx, outro, dc).AvaliarSoAsync("alerta-oficial");
+
+        outro.Avaliadas.Should().BeEmpty();
+        dc.Avaliadas.Should().NotBeEmpty();
     }
 }

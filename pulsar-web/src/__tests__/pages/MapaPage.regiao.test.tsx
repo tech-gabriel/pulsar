@@ -66,7 +66,9 @@ describe('MapaPage deep-link', () => {
       render(<MemoryRouter initialEntries={['/app?cidade=Baixada%20Santista']}><MapaPage /></MemoryRouter>);
       await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toHaveTextContent('|Baixada Santista'));
       expect(screen.getAllByRole('button', { name: 'Baixada Santista', pressed: true }).length).toBeGreaterThan(0);
-    } finally { SUBS.pop(); }
+      // A cidade fica lembrada para a próxima visita.
+      await waitFor(() => expect(localStorage.getItem('pulsar-cidade-painel')).toBe('Baixada Santista'));
+    } finally { SUBS.pop(); localStorage.removeItem('pulsar-cidade-painel'); }
   });
   it('?regiao=<zona> enquadra a zona no mapa, sem painel de zona', async () => {
     render(<MemoryRouter initialEntries={['/app?regiao=zona-leste']}><MapaPage /></MemoryRouter>);

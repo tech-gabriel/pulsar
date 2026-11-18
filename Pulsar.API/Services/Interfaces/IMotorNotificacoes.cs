@@ -23,4 +23,10 @@ public interface IMotorNotificacoes
     /// as outras sigam sendo avaliadas. Ver <c>MotorNotificacoes</c>.
     /// </remarks>
     Task<int> AvaliarEDispararAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Mesma rodada, só com um gatilho (pelo <c>Nome</c>). Usada pelo job de alertas no alerta Extremo:
+    /// um push de outro gatilho não sai segundos antes do ciclo normal.
+    /// </summary>
+    Task<int> AvaliarSoAsync(string gatilho, CancellationToken ct = default);
 }

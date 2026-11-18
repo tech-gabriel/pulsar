@@ -124,6 +124,20 @@ public class IdapClientTests
         (await leitura).Should().BeNull();
     }
 
+    // Um alerta escrito dentro do texto de outro (CDATA) é texto, não alerta: não pode virar aviso.
+    [Fact]
+    public void Parse_AlertaDentroDeCdata_NaoViraAlerta()
+    {
+        var xml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "External", "Fixtures", "idap-amostra.xml"));
+        var i = xml.IndexOf("<alert ", StringComparison.Ordinal);
+        var falso = xml[i..(xml.IndexOf("</alert>", i, StringComparison.Ordinal) + "</alert>".Length)]
+            .Replace("198620/2026", "falso/2026");
+        var comFalso = xml.Replace("<headline>Defesa Civil:14h05", $"<headline><![CDATA[{falso}]]>Defesa Civil:14h05");
+
+        IdapClient.Parse(new MemoryStream(Encoding.UTF8.GetBytes(comFalso)))
+            .Select(a => a.Identificador).Should().NotContain("falso/2026").And.Contain("198700/2026");
+    }
+
     // XML quebrado numa entrada (um "&" sem escape no texto, por exemplo) derruba o XmlReader. O feed
     // vem do mais antigo para o mais novo: parar ali perderia justamente os alertas novos.
     [Fact]

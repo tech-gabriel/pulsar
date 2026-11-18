@@ -59,37 +59,63 @@ public class IdapClient : IIdapClient
     }
 
     /// <summary>
-    /// Lê um alerta por vez, cada um num leitor próprio: XML quebrado numa entrada (um "&amp;" sem
-    /// escape, um caractere de controle) derruba só ela. O feed vem do mais antigo para o mais novo,
-    /// então parar no primeiro erro perderia os alertas novos. Só alertas à população (status
-    /// Actual, scope Public) com bloco info.
+    /// Lê o feed com o leitor XML, um alerta CAP por vez (nome e namespace conferidos: um "&lt;alert"
+    /// dentro de CDATA ou comentário é texto, nunca alerta). XML quebrado numa entrada (um "&amp;" sem
+    /// escape, um caractere de controle) derruba só ela: a leitura recomeça na próxima &lt;entry&gt;
+    /// depois do erro. O feed vem do mais antigo para o mais novo, então parar no erro perderia os
+    /// alertas novos. Só alertas à população (status Actual, scope Public) com bloco info.
     /// </summary>
     public static IReadOnlyList<AlertaCap> Parse(string xml, out int quebradas)
     {
-        const string Fecha = "</alert>";
         var alertas = new List<AlertaCap>();
-        var configuracao = new XmlReaderSettings { IgnoreComments = true, DtdProcessing = DtdProcessing.Prohibit };
         quebradas = 0;
-        for (var inicio = InicioDoAlerta(xml, 0); inicio >= 0; inicio = InicioDoAlerta(xml, inicio + 1))
+        var fimDoFeed = xml.LastIndexOf("</feed>", StringComparison.Ordinal);
+        if (fimDoFeed < 0) fimDoFeed = xml.Length;
+        int? retomada = null; // depois de um erro: posição da próxima <entry>, lida como fragmento
+        while (true)
         {
-            var fim = xml.IndexOf(Fecha, inicio, StringComparison.Ordinal);
-            if (fim < 0) { quebradas++; break; }
+            var trecho = retomada is { } r ? xml[r..fimDoFeed] : xml;
             try
             {
-                using var leitor = XmlReader.Create(new StringReader(xml[inicio..(fim + Fecha.Length)]), configuracao);
-                if (Converter(XElement.Load(leitor)) is { } a) alertas.Add(a);
+                using var leitor = XmlReader.Create(new StringReader(trecho), new XmlReaderSettings
+                {
+                    IgnoreComments = true, DtdProcessing = DtdProcessing.Prohibit,
+                    ConformanceLevel = retomada is null ? ConformanceLevel.Document : ConformanceLevel.Fragment,
+                });
+                leitor.MoveToContent();
+                while (!leitor.EOF)
+                {
+                    if (leitor.NodeType == XmlNodeType.Element && leitor.LocalName == "alert" && leitor.NamespaceURI == Cap.NamespaceName)
+                    {
+                        if (Converter((XElement)XNode.ReadFrom(leitor)) is { } a) alertas.Add(a);
+                    }
+                    else leitor.Read();
+                }
+                return alertas;
             }
-            catch (XmlException) { quebradas++; }
+            catch (XmlException e)
+            {
+                quebradas++;
+                var inicio = retomada ?? 0;
+                var erro = inicio + Posicao(trecho, e.LineNumber, e.LinePosition);
+                var proxima = xml.IndexOf("<entry", Math.Max(erro, inicio + 1), StringComparison.Ordinal);
+                if (proxima < 0 || proxima >= fimDoFeed) return alertas;
+                retomada = proxima;
+            }
         }
-        return alertas;
     }
 
-    /// <summary>Próximo "&lt;alert" seguido de espaço ou "&gt;" (não pega uma tag que só comece igual).</summary>
-    private static int InicioDoAlerta(string xml, int de)
+    /// <summary>Posição no texto da linha e coluna (contadas a partir de 1) de um erro do leitor XML.</summary>
+    private static int Posicao(string texto, int linha, int coluna)
     {
-        for (var i = xml.IndexOf("<alert", de, StringComparison.Ordinal); i >= 0; i = xml.IndexOf("<alert", i + 1, StringComparison.Ordinal))
-            if (i + 6 < xml.Length && xml[i + 6] is ' ' or '>' or '\n' or '\r' or '\t') return i;
-        return -1;
+        var i = 0;
+        for (var l = 1; l < linha; l++)
+        {
+            i = texto.IndexOf('\n', i);
+            if (i < 0) return texto.Length;
+            i++;
+        }
+        return Math.Min(texto.Length, i + Math.Max(0, coluna - 1));
     }
 
     private static AlertaCap? Converter(XElement a)

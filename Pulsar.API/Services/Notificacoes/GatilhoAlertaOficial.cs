@@ -27,6 +27,10 @@ public partial class GatilhoAlertaOficial : IGatilhoNotificacao
         var pendencias = new List<NotificacaoPendente>();
         foreach (var alerta in ctx.AlertasOficiaisAtivos)
         {
+            // O livro-caixa só lembra os envios das últimas JanelaTetoDiarioHoras: um alerta mais velho
+            // que isso (menos uma hora de folga para o ciclo) já teve a chance dele e não volta a avisar.
+            if (ctx.AgoraUtc - alerta.InicioUtc >= TimeSpan.FromHours(LimiaresNotificacao.JanelaTetoDiarioHoras - 1))
+                continue;
             var extremo = alerta.Gravidade == "Extreme";
             if (!extremo && (ctx.PontosCgeAtivos.Count > 0 || !TemSinalProprio(alerta, ctx.Estado.Score)))
                 continue;

@@ -120,4 +120,16 @@ public class GatilhoAlertaOficialTests
 
         (await Avaliar(vazio)).Should().BeEmpty();
     }
+
+    // O livro-caixa lembra os envios de 48 h; um alerta que dura mais (a IDAP já trouxe um de 75 h)
+    // não pode ser avisado de novo quando o primeiro envio sai dessa janela.
+    [Fact]
+    public async Task AlertaMaisVelhoQueAJanelaDoLivroCaixa_NaoNotificaDeNovo()
+    {
+        var velho = Alerta("Extreme");
+        velho.InicioUtc = Agora.AddHours(-LimiaresNotificacao.JanelaTetoDiarioHoras + 0.5);
+        velho.ExpiraUtc = Agora.AddHours(20);
+
+        (await Avaliar(Contexto(velho))).Should().BeEmpty();
+    }
 }

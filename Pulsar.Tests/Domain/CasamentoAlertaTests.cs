@@ -44,4 +44,27 @@ public class CasamentoAlertaTests
     [Fact]
     public void GeocodeEPoligono_JuntamSemRepetir()
         => CasamentoAlerta.Areas(Alerta([SobreASe], "3548500", "3548500"), Areas).Should().BeEquivalentTo([Se, Santos]);
+
+    // O feed traz polígonos do Brasil inteiro, com centenas de milhares de vértices, e quase nenhum
+    // perto de uma área do Pulsar: o longe precisa ser descartado sem percorrer vértice por vértice.
+    [Fact]
+    public void PoligonosLonge_SaoDescartadosSemCustoPorVertice()
+    {
+        var areas = Enumerable.Range(0, 32)
+            .Select(i => new AreaParaCasar(Guid.NewGuid(), null,
+                [.. Enumerable.Range(0, 100).Select(j => (-23.5 - i * 0.01, -46.6 - j * 0.001))]))
+            .ToList();
+        // Cem polígonos na Amazônia, cada um com 2.000 vértices.
+        var longe = Enumerable.Range(0, 100)
+            .Select(k => (IReadOnlyList<(double, double)>)[.. Enumerable.Range(0, 2000)
+                .Select(v => (-3.0 + Math.Sin(v * Math.PI / 1000) + k * 0.01, -60.0 + Math.Cos(v * Math.PI / 1000)))])
+            .ToList();
+
+        var relogio = System.Diagnostics.Stopwatch.StartNew();
+        var atingidas = CasamentoAlerta.Areas(Alerta(longe), areas);
+        relogio.Stop();
+
+        atingidas.Should().BeEmpty();
+        relogio.ElapsedMilliseconds.Should().BeLessThan(300);
+    }
 }

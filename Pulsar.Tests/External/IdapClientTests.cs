@@ -77,9 +77,63 @@ public class IdapClientTests
             => throw new HttpRequestException("fora do ar");
     }
 
-    private sealed class Fabrica(HttpMessageHandler h) : IHttpClientFactory
+    private sealed class Fabrica(HttpMessageHandler h, TimeSpan? timeout = null) : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) => new(h) { BaseAddress = new Uri("https://idapfile.mdr.gov.br/") };
+        public HttpClient CreateClient(string name) => new(h)
+        {
+            BaseAddress = new Uri("https://idapfile.mdr.gov.br/"), Timeout = timeout ?? TimeSpan.FromSeconds(100),
+        };
+    }
+
+    /// <summary>Servidor que manda o cabeçalho e trava no meio do corpo.</summary>
+    private sealed class CorpoTravado : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage r, CancellationToken ct)
+            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StreamContent(new Travado()) });
+    }
+
+    private sealed class Travado : Stream
+    {
+        public override int Read(byte[] buffer, int offset, int count) { Thread.Sleep(10_000); return 0; }
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
+        { await Task.Delay(Timeout.Infinite, ct); return 0; }
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken ct)
+            => ReadAsync(buffer.AsMemory(offset, count), ct).AsTask();
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => 0; set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override long Seek(long o, SeekOrigin s) => throw new NotSupportedException();
+        public override void SetLength(long v) => throw new NotSupportedException();
+        public override void Write(byte[] b, int o, int c) => throw new NotSupportedException();
+    }
+
+    // O tempo limite precisa valer para o corpo inteiro (13 a 38 MB), não só até o cabeçalho:
+    // senão uma conexão que trava no meio congela a leitura dos alertas para sempre.
+    [Fact]
+    public async Task ObterAsync_CorpoTravado_DesisteNoTempoLimite()
+    {
+        var client = new IdapClient(new Fabrica(new CorpoTravado(), TimeSpan.FromMilliseconds(300)), NullLogger<IdapClient>.Instance);
+
+        var leitura = Task.Run(() => client.ObterAsync());
+        var terminou = await Task.WhenAny(leitura, Task.Delay(5_000)) == leitura;
+
+        terminou.Should().BeTrue();
+        (await leitura).Should().BeNull();
+    }
+
+    // XML quebrado numa entrada (um "&" sem escape no texto, por exemplo) derruba o XmlReader. O feed
+    // vem do mais antigo para o mais novo: parar ali perderia justamente os alertas novos.
+    [Fact]
+    public void Parse_EntradaComXmlQuebrado_DescartaSoEla()
+    {
+        var xml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "External", "Fixtures", "idap-amostra.xml"))
+            .Replace("<expires>2026-11-18T14:50:00-03:00</expires>", "<expires>2026-11-18T14:50:00-03:00</expires><note>Chuva & vento</note>");
+
+        IdapClient.Parse(new MemoryStream(Encoding.UTF8.GetBytes(xml)))
+            .Select(a => a.Identificador).Should().Equal("198700/2026", "198701/2026", "198702/2026");
     }
 
     [Fact]

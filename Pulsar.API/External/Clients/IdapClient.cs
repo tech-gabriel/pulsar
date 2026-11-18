@@ -31,12 +31,20 @@ public class IdapClient : IIdapClient
         try
         {
             var http = _httpClientFactory.CreateClient(NomeHttp);
-            using var resposta = await http.GetAsync("idap/api/rss/cap", HttpCompletionOption.ResponseHeadersRead, ct);
-            resposta.EnsureSuccessStatusCode();
-            await using var corpo = await resposta.Content.ReadAsStreamAsync(ct);
-            return Parse(corpo);
+            // GetString baixa o corpo inteiro sob o Timeout do HttpClient. Com ResponseHeadersRead o
+            // limite parava no cabeçalho, e um servidor que trava no meio do corpo congelava o job.
+            var xml = await http.GetStringAsync("idap/api/rss/cap", ct);
+            if (!xml.Contains("<feed", StringComparison.Ordinal))
+            {
+                _logger.LogWarning("Feed da IDAP veio sem <feed> ({Tamanho} caracteres): tratado como indisponível.", xml.Length);
+                return null;
+            }
+            var alertas = Parse(xml, out var quebradas);
+            if (quebradas > 0)
+                _logger.LogWarning("Feed da IDAP: {Quebradas} entrada(s) com XML quebrado descartada(s); as outras seguem.", quebradas);
+            return alertas;
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or XmlException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
         {
             if (ct.IsCancellationRequested) throw;
             _logger.LogWarning("Feed da IDAP indisponível: {Tipo}: {Mensagem}", ex.GetType().Name, ex.Message);
@@ -44,25 +52,44 @@ public class IdapClient : IIdapClient
         }
     }
 
-    /// <summary>
-    /// Lê o feed em streaming, um alerta por vez. Só alertas à população (status Actual, scope
-    /// Public) com bloco info; a entrada malformada é descartada sem levar as outras.
-    /// </summary>
     public static IReadOnlyList<AlertaCap> Parse(Stream xml)
     {
+        using var leitor = new StreamReader(xml);
+        return Parse(leitor.ReadToEnd(), out _);
+    }
+
+    /// <summary>
+    /// Lê um alerta por vez, cada um num leitor próprio: XML quebrado numa entrada (um "&amp;" sem
+    /// escape, um caractere de controle) derruba só ela. O feed vem do mais antigo para o mais novo,
+    /// então parar no primeiro erro perderia os alertas novos. Só alertas à população (status
+    /// Actual, scope Public) com bloco info.
+    /// </summary>
+    public static IReadOnlyList<AlertaCap> Parse(string xml, out int quebradas)
+    {
+        const string Fecha = "</alert>";
         var alertas = new List<AlertaCap>();
-        using var leitor = XmlReader.Create(xml, new XmlReaderSettings { IgnoreComments = true, DtdProcessing = DtdProcessing.Prohibit });
-        leitor.MoveToContent();
-        while (!leitor.EOF)
+        var configuracao = new XmlReaderSettings { IgnoreComments = true, DtdProcessing = DtdProcessing.Prohibit };
+        quebradas = 0;
+        for (var inicio = InicioDoAlerta(xml, 0); inicio >= 0; inicio = InicioDoAlerta(xml, inicio + 1))
         {
-            if (leitor.NodeType == XmlNodeType.Element && leitor.LocalName == "alert" && leitor.NamespaceURI == Cap.NamespaceName)
+            var fim = xml.IndexOf(Fecha, inicio, StringComparison.Ordinal);
+            if (fim < 0) { quebradas++; break; }
+            try
             {
-                var alerta = (XElement)XNode.ReadFrom(leitor);
-                if (Converter(alerta) is { } a) alertas.Add(a);
+                using var leitor = XmlReader.Create(new StringReader(xml[inicio..(fim + Fecha.Length)]), configuracao);
+                if (Converter(XElement.Load(leitor)) is { } a) alertas.Add(a);
             }
-            else leitor.Read();
+            catch (XmlException) { quebradas++; }
         }
         return alertas;
+    }
+
+    /// <summary>Próximo "&lt;alert" seguido de espaço ou "&gt;" (não pega uma tag que só comece igual).</summary>
+    private static int InicioDoAlerta(string xml, int de)
+    {
+        for (var i = xml.IndexOf("<alert", de, StringComparison.Ordinal); i >= 0; i = xml.IndexOf("<alert", i + 1, StringComparison.Ordinal))
+            if (i + 6 < xml.Length && xml[i + 6] is ' ' or '>' or '\n' or '\r' or '\t') return i;
+        return -1;
     }
 
     private static AlertaCap? Converter(XElement a)

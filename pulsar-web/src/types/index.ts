@@ -202,6 +202,28 @@ export interface SubprefeituraDto {
   chuvaMedida?: ChuvaMedida | null;
   /** Chuva das últimas 24 horas numa estação do CEMADEN perto. O CGE-SP não publica esse número. */
   chuva24h?: Chuva24h | null;
+  /** Alertas oficiais da Defesa Civil valendo agora na área. Opcional: o snapshot do SSG não traz. */
+  alertasOficiais?: AlertaOficial[];
+}
+
+/** Alerta oficial da Defesa Civil (feed nacional da IDAP), com o texto exatamente como veio. */
+export interface AlertaOficial {
+  identificador: string;
+  /** Evento do alerta, em caixa alta como a Defesa Civil manda (ex.: "CHUVAS INTENSAS"). */
+  evento: string;
+  /** severity do CAP: Extreme, Severe, Moderate, Minor ou Unknown. */
+  gravidade: string;
+  /** Quem emitiu (ex.: "Defesa Civil Estadual De São Paulo"). */
+  emissor: string;
+  /** O texto curto (o do SMS), com o prefixo "Defesa Civil:". */
+  titulo: string;
+  /** O texto completo do alerta. */
+  descricao: string;
+  /** A orientação oficial. Pode vir vazia. */
+  instrucao: string;
+  /** ISO UTC; exibir pelo fuso do navegador. */
+  inicioUtc: string;
+  expiraUtc: string;
 }
 
 /**

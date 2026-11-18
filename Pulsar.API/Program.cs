@@ -222,6 +222,14 @@ builder.Services.AddHttpClient("geosampa", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
 });
 
+// Alertas oficiais da Defesa Civil (feed nacional da IDAP): ~13,6 MB por leitura, sem gzip.
+builder.Services.AddHttpClient(IdapClient.NomeHttp, (sp, client) =>
+{
+    client.BaseAddress = new Uri(sp.GetRequiredService<IConfiguration>()["Idap:Url"] ?? "https://idapfile.mdr.gov.br/");
+    client.Timeout = TimeSpan.FromSeconds(120);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
+});
+
 // --- Cache ---
 builder.Services.AddMemoryCache();
 
@@ -270,6 +278,7 @@ builder.Services.AddScoped<ICgeEstacaoClient, CgeEstacaoClient>();
 // Singleton: guarda o token do CEMADEN (cerca de 4 h) entre os ciclos.
 builder.Services.AddSingleton<ICemadenClient, CemadenClient>();
 builder.Services.AddScoped<IGeoSampaClient, GeoSampaClient>();
+builder.Services.AddScoped<IIdapClient, IdapClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IGeocodingClient, MapTilerGeocodingClient>();
 builder.Services.AddScoped<IBuscaService, BuscaService>();
@@ -288,6 +297,7 @@ builder.Services.AddScoped<IOcorrenciaIngestionService, OcorrenciaIngestionServi
 builder.Services.AddScoped<IOcorrenciaConsultaService, OcorrenciaConsultaService>();
 builder.Services.AddScoped<IAgregadoDiarioService, AgregadoDiarioService>();
 builder.Services.AddScoped<IAlagamentoCgeService, AlagamentoCgeService>();
+builder.Services.AddScoped<IAlertaOficialService, AlertaOficialService>();
 builder.Services.AddScoped<IEstacaoCgeService, EstacaoCgeService>();
 builder.Services.AddScoped<ICemadenService, CemadenService>();
 builder.Services.AddScoped<IPrevisaoService, PrevisaoService>();
@@ -304,6 +314,7 @@ builder.Services.AddScoped<ILocaisSalvosService, LocaisSalvosService>();
 // recebe IEnumerable<IGatilhoNotificacao>: registrado pelo tipo concreto, ele compila,
 // resolve e nunca é avaliado. Ver NotificacoesDependencyInjectionTests.
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAlagamentoCge>();
+builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAlertaOficial>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoScoreAlto>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaPrevista>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaMedidaPerto>();
@@ -342,6 +353,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 // --- Scheduler ---
 builder.Services.AddHostedService<DataCollectionJob>();
 builder.Services.AddHostedService<SincronizacaoOcorrenciasJob>();
+builder.Services.AddHostedService<AlertasOficiaisJob>();
 
 // --- Build ---
 var app = builder.Build();

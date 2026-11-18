@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Recorte do feed da IDAP (https://idapfile.mdr.gov.br/idap/api/rss/cap), no formato real
+     conferido em 18/11/2026. Entradas: interior de SP (Moderate), capital (Severe), Santos com
+     geocode IBGE (Extreme), cancelamento do alerta da capital, e uma entrada sem <info>. -->
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>Rss Idap</title>
+  <id>http://idapapi.mi.gov.br/api/rss/cap</id>
+  <updated>2026-11-18T17:00:00Z</updated>
+  <entry>
+    <title>CHUVAS INTENSAS</title>
+    <id>198620/2026</id>
+    <content type="text/xml">
+      <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+        <identifier>198620/2026</identifier>
+        <sender>CENAD-SEDEC</sender>
+        <sent>2026-11-18T12:47:35-03:00</sent>
+        <status>Actual</status>
+        <msgType>Alert</msgType>
+        <source>Defesa Civil</source>
+        <scope>Public</scope>
+        <info>
+          <language>pt-BR</language>
+          <category>Met</category>
+          <event>CHUVAS INTENSAS</event>
+          <responseType>Execute</responseType>
+          <urgency>Immediate</urgency>
+          <severity>Moderate</severity>
+          <certainty>Observed</certainty>
+          <onset>2026-11-18T12:47:35-03:00</onset>
+          <expires>2026-11-18T14:50:00-03:00</expires>
+          <senderName>Defesa Civil Estadual De São Paulo</senderName>
+          <headline>Defesa Civil:12h47 Chuva isolada na regiao de Santo Antonio do Aracangua. Tem raios. Tenha cuidado!</headline>
+          <description>12h47 Chuva isolada na região de Santo Antônio do Aracanguá. Tem raios. Atinge municípios vizinhos. Tenha cuidado!</description>
+          <area>
+            <areaDesc>SÃO PAULO/SP</areaDesc>
+            <polygon>-20.977,-50.635 -21.067,-50.478 -21.057,-50.323 -20.877,-50.229 -20.733,-50.639 -20.977,-50.635</polygon>
+          </area>
+        </info>
+      </alert>
+    </content>
+  </entry>
+  <entry>
+    <title>CHUVAS INTENSAS</title>
+    <id>198700/2026</id>
+    <content type="text/xml">
+      <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+        <identifier>198700/2026</identifier>
+        <sender>CENAD-SEDEC</sender>
+        <sent>2026-11-18T14:05:00-03:00</sent>
+        <status>Actual</status>
+        <msgType>Alert</msgType>
+        <scope>Public</scope>
+        <info>
+          <language>pt-BR</language>
+          <event>CHUVAS INTENSAS</event>
+          <urgency>Expected</urgency>
+          <severity>Severe</severity>
+          <onset>2026-11-18T14:05:00-03:00</onset>
+          <expires>2026-11-18T17:00:00-03:00</expires>
+          <senderName>Defesa Civil Estadual De São Paulo</senderName>
+          <headline>Defesa Civil:14h05 Chuva forte na capital. Risco de alagamento. Evite areas de risco!</headline>
+          <description>14h05 Chuva forte na região central da capital. Risco de alagamentos e queda de árvores.</description>
+          <instruction>Siga as orientações da defesa civil local e do plano de contingência municipal. Em caso de emergência, ligue 199 ou 193.</instruction>
+          <area>
+            <areaDesc>SÃO PAULO/SP</areaDesc>
+            <polygon>-23.58,-46.67 -23.58,-46.60 -23.52,-46.60 -23.52,-46.67 -23.58,-46.67</polygon>
+          </area>
+        </info>
+      </alert>
+    </content>
+  </entry>
+  <entry>
+    <title>TEMPESTADE LOCAL/CONVECTIVA - CHUVAS INTENSAS</title>
+    <id>198701/2026</id>
+    <content type="text/xml">
+      <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+        <identifier>198701/2026</identifier>
+        <sender>CENAD-SEDEC</sender>
+        <sent>2026-11-18T14:10:00-03:00</sent>
+        <status>Actual</status>
+        <msgType>Alert</msgType>
+        <scope>Public</scope>
+        <info>
+          <language>pt-BR</language>
+          <event>TEMPESTADE LOCAL/CONVECTIVA - CHUVAS INTENSAS</event>
+          <urgency>Immediate</urgency>
+          <severity>Extreme</severity>
+          <onset>2026-11-18T14:10:00-03:00</onset>
+          <expires>2026-11-18T20:00:00-03:00</expires>
+          <senderName>Defesa Civil Estadual De São Paulo</senderName>
+          <headline>Defesa Civil:ALERTA SEVERO Temporal em Santos. Procure abrigo seguro!</headline>
+          <description>Temporal com chuva muito forte em Santos. Procure um local seguro e evite áreas alagadas.</description>
+          <area>
+            <areaDesc>Santos/SP</areaDesc>
+            <geocode>
+              <valueName>IBGE</valueName>
+              <value>3548500</value>
+            </geocode>
+          </area>
+        </info>
+      </alert>
+    </content>
+  </entry>
+  <entry>
+    <title>CHUVAS INTENSAS</title>
+    <id>198702/2026</id>
+    <content type="text/xml">
+      <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+        <identifier>198702/2026</identifier>
+        <sender>CENAD-SEDEC</sender>
+        <sent>2026-11-18T15:00:00-03:00</sent>
+        <status>Actual</status>
+        <msgType>Cancel</msgType>
+        <scope>Public</scope>
+        <references>CENAD-SEDEC,198700/2026,2026-11-18T14:05:00-03:00</references>
+        <info>
+          <language>pt-BR</language>
+          <event>CHUVAS INTENSAS</event>
+          <urgency>Past</urgency>
+          <severity>Minor</severity>
+          <onset>2026-11-18T15:00:00-03:00</onset>
+          <expires>2026-11-18T17:00:00-03:00</expires>
+          <senderName>Defesa Civil Estadual De São Paulo</senderName>
+          <headline>Defesa Civil: alerta encerrado</headline>
+          <description>Alerta encerrado.</description>
+        </info>
+      </alert>
+    </content>
+  </entry>
+  <entry>
+    <title>SEM INFO</title>
+    <id>198703/2026</id>
+    <content type="text/xml">
+      <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+        <identifier>198703/2026</identifier>
+        <sender>CENAD-SEDEC</sender>
+        <sent>2026-11-18T15:10:00-03:00</sent>
+        <status>Actual</status>
+        <msgType>Alert</msgType>
+        <scope>Public</scope>
+      </alert>
+    </content>
+  </entry>
+</feed>

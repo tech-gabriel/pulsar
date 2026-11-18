@@ -130,6 +130,89 @@ namespace Pulsar.API.Migrations
                     b.ToTable("AgregadosHorarios");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AlertaOficial", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CanceladoEmUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Emissor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Evento")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<DateTime>("ExpiraUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Gravidade")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Identificador")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("InicioUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Instrucao")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("RecebidoEmUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Urgencia")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiraUtc");
+
+                    b.HasIndex("Identificador")
+                        .IsUnique();
+
+                    b.ToTable("AlertasOficiais");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AlertaOficialArea", b =>
+                {
+                    b.Property<Guid>("AlertaOficialId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SubprefeituraId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("AlertaOficialId", "SubprefeituraId");
+
+                    b.HasIndex("SubprefeituraId");
+
+                    b.ToTable("AlertaOficialArea");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.AssinaturaPush", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1904,6 +1987,25 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Subprefeitura");
                 });
 
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AlertaOficialArea", b =>
+                {
+                    b.HasOne("Pulsar.API.Domain.Entities.AlertaOficial", "AlertaOficial")
+                        .WithMany("Areas")
+                        .HasForeignKey("AlertaOficialId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pulsar.API.Domain.Entities.Subprefeitura", "Subprefeitura")
+                        .WithMany()
+                        .HasForeignKey("SubprefeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AlertaOficial");
+
+                    b.Navigation("Subprefeitura");
+                });
+
             modelBuilder.Entity("Pulsar.API.Domain.Entities.AssinaturaPush", b =>
                 {
                     b.HasOne("Pulsar.API.Domain.Entities.Usuario", "Usuario")
@@ -2085,6 +2187,11 @@ namespace Pulsar.API.Migrations
                     b.Navigation("Subprefeitura");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Pulsar.API.Domain.Entities.AlertaOficial", b =>
+                {
+                    b.Navigation("Areas");
                 });
 
             modelBuilder.Entity("Pulsar.API.Domain.Entities.Cidade", b =>

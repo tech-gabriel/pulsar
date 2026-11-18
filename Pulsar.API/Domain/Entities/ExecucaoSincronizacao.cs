@@ -8,6 +8,7 @@ namespace Pulsar.API.Domain.Entities;
 public class ExecucaoSincronizacao
 {
     public const string FonteGeoSampa = "geosampa";
+    public const string FonteIdap = "idap";
 
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Fonte { get; set; } = string.Empty;

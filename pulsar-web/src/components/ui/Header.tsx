@@ -9,6 +9,9 @@ import { useFavoritos } from '../../hooks/useFavoritos';
 import { alertasDoSino, type Area } from '../../features/cidade/areas';
 import { slugify } from '../../data/regioes-seo';
 import { resumoAlertas } from '../../utils/risco';
+import { alertasDoSinoOficial, eventoLegivel } from '../../utils/alertaOficial';
+import { horaCurta } from '../../utils/data';
+import { SeloNivelOficial } from '../painel/AvisosOficiais';
 import { useTheme } from '../../hooks/useTheme';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import BadgeRisco from './BadgeRisco';
@@ -61,6 +64,8 @@ export default function Header() {
   const { subprefeituras, carregando } = useSubprefeituras();
   const { favoritos } = useFavoritos();
   const sino = alertasDoSino(subprefeituras, favoritos.map((f) => f.subprefeituraId));
+  // Alertas oficiais da Defesa Civil: grupo próprio no topo, uma linha por área (escolha do user, 18/11/2026).
+  const oficiais = alertasDoSinoOficial(subprefeituras, favoritos.map((f) => f.subprefeituraId));
   const navigate = useNavigate();
 
   const [painelAberto, setPainelAberto] = useState(false);
@@ -70,7 +75,7 @@ export default function Header() {
   const iniciais = (usuario?.nome ?? '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase() || '?';
 
   const temAlertas = sino.contagem > 0;
-  const temItens = sino.suas.length + sino.naCidade.length > 0;
+  const temItens = sino.suas.length + sino.naCidade.length + oficiais.length > 0;
   const semDado = subprefeituras.length === 0;
 
   // Fecha o painel do sino e o menu da conta ao clicar fora ou pressionar Esc.
@@ -197,6 +202,25 @@ export default function Header() {
                     </div>
                   ) : (
                     <div className="notif-list">
+                      {oficiais.length > 0 && (
+                        <section>
+                          <p className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Defesa Civil</p>
+                          <ul>
+                            {oficiais.map(({ area: a, alerta }) => (
+                              <li key={a.id}>
+                                <button type="button" className="notif-item" onClick={() => abrirArea(a)}>
+                                  <div className="min-w-0 flex-1 text-left">
+                                    <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{a.nome}</p>
+                                    <p className="truncate" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{`${eventoLegivel(alerta.evento)} até ${horaCurta(alerta.expiraUtc)}`}</p>
+                                  </div>
+                                  <SeloNivelOficial gravidade={alerta.gravidade} />
+                                  <ChevronRight size={16} className="flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )}
                       {[{ titulo: 'Suas subprefeituras', itens: sino.suas, estrela: true }, { titulo: 'Na cidade', itens: sino.naCidade, estrela: false }]
                         .filter((g) => g.itens.length > 0)
                         .map((g) => (

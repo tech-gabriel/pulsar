@@ -35,6 +35,7 @@ import { useAlturaFluida } from '../motion/useAlturaFluida';
 import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
 import { useJsonPublico } from '../hooks/useJsonPublico';
 import { comContornosDaBaixada } from '../utils/geo';
+import type { PontoCritico } from '../features/cidade/pontosCriticos';
 import { areaPorSlug, areasDaCidade, cidadeDaArea, cidadeInicial, cidadesDasAreas, nomeDaCobertura } from '../features/cidade/cidade';
 import { escolherDestinoComoChegar, rotuloDoPino, rotuloDoTrecho } from '../features/rota/destino';
 import { buscarRuaPerto } from '../api/busca';
@@ -204,6 +205,8 @@ export default function MapaPage() {
   const rotaNoCelular = isMobile && rotaAberta;
   useAlturaFluida(folhaRef, !rotaSemPontos); // a folha sai e volta (AnimatePresence)
   const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
+  // D3: na Baixada, a gota liga os pontos críticos curados (só quem a vê baixa o arquivo).
+  const pontosCriticos = useJsonPublico<PontoCritico[]>('/pontos-criticos-baixada.json', overlayAlagamento && comBaixada);
 
   // Trechos (hexágonos da grade): só na camada de risco e fora da rota. Os dados vêm quando o
   // mapa chega perto ou quando há um ponto (busca, localização), nunca na abertura de longe.
@@ -682,6 +685,7 @@ export default function MapaPage() {
           onMoverPonto={handleMoverPonto}
           overlayAlagamento={overlayAlagamento}
           ocorrencias={ocorrencias}
+          pontosCriticos={pontosCriticos.dados ?? undefined}
           rota={rotaAberta ? rota.linha : null}
           destinoSemRota={rotaAberta && !rota.linha ? rota.destino : null}
           semZoom={rotaNoCelular}

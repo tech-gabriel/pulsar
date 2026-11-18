@@ -15,6 +15,7 @@ export const PALETA = {
   verde: '#22c55e', // green-500  — risco baixo
   amarelo: '#eab308', // yellow-500 — risco moderado
   ambar: '#f59e0b', // amber-500  — atenção
+  ambarEscuro: '#B45309', // amber-700  — ponto crítico da Baixada (D3, 18/11/2026): disco com '!' branco legível
   vermelho: '#ef4444', // red-500    — risco alto
   roxo: '#9333ea', // purple-600 — UV extremo
   // Risco no semáforo da Defesa Civil SP (escolha de 16/11/2026; a SEMIL publica só os nomes das

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import type { FeatureCollection, GeoJsonObject, Polygon } from 'geojson';
 import type { LocalSalvoDto, OcorrenciaAlagamentoDto, SubprefeituraMapaDto, TipoLocal } from '../../types';
+import type { PontoCritico } from '../../features/cidade/pontosCriticos';
 import type { PropsTrecho } from '../../features/cidade/trechos';
 import type { Camada } from '../../utils/camadas';
 import { temWebGL } from './webgl';
@@ -28,6 +29,8 @@ export interface PropsMapa {
   onMoverPonto: (lat: number, lon: number) => void;
   overlayAlagamento: boolean;
   ocorrencias: OcorrenciaAlagamentoDto[];
+  /** Pontos críticos da Baixada (D3): entram com a gota, só para quem vê a Baixada. */
+  pontosCriticos?: PontoCritico[];
   /** Traçado da rota: linhas com `properties.cor` e os pontos `origem`/`destino`. */
   rota?: FeatureCollection | null;
   /**

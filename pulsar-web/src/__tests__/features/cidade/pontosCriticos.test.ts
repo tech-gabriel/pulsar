@@ -4,6 +4,7 @@ import { describe, it, expect } from 'vitest';
 import type { FeatureCollection } from 'geojson';
 import { pontoEmPoligono } from '../../../utils/geo';
 import { distanciaKm } from '../../../features/alagamentosHoje/regras';
+import { pontosCriticosGeojson, textoPontoCritico } from '../../../features/cidade/pontosCriticos';
 
 interface PontoCritico { nome: string; municipio: string; lat: number; lon: number; fonte: string; data: string }
 
@@ -33,5 +34,21 @@ describe('pontos-criticos-baixada.json', () => {
 
   it('cobre ao menos 5 dos 9 municípios', () => {
     expect(new Set(pontos.map((p) => p.municipio)).size).toBeGreaterThanOrEqual(5);
+  });
+});
+
+// D3 (escolha do user, 18/11/2026): os pontos entram na camada da gota; o toque diz quando alagou,
+// que o ponto não muda o risco da área e de onde veio.
+describe('ponto crítico no mapa', () => {
+  const p = { nome: 'Avenida Rangel Pestana', municipio: 'Santos', lat: -23.94271, lon: -46.33259, fonte: 'https://www.abcdoabc.com.br/fortes-chuvas', data: '2025-08-06' };
+
+  it('o texto do toque', () => {
+    expect(textoPontoCritico(p)).toEqual({ quando: 'Alagou em 6 de agosto de 2025. Não muda o risco da área.', fonte: 'abcdoabc.com.br' });
+  });
+
+  it('o ponto no mapa (GeoJSON é lon, lat)', () => {
+    const g = pontosCriticosGeojson([p]);
+    expect(g.features[0].geometry.coordinates).toEqual([-46.33259, -23.94271]);
+    expect(g.features[0].properties).toEqual({ i: 0 });
   });
 });

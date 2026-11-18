@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pulsar.API.DTOs;
@@ -51,7 +52,7 @@ public class SubprefeiturasController : ControllerBase
             .ToLookup(p => p.SubprefeituraId);
         var medidas = await ObterChuvaMedidaAsync();
         var cemadenPorSub = await ObterChuvaCemadenAsync();
-        var alertas = await _alertas.AtivosPorAreaAsync(DateTime.UtcNow, HttpContext.RequestAborted);
+        var alertas = await ObterAlertasOficiaisAsync();
         var dtos = subs
             .Select(s =>
             {
@@ -66,6 +67,20 @@ public class SubprefeiturasController : ControllerBase
             .OrderByDescending(d => d.ScoreAtual?.Valor ?? -1)
             .ThenBy(d => d.Nome, StringComparer.Ordinal);
         return Ok(dtos);
+    }
+
+    /// <summary>Alerta oficial também é enfeite da lista: falha na leitura abre o mapa sem eles.</summary>
+    private async Task<IReadOnlyDictionary<Guid, IReadOnlyList<AlertaOficial>>> ObterAlertasOficiaisAsync()
+    {
+        try
+        {
+            return await _alertas.AtivosPorAreaAsync(DateTime.UtcNow, HttpContext.RequestAborted);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Falha ao ler os alertas oficiais para a lista de subprefeituras.");
+            return new Dictionary<Guid, IReadOnlyList<AlertaOficial>>();
+        }
     }
 
     /// <summary>

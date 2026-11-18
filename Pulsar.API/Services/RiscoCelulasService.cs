@@ -126,7 +126,7 @@ public class RiscoCelulasService : IRiscoCelulasService
         if (leituras.Count == 0) return null;
 
         var entrada = ScoreService.MontarEntrada(sub.Nome, leituras);
-        ComponenteScore Alagamento(EntradaScore e, double fator) => CalculadoraScore.Calcular(e, CalibracaoScore.Atual, fator).Alagamento;
+        ComponenteScore Alagamento(EntradaScore e, double fator) => CalculadoraScore.Calcular(e, CalibracaoScore.Para(e.Subprefeitura), fator).Alagamento;
 
         // Três contas por trecho. Modelo: a chuva da área (entrega 1). Medida: a estação
         // substitui o modelo onde existe. Maior: vale a mais alta das duas. Trecho sem

@@ -11,4 +11,7 @@
   <ItemGroup>
     <PackageReference Include="pocketken.H3" Version="4.5.0.1" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="dados\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

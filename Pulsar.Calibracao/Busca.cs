@@ -3,6 +3,8 @@ using Pulsar.API.Domain.Score;
 
 namespace Pulsar.Calibracao;
 
+public record EscolhaBaixada(Candidato Vencedor, IReadOnlyDictionary<string, double> Fatores, IReadOnlyDictionary<string, double> PctDiasAltoPorArea);
+
 public record Candidato(double EscalaIntensidade, double BonusSaturacao, ParametrosScore Parametros, Metricas Metricas);
 
 public static class Busca
@@ -49,5 +51,50 @@ public static class Busca
                 res.Add(new Candidato(Math.Round(k, 2), bonus, p, Backtest.Avaliar(DiasAlto(series, p), ocorrencias, de, ate)));
             }
         return res.OrderByDescending(c => c.Metricas.F1).ToList();
+    }
+
+    /// <summary>Passo e piso do fator da área que passa da trava (critério para separar Cubatão).</summary>
+    public const double PassoFatorArea = 0.025, PisoFatorArea = 0.85;
+
+    /// <summary>
+    /// Limiares da Baixada: a grade de busca da capital, mas cada candidato só vale se nenhuma
+    /// área passar de <see cref="MaxPctDiasAlto"/> dias em ALTO. A área que passa perde fator de
+    /// <see cref="PassoFatorArea"/> em <see cref="PassoFatorArea"/> até <see cref="PisoFatorArea"/>;
+    /// se nem assim couber, o candidato cai. Vence o maior F1 contra os dias documentados;
+    /// empate fica com o maior k (menos alerta). Nenhum candidato: lança com as áreas culpadas.
+    /// </summary>
+    public static EscolhaBaixada Baixada(
+        IReadOnlyDictionary<string, List<HoraClima>> series,
+        IReadOnlyDictionary<string, HashSet<DateOnly>> ocorrencias, DateOnly de, DateOnly ate)
+    {
+        var dias = ate.DayNumber - de.DayNumber + 1;
+        EscolhaBaixada? melhor = null;
+        var foraDaTrava = new HashSet<string>();
+        for (var k = 0.3; k <= 1.61; k += 0.1)
+            foreach (var bonus in new[] { 0.0, 10, 20, 30 })
+            {
+                var fatores = series.Keys.ToDictionary(a => a, _ => 1.0);
+                Dictionary<string, HashSet<DateOnly>> alto;
+                Dictionary<string, double> pct;
+                ParametrosScore p;
+                while (true)
+                {
+                    p = Escalar(CalibracaoScore.Atual, Math.Round(k, 2), bonus, fatores);
+                    alto = DiasAlto(series, p);
+                    pct = alto.ToDictionary(kv => kv.Key, kv => (double)kv.Value.Count(d => d >= de && d <= ate) / dias);
+                    var acima = pct.Where(kv => kv.Value > MaxPctDiasAlto).Select(kv => kv.Key).ToList();
+                    if (acima.Count == 0) break;
+                    var semPiso = acima.Where(a => fatores[a] - PassoFatorArea >= PisoFatorArea - 1e-9).ToList();
+                    if (semPiso.Count < acima.Count) { foraDaTrava.UnionWith(acima.Except(semPiso)); p = null!; break; }
+                    foreach (var a in semPiso) fatores[a] = Math.Round(fatores[a] - PassoFatorArea, 4);
+                }
+                if (p is null) continue;
+                var c = new Candidato(Math.Round(k, 2), bonus, p, Backtest.Avaliar(alto, ocorrencias, de, ate));
+                if (melhor is null || c.Metricas.F1 > melhor.Vencedor.Metricas.F1 + 1e-12
+                    || (Math.Abs(c.Metricas.F1 - melhor.Vencedor.Metricas.F1) <= 1e-12 && c.EscalaIntensidade > melhor.Vencedor.EscalaIntensidade))
+                    melhor = new EscolhaBaixada(c, fatores, pct);
+            }
+        return melhor ?? throw new InvalidOperationException(
+            $"Nenhum limiar deixa estas áreas dentro da trava de {MaxPctDiasAlto:P0} dos dias em ALTO, nem com fator {PisoFatorArea}: {string.Join(", ", foraDaTrava)}. Curvas próprias para elas precisam de decisão do user.");
     }
 }

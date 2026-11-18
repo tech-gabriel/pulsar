@@ -6,11 +6,11 @@ namespace Pulsar.Calibracao;
 
 public static class Relatorio
 {
-    private static string F(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);
+    internal static string F(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);
     private static string P(double v) => v.ToString("P0", CultureInfo.InvariantCulture);
     private static string P1(double v) => v.ToString("P1", CultureInfo.InvariantCulture);
 
-    private static string Pontos(PontoCurva[] ps) => "[" + string.Join(", ", ps.Select(p => $"new({F(p.X)}, {F(p.Y)})")) + "]";
+    internal static string Pontos(PontoCurva[] ps) => "[" + string.Join(", ", ps.Select(p => $"new({F(p.X)}, {F(p.Y)})")) + "]";
 
     public static string Gerar(Metricas antiga, Metricas atualSemAjuste, Candidato vencedor, IReadOnlyList<Candidato> top, DateOnly de, DateOnly ate)
     {

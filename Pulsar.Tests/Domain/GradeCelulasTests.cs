@@ -47,12 +47,24 @@ public class GradeCelulasTests
     };
 
     // A coleta usa a sede como ponto da área: ela precisa cair num trecho da própria área,
-    // nunca no mar nem no município vizinho. Fator 1,0 até o SGB entrar (entrega 2).
+    // nunca no mar nem no município vizinho. O fator vem do SGB (entrega 2): a área fica em 1,0 e o
+    // trecho que é pelo menos metade área de risco sobe até 25%, nunca desce.
     [Theory, MemberData(nameof(SedesDaBaixada))]
     public void Baixada_SedeCaiNumTrechoDaPropriaArea(string area, double lat, double lon)
     {
-        Grade.DaArea(area).Should().NotBeEmpty().And.OnlyContain(c => c.Fator == 1.0);
+        Grade.DaArea(area).Should().NotBeEmpty().And.OnlyContain(c => c.Fator >= 1.0 && c.Fator <= 1.25);
         Grade.MaisProxima(lat, lon)!.Sub.Should().Be(area);
+    }
+
+    // "Costuma alagar" é minoria (opção A do user, 18/11): com todo trecho marcado, a frase perde o sentido.
+    [Fact]
+    public void Baixada_CostumaAlagarEmMinoriaDosTrechos()
+    {
+        var todas = SedesDaBaixada.Select(s => (string)s[0]).SelectMany(Grade.DaArea).ToList();
+        var marcados = todas.Count(c => c.Fator > 1.0);
+
+        marcados.Should().BeGreaterThan(0);
+        ((double)marcados / todas.Count).Should().BeLessThan(0.4);
     }
 
     [Fact]

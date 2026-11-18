@@ -58,4 +58,27 @@ public static class CalibracaoScore
             ["Vila Mariana"] = 0.925,
             ["Vila Prudente"] = 1.05,
         });
+
+    /// <summary>
+    /// Baixada Santista. Calibrada em 2026-11-18 (Pulsar.Calibracao, modo grade-baixada) contra a
+    /// chuva do Open-Meteo de out/2024 a out/2026 e 27 alagamentos documentados (Defesa Civil e
+    /// imprensa, dados/alagamentos-baixada.csv): k = 1,6 sobre as curvas da capital, bônus de
+    /// saturação 10, F1 0,196 (cobertura 13 de 27), ALTO em 1,1% a 2,4% dos dias por município
+    /// (trava de 5%). Nenhuma área precisou de fator próprio. Vento e calor seguem a capital
+    /// (decisão do user). Conferida e aprovada pelo user em 18/11/2026.
+    /// </summary>
+    public static readonly ParametrosScore Baixada = Atual with
+    {
+        Chuva1h = [new(0, 0), new(4, 30), new(12, 60), new(24, 100)],
+        Chuva3h = [new(0, 0), new(12, 30), new(28, 60), new(48, 100)],
+        Saturacao48h = [new(20, 0), new(80, 10)],
+        Fatores = new Dictionary<string, double>
+        {
+            ["Bertioga"] = 1, ["Cubatão"] = 1, ["Guarujá"] = 1, ["Itanhaém"] = 1, ["Mongaguá"] = 1,
+            ["Peruíbe"] = 1, ["Praia Grande"] = 1, ["Santos"] = 1, ["São Vicente"] = 1,
+        },
+    };
+
+    /// <summary>Os parâmetros da cidade da área, pelo nome dela. Nome desconhecido fica com os da capital.</summary>
+    public static ParametrosScore Para(string nomeArea) => Baixada.Fatores.ContainsKey(nomeArea) ? Baixada : Atual;
 }

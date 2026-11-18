@@ -83,32 +83,70 @@ public static class GeracaoGrade
         await GravarContornoAsync(repo, areaDaCelula.Keys);
     }
 
+    /// <summary>Período da calibração da Baixada: as duas temporadas de chuva com alagamentos documentados.</summary>
+    public static readonly DateOnly BaixadaDe = new(2024, 10, 1), BaixadaAte = new(2026, 10, 31);
+
     /// <summary>
-    /// Modo <c>grade-baixada</c>: gera <c>grade-baixada-santista.json</c> com as células H3 dos 9
-    /// municípios da Baixada. Sem backtest e com fator 1,0 em todas: o "costuma alagar" da
-    /// Baixada vem do SGB, na entrega 2 do projeto (não há GeoSampa lá). As células que já estão
-    /// na grade da capital ficam com ela (divisa de Marsilac), para o trecho não ter dois riscos.
+    /// Modo <c>grade-baixada</c>: grade H3 dos 9 municípios com o fator de cada trecho e os
+    /// limiares da Baixada. Não há GeoSampa lá: os limiares saem do Open-Meteo contra a lista
+    /// curada de alagamentos (<see cref="FonteAlagamentosBaixada"/>), sob a trava de 5% dos dias
+    /// em ALTO, e o "costuma alagar" do trecho sai das cartas do SGB. As células que já estão na
+    /// grade da capital ficam com ela (divisa de Marsilac). Nada é gravado se a trava reprovar.
     /// </summary>
-    public static async Task BaixadaAsync(string raiz)
+    public static async Task BaixadaAsync(HttpClient http, string raiz)
     {
         var repo = Path.GetFullPath(Path.Combine(raiz, ".."));
+        var cache = Path.Combine(raiz, "cache");
         var geojson = await File.ReadAllTextAsync(Path.Combine(repo, "pulsar-web", "public", "baixada-santista-leve.geojson"));
         var daCapital = CelulasGravadas(Path.Combine(repo, "Pulsar.API", "Domain", "Score", "grade-sao-paulo.json")).ToHashSet();
 
         var areaDaCelula = GradeH3.Celulas(geojson, nome => nome)
             .Where(c => !daCapital.Contains(c.Key))
             .ToDictionary(c => c.Key, c => c.Value);
-        var municipios = new[] { "Santos", "São Vicente", "Guarujá", "Cubatão", "Praia Grande", "Bertioga", "Mongaguá", "Itanhaém", "Peruíbe" };
-        var semCelula = municipios.Except(areaDaCelula.Values).ToList();
+        var semCelula = Baixada.Todas.Select(b => b.Nome).Except(areaDaCelula.Values).ToList();
         if (semCelula.Count > 0)
             throw new InvalidOperationException($"Municípios sem nenhuma célula: {string.Join(", ", semCelula)}. A grade NÃO foi gravada.");
 
+        var docs = FonteAlagamentosBaixada.Ler(await File.ReadAllTextAsync(FonteAlagamentosBaixada.Arquivo(raiz)));
+        Console.WriteLine("Baixando séries do Open-Meteo...");
+        var series = new Dictionary<string, List<HoraClima>>();
+        foreach (var b in Baixada.Todas)
+            series[b.Nome] = await FonteOpenMeteo.SerieAsync(http, b, BaixadaDe, BaixadaAte, cache);
+        // Referência da capital para vento e calor (centro, sul e leste).
+        var capital = new Dictionary<string, List<HoraClima>>();
+        foreach (var s in Subprefeituras.Todas.Where(s => s.Nome is "Sé" or "Santo Amaro" or "Itaquera"))
+            capital[s.Nome] = await FonteOpenMeteo.SerieAsync(http, s, BaixadaDe, BaixadaAte, cache);
+
+        var escolha = Busca.Baixada(series, docs, BaixadaDe, BaixadaAte);
+        var p = escolha.Vencedor.Parametros;
+
+        Console.WriteLine("Baixando cartas do SGB...");
+        var poligonos = await FonteSgb.PoligonosAsync(http, cache);
+        var peso = GradeH3.PesoSgb(areaDaCelula.Keys, poligonos);
+        var fatores = GradeH3.FatoresPorPeso(peso, areaDaCelula, escolha.Fatores);
+
+        var semOcorrencia = new Dictionary<string, HashSet<DateOnly>>();
+        var comFatorDaArea = Backtest.Avaliar(
+            DiasAltoPorCelula(series, areaDaCelula, c => escolha.Fatores[areaDaCelula[c]], p), semOcorrencia, BaixadaDe, BaixadaAte);
+        var comFatorDaCelula = Backtest.Avaliar(
+            DiasAltoPorCelula(series, areaDaCelula, c => fatores[c], p), semOcorrencia, BaixadaDe, BaixadaAte);
+        var dentro = GradeH3.DentroDaTrava(comFatorDaArea, comFatorDaCelula);
+
+        var md = RelatorioBaixada.Gerar(escolha, docs, series, capital, poligonos, peso, fatores, areaDaCelula,
+            comFatorDaArea, comFatorDaCelula, dentro, BaixadaDe, BaixadaAte);
+        var saida = Path.Combine(raiz, "saida");
+        Directory.CreateDirectory(saida);
+        var arqRelatorio = Path.Combine(saida, $"baixada-{DateTime.Now:yyyyMMdd-HHmm}.md");
+        await File.WriteAllTextAsync(arqRelatorio, md);
+        Console.WriteLine(md);
+        Console.WriteLine($"Relatório: {arqRelatorio}");
+
+        if (!dentro)
+            throw new InvalidOperationException("Grade da Baixada reprovada na trava de excesso de alerta. O arquivo da grade NÃO foi alterado.");
         var arquivo = Path.Combine(repo, "Pulsar.API", "Domain", "Score", "grade-baixada-santista.json");
-        await File.WriteAllTextAsync(arquivo, Json(areaDaCelula, areaDaCelula.Keys.ToDictionary(c => c, _ => 1.0)));
+        await File.WriteAllTextAsync(arquivo, Json(areaDaCelula, fatores, BaixadaDe, BaixadaAte));
         Console.WriteLine($"Grade da Baixada: {areaDaCelula.Count} células em {arquivo}");
         await GravarContornoAsync(repo, areaDaCelula.Keys, "grade-baixada-santista.geojson");
-        foreach (var g in areaDaCelula.GroupBy(c => c.Value).OrderBy(g => g.Key))
-            Console.WriteLine($"  {g.Key}: {g.Count()}");
     }
 
     private static IEnumerable<string> CelulasGravadas(string arquivoGrade)
@@ -141,8 +179,9 @@ public static class GeracaoGrade
     /// <summary>Dias em ALTO de cada célula: a série de clima é a da área dela; só o fator muda.</summary>
     private static Dictionary<string, HashSet<DateOnly>> DiasAltoPorCelula(
         IReadOnlyDictionary<string, List<HoraClima>> series,
-        IReadOnlyDictionary<string, string> areaDaCelula, Func<string, double> fator)
+        IReadOnlyDictionary<string, string> areaDaCelula, Func<string, double> fator, ParametrosScore? p = null)
     {
+        p ??= CalibracaoScore.Atual;
         // Muitas células dividem a mesma área e o mesmo fator: calcula uma vez por par.
         var memo = new Dictionary<(string, double), HashSet<DateOnly>>();
         return areaDaCelula.ToDictionary(kv => kv.Key, kv =>
@@ -152,7 +191,7 @@ public static class GeracaoGrade
             {
                 var serie = series[kv.Value];
                 dias = Backtest.Entradas(kv.Value, serie).Zip(serie)
-                    .Where(x => CalculadoraScore.Calcular(x.First, CalibracaoScore.Atual, chave.Item2).Alagamento.Faixa == FaixaRisco.ALTO)
+                    .Where(x => CalculadoraScore.Calcular(x.First, p, chave.Item2).Alagamento.Faixa == FaixaRisco.ALTO)
                     .Select(x => DateOnly.FromDateTime(x.Second.HoraLocal))
                     .ToHashSet();
                 memo[chave] = dias;

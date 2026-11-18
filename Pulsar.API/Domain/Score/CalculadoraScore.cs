@@ -48,7 +48,7 @@ public readonly record struct ResultadoScore(
 /// </summary>
 public static class CalculadoraScore
 {
-    public static ResultadoScore Calcular(EntradaScore e) => Calcular(e, CalibracaoScore.Atual);
+    public static ResultadoScore Calcular(EntradaScore e) => Calcular(e, CalibracaoScore.Para(e.Subprefeitura));
 
     public static ResultadoScore Calcular(EntradaScore e, ParametrosScore p)
         => Calcular(e, p, p.Fator(e.Subprefeitura));

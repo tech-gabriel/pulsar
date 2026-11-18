@@ -21,6 +21,7 @@ import BotaoCompartilhar from '../../features/compartilhar/BotaoCompartilhar';
 import BotaoFavorito from './BotaoFavorito';
 import PrevisaoFaixa from './PrevisaoFaixa';
 import AlagamentosCge from './AlagamentosCge';
+import AvisosOficiais, { LinhaAvisoOficial } from './AvisosOficiais';
 import ChuvaMedidaLinha from './ChuvaMedidaLinha';
 import { temChuvaMedida } from '../../utils/chuvaMedida';
 import { porExtenso } from '../../utils/texto';
@@ -190,6 +191,8 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
             <span>{pontos.length === 1 ? `Alagamento agora: ${porExtenso(pontos[0].via)}` : `${pontos.length} pontos de alagamento agora`}</span>
           </p>
         )}
+        {/* Alerta oficial da Defesa Civil: o mais grave, resumido na folha curta como a linha do CGE. */}
+        {folha && !folha.aberta && <LinhaAvisoOficial alertas={area.alertasOficiais} />}
         {trecho && (
           // O texto de antes (pedido de 16/11/2026), mas o toque abre o cartão da área.
           <button type="button" className="det-linha det-regiao" onClick={onVerRegiao} disabled={!onVerRegiao}>
@@ -213,6 +216,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
         <div className="det-resto">
           {/* Dado oficial antes de tudo que é estimativa. */}
           <AlagamentosCge pontos={area.alagamentosCge} />
+          <AvisosOficiais alertas={area.alertasOficiais} />
 
           {blocos.length > 0 && (
             <section className="det-sec">

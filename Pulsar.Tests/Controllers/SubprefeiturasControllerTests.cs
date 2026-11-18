@@ -60,7 +60,8 @@ public class SubprefeiturasControllerTests : IClassFixture<PulsarWebApplicationF
         using (var escopo = _factory.Services.CreateScope())
         {
             var db = escopo.ServiceProvider.GetRequiredService<PulsarDbContext>();
-            ativasNoBanco = await db.Subprefeituras.CountAsync(s => s.Ativa);
+            // Usuário comum: só as ativas de cidade pública (a Baixada escondida fica de fora).
+            ativasNoBanco = await db.Subprefeituras.CountAsync(s => s.Ativa && s.Regiao.Cidade.Publica);
         }
 
         subs!.Should().HaveCount(ativasNoBanco);

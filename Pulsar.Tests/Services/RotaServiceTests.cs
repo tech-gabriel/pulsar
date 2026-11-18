@@ -21,7 +21,7 @@ public class RotaServiceTests
     {
         var sub = new Subprefeitura { Nome = "Mooca", Latitude = -23.5, Longitude = -46.6 };
         var subs = new Mock<ISubprefeituraRepository>();
-        subs.Setup(r => r.ObterAtivasComResumoAsync()).ReturnsAsync([sub]);
+        subs.Setup(r => r.ObterVisiveisComResumoAsync(false)).ReturnsAsync([sub]);
         var cge = new Mock<IPontoAlagamentoCgeRepository>();
         cge.Setup(r => r.ObterAtivosAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
@@ -83,7 +83,7 @@ public class RotaServiceTests
         Mock<ICemadenService> cemaden)
     {
         var subs = new Mock<ISubprefeituraRepository>();
-        subs.Setup(r => r.ObterAtivasComResumoAsync()).ReturnsAsync([sub]);
+        subs.Setup(r => r.ObterVisiveisComResumoAsync(false)).ReturnsAsync([sub]);
         var cge = new Mock<IPontoAlagamentoCgeRepository>();
         cge.Setup(r => r.ObterAtivosAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var svc = new RotaService(subs.Object, cge.Object, Mock.Of<IChuvaReferenciaClient>(),

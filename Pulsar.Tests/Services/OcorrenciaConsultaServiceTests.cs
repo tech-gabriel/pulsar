@@ -33,7 +33,7 @@ public class OcorrenciaConsultaServiceTests
             Oco(Lat + 0.001, Lon),            // ~111 m
             Oco(Lat + 0.05, Lon),             // ~5.5 km (fora)
         ]);
-        _subRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([]);
+        _subRepoMock.Setup(r => r.ObterVisiveisAsync(false)).ReturnsAsync([]);
 
         var res = await CriarServico().ObterProximasAsync(Lat, Lon, 500);
 
@@ -45,7 +45,7 @@ public class OcorrenciaConsultaServiceTests
     public async Task ObterProximas_SemOcorrencias_NaoTemRiscoElevado()
     {
         _repoMock.Setup(r => r.ObterRecentesAsync(It.IsAny<int>())).ReturnsAsync([]);
-        _subRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([]);
+        _subRepoMock.Setup(r => r.ObterVisiveisAsync(false)).ReturnsAsync([]);
 
         var res = await CriarServico().ObterProximasAsync(Lat, Lon, 500);
 
@@ -62,7 +62,7 @@ public class OcorrenciaConsultaServiceTests
         _repoMock.Setup(r => r.ObterRecentesAsync(It.IsAny<int>())).ReturnsAsync([Oco(Lat, Lon)]);
         var sub = new Subprefeitura { Id = Guid.NewGuid(), Nome = "Sé", Latitude = Lat, Longitude = Lon };
         sub.Leituras.Add(new LeituraClimatica { ChuvaMmH = 12, Timestamp = DateTime.UtcNow });
-        _subRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([sub]);
+        _subRepoMock.Setup(r => r.ObterVisiveisAsync(false)).ReturnsAsync([sub]);
         _subRepoMock.Setup(r => r.ObterComUltimaLeituraAsync(sub.Id)).ReturnsAsync(sub);
         // Principal ALTO de propósito: vale a faixa de ALAGAMENTO, não a principal.
         _scoreRepoMock.Setup(r => r.ObterUltimoAsync(sub.Id))
@@ -82,7 +82,7 @@ public class OcorrenciaConsultaServiceTests
         _repoMock.Setup(r => r.ObterRecentesAsync(It.IsAny<int>())).ReturnsAsync([Oco(Lat, Lon)]);
         var sub = new Subprefeitura { Id = Guid.NewGuid(), Nome = "Sé", Latitude = Lat, Longitude = Lon };
         sub.Leituras.Add(new LeituraClimatica { ChuvaMmH = 30, Timestamp = antigo });
-        _subRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([sub]);
+        _subRepoMock.Setup(r => r.ObterVisiveisAsync(false)).ReturnsAsync([sub]);
         _subRepoMock.Setup(r => r.ObterComUltimaLeituraAsync(sub.Id)).ReturnsAsync(sub);
         _scoreRepoMock.Setup(r => r.ObterUltimoAsync(sub.Id))
             .ReturnsAsync(new ScorePerigo { FaixaAlagamento = FaixaRisco.ALTO, Timestamp = antigo });
@@ -98,7 +98,7 @@ public class OcorrenciaConsultaServiceTests
     {
         _repoMock.Setup(r => r.ObterRecentesAsync(It.IsAny<int>())).ReturnsAsync([Oco(Lat, Lon)]);
         var sub = new Subprefeitura { Id = Guid.NewGuid(), Nome = "Sé", Latitude = Lat, Longitude = Lon };
-        _subRepoMock.Setup(r => r.ObterAtivasAsync()).ReturnsAsync([sub]);
+        _subRepoMock.Setup(r => r.ObterVisiveisAsync(false)).ReturnsAsync([sub]);
         _scoreRepoMock.Setup(r => r.ObterUltimoAsync(sub.Id)).ReturnsAsync((ScorePerigo?)null);
 
         var res = await CriarServico().ObterProximasAsync(Lat, Lon, 500);

@@ -44,7 +44,10 @@ public class LocaisSalvosService : ILocaisSalvosService
             throw new ArgumentException("Endereço inválido.");
         if (!LocalSalvo.DentroDeSaoPaulo(req.Latitude, req.Longitude))
             throw new ArgumentException("Esse endereço fica fora da cidade de São Paulo.");
-        var sub = await _db.Subprefeituras.AsNoTracking().FirstOrDefaultAsync(s => s.Id == req.SubprefeituraId)
+        // Casa e trabalho só em área de cidade pública: senão a área escondida (Baixada em
+        // conferência) entrava nos favoritos e ligava push para ela.
+        var sub = await _db.Subprefeituras.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == req.SubprefeituraId && s.Regiao.Cidade.Publica)
             ?? throw new ArgumentException("Subprefeitura não encontrada.");
 
         var agora = DateTime.UtcNow;

@@ -43,7 +43,7 @@ public class SubprefeiturasController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<SubprefeituraResumoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ObterTodas()
     {
-        var subs = await _subprefeituraRepository.ObterAtivasComResumoAsync();
+        var subs = await _subprefeituraRepository.ObterVisiveisComResumoAsync(incluirOcultas: User.IsInRole("ADMIN"));
         // Mesma validade que o aviso de Perigo usa: o mapa não mostra ponto que o push não mandaria.
         var pontos = (await _pontosCge.ObterAtivosAsync(DateTime.UtcNow - LimiaresNotificacao.ValidadePontoCge))
             .ToLookup(p => p.SubprefeituraId);
@@ -104,8 +104,8 @@ public class SubprefeiturasController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ObterPrevisao(Guid id, CancellationToken ct)
     {
-        var sub = await _subprefeituraRepository.ObterPorIdAsync(id);
-        if (sub is null || !sub.Ativa)
+        var sub = await _subprefeituraRepository.ObterVisivelAsync(id, incluirOcultas: User.IsInRole("ADMIN"));
+        if (sub is null)
             return NotFound(new { mensagem = "Subprefeitura não encontrada." });
 
         return Ok(await _previsaoService.ObterFaixasSubprefeituraAsync(id, MaxFaixasPrevisao, ct));

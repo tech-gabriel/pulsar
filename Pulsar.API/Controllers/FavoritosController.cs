@@ -61,7 +61,8 @@ public class FavoritosController : ControllerBase
             return NotFound(new { mensagem = "Usuário não encontrado." });
 
         var sub = await _subprefeituraRepository.ObterComRegiaoAsync(request.SubprefeituraId);
-        if (sub is null)
+        // Área de cidade ainda escondida (Baixada em conferência) não existe para o usuário comum.
+        if (sub is null || (!sub.Regiao.Cidade.Publica && !User.IsInRole("ADMIN")))
             return NotFound(new { mensagem = "Subprefeitura não encontrada." });
 
         if (usuario.Favoritos.Any(f => f.SubprefeituraId == request.SubprefeituraId))

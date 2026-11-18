@@ -25,9 +25,10 @@ public interface IRiscoCelulasService
 
     /// <summary>
     /// O risco de alagamento de cada trecho agora, pela mesma conta do score da área. Área
-    /// sem leitura nas últimas 48 h fica de fora.
+    /// sem leitura nas últimas 48 h fica de fora. Área de cidade escondida só entra com
+    /// <paramref name="incluirOcultas"/> (Admin).
     /// </summary>
-    Task<CelulasAgoraDto> AgoraAsync(CancellationToken ct = default);
+    Task<CelulasAgoraDto> AgoraAsync(bool incluirOcultas = false, CancellationToken ct = default);
 
     /// <summary>Apaga os resumos mais antigos que a retenção. Devolve quantos apagou.</summary>
     Task<int> PodarAsync(CancellationToken ct = default);

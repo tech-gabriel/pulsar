@@ -44,7 +44,7 @@ public class PublicoController : ControllerBase
         var resultado = await _cache.GetOrCreateAsync(ChaveCache, async entrada =>
         {
             entrada.AbsoluteExpirationRelativeToNow = DuracaoCache;
-            var subs = await _subprefeituraRepo.ObterAtivasComResumoAsync();
+            var subs = await _subprefeituraRepo.ObterVisiveisComResumoAsync();
             // Mesma validade do mapa e do push: ponto que o app não mostraria não aparece aqui.
             var pontos = (await _pontosCge.ObterAtivosAsync(DateTime.UtcNow - LimiaresNotificacao.ValidadePontoCge))
                 .ToLookup(p => p.SubprefeituraId);

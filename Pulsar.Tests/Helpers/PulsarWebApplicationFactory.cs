@@ -54,6 +54,9 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
                 // E-mail de bootstrap de admin usado pelos testes de autorização.
                 ["Admin:Emails:0"]      = EmailAdminBootstrap,
                 ["Admin:Emails:1"]      = EmailAdminSemDono,
+                // Sem o ritmo de 1,1 s do OpenWeatherMap: a coleta falsa de 41 áreas levaria 45 s por teste.
+                ["OpenWeatherMap:IntervaloMinimoMs"] = "0",
+                ["Cemaden:IntervaloMinimoMs"] = "0",
             });
         });
 

@@ -190,7 +190,6 @@ namespace Pulsar.API.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CodigoIbge")
-                        .IsRequired()
                         .HasMaxLength(7)
                         .HasColumnType("character varying(7)");
 
@@ -201,6 +200,9 @@ namespace Pulsar.API.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("Publica")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Uf")
                         .IsRequired()
@@ -222,6 +224,16 @@ namespace Pulsar.API.Migrations
                             CodigoIbge = "3550308",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Nome = "São Paulo",
+                            Publica = true,
+                            Uf = "SP"
+                        },
+                        new
+                        {
+                            Id = new Guid("30000000-0000-0000-0000-000000000002"),
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nome = "Baixada Santista",
+                            Publica = false,
                             Uf = "SP"
                         });
                 });
@@ -805,6 +817,15 @@ namespace Pulsar.API.Migrations
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             FusoHorario = "America/Sao_Paulo",
                             Nome = "Sul"
+                        },
+                        new
+                        {
+                            Id = new Guid("10000000-0000-0000-0000-000000000006"),
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CidadeId = new Guid("30000000-0000-0000-0000-000000000002"),
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            FusoHorario = "America/Sao_Paulo",
+                            Nome = "Baixada Santista"
                         });
                 });
 
@@ -949,6 +970,10 @@ namespace Pulsar.API.Migrations
 
                     b.Property<DateTime>("AtualizadoEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CodigoIbge")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
 
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -1325,6 +1350,114 @@ namespace Pulsar.API.Migrations
                             Longitude = -46.646222000000002,
                             Nome = "Vila Mariana",
                             RegiaoId = new Guid("10000000-0000-0000-0000-000000000005")
+                        },
+                        new
+                        {
+                            Id = new Guid("20000000-0000-0000-0000-000000000033"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3548500",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Latitude = -23.960799999999999,
+                            Longitude = -46.333599999999997,
+                            Nome = "Santos",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            Id = new Guid("20000000-0000-0000-0000-000000000034"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3551009",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Latitude = -23.963100000000001,
+                            Longitude = -46.3919,
+                            Nome = "São Vicente",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            Id = new Guid("20000000-0000-0000-0000-000000000035"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3518701",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Latitude = -23.993099999999998,
+                            Longitude = -46.256399999999999,
+                            Nome = "Guarujá",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            Id = new Guid("20000000-0000-0000-0000-000000000036"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3513504",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Latitude = -23.895,
+                            Longitude = -46.425400000000003,
+                            Nome = "Cubatão",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            Id = new Guid("20000000-0000-0000-0000-000000000037"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3541000",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Latitude = -24.005800000000001,
+                            Longitude = -46.402799999999999,
+                            Nome = "Praia Grande",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            Id = new Guid("20000000-0000-0000-0000-000000000038"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3506359",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Latitude = -23.848600000000001,
+                            Longitude = -46.139600000000002,
+                            Nome = "Bertioga",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            Id = new Guid("20000000-0000-0000-0000-000000000039"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3531100",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Latitude = -24.0931,
+                            Longitude = -46.620800000000003,
+                            Nome = "Mongaguá",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            Id = new Guid("20000000-0000-0000-0000-000000000040"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3522109",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Latitude = -24.1831,
+                            Longitude = -46.788899999999998,
+                            Nome = "Itanhaém",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000006")
+                        },
+                        new
+                        {
+                            Id = new Guid("20000000-0000-0000-0000-000000000041"),
+                            Ativa = true,
+                            AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CodigoIbge = "3537602",
+                            CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Latitude = -24.32,
+                            Longitude = -46.9983,
+                            Nome = "Peruíbe",
+                            RegiaoId = new Guid("10000000-0000-0000-0000-000000000006")
                         });
                 });
 

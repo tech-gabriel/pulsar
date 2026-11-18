@@ -82,13 +82,16 @@ public static class GradeH3
     /// toca alguma área, para que nenhum ponto da cidade fique sem trecho; na divisa, a
     /// célula fica com a área que ocupa a maior parte dela.
     /// </summary>
-    public static IReadOnlyDictionary<string, string> Celulas(string geojson)
+    /// <param name="nomeDaArea">Traduz o nome do geojson para o nome do banco. Padrão: as
+    /// subprefeituras da capital. A Baixada já grava no geojson o nome do banco.</param>
+    public static IReadOnlyDictionary<string, string> Celulas(string geojson, Func<string, string>? nomeDaArea = null)
     {
+        nomeDaArea ??= NomeCanonico;
         var areas = new List<(string Nome, Polygon Poligono, Geometry Valido)>();
         using var doc = JsonDocument.Parse(geojson);
         foreach (var f in doc.RootElement.GetProperty("features").EnumerateArray())
         {
-            var nome = NomeCanonico(f.GetProperty("properties").GetProperty("nm_subprefeitura").GetString() ?? "");
+            var nome = nomeDaArea(f.GetProperty("properties").GetProperty("nm_subprefeitura").GetString() ?? "");
             var geo = f.GetProperty("geometry");
             var coords = geo.GetProperty("coordinates");
             var poligonos = geo.GetProperty("type").GetString() == "MultiPolygon"

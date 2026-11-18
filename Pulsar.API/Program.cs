@@ -160,6 +160,10 @@ builder.Services.AddDbContext<PulsarDbContext>((sp, options) =>
            .AddInterceptors(sp.GetRequiredService<InvalidaSessaoInterceptor>()));
 
 // --- HTTP Clients ---
+// No máximo ~54 chamadas por minuto (teto do plano grátis: 60), valendo entre a coleta e a
+// previsão. Os testes zeram o intervalo (OpenWeatherMap:IntervaloMinimoMs).
+builder.Services.AddKeyedSingleton("openweathermap", (sp, _) => new Pulsar.API.External.Http.RitmoChamadas(
+    TimeSpan.FromMilliseconds(sp.GetRequiredService<IConfiguration>().GetValue("OpenWeatherMap:IntervaloMinimoMs", 1100))));
 builder.Services.AddHttpClient("openweathermap", (sp, client) =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
@@ -168,7 +172,8 @@ builder.Services.AddHttpClient("openweathermap", (sp, client) =>
     if (!client.BaseAddress.AbsoluteUri.EndsWith('/'))
         client.BaseAddress = new Uri(client.BaseAddress.AbsoluteUri + "/");
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddHttpMessageHandler(sp => new Pulsar.API.External.Http.RitmoChamadasHandler(
+    sp.GetRequiredKeyedService<Pulsar.API.External.Http.RitmoChamadas>("openweathermap")));
 
 // Segunda fonte de chuva, só para conferir a do OpenWeatherMap (PlausibilidadeChuva).
 builder.Services.AddHttpClient("openmeteo", client =>
@@ -192,11 +197,16 @@ builder.Services.AddHttpClient("cemaden-token", client =>
     client.BaseAddress = new Uri("https://sgaa.cemaden.gov.br/SGAA/rest/");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+// No máximo 10 chamadas por minuto ao PED: com os 10 municípios (capital + Baixada) o CEMADEN
+// passou a responder 401 no meio do ciclo (limite não oficial de ~12 por minuto). Os testes zeram.
+builder.Services.AddKeyedSingleton("cemaden-ped", (sp, _) => new Pulsar.API.External.Http.RitmoChamadas(
+    TimeSpan.FromMilliseconds(sp.GetRequiredService<IConfiguration>().GetValue("Cemaden:IntervaloMinimoMs", 6000))));
 builder.Services.AddHttpClient("cemaden-ped", client =>
 {
     client.BaseAddress = new Uri("https://sws.cemaden.gov.br/PED/rest/");
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddHttpMessageHandler(sp => new Pulsar.API.External.Http.RitmoChamadasHandler(
+    sp.GetRequiredKeyedService<Pulsar.API.External.Http.RitmoChamadas>("cemaden-ped")));
 
 builder.Services.AddHttpClient("maptiler", client =>
 {

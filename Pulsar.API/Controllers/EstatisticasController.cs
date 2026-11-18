@@ -48,7 +48,7 @@ public class EstatisticasController : ControllerBase
         var resultado = await _cache.GetOrCreateAsync(ChaveCache, async entrada =>
         {
             entrada.AbsoluteExpirationRelativeToNow = DuracaoCache;
-            var subs = await _subprefeituraRepo.ObterAtivasComResumoAsync();
+            var subs = await _subprefeituraRepo.ObterVisiveisComResumoAsync();
             var linhas = await _agregadoRepo.ObterRecentesAsync(EstatisticasRegioes.JanelaDias);
             var hoje = FusoLocal.DiaLocal(DateTime.UtcNow, FusoSaoPaulo);
             return EstatisticasRegioes.Calcular(subs, linhas, hoje);

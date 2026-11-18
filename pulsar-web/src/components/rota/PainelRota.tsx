@@ -34,6 +34,8 @@ interface Props {
   cobertura?: string;
   /** Rota entre cidades (capital ↔ Baixada): só as pontas foram avaliadas, a serra entra como linha. */
   atravessaSerra?: boolean;
+  /** O texto da serra pelo sentido (textoSerra); sem ele, o de descer. */
+  textoSerra?: string | null;
 }
 
 type App = 'google' | 'waze' | 'apple';
@@ -95,7 +97,7 @@ function useAppLembrado(): App {
  * a saída para o app de navegação. Um primário por estado: o app lembrado em Pode ir e Com
  * atenção, o aviso em Esperar e nenhum em Sem leitura. O traçado e os campos ficam fora daqui.
  */
-export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm, faixaDaArea, cobertura = 'São Paulo capital', atravessaSerra = false }: Props) {
+export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm, faixaDaArea, cobertura = 'São Paulo capital', atravessaSerra = false, textoSerra }: Props) {
   const app = useAppLembrado();
 
   if (erro) {
@@ -122,16 +124,19 @@ export default function PainelRota({ resultado, origem, destino, carregando, err
       {/* Mesmo lugar na árvore no carregando e no resultado: o cartão não desmonta, só muda. */}
       <VereditoRota resultado={pronto ? resultado : null} atualizadoEm={atualizadoEm} atravessaSerra={atravessaSerra} />
       {pronto && <Resultado resultado={resultado} links={linksNavegacao(origem, destino)} app={app} onApp={lembrarApp}
-        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso} faixaDaArea={faixaDaArea} atravessaSerra={atravessaSerra} />}
+        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso} faixaDaArea={faixaDaArea} atravessaSerra={atravessaSerra} textoSerra={textoSerra ?? TEXTO_SERRA} />}
     </div>
   );
 }
 
-function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel, onCancelarAviso, faixaDaArea, atravessaSerra }: {
+function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel, onCancelarAviso, faixaDaArea, atravessaSerra, textoSerra }: {
   resultado: RotaAvaliacao; links: Record<App, string>; app: App; onApp: (a: App) => void;
   avisoPedido: boolean; onPedirAviso: () => void; avisoIndisponivel: boolean; onCancelarAviso?: () => void;
-  faixaDaArea?: Props['faixaDaArea']; atravessaSerra: boolean;
+  faixaDaArea?: Props['faixaDaArea']; atravessaSerra: boolean; textoSerra: string;
 }) {
+  // Linha visível da serra: a parte depois dos dois pontos, com maiúscula ("Confira a Ecovias antes de subir").
+  const confira = textoSerra.split(': ')[1] ?? textoSerra;
+  const linhaSerra = confira.charAt(0).toUpperCase() + confira.slice(1);
   const esperar = resultado.estado === 'Esperar';
   // A previsão por hora só ajuda a saber até quando esperar (16/11/2026).
   const comHoras = esperar && resultado.horas.length > 0;
@@ -156,9 +161,9 @@ function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, av
           {/* D2 (escolha do user, 18/11/2026): a serra fica entre a saída e a chegada, sem cor de risco. */}
           {atravessaSerra && i === resultado.trechos.length - 1 && i > 0 && (
             <li className="rota-trecho flex items-start gap-2 text-[13.5px]" style={{ color: 'var(--text-secondary)' }}>
-              <span className="sr-only">{TEXTO_SERRA}</span>
+              <span className="sr-only">{textoSerra}</span>
               <i aria-hidden="true" className="w-[9px] h-[9px] mt-[5px] rounded-full flex-shrink-0" style={{ border: '1.5px dashed var(--text-muted)' }} />
-              <span aria-hidden="true" className="min-w-0">Serra do Mar<small className="block text-[12px]" style={{ color: 'var(--text-muted)' }}>Confira a Ecovias antes de descer</small></span>
+              <span aria-hidden="true" className="min-w-0">Serra do Mar<small className="block text-[12px]" style={{ color: 'var(--text-muted)' }}>{linhaSerra}</small></span>
               <span aria-hidden="true" className="ml-auto flex-shrink-0 text-right">Não avaliada</span>
             </li>
           )}

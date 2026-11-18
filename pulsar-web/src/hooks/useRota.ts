@@ -69,8 +69,8 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
     () => (origemPos && destinoPos && geojson ? tracarCorredor(origemPos, destinoPos, geojson) : null),
     [origemPos, destinoPos, geojson],
   );
-  const { ids, atravessaSerra } = useMemo(
-    () => (corredor?.ok && subs.length > 0 ? idsDaRota(corredor, subs) : { ids: [] as string[], atravessaSerra: false }),
+  const { ids, atravessaSerra, textoSerra } = useMemo(
+    () => (corredor?.ok && subs.length > 0 ? idsDaRota(corredor, subs) : { ids: [] as string[], atravessaSerra: false, textoSerra: null }),
     [corredor, subs],
   );
   const erroCorredor: Erro | null = !corredor ? null
@@ -201,5 +201,6 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
     pedirAviso, cancelarAviso, avisoPedido: !!chave && chaveAviso === chave,
     // Rota entre cidades: só as pontas foram avaliadas; o painel diz que a serra fica de fora (TEXTO_SERRA).
     atravessaSerra,
+    textoSerra,
   };
 }

@@ -52,3 +52,13 @@ export function textoVeredito(r: RotaAvaliacao, fuso?: string, atravessaSerra = 
 
 /** Rota entre a capital e a Baixada: a serra não tem trecho nem medida (desenho de 17/11/2026). */
 export const TEXTO_SERRA = 'A serra não é avaliada: confira a Ecovias antes de descer';
+
+/**
+ * O texto da serra pelo sentido (decisão do user, 18/11/2026): descendo ou subindo pela Ecovias
+ * (Anchieta e Imigrantes, o caminho até a Baixada a partir de qualquer ponta da capital); com
+ * Bertioga numa das pontas a estrada é a Mogi-Bertioga, fora da Ecovias.
+ */
+export function textoSerra(desce: boolean, bertioga: boolean): string {
+  if (bertioga) return 'A serra não é avaliada: confira as condições da estrada antes de ir';
+  return desce ? TEXTO_SERRA : 'A serra não é avaliada: confira a Ecovias antes de subir';
+}

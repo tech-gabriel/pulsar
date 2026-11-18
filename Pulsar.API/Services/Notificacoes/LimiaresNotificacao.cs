@@ -145,6 +145,12 @@ public static class LimiaresNotificacao
     // PrioridadePerigoCge é o terceiro nível acima de tudo: o CGE dizendo que alagou. Também
     // isenta do teto diário, pelo mesmo motivo do score alto.
     public const int PrioridadePerigoCge = 0;
+    // Alerta oficial da Defesa Civil (regra C do user): o Extremo é tão grave quanto o Perigo do
+    // CGE; os outros níveis só saem com sinal próprio do Pulsar, e aí valem como o score alto.
+    public const int PrioridadeAlertaExtremo = PrioridadePerigoCge;
+    public const int PrioridadeAlertaComSinal = 1;
+    /// <summary>Chuva medida em 3 h que conta como sinal próprio para um alerta oficial de chuva.</summary>
+    public const double ChuvaMedidaSinalMm = 1.0;
     public const int PrioridadeScoreAlto = 1;
     public const int PrioridadeChuvaPrevista = 2;
     // Chuva forte MEDIDA num posto ao lado (AS7): é fato, então vence o "começou a chover",

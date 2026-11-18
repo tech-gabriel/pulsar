@@ -314,6 +314,7 @@ builder.Services.AddScoped<ILocaisSalvosService, LocaisSalvosService>();
 // recebe IEnumerable<IGatilhoNotificacao>: registrado pelo tipo concreto, ele compila,
 // resolve e nunca é avaliado. Ver NotificacoesDependencyInjectionTests.
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAlagamentoCge>();
+builder.Services.AddScoped<IGatilhoNotificacao, GatilhoAlertaOficial>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoScoreAlto>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaPrevista>();
 builder.Services.AddScoped<IGatilhoNotificacao, GatilhoChuvaMedidaPerto>();

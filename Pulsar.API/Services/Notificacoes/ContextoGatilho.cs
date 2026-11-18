@@ -60,6 +60,9 @@ public class ContextoGatilho
     /// </summary>
     public IReadOnlyList<MedicaoPerto> ChuvaMedidaPerto { get; init; } = [];
 
+    /// <summary>Alertas oficiais da Defesa Civil valendo agora nesta área (IDAP).</summary>
+    public IReadOnlyList<AlertaOficial> AlertasOficiaisAtivos { get; init; } = [];
+
     public Subprefeitura Subprefeitura => Estado.Subprefeitura;
 
     /// <summary>O estado, se tiver score. Mantém o nome usado pelos gatilhos.</summary>

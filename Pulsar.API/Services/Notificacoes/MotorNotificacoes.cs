@@ -232,6 +232,12 @@ public class MotorNotificacoes : IMotorNotificacoes
             .Where(p => subIds.Contains(p.SubprefeituraId) && p.Ativo && p.VistoEm >= vistoDesde)
             .ToListAsync(ct))
             .ToLookup(p => p.SubprefeituraId);
+        // Alertas oficiais da Defesa Civil valendo agora, por área (gravados pelo AlertasOficiaisJob).
+        var alertas = (await _db.AlertasOficiais.Include(a => a.Areas)
+                .Where(a => a.CanceladoEmUtc == null && a.InicioUtc <= agora && a.ExpiraUtc > agora)
+                .ToListAsync(ct))
+            .SelectMany(a => a.Areas.Where(ar => subIds.Contains(ar.SubprefeituraId)).Select(ar => (ar.SubprefeituraId, Alerta: a)))
+            .ToLookup(x => x.SubprefeituraId, x => x.Alerta);
         var referencia = await ObterChuvaReferenciaAsync(subs, ct);
         var medidas = await ObterChuvaMedidaAsync(agora, ct);
         // As vizinhas saem de TODAS as subprefeituras ativas, não só das acompanhadas: o posto
@@ -247,7 +253,7 @@ public class MotorNotificacoes : IMotorNotificacoes
             try
             {
                 ctx = await MontarContextoAsync(sub, agora, [.. pontosCge[sub.Id]], referencia?.GetValueOrDefault(sub.Id),
-                    medidas.GetValueOrDefault(sub.Id), MedicoesPerto(sub, todas, medidas), ct);
+                    medidas.GetValueOrDefault(sub.Id), MedicoesPerto(sub, todas, medidas), [.. alertas[sub.Id]], ct);
             }
             catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
             {
@@ -285,7 +291,8 @@ public class MotorNotificacoes : IMotorNotificacoes
     private async Task<ContextoGatilho> MontarContextoAsync(
         Subprefeitura sub, DateTime agora, IReadOnlyList<PontoAlagamentoCge> pontosCge,
         IReadOnlyDictionary<DateTime, double>? chuvaReferencia,
-        ChuvaMedidaRegiao? chuvaMedida, IReadOnlyList<MedicaoPerto> chuvaMedidaPerto, CancellationToken ct)
+        ChuvaMedidaRegiao? chuvaMedida, IReadOnlyList<MedicaoPerto> chuvaMedidaPerto,
+        IReadOnlyList<AlertaOficial> alertasOficiais, CancellationToken ct)
     {
         // Os dois últimos: o atual e o do ciclo anterior, para o "2 ciclos seguidos".
         var scores = await _db.ScoresPerigo
@@ -319,6 +326,7 @@ public class MotorNotificacoes : IMotorNotificacoes
             LeiturasRecentes = recentes,
             ChuvaMedida = chuvaMedida,
             ChuvaMedidaPerto = chuvaMedidaPerto,
+            AlertasOficiaisAtivos = alertasOficiais,
         };
     }
 

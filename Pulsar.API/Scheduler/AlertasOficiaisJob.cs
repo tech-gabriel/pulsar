@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Pulsar.API.Domain.Alertas;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Services.Interfaces;
+using Pulsar.API.Services.Notificacoes;
 
 namespace Pulsar.API.Scheduler;
 
@@ -15,7 +16,6 @@ public class AlertasOficiaisJob : BackgroundService
 {
     /// <summary>Até quando um score com chuva medida conta como "chovendo agora" para apertar o ritmo.</summary>
     private static readonly TimeSpan JanelaChuvaMedida = TimeSpan.FromMinutes(30);
-    private const string GatilhoAlertaOficialNome = "alerta-oficial";
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<AlertasOficiaisJob> _logger;
@@ -53,7 +53,7 @@ public class AlertasOficiaisJob : BackgroundService
                 try
                 {
                     var enviados = await scope.ServiceProvider.GetRequiredService<IMotorNotificacoes>()
-                        .AvaliarSoAsync(GatilhoAlertaOficialNome, ct);
+                        .AvaliarSoAsync(LimiaresNotificacao.GatilhoAlertaOficial, ct);
                     _logger.LogInformation("Alerta Extremo novo: push da Defesa Civil avaliado na hora ({Enviados} envio(s)).", enviados);
                 }
                 catch (Exception ex) when (!ct.IsCancellationRequested)

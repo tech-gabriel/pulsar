@@ -25,8 +25,9 @@ public interface IMotorNotificacoes
     Task<int> AvaliarEDispararAsync(CancellationToken ct = default);
 
     /// <summary>
-    /// Mesma rodada, só com um gatilho (pelo <c>Nome</c>). Usada pelo job de alertas no alerta Extremo:
-    /// um push de outro gatilho não sai segundos antes do ciclo normal.
+    /// Mesma rodada, só com um gatilho (pelo <c>Nome</c>). Usada pelo job de alertas no alerta Extremo: um
+    /// push de outro gatilho não sai segundos antes do ciclo normal. Outro alerta da Defesa Civil pendente
+    /// pode sair junto, até 15 min antes do ciclo; nada se perde, só adianta.
     /// </summary>
     Task<int> AvaliarSoAsync(string gatilho, CancellationToken ct = default);
 }

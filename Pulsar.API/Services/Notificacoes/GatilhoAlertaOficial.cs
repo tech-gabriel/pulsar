@@ -13,11 +13,12 @@ namespace Pulsar.API.Services.Notificacoes;
 /// Atenção ou acima, ou chuva medida); sem sinal, o alerta só aparece no app;</item>
 /// <item>capital: com ponto de alagamento do CGE ativo, o não Extremo não vira um segundo push.</item>
 /// </list>
-/// Um push por alerta e área (a chave leva o identificador do alerta, sem cooldown).
+/// Um push por alerta e área (a chave leva o identificador); fora o Extremo, 1 por área a cada 3 h, e
+/// depois disso o mesmo tipo de alerta sai como lembrete (ver Consolidador.EhLembrete).
 /// </summary>
 public partial class GatilhoAlertaOficial : IGatilhoNotificacao
 {
-    public string Nome => "alerta-oficial";
+    public string Nome => LimiaresNotificacao.GatilhoAlertaOficial;
 
     /// <summary>Tamanho máximo do corpo do push (a bandeja corta o resto).</summary>
     private const int MaxCorpo = 180;

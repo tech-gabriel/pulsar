@@ -48,3 +48,6 @@ export function textoVeredito(r: RotaAvaliacao, fuso?: string): { titulo: string
       return { titulo: 'Sem leitura recente no caminho', detalhe: `Não temos dado recente ${em}. Confira antes de sair.` };
   }
 }
+
+/** Rota entre a capital e a Baixada: a serra não tem trecho nem medida (desenho de 17/11/2026). */
+export const TEXTO_SERRA = 'A serra não é avaliada: confira a Ecovias antes de descer';

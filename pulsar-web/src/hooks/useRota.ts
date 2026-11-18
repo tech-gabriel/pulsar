@@ -3,7 +3,7 @@ import type { Feature, FeatureCollection } from 'geojson';
 import { avaliarRota, cancelarAvisoRota, pedirAvisoRota, type Coordenada } from '../api/rota';
 import { track } from '../analytics';
 import { useToast } from '../contexts/ToastContext';
-import { idsDosTrechos, tracarCorredor } from '../features/rota/corredor';
+import { idsDaRota, tracarCorredor } from '../features/rota/corredor';
 import type { PontoRota, RotaAvaliacao } from '../features/rota/tipos';
 import type { SubprefeituraMapaDto } from '../types';
 import { coresParaFaixa } from '../utils/risco';
@@ -69,8 +69,8 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
     () => (origemPos && destinoPos && geojson ? tracarCorredor(origemPos, destinoPos, geojson) : null),
     [origemPos, destinoPos, geojson],
   );
-  const ids = useMemo(
-    () => (corredor?.ok && subs.length > 0 ? idsDosTrechos(corredor.nomes, subs) : []),
+  const { ids, atravessaSerra } = useMemo(
+    () => (corredor?.ok && subs.length > 0 ? idsDaRota(corredor, subs) : { ids: [] as string[], atravessaSerra: false }),
     [corredor, subs],
   );
   const erroCorredor: Erro | null = !corredor ? null
@@ -199,5 +199,7 @@ export function useRota(geojson: FeatureCollection | null, subs: SubprefeituraMa
     resultado, atualizadoEm: atual?.resultado ? atual.em : null, carregando, erro, linha,
     tentarDeNovo, avisoIndisponivel: push.estado === 'carregando',
     pedirAviso, cancelarAviso, avisoPedido: !!chave && chaveAviso === chave,
+    // Rota entre cidades: só as pontas foram avaliadas; o painel diz que a serra fica de fora (TEXTO_SERRA).
+    atravessaSerra,
   };
 }

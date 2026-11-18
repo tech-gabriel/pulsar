@@ -47,6 +47,8 @@ export interface PropsMapa {
   lugarEmFoco?: { local: LocalSalvoDto; toque: number } | null;
   /** Muda a cada "fechar" da folha do lugar: o mapa volta ao enquadramento de antes. */
   voltarDoLugar?: number;
+  /** Cada troca de cidade no painel (D1): o mapa volta a enquadrar a cidade, mesmo com a zona igual. */
+  pedidoFoco?: number;
   /** Lugares com alagamento ativo na região: o marcador ganha o anel de alerta. */
   lugaresEmAlerta?: TipoLocal[];
   /** Trechos pintados pelo risco de agora (camada de risco). Null ou ausente: só as áreas. */

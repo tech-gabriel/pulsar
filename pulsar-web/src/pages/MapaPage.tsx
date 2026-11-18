@@ -105,6 +105,8 @@ export default function MapaPage() {
   const slugParam = searchParams.get('regiao');
   const [slugAplicado, setSlugAplicado] = useState<string | null>(null);
   const [zonaEmFoco, setZonaEmFoco] = useState<string | null>(null);
+  // Cada troca de cidade no painel conta, mesmo quando a zona em foco não muda (voltar à capital).
+  const [pedidoFoco, setPedidoFoco] = useState(0);
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
   // Trecho tocado no mapa (índice H3). Toda outra forma de escolher a área o limpa.
   const [trechoTocado, setTrechoTocado] = useState<string | null>(null);
@@ -488,6 +490,7 @@ export default function MapaPage() {
   // zona; a de várias zonas (capital) volta à vista da cidade.
   function trocarCidade(c: string) {
     lembrarCidade(c);
+    setPedidoFoco((n) => n + 1);
     const zonas = new Set(areasDaCidade(subprefeituras, c).map((a) => a.zona));
     setZonaEmFoco(zonas.size === 1 ? [...zonas][0] : null);
     setSubSelecionada(null);
@@ -680,6 +683,7 @@ export default function MapaPage() {
           onSelecionarSub={handleSelecionarSub}
           camadaAtiva={camadaAtiva}
           zonaEmFoco={zonaEmFoco}
+          pedidoFoco={pedidoFoco}
           subSelecionadaAtiva={!!subSelecionada}
           pontoBusca={rotaAberta ? null : pontoBusca}
           onMoverPonto={handleMoverPonto}

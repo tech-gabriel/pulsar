@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { FeatureCollection } from 'geojson';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,6 +18,9 @@ import TelaEscolher from '../features/ativacao/telas/TelaEscolher';
 import TelaInstalar from '../features/ativacao/telas/TelaInstalar';
 import TelaAlerta from '../features/ativacao/telas/TelaAlerta';
 import TelaPronto from '../features/ativacao/telas/TelaPronto';
+import { useJsonPublico } from '../hooks/useJsonPublico';
+import { comContornosDaBaixada } from '../utils/geo';
+import { BAIXADA } from '../features/cidade/cidade';
 
 export default function BoasVindasPage() {
   const navigate = useNavigate();
@@ -37,6 +40,14 @@ export default function BoasVindasPage() {
   useEffect(() => {
     fetch('/subprefeituras_wgs84.geojson').then((r) => r.json()).then(setGeojson).catch(() => setGeojson(null));
   }, []);
+
+  // Quem vê a Baixada (o Admin, até a abertura) também acha os municípios dela pela localização.
+  const comBaixada = subprefeituras.some((s) => s.cidade === BAIXADA);
+  const contornosDaBaixada = useJsonPublico<FeatureCollection>('/baixada-santista-leve.geojson', comBaixada);
+  const contornos = useMemo(
+    () => (geojson && contornosDaBaixada.dados ? comContornosDaBaixada(geojson, contornosDaBaixada.dados) : geojson),
+    [geojson, contornosDaBaixada.dados],
+  );
 
   const ctx: ContextoAtivacao | null = carregando || push.estado === 'carregando'
     ? null
@@ -63,11 +74,11 @@ export default function BoasVindasPage() {
   const localizar = useCallback(async () => {
     try {
       const { lat, lon } = await detectar();
-      return resolverSelecao(lat, lon, geojson, subprefeituras, 'localizacao').sub?.id ?? null;
+      return resolverSelecao(lat, lon, contornos, subprefeituras, 'localizacao').sub?.id ?? null;
     } catch {
       return null;
     }
-  }, [detectar, geojson, subprefeituras]);
+  }, [detectar, contornos, subprefeituras]);
 
   async function ativarAlerta() {
     const final = await push.ativar();

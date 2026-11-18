@@ -80,7 +80,7 @@ function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, pontosCriticos = [], rota, destinoSemRota = null, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto, pontoMedida = null } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, pontosCriticos = [], rota, destinoSemRota = null, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, pedidoFoco = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto, pontoMedida = null } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -138,7 +138,7 @@ export default function MapaGL(props: PropsMapa) {
     const centro = centroideRegiao(subprefeituras.filter((s) => normalizarNome(s.zona) === normalizarNome(zonaEmFoco)));
     if (centro) voar([centro.lon, centro.lat], ZOOM.regiao, 600);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zonaEmFoco, carregou]);
+  }, [zonaEmFoco, carregou, pedidoFoco]);
 
   // A subprefeitura escolhida na lista, na busca ou no sino vira o foco do mapa.
   useEffect(() => {

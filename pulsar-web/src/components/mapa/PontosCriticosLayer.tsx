@@ -3,12 +3,13 @@ import { Layer, Popup, Source, useMap } from 'react-map-gl/maplibre';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
 import { pontosCriticosGeojson, textoPontoCritico, type PontoCritico } from '../../features/cidade/pontosCriticos';
 import { PALETA } from '../../utils/paleta';
+import { ID_TOQUE_PONTOS_CRITICOS } from './camadasPorCima';
 
 const FONTE = 'pulsar-pontos-criticos';
 const DISCO = 'pulsar-pontos-criticos-disco';
 const GLIFO = 'pulsar-pontos-criticos-glifo';
 /** Alvo invisível do toque: 44 px, o mínimo da Apple e do WCAG, mesmo com o disco menor. */
-const TOQUE = 'pulsar-pontos-criticos-toque';
+const TOQUE = ID_TOQUE_PONTOS_CRITICOS;
 
 /**
  * Pontos onde costuma alagar na Baixada (D3, escolha do user em 18/11/2026): entram com a camada

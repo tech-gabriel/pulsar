@@ -121,3 +121,13 @@ describe('TelaEscolher com duas cidades', () => {
     expect(screen.queryByRole('checkbox', { name: 'Mooca' })).not.toBeInTheDocument();
   });
 });
+
+// Achado da revisão: com a lista ainda chegando (ou com erro), a conta comum via "Em qual cidade?"
+// sem nenhum cartão.
+describe('TelaEscolher sem a lista ainda', () => {
+  it('não pergunta a cidade antes de saber quais existem', () => {
+    render(<TelaEscolher subprefeituras={[]} localizar={vi.fn()} onContinuar={vi.fn()} />);
+    expect(screen.queryByText('Em qual cidade?')).not.toBeInTheDocument();
+    expect(screen.getByRole('searchbox')).toBeInTheDocument();
+  });
+});

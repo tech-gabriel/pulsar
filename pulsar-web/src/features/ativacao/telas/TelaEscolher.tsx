@@ -30,7 +30,8 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
   const [cidadeEscolhida, setCidadeEscolhida] = useState<string | null>(null);
   const cidades = useMemo(() => cidadesDasAreas(subprefeituras), [subprefeituras]);
   const variasCidades = cidades.length > 1;
-  const cidade = variasCidades ? cidadeEscolhida : cidades[0] ?? null;
+  // Lista ainda chegando (ou com erro): não pergunta a cidade antes de saber quais existem.
+  const cidade = variasCidades ? cidadeEscolhida : cidades[0] ?? 'São Paulo';
   const daCidade = useMemo(() => (cidade ? areasDaCidade(subprefeituras, cidade) : []), [subprefeituras, cidade]);
   const singular = rotuloAreas(cidade ?? 'São Paulo', 1).slice(2);
   if (!pendenteAplicado && subprefeituras.length > 0) {

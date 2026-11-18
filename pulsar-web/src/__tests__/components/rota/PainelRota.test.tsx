@@ -270,3 +270,36 @@ describe('PainelRota: sem salvar casa ou trabalho no resultado', () => {
     expect(screen.queryByText(/Salvar como/)).not.toBeInTheDocument();
   });
 });
+
+// D2 (escolha do user, 18/11/2026): na rota capital ↔ Baixada, a serra entra como uma linha do
+// caminho, entre a saída e a chegada, e o veredito fala só da saída e da chegada.
+describe('PainelRota entre cidades', () => {
+  const ateSantos = (): RotaAvaliacao => ({
+    ...rota('PodeIr'),
+    trechos: [
+      { subprefeituraId: 'se', nome: 'Sé', faixa: 'BAIXO', alagandoCge: false },
+      { subprefeituraId: 'santos', nome: 'Santos', faixa: 'BAIXO', alagandoCge: false },
+    ],
+  });
+
+  it('a serra aparece entre a saída e a chegada, como não avaliada', () => {
+    render(<PainelRota resultado={ateSantos()} origem={origem} destino={destino} carregando={false} erro={null}
+      avisoPedido={false} onPedirAviso={vi.fn()} atravessaSerra />);
+    const linhas = screen.getAllByRole('listitem');
+    expect(linhas.map((l) => l.textContent)).toEqual([
+      expect.stringContaining('Sé'),
+      expect.stringContaining('Serra do Mar'),
+      expect.stringContaining('Santos'),
+    ]);
+    expect(linhas[1]).toHaveTextContent('Não avaliada');
+    expect(linhas[1]).toHaveTextContent('Confira a Ecovias antes de descer');
+    expect(screen.getByText('A serra não é avaliada: confira a Ecovias antes de descer')).toHaveClass('sr-only');
+    expect(screen.getByRole('status')).toHaveTextContent('Sem chuva forte medida na saída e na chegada agora.');
+  });
+
+  it('rota dentro da cidade: sem a serra e o texto de sempre', () => {
+    monta('PodeIr');
+    expect(screen.queryByText(/Serra do Mar/)).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Sem chuva forte medida no caminho agora.');
+  });
+});

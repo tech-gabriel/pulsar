@@ -583,6 +583,7 @@ export default function MapaPage() {
       onCancelarAviso={() => void rota.cancelarAviso()}
       faixaDaArea={(id) => subprefeituras.find((s) => s.id === id)?.faixaRisco}
       cobertura={nomeDaCobertura(subprefeituras)}
+      atravessaSerra={rota.atravessaSerra}
       onTrocar={(ponto) => {
         (ponto === 'origem' ? rota.setOrigem : rota.setDestino)(null);
         // O De/Para é o mesmo no celular e no painel: um só está montado.

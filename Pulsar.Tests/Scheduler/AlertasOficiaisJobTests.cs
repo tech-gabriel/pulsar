@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Pulsar.API.Domain.Alertas;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.Repositories.Data;
 using Pulsar.API.Scheduler;
@@ -24,17 +25,25 @@ public class AlertasOficiaisJobTests
             => Task.FromResult<IReadOnlyDictionary<Guid, IReadOnlyList<AlertaOficial>>>(new Dictionary<Guid, IReadOnlyList<AlertaOficial>>());
     }
 
-    private sealed class MotorFalso : IMotorNotificacoes
+    private sealed class MotorFalso(bool falha = false) : IMotorNotificacoes
     {
         public int Chamadas;
-        public Task<int> AvaliarEDispararAsync(CancellationToken ct = default) { Chamadas++; return Task.FromResult(0); }
+        public string? SoGatilho;
+        public Task<int> AvaliarEDispararAsync(CancellationToken ct = default) => AvaliarSoAsync("todos", ct);
+        public Task<int> AvaliarSoAsync(string gatilho, CancellationToken ct = default)
+        {
+            Chamadas++;
+            SoGatilho = gatilho;
+            return falha ? throw new InvalidOperationException("banco fora") : Task.FromResult(0);
+        }
     }
 
-    private static async Task<int> Ciclo(int novosExtremos)
+    private static async Task<int> Ciclo(int novosExtremos) => (await CicloCom(novosExtremos, new MotorFalso())).motor.Chamadas;
+
+    private static async Task<(MotorFalso motor, TimeSpan proximo)> CicloCom(int novosExtremos, MotorFalso motor)
     {
         using var conn = new SqliteConnection("Data Source=:memory:");
         conn.Open();
-        var motor = new MotorFalso();
         var servicos = new ServiceCollection()
             .AddDbContext<PulsarDbContext>(o => o.UseSqlite(conn))
             .AddSingleton<IAlertaOficialService>(new ServicoFalso(novosExtremos))
@@ -42,8 +51,7 @@ public class AlertasOficiaisJobTests
             .BuildServiceProvider();
         using (var scope = servicos.CreateScope()) scope.ServiceProvider.GetRequiredService<PulsarDbContext>().Database.EnsureCreated();
         var job = new AlertasOficiaisJob(servicos.GetRequiredService<IServiceScopeFactory>(), NullLogger<AlertasOficiaisJob>.Instance);
-        await job.ExecutarUmCicloAsync(CancellationToken.None);
-        return motor.Chamadas;
+        return (motor, await job.ExecutarUmCicloAsync(CancellationToken.None));
     }
 
     [Fact]
@@ -51,4 +59,14 @@ public class AlertasOficiaisJobTests
 
     [Fact]
     public async Task SemExtremoNovo_NaoChamaOMotor() => (await Ciclo(0)).Should().Be(0);
+
+    // Só o gatilho da Defesa Civil roda na rodada extra.
+    [Fact]
+    public async Task AlertaExtremoNovo_RodaSoOGatilhoDaDefesaCivil()
+        => (await CicloCom(1, new MotorFalso())).motor.SoGatilho.Should().Be("alerta-oficial");
+
+    // Falha no envio não derruba a leitura: o ritmo segue o da leitura (atento, com alerta de SP no feed).
+    [Fact]
+    public async Task MotorFalha_LeituraSegueNoRitmoDela()
+        => (await CicloCom(1, new MotorFalso(falha: true))).proximo.Should().Be(RitmoAlertas.Atento);
 }

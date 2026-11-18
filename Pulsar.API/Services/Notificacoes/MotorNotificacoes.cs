@@ -60,14 +60,18 @@ public class MotorNotificacoes : IMotorNotificacoes
     // lendo o livro-caixa antes de qualquer uma gravar mandariam o mesmo push duas vezes.
     private static readonly SemaphoreSlim UmaRodadaPorVez = new(1, 1);
 
-    public async Task<int> AvaliarEDispararAsync(CancellationToken ct = default)
+    public Task<int> AvaliarEDispararAsync(CancellationToken ct = default) => RodadaAsync(null, ct);
+
+    public Task<int> AvaliarSoAsync(string gatilho, CancellationToken ct = default) => RodadaAsync(gatilho, ct);
+
+    private async Task<int> RodadaAsync(string? soGatilho, CancellationToken ct)
     {
         await UmaRodadaPorVez.WaitAsync(ct);
-        try { return await AvaliarEDispararSozinhoAsync(ct); }
+        try { return await AvaliarEDispararSozinhoAsync(soGatilho, ct); }
         finally { UmaRodadaPorVez.Release(); }
     }
 
-    private async Task<int> AvaliarEDispararSozinhoAsync(CancellationToken ct)
+    private async Task<int> AvaliarEDispararSozinhoAsync(string? soGatilho, CancellationToken ct)
     {
         // Sem chaves VAPID nada sai, então avaliar gatilhos e escrever no livro-caixa seria
         // pior que inútil: gravaria a chave de um push que não aconteceu e calaria o aviso de
@@ -84,8 +88,8 @@ public class MotorNotificacoes : IMotorNotificacoes
         if (destinatarios.Count > 0)
         {
             var pendencias = await GerarPendenciasAsync(
-                destinatarios.SelectMany(d => d.Favoritas.Concat(d.LocaisOuVazio.Keys)).ToHashSet(), agora, ct);
-            pendencias.AddRange(await AlagamentoNosLugaresAsync(agora, ct));
+                destinatarios.SelectMany(d => d.Favoritas.Concat(d.LocaisOuVazio.Keys)).ToHashSet(), agora, soGatilho, ct);
+            if (soGatilho is null) pendencias.AddRange(await AlagamentoNosLugaresAsync(agora, ct));
 
             // Lista pela metade decide errado: o gatilho que não chegou a rodar pode ser o de
             // risco alto, e a pendência menor sairia por AUSÊNCIA da maior. Nada foi enviado
@@ -230,8 +234,9 @@ public class MotorNotificacoes : IMotorNotificacoes
 
     /// <summary>Etapa 1: roda os gatilhos em cada subprefeitura acompanhada por alguém.</summary>
     private async Task<List<NotificacaoPendente>> GerarPendenciasAsync(
-        HashSet<Guid> subIds, DateTime agora, CancellationToken ct)
+        HashSet<Guid> subIds, DateTime agora, string? soGatilho, CancellationToken ct)
     {
+        var gatilhos = _gatilhos.Where(g => soGatilho is null || g.Nome == soGatilho).ToList();
         var subs = await _db.Subprefeituras
             .Include(s => s.Regiao)
             .Where(s => subIds.Contains(s.Id) && s.Ativa)
@@ -281,7 +286,7 @@ public class MotorNotificacoes : IMotorNotificacoes
                 continue;
             }
 
-            foreach (var gatilho in _gatilhos)
+            foreach (var gatilho in gatilhos)
             {
                 if (ct.IsCancellationRequested) break;
                 try

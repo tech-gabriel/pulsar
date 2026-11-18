@@ -72,7 +72,7 @@ public static class GradeH3
             ?? throw new InvalidOperationException($"Área do geojson sem correspondência nas subprefeituras: '{nomeDoGeojson}'");
     }
 
-    private static string Chave(string nome)
+    internal static string Chave(string nome)
         => new(nome.Normalize(NormalizationForm.FormD)
             .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark && char.IsLetterOrDigit(c))
             .Select(char.ToUpperInvariant).ToArray());
@@ -127,7 +127,7 @@ public static class GradeH3
         return celulas;
     }
 
-    private static Polygon Poligono(JsonElement aneis)
+    internal static Polygon Poligono(JsonElement aneis)
     {
         var lista = aneis.EnumerateArray()
             .Select(a => GeometryFactory.Default.CreateLinearRing(

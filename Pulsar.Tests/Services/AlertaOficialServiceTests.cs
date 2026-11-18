@@ -135,6 +135,22 @@ public class AlertaOficialServiceTests : IDisposable
         gravado.Emissor.Length.Should().Be(200);
     }
 
+    // Cortar no meio de um emoji deixa meio caractere (surrogate solto), que o Postgres recusa em UTF-8.
+    [Fact]
+    public async Task Corte_NaoPartEmojiAoMeio()
+    {
+        var santos = Amostra(comCancel: false).Single(a => a.Identificador == "198701/2026");
+        // O 🌧 ocupa dois chars (3999 e 4000): o corte em 4000 cairia entre eles.
+        var comEmoji = santos with { Descricao = new string('x', 3999) + "🌧️ fim" };
+
+        await Servico(new FeedFalso([comEmoji])).SincronizarAsync(Agora);
+
+        var d = (await _db.AlertasOficiais.SingleAsync()).Descricao;
+        d.Length.Should().BeLessThanOrEqualTo(4000);
+        char.IsHighSurrogate(d[^1]).Should().BeFalse();
+        FluentActions.Invoking(() => new System.Text.UTF8Encoding(false, true).GetBytes(d)).Should().NotThrow();
+    }
+
     [Fact]
     public async Task AlertaVencidoHaMaisDe30Dias_EApagado()
     {

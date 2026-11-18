@@ -107,7 +107,13 @@ public class AlertaOficialService : IAlertaOficialService
         return new ResultadoSincronizacao(true, novos, cancelados, haAlertaSp);
     }
 
-    private static string Cortar(string texto, int limite) => texto.Length <= limite ? texto : texto[..limite];
+    /// <summary>Corta no limite sem partir um emoji ao meio (surrogate solto o Postgres recusa em UTF-8).</summary>
+    private static string Cortar(string texto, int limite)
+    {
+        if (texto.Length <= limite) return texto;
+        var n = char.IsHighSurrogate(texto[limite - 1]) ? limite - 1 : limite;
+        return texto[..n];
+    }
 
     public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<AlertaOficial>>> AtivosPorAreaAsync(
         DateTime agoraUtc, CancellationToken ct = default)

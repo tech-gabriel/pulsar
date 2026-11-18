@@ -132,6 +132,17 @@ describe('BuscaEndereco — botão de localização', () => {
     expect(onSelecionarArea).toHaveBeenCalledWith(mooca);
   });
 
+  // Santos não é subprefeitura: com as duas cidades na lista, o grupo vira "Áreas".
+  it('com a Baixada na lista, o grupo das áreas não se chama "Subprefeituras"', () => {
+    const santos = { id: 'b1', nome: 'Santos', zona: 'Baixada Santista', cidade: 'Baixada Santista', faixaRisco: 'BAIXO' } as Area;
+    const sao = { id: 's9', nome: 'Sapopemba', zona: 'Leste', cidade: 'São Paulo', faixaRisco: 'BAIXO' } as Area;
+    hookState = { ...hookState, termo: 'sa', resultados };
+    render(<BuscaUnificada areas={[sao, santos]} onSelecionarArea={vi.fn()} onSelecionar={vi.fn()} isMobile={false} />);
+    fireEvent.focus(screen.getByLabelText('Buscar subprefeitura ou endereço'));
+    expect(screen.getByText('Áreas')).toBeInTheDocument();
+    expect(screen.queryByText('Subprefeituras')).not.toBeInTheDocument();
+  });
+
   it('sem subprefeitura nem endereço: mensagem única', () => {
     hookState = { ...hookState, termo: 'xyzw', resultados: [] };
     render(<BuscaUnificada areas={[]} onSelecionarArea={vi.fn()} onSelecionar={vi.fn()} isMobile={false} />);

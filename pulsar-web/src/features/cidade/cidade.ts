@@ -56,3 +56,35 @@ export function zonaDaArea(area: { zona: string } & ComCidade): string {
 export function lugarDaArea(area: { zona: string } & ComCidade): string {
   return area.cidade === BAIXADA ? BAIXADA : `${zonaDaArea(area)} · São Paulo`;
 }
+
+/** A cidade de uma área; sem o campo (snapshot do SSG) é São Paulo. */
+export const cidadeDaArea = (area: ComCidade): string => area.cidade ?? 'São Paulo';
+
+/** As cidades das áreas, na ordem em que aparecem na lista da API (a capital vem primeiro). */
+export function cidadesDasAreas(areas: ComCidade[]): string[] {
+  return [...new Set(areas.map(cidadeDaArea))];
+}
+
+export function areasDaCidade<A extends ComCidade>(areas: A[], cidade: string): A[] {
+  return areas.filter((a) => cidadeDaArea(a) === cidade);
+}
+
+/** A cidade que o painel abre: a última escolhida, senão a da maioria das favoritas, senão a primeira. */
+export function cidadeInicial(cidades: string[], favoritas: ComCidade[], lembrada: string | null): string {
+  if (lembrada && cidades.includes(lembrada)) return lembrada;
+  const votos = new Map<string, number>();
+  for (const f of favoritas) votos.set(cidadeDaArea(f), (votos.get(cidadeDaArea(f)) ?? 0) + 1);
+  const daMaioria = [...votos].filter(([c]) => cidades.includes(c)).sort((x, y) => y[1] - x[1])[0]?.[0];
+  return daMaioria ?? cidades[0] ?? 'São Paulo';
+}
+
+/** "32 subprefeituras", "9 municípios": cada cidade chama as áreas dela pelo nome que tem. */
+export function rotuloAreas(cidade: string, n: number): string {
+  const [um, varios] = cidade === BAIXADA ? ['município', 'municípios'] : ['subprefeitura', 'subprefeituras'];
+  return `${n} ${n === 1 ? um : varios}`;
+}
+
+/** A área do link /app?regiao=<slug>, de qualquer cidade (o SEO só conhece as da capital). */
+export function areaPorSlug<A extends { nome: string }>(slug: string, areas: A[]): A | null {
+  return areas.find((a) => idDaArea(a.nome) === slug) ?? null;
+}

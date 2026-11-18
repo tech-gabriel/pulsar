@@ -35,7 +35,7 @@ import { useAlturaFluida } from '../motion/useAlturaFluida';
 import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
 import { useJsonPublico } from '../hooks/useJsonPublico';
 import { comContornosDaBaixada } from '../utils/geo';
-import { nomeDaCobertura } from '../features/cidade/cidade';
+import { areaPorSlug, areasDaCidade, cidadeDaArea, cidadeInicial, cidadesDasAreas, nomeDaCobertura } from '../features/cidade/cidade';
 import { escolherDestinoComoChegar, rotuloDoPino, rotuloDoTrecho } from '../features/rota/destino';
 import { buscarRuaPerto } from '../api/busca';
 import { useRuaPerto } from '../hooks/useRuaPerto';
@@ -53,6 +53,9 @@ import type { OrigemTrecho } from '../components/painel/DetalheSubprefeitura';
 /** ?lugar= do aviso de chuva: "casa" | "trabalho"; outro valor não abre nada. */
 const tipoDoParam = (v: string | null): TipoLocal | null => (v === 'casa' ? 'CASA' : v === 'trabalho' ? 'TRABALHO' : null);
 
+/** Cidade escolhida no painel (D1), lembrada neste navegador. */
+const CHAVE_CIDADE = 'pulsar-cidade-painel';
+
 export default function MapaPage() {
   const { usuario } = useAuth();
   const { subprefeituras, carregando, erro, recarregar, ultimaAtualizacao } = useSubprefeituras();
@@ -62,6 +65,17 @@ export default function MapaPage() {
   // Baixada escondida até o lançamento: só quem a recebe na lista (o Admin) baixa os contornos dela.
   const comBaixada = subprefeituras.some((a) => a.cidade === 'Baixada Santista');
   const contornosDaBaixada = useJsonPublico<FeatureCollection>('/baixada-santista-leve.geojson', comBaixada);
+  // D1 (escolha do user, 18/11/2026): a cidade do painel, lembrada entre visitas (/app é só CSR).
+  const [cidadeLembrada, setCidadeLembrada] = useState<string | null>(() => {
+    try { return localStorage.getItem(CHAVE_CIDADE); } catch { return null; }
+  });
+  const cidades = useMemo(() => cidadesDasAreas(subprefeituras), [subprefeituras]);
+  const cidade = cidadeInicial(cidades, favoritas, cidadeLembrada);
+  const areasDoPainel = useMemo(() => areasDaCidade(subprefeituras, cidade), [subprefeituras, cidade]);
+  function lembrarCidade(c: string) {
+    setCidadeLembrada(c);
+    try { localStorage.setItem(CHAVE_CIDADE, c); } catch { /* sem storage: vale só nesta visita */ }
+  }
   const isMobile = useIsMobile(768);
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -106,9 +120,12 @@ export default function MapaPage() {
   if (slugParam !== slugAplicado && (subprefeituras.length > 0 || !slugParam)) {
     setSlugAplicado(slugParam);
     const alvo = slugParam ? resolverDeepLink(slugParam) : undefined;
-    const sub = alvo?.nomeSub ? subprefeituras.find((s) => s.nome === alvo.nomeSub) ?? null : null;
+    // O SEO só conhece as áreas da capital; as outras cidades (Baixada) se acham pelo nome.
+    const sub = alvo?.nomeSub ? subprefeituras.find((s) => s.nome === alvo.nomeSub) ?? null
+      : !alvo && slugParam ? areaPorSlug(slugParam, subprefeituras) : null;
     setZonaEmFoco(alvo && !alvo.nomeSub ? alvo.nomeRegiao : null);
     if (sub) {
+      setCidadeLembrada(cidadeDaArea(sub));
       setLugarAberto(null);
       setSubSelecionada(sub);
       setTrechoTocado(null);
@@ -464,8 +481,18 @@ export default function MapaPage() {
 
   // Toque numa subprefeitura (mapa, painel, busca): abre o detalhe dela e marca o
   // polígono (highlight + centralização).
+  // Trocar de cidade no painel leva o mapa até ela: a cidade de uma zona só (Baixada) enquadra a
+  // zona; a de várias zonas (capital) volta à vista da cidade.
+  function trocarCidade(c: string) {
+    lembrarCidade(c);
+    const zonas = new Set(areasDaCidade(subprefeituras, c).map((a) => a.zona));
+    setZonaEmFoco(zonas.size === 1 ? [...zonas][0] : null);
+    setSubSelecionada(null);
+  }
+
   function handleSelecionarSub(sub: SubprefeituraMapaDto) {
     limparDeepLink();
+    lembrarCidade(cidadeDaArea(sub));
     setLugarAberto(null);
     setSubSelecionada(sub);
     setTrechoTocado(null);
@@ -626,6 +653,8 @@ export default function MapaPage() {
               ultimaAtualizacao={ultimaAtualizacao}
               onRecarregar={recarregar}
               onSelecionar={handleSelecionarSub}
+              cidade={cidade}
+              onTrocarCidade={trocarCidade}
             />
           )}
         </div>
@@ -775,7 +804,7 @@ export default function MapaPage() {
               {/* Fechada, a alça é a única linha visível: mostra o resumo. Aberta, o cartão da cidade já resume. */}
               {!painelMobileAberto && (
                 <span className="w-full px-5 mt-2 text-sm font-semibold truncate text-center" style={{ color: 'var(--text-primary)' }}>
-                  {resumoAlertas(subprefeituras, carregando)}
+                  {resumoAlertas(areasDoPainel, carregando)}
                 </span>
               )}
             </button>
@@ -789,6 +818,8 @@ export default function MapaPage() {
                   ultimaAtualizacao={ultimaAtualizacao}
                   onRecarregar={recarregar}
                   onSelecionar={handleSelecionarSub}
+              cidade={cidade}
+              onTrocarCidade={trocarCidade}
                 />
               </div>
             )}

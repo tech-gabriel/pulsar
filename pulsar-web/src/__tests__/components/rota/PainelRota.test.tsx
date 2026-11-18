@@ -87,6 +87,12 @@ describe('PainelRota', () => {
       avisoPedido={false} onPedirAviso={vi.fn()} />);
     expect(screen.getByRole('alert')).toHaveTextContent(/fora/i);
   });
+
+  it('o aviso de fora diz a cobertura de quem pede a rota', () => {
+    render(<PainelRota resultado={null} origem={origem} destino={destino} carregando={false} erro="destinoFora"
+      avisoPedido={false} onPedirAviso={vi.fn()} cobertura="São Paulo capital" />);
+    expect(screen.getByRole('alert')).toHaveTextContent('O destino fica fora da área coberta (São Paulo capital).');
+  });
 });
 
 describe('PainelRota: erro de rede e aviso', () => {

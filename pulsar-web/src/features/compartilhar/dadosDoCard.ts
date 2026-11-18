@@ -1,5 +1,5 @@
 import type { Area } from '../cidade/areas';
-import { idDaArea } from '../cidade/cidade';
+import { idDaArea, lugarDaArea } from '../cidade/cidade';
 import { emNomeDe, slugify } from '../../data/regioes-seo';
 import type { DicaDto, FaixaRisco } from '../../types';
 import { blocosDeDicas } from '../../utils/dicas';
@@ -80,7 +80,7 @@ export function dadosDoCard(area: Area, catalogo: DicaDto[], agora: Date = new D
 
   return {
     slug, idArea: idDaArea(area.nome), nome: area.nome,
-    legenda: `${area.zona === 'Centro' ? 'Centro' : `Zona ${area.zona}`} · São Paulo`.toUpperCase(),
+    legenda: lugarDaArea(area).toUpperCase(),
     faixa, rotuloFaixa: labelFaixa(faixa).toUpperCase(), perigo, dado, caixa,
     horario: horario(quando, agora),
     texto, link,

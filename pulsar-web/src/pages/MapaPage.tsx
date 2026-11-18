@@ -35,6 +35,7 @@ import { useAlturaFluida } from '../motion/useAlturaFluida';
 import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
 import { useJsonPublico } from '../hooks/useJsonPublico';
 import { comContornosDaBaixada } from '../utils/geo';
+import { nomeDaCobertura } from '../features/cidade/cidade';
 import { escolherDestinoComoChegar, rotuloDoPino, rotuloDoTrecho } from '../features/rota/destino';
 import { buscarRuaPerto } from '../api/busca';
 import { useRuaPerto } from '../hooks/useRuaPerto';
@@ -499,7 +500,7 @@ export default function MapaPage() {
     }
     const id = subprefeituraIdDoPonto(p, contornoLeve.dados, subprefeituras);
     if (!id) {
-      showToast('Esse endereço fica fora da cidade de São Paulo.', 'error');
+      showToast(`Esse endereço fica fora da área coberta (${nomeDaCobertura(subprefeituras)}).`, 'error');
       return false;
     }
     return locaisSalvos.salvar(tipo, p, id, 'rota');
@@ -554,6 +555,7 @@ export default function MapaPage() {
       onTentarDeNovo={rota.tentarDeNovo}
       onCancelarAviso={() => void rota.cancelarAviso()}
       faixaDaArea={(id) => subprefeituras.find((s) => s.id === id)?.faixaRisco}
+      cobertura={nomeDaCobertura(subprefeituras)}
       onTrocar={(ponto) => {
         (ponto === 'origem' ? rota.setOrigem : rota.setDestino)(null);
         // O De/Para é o mesmo no celular e no painel: um só está montado.

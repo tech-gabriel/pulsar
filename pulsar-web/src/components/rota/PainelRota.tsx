@@ -29,14 +29,16 @@ interface Props {
   faixaDaArea?: (subprefeituraId: string) => FaixaRisco | null | undefined;
   /** Hora (epoch ms) da última avaliação recebida. */
   atualizadoEm?: number | null;
+  /** Nome da área que a pessoa enxerga (nomeDaCobertura), para o aviso de ponto fora. */
+  cobertura?: string;
 }
 
 type App = 'google' | 'waze' | 'apple';
 
 const MENSAGEM_ERRO = {
-  origemFora: 'O ponto de partida fica fora de São Paulo. A rota cobre só a cidade.',
-  destinoFora: 'O destino fica fora de São Paulo. A rota cobre só a cidade.',
-  rede: 'Não consegui avaliar o caminho agora. Tente de novo em instantes.',
+  origemFora: (c: string) => `O ponto de partida fica fora da área coberta (${c}).`,
+  destinoFora: (c: string) => `O destino fica fora da área coberta (${c}).`,
+  rede: () => 'Não consegui avaliar o caminho agora. Tente de novo em instantes.',
 } as const;
 
 const NOME_APP: Record<App, string> = { google: 'Google Maps', waze: 'Waze', apple: 'Apple Maps' };
@@ -90,14 +92,14 @@ function useAppLembrado(): App {
  * a saída para o app de navegação. Um primário por estado: o app lembrado em Pode ir e Com
  * atenção, o aviso em Esperar e nenhum em Sem leitura. O traçado e os campos ficam fora daqui.
  */
-export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm, faixaDaArea }: Props) {
+export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm, faixaDaArea, cobertura = 'São Paulo capital' }: Props) {
   const app = useAppLembrado();
 
   if (erro) {
     const fora = erro === 'origemFora' ? 'origem' : erro === 'destinoFora' ? 'destino' : null;
     return (
       <div className="mt-3">
-        <p role="alert" className="text-sm" style={{ color: 'var(--text-secondary)' }}>{MENSAGEM_ERRO[erro]}</p>
+        <p role="alert" className="text-sm" style={{ color: 'var(--text-secondary)' }}>{MENSAGEM_ERRO[erro](cobertura)}</p>
         {erro === 'rede' && onTentarDeNovo && (
           <button type="button" onClick={onTentarDeNovo} className="rota-botao rota-secundario px-4 mt-2.5">Tentar de novo</button>
         )}

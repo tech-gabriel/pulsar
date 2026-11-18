@@ -38,4 +38,27 @@ public record EstacaoChuva(string Cod, double Lat, double Lon, double Mm1h, doub
         }
         return melhor;
     }
+
+    /// <summary>Até onde a maior chuva medida vale para o trecho (decisão do user, 18/11/2026).</summary>
+    public const double RaioMaiorKm = 3.0;
+
+    /// <summary>
+    /// A estação que fala pelo trecho: a de MAIOR chuva em 3 h entre as que estão a até
+    /// <see cref="RaioMaiorKm"/> (empate, a mais perto); sem nenhuma tão perto, a mais perto até
+    /// <paramref name="raioKm"/>. Uma estação atrasada não deixa verde o trecho ao lado de um posto com
+    /// chuva forte (Butantã, 18/11/2026: CGE com 31 mm, CEMADEN a 4 km com 2 mm).
+    /// </summary>
+    public static EstacaoChuva? DoTrecho(double lat, double lon, IReadOnlyList<EstacaoChuva> estacoes, double raioKm = 5.0)
+    {
+        EstacaoChuva? melhor = null;
+        var melhorMetros = double.MaxValue;
+        foreach (var e in estacoes)
+        {
+            var metros = GeoDistancia.HaversineMetros(lat, lon, e.Lat, e.Lon);
+            if (metros > RaioMaiorKm * 1000) continue;
+            if (melhor is null || e.Mm3h > melhor.Mm3h || (e.Mm3h == melhor.Mm3h && metros < melhorMetros))
+                (melhor, melhorMetros) = (e, metros);
+        }
+        return melhor ?? MaisProxima(lat, lon, estacoes, raioKm);
+    }
 }

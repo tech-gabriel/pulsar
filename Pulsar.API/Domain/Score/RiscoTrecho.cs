@@ -26,7 +26,8 @@ public static class RiscoTrecho
     /// <summary>
     /// O risco de cada trecho de uma área: a chuva de modelo da área com o fator do trecho e,
     /// onde há estação a até <see cref="RaioEstacaoKm"/>, a chuva medida no lugar dela (mesmo
-    /// quando a estação marca zero e o modelo diz chuva).
+    /// quando a estação marca zero e o modelo diz chuva). Com mais de uma estação a até 3 km, vale a de
+    /// maior chuva (ver <see cref="EstacaoChuva.DoTrecho"/>).
     /// </summary>
     public static IReadOnlyList<TrechoRisco> DaArea(
         EntradaScore modelo, IReadOnlyList<CelulaGrade> celulas, IReadOnlyList<EstacaoChuva> estacoes)
@@ -34,7 +35,7 @@ public static class RiscoTrecho
         var trechos = new List<TrechoRisco>(celulas.Count);
         foreach (var celula in celulas)
         {
-            var estacao = EstacaoChuva.MaisProxima(celula.Lat, celula.Lon, estacoes, RaioEstacaoKm);
+            var estacao = EstacaoChuva.DoTrecho(celula.Lat, celula.Lon, estacoes, RaioEstacaoKm);
             var risco = estacao is null
                 ? CalculadoraScore.Calcular(modelo, CalibracaoScore.Para(celula.Sub), celula.Fator).Alagamento
                 : ComChuvaMedida(modelo, estacao, celula.Fator);

@@ -24,14 +24,16 @@ public class SubprefeiturasController : ControllerBase
     private readonly IPontoAlagamentoCgeRepository _pontosCge;
     private readonly IEstacaoCgeService _estacoesCge;
     private readonly ICemadenService _cemaden;
+    private readonly IAlertaOficialService _alertas;
     private readonly ILogger<SubprefeiturasController> _logger;
 
     public SubprefeiturasController(
         ISubprefeituraRepository subprefeituraRepository, IPrevisaoService previsaoService, IPontoAlagamentoCgeRepository pontosCge,
-        IEstacaoCgeService estacoesCge, ICemadenService cemaden, ILogger<SubprefeiturasController> logger)
+        IEstacaoCgeService estacoesCge, ICemadenService cemaden, IAlertaOficialService alertas, ILogger<SubprefeiturasController> logger)
     {
         _estacoesCge = estacoesCge;
         _cemaden = cemaden;
+        _alertas = alertas;
         _logger = logger;
         _subprefeituraRepository = subprefeituraRepository;
         _previsaoService = previsaoService;
@@ -49,11 +51,13 @@ public class SubprefeiturasController : ControllerBase
             .ToLookup(p => p.SubprefeituraId);
         var medidas = await ObterChuvaMedidaAsync();
         var cemadenPorSub = await ObterChuvaCemadenAsync();
+        var alertas = await _alertas.AtivosPorAreaAsync(DateTime.UtcNow, HttpContext.RequestAborted);
         var dtos = subs
             .Select(s =>
             {
                 var dto = SubprefeituraDto.Preencher(new SubprefeituraResumoDto { Zona = s.Regiao?.Nome ?? string.Empty }, s);
                 dto.AlagamentosCge = [.. pontos[s.Id].Select(PontoAlagamentoCgeDto.De)];
+                dto.AlertasOficiais = [.. (alertas.GetValueOrDefault(s.Id) ?? []).Select(AlertaOficialDto.De)];
                 var cemaden = cemadenPorSub.GetValueOrDefault(s.Id);
                 dto.ChuvaMedida = ChuvaMedidaDto.De(medidas.GetValueOrDefault(s.Id), cemaden);
                 dto.Chuva24h = Chuva24hDto.De(cemaden);

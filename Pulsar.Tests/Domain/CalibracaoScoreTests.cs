@@ -30,4 +30,16 @@ public class CalibracaoScoreTests
 
         CalculadoraScore.Calcular(e).Should().BeEquivalentTo(CalculadoraScore.Calcular(e, CalibracaoScore.Atual));
     }
+
+    // Calibração de 18/11/2026 (k = 1,6): a mesma chuva forte dá Alerta pleno na capital e um
+    // pouco menos na Baixada, que precisa de mais chuva para alertar (relatório baixada-*.md).
+    [Fact]
+    public void Santos_UsaOsLimiaresDaBaixada()
+    {
+        var santos = CalculadoraScore.Calcular(new EntradaScore(15, 40, 40, 5, 22, "Santos")).Alagamento;
+        var itaquera = CalculadoraScore.Calcular(new EntradaScore(15, 40, 40, 5, 22, "Itaquera")).Alagamento; // fator 1,0 na capital
+
+        santos.Valor.Should().BeApproximately(87.3, 0.1);
+        itaquera.Valor.Should().Be(100);
+    }
 }

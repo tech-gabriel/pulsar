@@ -70,6 +70,15 @@ describe('alertaOficial', () => {
       .toEqual(['Sé vendaval', 'resumo 4 chuva']);
   });
 
+  // A Defesa Civil manda vários alertas iguais (mesmo evento, nível e fim) por polígonos diferentes:
+  // na tela seriam linhas "E mais N" idênticas. Junta pelo que a linha mostra, não pelo identificador.
+  it('alertasDoSinoOficial junta alertas que aparecem iguais na linha', () => {
+    const area = (id: string, a: AlertaOficial) => ({ id, nome: id, cidade: 'São Paulo', alertasOficiais: [a] }) as unknown as Area;
+    const areas = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((n, i) => area(n, alerta('Extreme', undefined, `id-${i % 2}`)));
+    const linhas = alertasDoSinoOficial(areas, []);
+    expect(linhas.map((l) => (l.tipo === 'resumo' ? `resumo ${l.n}` : l.area.nome))).toEqual(['resumo 8']);
+  });
+
   // V2 B (escolha do user, 18/11/2026): só a hora se for hoje; com a data em número se não for.
   it('ateQuando', () => {
     const agora = new Date('2026-11-18T14:00:00Z');

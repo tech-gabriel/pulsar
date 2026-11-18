@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Cobertura;
 using Microsoft.EntityFrameworkCore;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
@@ -42,8 +43,8 @@ public class LocaisSalvosService : ILocaisSalvosService
         var rotulo = (req.Rotulo ?? string.Empty).Trim();
         if (rotulo.Length == 0 || rotulo.Length > LocalSalvo.MaxRotulo)
             throw new ArgumentException("Endereço inválido.");
-        if (!LocalSalvo.DentroDeSaoPaulo(req.Latitude, req.Longitude))
-            throw new ArgumentException("Esse endereço fica fora da cidade de São Paulo.");
+        if (!CoberturaCidades.Dentro(req.Latitude, req.Longitude, CoberturaCidades.Nomes))
+            throw new ArgumentException("Esse endereço fica fora da área coberta pelo Pulsar.");
         // Casa e trabalho só em área de cidade pública: senão a área escondida (Baixada em
         // conferência) entrava nos favoritos e ligava push para ela.
         var sub = await _db.Subprefeituras.AsNoTracking()

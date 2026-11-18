@@ -31,6 +31,12 @@ describe('DetalheSubprefeitura', () => {
     expect(screen.getByText('Alerta')).toBeInTheDocument();
   });
 
+  it('área da Baixada: o lugar é a Baixada, não uma zona de São Paulo', () => {
+    renderiza({ area: { ...itaquera, nome: 'Santos', zona: 'Baixada Santista', cidade: 'Baixada Santista' } as Area });
+    expect(screen.getByText('Baixada Santista')).toBeInTheDocument();
+    expect(screen.queryByText(/São Paulo/)).not.toBeInTheDocument();
+  });
+
   it('favoritar e fechar; o histórico saiu do detalhe', () => {
     const onToggleFavorito = vi.fn();
     const onFechar = vi.fn();

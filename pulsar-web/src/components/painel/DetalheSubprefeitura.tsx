@@ -13,7 +13,7 @@ import { useCatalogoDicas } from '../../hooks/useCatalogoDicas';
 import { blocosDeDicas } from '../../utils/dicas';
 import { DURACAO, EASE_SUAVE } from '../../motion/presets';
 import { useArrastoFolha } from '../../motion/useArrastoFolha';
-import { CIDADE_ATUAL } from '../../features/cidade/cidade';
+import { lugarDaArea, zonaDaArea } from '../../features/cidade/cidade';
 import { fraseDoTrecho, ondeChoveuMais, type Trecho } from '../../features/cidade/trechos';
 import type { Area } from '../../features/cidade/areas';
 import type { ChuvaMedida, FaixaRisco, TipoPerigo } from '../../types';
@@ -167,7 +167,7 @@ export default function DetalheSubprefeitura({ area, isFavorito, onToggleFavorit
         <div className="flex-1 min-w-0">
           {/* O título diz de onde é o número: a rua do ponto no trecho, o nome da área na área. */}
           <h2 ref={titulo} tabIndex={-1} className={`${trecho ? 'line-clamp-2' : 'truncate'} outline-none`}>{trecho ? trecho.titulo ?? rotuloDoTrecho(area.nome, null) : area.nome}</h2>
-          <p className="truncate">{trecho ? `${area.nome} · Zona ${area.zona}` : `Zona ${area.zona} · ${CIDADE_ATUAL.nome}`}</p>
+          <p className="truncate">{trecho ? `${area.nome} · ${zonaDaArea(area)}` : lugarDaArea(area)}</p>
         </div>
         <BotaoFavorito ativo={isFavorito(area.id)} onToggle={() => onToggleFavorito(area.id)} size={20} />
         <button type="button" className="det-fechar" onClick={onFechar} aria-label="Fechar"><X size={20} aria-hidden="true" /></button>

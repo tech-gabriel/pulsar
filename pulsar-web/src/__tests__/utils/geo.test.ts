@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import type { FeatureCollection } from 'geojson';
-import { pontoEmPoligono, resolverRegiaoPorPonto } from '../../utils/geo';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { comContornosDaBaixada, pontoEmPoligono, resolverRegiaoPorPonto } from '../../utils/geo';
 
 // FeatureCollection mínima: um quadrado [-46.7,-23.6] a [-46.5,-23.4]
 // (coordenadas GeoJSON em [lon, lat]) com nomes oficiais embutidos.
@@ -50,5 +52,26 @@ describe('resolverRegiaoPorPonto', () => {
 
   it('retorna null fora de qualquer polígono', () => {
     expect(resolverRegiaoPorPonto(-23.9, -46.9, geojson)).toBeNull();
+  });
+});
+
+// Os contornos reais das duas cidades (public/). A Baixada tem municípios em várias partes
+// (Guarujá é ilha, Santos e Peruíbe têm pedaços separados) e faz divisa com a capital na serra.
+describe('contornos da Baixada', () => {
+  const ler = (arquivo: string) =>
+    JSON.parse(readFileSync(join(process.cwd(), 'public', arquivo), 'utf-8')) as FeatureCollection;
+  const baixada = ler('baixada-santista-leve.geojson');
+  const juntos = comContornosDaBaixada(ler('subprefeituras_wgs84.geojson'), baixada);
+
+  it('ponto numa parte separada do município cai nele, não fora', () => {
+    expect(pontoEmPoligono(-24.0491, -46.2624, baixada)?.properties?.nm_subprefeitura).toBe('Guarujá');
+  });
+
+  it('Marsilac fica na capital', () => {
+    expect(resolverRegiaoPorPonto(-23.916332, -46.727397, juntos)?.subprefeituraNome).toBe('PARELHEIROS');
+  });
+
+  it('Itanhaém fica na Baixada, com a região dela', () => {
+    expect(resolverRegiaoPorPonto(-24.1831, -46.7889, juntos)).toEqual({ subprefeituraNome: 'Itanhaém', regiaoNome: 'Baixada Santista' });
   });
 });

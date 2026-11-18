@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import type { FeatureCollection, GeoJsonObject, Polygon } from 'geojson';
 import type { LocalSalvoDto, OcorrenciaAlagamentoDto, SubprefeituraMapaDto, TipoLocal } from '../../types';
+import type { PontoCritico } from '../../features/cidade/pontosCriticos';
 import type { PropsTrecho } from '../../features/cidade/trechos';
 import type { Camada } from '../../utils/camadas';
 import { temWebGL } from './webgl';
@@ -28,6 +29,8 @@ export interface PropsMapa {
   onMoverPonto: (lat: number, lon: number) => void;
   overlayAlagamento: boolean;
   ocorrencias: OcorrenciaAlagamentoDto[];
+  /** Pontos críticos da Baixada (D3): entram com a gota, só para quem vê a Baixada. */
+  pontosCriticos?: PontoCritico[];
   /** Traçado da rota: linhas com `properties.cor` e os pontos `origem`/`destino`. */
   rota?: FeatureCollection | null;
   /**
@@ -44,6 +47,8 @@ export interface PropsMapa {
   lugarEmFoco?: { local: LocalSalvoDto; toque: number } | null;
   /** Muda a cada "fechar" da folha do lugar: o mapa volta ao enquadramento de antes. */
   voltarDoLugar?: number;
+  /** Cada troca de cidade no painel (D1): o mapa volta a enquadrar a cidade, mesmo com a zona igual. */
+  pedidoFoco?: number;
   /** Lugares com alagamento ativo na região: o marcador ganha o anel de alerta. */
   lugaresEmAlerta?: TipoLocal[];
   /** Trechos pintados pelo risco de agora (camada de risco). Null ou ausente: só as áreas. */

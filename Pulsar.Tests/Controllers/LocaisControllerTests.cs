@@ -111,7 +111,23 @@ public class LocaisControllerTests : IClassFixture<PulsarWebApplicationFactory>
             new SalvarLocalRequestDto { Latitude = -22.9056, Longitude = -47.0608, Rotulo = "Campinas", SubprefeituraId = Mooca });
 
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await resp.Content.ReadAsStringAsync()).Should().Contain("Esse endereço fica fora da cidade de São Paulo.");
+        (await resp.Content.ReadAsStringAsync()).Should().Contain("Esse endereço fica fora da área coberta pelo Pulsar.");
+        (await Locais(usuarioId)).Should().BeEmpty();
+        Limpar();
+    }
+
+    // Santos está dentro da cobertura de alguém (o Admin), mas a Baixada segue escondida:
+    // a casa lá não entra, senão ligava favorito e push para uma área que a pessoa não vê.
+    [Fact]
+    public async Task CasaEmSantos_UsuarioComum_Recusada()
+    {
+        var (token, usuarioId) = await CadastrarAsync();
+        Autenticar(token);
+
+        var resp = await _client.PutAsJsonAsync($"/api/usuarios/{usuarioId}/locais/casa",
+            new SalvarLocalRequestDto { Latitude = -23.9608, Longitude = -46.3336, Rotulo = "Avenida Ana Costa, 1", SubprefeituraId = Guid.Parse("20000000-0000-0000-0000-000000000033") });
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await Locais(usuarioId)).Should().BeEmpty();
         Limpar();
     }

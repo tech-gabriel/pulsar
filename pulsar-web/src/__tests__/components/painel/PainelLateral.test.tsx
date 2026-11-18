@@ -61,3 +61,36 @@ describe('PainelLateral (B)', () => {
     expect(container.textContent).not.toMatch(/regi(ão|ões)/i);
   });
 });
+
+// D1 (escolha do user, 18/11/2026): com duas cidades, um seletor no topo troca o resumo, a lista
+// de risco e o "ver todas"; as suas áreas aparecem sempre, das duas cidades.
+describe('PainelLateral com duas cidades', () => {
+  const baixada = (id: string, nome: string, valor: number, faixa: Area['faixaRisco']): Area =>
+    ({ ...a(id, nome, valor, faixa), zona: 'Baixada Santista', cidade: 'Baixada Santista' });
+  const santos = baixada('b1', 'Santos', 70, 'ALTO');
+  const cubatao = baixada('b2', 'Cubatão', 10, 'BAIXO');
+  const areas = [itaquera, mooca, penha, santos, cubatao];
+
+  it('na Baixada: o resumo e a lista são dela; a favorita da capital continua', () => {
+    const onTrocarCidade = vi.fn();
+    render(<PainelLateral {...base} areas={areas} favoritas={[penha]} onSelecionar={vi.fn()}
+      cidade="Baixada Santista" onTrocarCidade={onTrocarCidade} />);
+    expect(screen.getByText('Baixada Santista agora')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('1 em alerta');
+    expect(screen.getByText('Suas áreas')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Penha/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Santos/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Itaquera/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Ver os 2 municípios/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'São Paulo' }));
+    expect(onTrocarCidade).toHaveBeenCalledWith('São Paulo');
+    expect(screen.getByRole('button', { name: 'Baixada Santista' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('só a capital: sem seletor e o texto de sempre', () => {
+    render(<PainelLateral {...base} areas={[itaquera, penha]} favoritas={[penha]} onSelecionar={vi.fn()} />);
+    expect(screen.queryByRole('group', { name: 'Cidade' })).not.toBeInTheDocument();
+    expect(screen.getByText('Suas subprefeituras')).toBeInTheDocument();
+  });
+});

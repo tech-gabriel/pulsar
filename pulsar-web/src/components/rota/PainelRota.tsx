@@ -1,7 +1,8 @@
-import { useSyncExternalStore } from 'react';
+import { Fragment, useSyncExternalStore } from 'react';
 import { BellRing, Check, ExternalLink, Navigation } from 'lucide-react';
 import { track } from '../../analytics';
 import { linksNavegacao } from '../../features/rota/links';
+import { TEXTO_SERRA } from '../../features/rota/textos';
 import type { PontoRota, RotaAvaliacao } from '../../features/rota/tipos';
 import type { FaixaRisco } from '../../types';
 import { coresParaFaixa, labelFaixa } from '../../utils/risco';
@@ -29,14 +30,18 @@ interface Props {
   faixaDaArea?: (subprefeituraId: string) => FaixaRisco | null | undefined;
   /** Hora (epoch ms) da última avaliação recebida. */
   atualizadoEm?: number | null;
+  /** Nome da área que a pessoa enxerga (nomeDaCobertura), para o aviso de ponto fora. */
+  cobertura?: string;
+  /** Rota entre cidades (capital ↔ Baixada): só as pontas foram avaliadas, a serra entra como linha. */
+  atravessaSerra?: boolean;
 }
 
 type App = 'google' | 'waze' | 'apple';
 
 const MENSAGEM_ERRO = {
-  origemFora: 'O ponto de partida fica fora de São Paulo. A rota cobre só a cidade.',
-  destinoFora: 'O destino fica fora de São Paulo. A rota cobre só a cidade.',
-  rede: 'Não consegui avaliar o caminho agora. Tente de novo em instantes.',
+  origemFora: (c: string) => `O ponto de partida fica fora da área coberta (${c}).`,
+  destinoFora: (c: string) => `O destino fica fora da área coberta (${c}).`,
+  rede: () => 'Não consegui avaliar o caminho agora. Tente de novo em instantes.',
 } as const;
 
 const NOME_APP: Record<App, string> = { google: 'Google Maps', waze: 'Waze', apple: 'Apple Maps' };
@@ -90,14 +95,14 @@ function useAppLembrado(): App {
  * a saída para o app de navegação. Um primário por estado: o app lembrado em Pode ir e Com
  * atenção, o aviso em Esperar e nenhum em Sem leitura. O traçado e os campos ficam fora daqui.
  */
-export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm, faixaDaArea }: Props) {
+export default function PainelRota({ resultado, origem, destino, carregando, erro, avisoPedido, onPedirAviso, avisoIndisponivel = false, onCancelarAviso, onTentarDeNovo, onTrocar, atualizadoEm, faixaDaArea, cobertura = 'São Paulo capital', atravessaSerra = false }: Props) {
   const app = useAppLembrado();
 
   if (erro) {
     const fora = erro === 'origemFora' ? 'origem' : erro === 'destinoFora' ? 'destino' : null;
     return (
       <div className="mt-3">
-        <p role="alert" className="text-sm" style={{ color: 'var(--text-secondary)' }}>{MENSAGEM_ERRO[erro]}</p>
+        <p role="alert" className="text-sm" style={{ color: 'var(--text-secondary)' }}>{MENSAGEM_ERRO[erro](cobertura)}</p>
         {erro === 'rede' && onTentarDeNovo && (
           <button type="button" onClick={onTentarDeNovo} className="rota-botao rota-secundario px-4 mt-2.5">Tentar de novo</button>
         )}
@@ -115,17 +120,17 @@ export default function PainelRota({ resultado, origem, destino, carregando, err
   return (
     <div className="mt-3">
       {/* Mesmo lugar na árvore no carregando e no resultado: o cartão não desmonta, só muda. */}
-      <VereditoRota resultado={pronto ? resultado : null} atualizadoEm={atualizadoEm} />
+      <VereditoRota resultado={pronto ? resultado : null} atualizadoEm={atualizadoEm} atravessaSerra={atravessaSerra} />
       {pronto && <Resultado resultado={resultado} links={linksNavegacao(origem, destino)} app={app} onApp={lembrarApp}
-        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso} faixaDaArea={faixaDaArea} />}
+        avisoPedido={avisoPedido} onPedirAviso={onPedirAviso} avisoIndisponivel={avisoIndisponivel} onCancelarAviso={onCancelarAviso} faixaDaArea={faixaDaArea} atravessaSerra={atravessaSerra} />}
     </div>
   );
 }
 
-function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel, onCancelarAviso, faixaDaArea }: {
+function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, avisoIndisponivel, onCancelarAviso, faixaDaArea, atravessaSerra }: {
   resultado: RotaAvaliacao; links: Record<App, string>; app: App; onApp: (a: App) => void;
   avisoPedido: boolean; onPedirAviso: () => void; avisoIndisponivel: boolean; onCancelarAviso?: () => void;
-  faixaDaArea?: Props['faixaDaArea'];
+  faixaDaArea?: Props['faixaDaArea']; atravessaSerra: boolean;
 }) {
   const esperar = resultado.estado === 'Esperar';
   // A previsão por hora só ajuda a saber até quando esperar (16/11/2026).
@@ -147,7 +152,17 @@ function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, av
 
       <ul key={chaveTrechos} className="mt-3 flex flex-col gap-1.5 list-none p-0">
         {resultado.trechos.map((t, i) => (
-          <li key={t.subprefeituraId} className="rota-trecho flex items-center gap-2 text-[13.5px]"
+          <Fragment key={t.subprefeituraId}>
+          {/* D2 (escolha do user, 18/11/2026): a serra fica entre a saída e a chegada, sem cor de risco. */}
+          {atravessaSerra && i === resultado.trechos.length - 1 && i > 0 && (
+            <li className="rota-trecho flex items-start gap-2 text-[13.5px]" style={{ color: 'var(--text-secondary)' }}>
+              <span className="sr-only">{TEXTO_SERRA}</span>
+              <i aria-hidden="true" className="w-[9px] h-[9px] mt-[5px] rounded-full flex-shrink-0" style={{ border: '1.5px dashed var(--text-muted)' }} />
+              <span aria-hidden="true" className="min-w-0">Serra do Mar<small className="block text-[12px]" style={{ color: 'var(--text-muted)' }}>Confira a Ecovias antes de descer</small></span>
+              <span aria-hidden="true" className="ml-auto flex-shrink-0 text-right">Não avaliada</span>
+            </li>
+          )}
+          <li className="rota-trecho flex items-center gap-2 text-[13.5px]"
             style={{ color: 'var(--text-secondary)', animationDelay: `${Math.min(i * 30, 150)}ms` }}>
             <i aria-hidden="true" className="w-[9px] h-[9px] rounded-full flex-shrink-0" style={{ background: coresParaFaixa(t.faixa).fill }} />
             <span className="min-w-0 truncate">{t.nome}</span>
@@ -156,6 +171,7 @@ function Resultado({ resultado, links, app, onApp, avisoPedido, onPedirAviso, av
               : <span className="ml-auto flex-shrink-0 text-right">{labelFaixa(t.faixa)}{maisGrave(faixaDaArea?.(t.subprefeituraId), t.faixa)
                 ? <small className="block text-[11.5px]">{`área em ${labelFaixa(faixaDaArea?.(t.subprefeituraId))}`}</small> : null}</span>}
           </li>
+          </Fragment>
         ))}
       </ul>
 

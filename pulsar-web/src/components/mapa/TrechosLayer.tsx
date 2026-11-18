@@ -8,12 +8,13 @@ import { useTheme } from '../../hooks/useTheme';
 import { TOM_CLARO, TOM_ESCURO } from './estiloBase';
 import { deslocamentoDoPainel, paddingDoPainel } from './geometria';
 import { ZOOM, ZOOM_TRECHOS } from './zoom';
+import { CAMADAS_TOQUE_POR_CIMA } from './camadasPorCima';
 
 export const ID_TRECHOS_FILL = 'pulsar-trechos-fill';
 const LINHA = 'pulsar-trechos-linha';
 const SEL = 'pulsar-trechos-sel';
 /** Alagamentos por cima: o toque neles não abre o trecho de baixo. */
-const CAMADAS_POR_CIMA = ['pulsar-ocorr-cluster-toque', 'pulsar-ocorr-cluster', 'pulsar-ocorr-ponto'];
+const CAMADAS_POR_CIMA = CAMADAS_TOQUE_POR_CIMA;
 
 const { de, ate } = ZOOM_TRECHOS;
 // Surge no mesmo intervalo em que as áreas somem (opção B escolhida em 13/11). Perto da rua o

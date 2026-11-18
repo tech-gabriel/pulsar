@@ -265,6 +265,8 @@ export interface PontoAlagamentoCge {
 /** Retornado por GET /api/subprefeituras. A zona é só legenda (SP3). */
 export interface SubprefeituraMapaDto extends SubprefeituraDto {
   zona: string;
+  /** Cidade da área ("São Paulo", "Baixada Santista"). Ausente no snapshot do SSG: conta como São Paulo. */
+  cidade?: string;
 }
 
 /** Endereço retornado pela busca de geocoding (GET /api/busca/enderecos). */

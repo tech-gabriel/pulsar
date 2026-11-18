@@ -51,3 +51,23 @@ export function idsDosTrechos(nomes: string[], subs: { id: string; nome: string 
   const ids = nomes.map((n) => porNome.get(normalizarNome(n))).filter((id): id is string => !!id);
   return [...new Set(ids)];
 }
+
+/**
+ * As áreas que a rota avalia. Na mesma cidade, as do caminho (idsDosTrechos). Entre cidades
+ * (capital ↔ Baixada), só as pontas: a serra no meio não tem trecho nem medida, e o painel diz
+ * isso (TEXTO_SERRA). Área sem cidade (snapshot do SSG) conta como São Paulo.
+ */
+export function idsDaRota(
+  corredor: Corredor,
+  subs: { id: string; nome: string; cidade?: string }[],
+): { ids: string[]; atravessaSerra: boolean } {
+  if (!corredor.ok || corredor.nomes.length === 0) return { ids: [], atravessaSerra: false };
+  const porNome = new Map(subs.map((s) => [normalizarNome(s.nome), s]));
+  const area = (nome: string) => porNome.get(normalizarNome(nome));
+  const saida = area(corredor.nomes[0]);
+  const chegada = area(corredor.nomes[corredor.nomes.length - 1]);
+  const cidade = (s: { cidade?: string } | undefined) => s?.cidade ?? 'São Paulo';
+  if (saida && chegada && cidade(saida) !== cidade(chegada))
+    return { ids: [saida.id, chegada.id], atravessaSerra: true };
+  return { ids: idsDosTrechos(corredor.nomes, subs), atravessaSerra: false };
+}

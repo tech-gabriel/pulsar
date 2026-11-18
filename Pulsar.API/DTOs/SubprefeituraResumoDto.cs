@@ -7,4 +7,7 @@ namespace Pulsar.API.DTOs;
 public class SubprefeituraResumoDto : SubprefeituraDto
 {
     public string Zona { get; set; } = string.Empty;
+
+    /// <summary>Cidade da área ("São Paulo", "Baixada Santista"): o app escreve o lugar por ela.</summary>
+    public string Cidade { get; set; } = string.Empty;
 }

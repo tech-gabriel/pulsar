@@ -1,0 +1,17 @@
+[
+  { "nome": "Praça Washington", "municipio": "Santos", "lat": -23.96542, "lon": -46.35117, "fonte": "https://santaportal.com.br/baixada/temporal-causa-alagamentos-e-gera-transtornos-nas-cidades-da-regiao", "data": "2025-01-26" },
+  { "nome": "Tetéu", "municipio": "Santos", "lat": -23.93998, "lon": -46.35929, "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores", "data": "2025-01-29" },
+  { "nome": "Rua Greenhalgh", "municipio": "Santos", "lat": -23.96546, "lon": -46.31093, "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores", "data": "2025-01-29" },
+  { "nome": "Rua Doutor Arnaldo de Carvalho", "municipio": "Santos", "lat": -23.95945, "lon": -46.33552, "fonte": "https://www.boqnews.com/cidades/fortes-chuvas-deixam-moradores-ilhados-e-veiculos-de-baixo-da-agua-em-santos/", "data": "2025-02-18" },
+  { "nome": "Rua Governador Pedro de Toledo", "municipio": "Santos", "lat": -23.97025, "lon": -46.32498, "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/", "data": "2025-08-06" },
+  { "nome": "Avenida Nossa Senhora de Fátima com Rua Ana Santos", "municipio": "Santos", "lat": -23.93229, "lon": -46.35948, "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/", "data": "2025-08-06" },
+  { "nome": "Avenida Rangel Pestana", "municipio": "Santos", "lat": -23.94271, "lon": -46.33259, "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/", "data": "2025-08-06" },
+  { "nome": "Rua Augusto de Oliveira Santos", "municipio": "São Vicente", "lat": -23.97970, "lon": -46.46888, "fonte": "https://santaportal.com.br/baixada/temporal-causa-alagamentos-e-gera-transtornos-nas-cidades-da-regiao", "data": "2025-01-26" },
+  { "nome": "Avenida Presidente Wilson", "municipio": "São Vicente", "lat": -23.96818, "lon": -46.37656, "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores", "data": "2025-01-29" },
+  { "nome": "Avenida das Nações Unidas", "municipio": "São Vicente", "lat": -23.97100, "lon": -46.39923, "fonte": "https://santaportal.com.br/saovicente/tempestade-causa-alagamentos-na-baixada-santista/", "data": "2025-02-18" },
+  { "nome": "Avenida Santos Dumont", "municipio": "Guarujá", "lat": -23.96766, "lon": -46.28072, "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores", "data": "2025-01-29" },
+  { "nome": "Jardim Progresso", "municipio": "Guarujá", "lat": -23.93893, "lon": -46.28518, "fonte": "https://santaportal.com.br/saovicente/tempestade-causa-alagamentos-na-baixada-santista/", "data": "2025-02-18" },
+  { "nome": "Mirim", "municipio": "Praia Grande", "lat": -24.03129, "lon": -46.49167, "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores", "data": "2025-01-29" },
+  { "nome": "Vale Verde", "municipio": "Cubatão", "lat": -23.91295, "lon": -46.46457, "fonte": "https://jovempan.com.br/brasil/temporal-alaga-ruas-arrasta-carros-e-causa-transtornos-em-cidades-da-baixada-santista/", "data": "2025-08-06" },
+  { "nome": "Agenor de Campos", "municipio": "Mongaguá", "lat": -24.12740, "lon": -46.69163, "fonte": "https://vtvnews.com.br/baixada-santista/chuva-intensa-causa-alagamentos-e-afeta-abastecimento-de-agua-na-baixada-is-bs", "data": "2026-01-04" }
+]

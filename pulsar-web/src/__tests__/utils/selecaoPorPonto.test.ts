@@ -45,4 +45,10 @@ describe('resolverSelecao', () => {
     const sel = resolverSelecao(50, 50, geojson, subs, 'localizacao');
     expect(sel.aviso).toMatch(/fora de São Paulo capital/i);
   });
+
+  it('a conta comum nunca lê "Baixada"; quem a vê lê as duas cidades', () => {
+    expect(resolverSelecao(50, 50, geojson, subs, 'busca').aviso).not.toMatch(/Baixada/);
+    const comBaixada = [...subs, { nome: 'Santos', zona: 'Baixada Santista', cidade: 'Baixada Santista', id: 'b1' }];
+    expect(resolverSelecao(50, 50, geojson, comBaixada, 'localizacao').aviso).toMatch(/fora de São Paulo e Baixada Santista/);
+  });
 });

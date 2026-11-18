@@ -1,4 +1,4 @@
-import type { Feature, FeatureCollection, Polygon, Position } from 'geojson';
+import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from 'geojson';
 import type { SubprefeituraDto } from '../types';
 
 /**
@@ -35,9 +35,9 @@ function pontoEmAnel(lat: number, lon: number, anel: Position[]): boolean {
 }
 
 /**
- * Encontra a feature (subprefeitura) cujo polígono contém o ponto, considerando
- * o anel externo de cada Polygon. Retorna null se o ponto está fora de todos
- * (ex.: endereço fora do município de São Paulo).
+ * Encontra a feature (área) cujo polígono contém o ponto, considerando o anel externo de
+ * cada Polygon e de cada parte de um MultiPolygon (Guarujá é ilha; Santos e Peruíbe têm
+ * pedaços separados). Retorna null se o ponto está fora de todos.
  */
 export function pontoEmPoligono(
   lat: number,
@@ -47,9 +47,10 @@ export function pontoEmPoligono(
   if (!geojson?.features) return null;
   for (const feature of geojson.features) {
     const geom = feature.geometry;
-    if (geom?.type !== 'Polygon') continue;
-    const anelExterno = (geom as Polygon).coordinates[0];
-    if (pontoEmAnel(lat, lon, anelExterno)) return feature;
+    const partes = geom?.type === 'Polygon' ? [(geom as Polygon).coordinates]
+      : geom?.type === 'MultiPolygon' ? (geom as MultiPolygon).coordinates
+      : [];
+    if (partes.some((parte) => pontoEmAnel(lat, lon, parte[0]))) return feature;
   }
   return null;
 }
@@ -72,4 +73,18 @@ export function resolverRegiaoPorPonto(
   const reg = String(props.nm_regiao_05 ?? '').trim();
   if (!sub) return null;
   return { subprefeituraNome: sub, regiaoNome: reg };
+}
+
+/**
+ * Junta os contornos dos municípios da Baixada aos da capital, com a região que a capital
+ * guarda em nm_regiao_05. Só para quem recebe a Baixada na lista (o Admin, até o lançamento).
+ */
+export function comContornosDaBaixada(capital: FeatureCollection, baixada: FeatureCollection): FeatureCollection {
+  return {
+    ...capital,
+    features: [
+      ...capital.features,
+      ...baixada.features.map((f) => ({ ...f, properties: { ...f.properties, nm_regiao_05: 'Baixada Santista' } })),
+    ],
+  };
 }

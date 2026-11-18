@@ -59,6 +59,20 @@ describe('Sino pessoal primeiro', () => {
     expect(navigate).toHaveBeenCalledWith('/app?cidade=S%C3%A3o%20Paulo');
   });
 
+  // Dois alertas para a capital inteira (chuva e vendaval) dão duas linhas "E mais", cada uma com a sua chave.
+  it('dois alertas da capital inteira viram duas linhas de resumo, sem chave repetida', () => {
+    const erro = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const base = { evento: 'CHUVAS INTENSAS', gravidade: 'Moderate', emissor: 'Defesa Civil Estadual De São Paulo', titulo: 't', descricao: 'd', instrucao: '', inicioUtc: '2026-11-18T15:00:00Z', expiraUtc: '2099-11-18T19:00:00Z' };
+    dados.subs = Array.from({ length: 8 }, (_, i) => ({ ...s(`s${i}`, `Área ${i}`, 'BAIXO'), cidade: 'São Paulo',
+      alertasOficiais: [i < 4 ? { ...base, identificador: 'chuva' } : { ...base, identificador: 'vento', evento: 'VENDAVAL' }] }));
+    dados.favs = [];
+    render(<MemoryRouter><Header /></MemoryRouter>);
+    abrir();
+    expect(screen.getAllByRole('button', { name: /E mais 4 áreas da capital/ })).toHaveLength(2);
+    expect(erro.mock.calls.some((c) => String(c[0]).includes('same key'))).toBe(false);
+    erro.mockRestore();
+  });
+
   it('com as duas cidades, o grupo das favoritas é "Suas áreas"', () => {
     dados.subs = [{ ...s('s1', 'Itaquera', 'ALTO'), cidade: 'São Paulo' }, { ...s('b1', 'Santos', 'BAIXO'), cidade: 'Baixada Santista' }];
     dados.favs = [{ subprefeituraId: 's1' }];

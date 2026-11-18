@@ -72,8 +72,8 @@ describe('alertaOficial', () => {
 
   // V2 B (escolha do user, 18/11/2026): só a hora se for hoje; com a data em número se não for.
   it('ateQuando', () => {
-    const agora = new Date('2026-11-18T15:00:00Z');
-    expect(ateQuando('2026-11-18T19:18:00Z', agora)).toMatch(/^\d\d:\d\d$/);
-    expect(ateQuando('2026-11-21T19:18:00Z', agora)).toMatch(/^21\/11, \d\d:\d\d$/);
+    const agora = new Date('2026-11-18T14:00:00Z');
+    expect(ateQuando('2026-11-18T15:18:00Z', agora)).toMatch(/^\d\d:\d\d$/);
+    expect(ateQuando('2026-11-21T15:18:00Z', agora)).toMatch(/^21\/11, \d\d:\d\d$/);
   });
 });

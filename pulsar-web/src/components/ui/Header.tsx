@@ -213,7 +213,7 @@ export default function Header() {
                           <p className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Defesa Civil</p>
                           <ul>
                             {oficiais.map((l) => (
-                              <li key={l.tipo === 'area' ? l.area.id : `resumo-${l.cidade}`}>
+                              <li key={l.tipo === 'area' ? l.area.id : `resumo-${l.cidade}-${l.alerta.identificador}`}>
                                 <button type="button" className="notif-item" onClick={() => (l.tipo === 'area' ? abrirArea(l.area) : abrirCidade(l.cidade))}>
                                   <div className="min-w-0 flex-1 text-left">
                                     <p className="truncate" style={{ fontSize: 14, fontWeight: l.tipo === 'area' ? 600 : 500, color: 'var(--text-primary)' }}>

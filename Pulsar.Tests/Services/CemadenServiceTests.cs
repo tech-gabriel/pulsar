@@ -351,4 +351,50 @@ public class CemadenServiceTests : IDisposable
     [InlineData("Lapa", "Lapa")]
     public void NomeLegivel_ArrumaONomeDoCadastro(string entrada, string esperado)
         => CemadenService.NomeLegivel(entrada).Should().Be(esperado);
+
+    // Estação parada: o CEMADEN a devolve como 0 mm, e o zero falso apagava a chuva medida ao lado
+    // (Penha verde com 28 mm no posto do CGE, 18/11/2026). Muda na semana em que uma vizinha mediu
+    // chuva de verdade, ela sai da conta; numa semana seca, todas ficam.
+    private async Task SemearDia(string cod, double km, double acc24h, int diasAtras)
+    {
+        await Semear(cod, km, acc1h: 0, acc24h: acc24h, minutosAtras: diasAtras * 24 * 60 + 5, acc3h: 0, acc48h: acc24h);
+    }
+
+    [Fact]
+    public async Task EstacaoMudaComVizinhaQueMediuChuva_SaiDaConta()
+    {
+        await SemearDia("MUDA", km: 1, acc24h: 0, diasAtras: 3);
+        await SemearDia("VIVA", km: 4, acc24h: 25, diasAtras: 3);
+        await Semear("MUDA", km: 1, acc1h: 0, acc24h: 0, acc3h: 0, acc48h: 0);
+        await Semear("VIVA", km: 4, acc1h: 12, acc24h: 30, acc3h: 28, acc48h: 30);
+
+        var estacoes = await Servico(Mock.Of<ICemadenClient>()).ObterEstacoesComChuvaAsync(Agora);
+
+        estacoes.Select(e => e.Cod).Should().BeEquivalentTo(["VIVA"]);
+    }
+
+    [Fact]
+    public async Task SemanaSeca_EstacaoComZeroContinua()
+    {
+        await SemearDia("A", km: 1, acc24h: 0, diasAtras: 3);
+        await SemearDia("B", km: 4, acc24h: 0.2, diasAtras: 3);
+        await Semear("A", km: 1, acc1h: 0, acc24h: 0, acc3h: 0, acc48h: 0);
+        await Semear("B", km: 4, acc1h: 0, acc24h: 0, acc3h: 0, acc48h: 0);
+
+        var estacoes = await Servico(Mock.Of<ICemadenClient>()).ObterEstacoesComChuvaAsync(Agora);
+
+        estacoes.Select(e => e.Cod).Should().BeEquivalentTo(["A", "B"]);
+    }
+
+    // O cartão "Medida agora" da área também não usa a estação parada.
+    [Fact]
+    public async Task EstacaoMuda_NaoViraAMedidaDaArea()
+    {
+        await SemearDia("MUDA", km: 1, acc24h: 0, diasAtras: 3);
+        await SemearDia("VIVA", km: 4, acc24h: 25, diasAtras: 3);
+        await Semear("MUDA", km: 1, acc1h: 0, acc24h: 0, acc3h: 0, acc48h: 0);
+        await Semear("VIVA", km: 4, acc1h: 12, acc24h: 30, acc3h: 28, acc48h: 30);
+
+        (await DaLapa())!.Estacao1h.Should().Be("Estação VIVA");
+    }
 }

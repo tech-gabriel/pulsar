@@ -59,7 +59,7 @@ public class AlagamentoLugar : IAlagamentoLugar
         var pendencias = new List<NotificacaoPendente>();
         foreach (var celula in celulas)
         {
-            var estacao = EstacaoChuva.MaisProxima(celula.Lat, celula.Lon, estacoes, RiscoTrecho.RaioEstacaoKm);
+            var estacao = EstacaoChuva.DoTrecho(celula.Lat, celula.Lon, estacoes, RiscoTrecho.RaioEstacaoKm);
             if (estacao is null || estacao.Mm3h <= 0) continue;
 
             areas ??= await _db.Subprefeituras.AsNoTracking().Where(a => a.Ativa).ToDictionaryAsync(a => a.Nome, ct);

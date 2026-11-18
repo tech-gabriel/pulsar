@@ -201,17 +201,53 @@ public class CemadenService : ICemadenService
             .ToList();
     }
 
-    /// <summary>A leitura mais recente de cada estação, entre as que ainda valem como atuais.</summary>
+    /// <summary>A leitura mais recente de cada estação, entre as que ainda valem como atuais, sem as paradas.</summary>
     private async Task<List<LeituraEstacaoCemaden>> UltimasLeiturasAsync(DateTime agoraUtc, CancellationToken ct)
     {
         var desde = agoraUtc.AddMinutes(-ValidadeMinutos);
         var ate = agoraUtc.AddMinutes(FolgaRelogioMinutos);
+        var paradas = await ParadasAsync(agoraUtc, ct);
         return (await _db.LeiturasEstacaoCemaden.AsNoTracking()
                 .Where(l => l.DataHora >= desde && l.DataHora <= ate)
                 .ToListAsync(ct))
+            .Where(l => !paradas.Contains(l.CodEstacao))
             .GroupBy(l => l.CodEstacao)
             .Select(g => g.MaxBy(l => l.DataHora)!)
             .ToList();
+    }
+
+    /// <summary>Janela em que se olha se a estação mediu alguma coisa.</summary>
+    public const int DiasParaParada = 7;
+    /// <summary>Abaixo disto em todos os dias da janela, a estação está muda.</summary>
+    public const double MudaMm = 1.0;
+    /// <summary>Vizinha com pelo menos isto num dia mostra que choveu ali: a muda não está só num lugar seco.</summary>
+    public const double VizinhaComChuvaMm = 10.0;
+    public const double RaioVizinhaKm = 10.0;
+
+    /// <summary>
+    /// Estações paradas: o CEMADEN devolve 0 mm (com a hora da consulta) para a estação que não transmite,
+    /// e o zero falso apagava a chuva medida ao lado (Penha verde com 28 mm no CGE, 18/11/2026). Parada =
+    /// menos de 1 mm em todos os dias da semana enquanto uma vizinha a até 10 km mediu 10 mm num dia.
+    /// Numa semana seca, nenhuma é tirada.
+    /// </summary>
+    /// <remarks>ponytail: heurística pela semana; uma estação que para no meio da chuva só sai quando a
+    /// semana dela ficar muda. Conferir o "último dado" por estação se o CEMADEN passar a mandá-lo.</remarks>
+    private async Task<HashSet<string>> ParadasAsync(DateTime agoraUtc, CancellationToken ct)
+    {
+        var desde = agoraUtc.AddDays(-DiasParaParada);
+        var maximos = await _db.LeiturasEstacaoCemaden.AsNoTracking()
+            .Where(l => l.DataHora >= desde)
+            .GroupBy(l => l.CodEstacao)
+            .Select(g => new { Cod = g.Key, Max = g.Max(l => l.Acc24h) ?? 0 })
+            .ToDictionaryAsync(x => x.Cod, x => x.Max, ct);
+        var lugares = (await _db.EstacoesCemaden.AsNoTracking()
+                .Select(e => new { e.CodEstacao, e.Latitude, e.Longitude }).ToListAsync(ct))
+            .Where(e => maximos.ContainsKey(e.CodEstacao)).ToList();
+        return lugares
+            .Where(e => maximos[e.CodEstacao] < MudaMm && lugares.Any(v => maximos[v.CodEstacao] >= VizinhaComChuvaMm
+                && GeoDistancia.HaversineMetros(e.Latitude, e.Longitude, v.Latitude, v.Longitude) <= RaioVizinhaKm * 1000))
+            .Select(e => e.CodEstacao)
+            .ToHashSet();
     }
 
     private static DateTime? Utc(DateTime? d) => d is { } v ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : null;

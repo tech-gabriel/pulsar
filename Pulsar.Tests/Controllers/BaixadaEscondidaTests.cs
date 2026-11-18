@@ -162,4 +162,15 @@ public class BaixadaEscondidaTests : IClassFixture<PulsarWebApplicationFactory>
         resposta.StatusCode.Should().Be(HttpStatusCode.NotFound);
         (await resposta.Content.ReadAsStringAsync()).Should().Contain("Subprefeitura não encontrada.");
     }
+
+    // O app escreve o lugar de cada área pela cidade dela ("Zona Leste · São Paulo", "Baixada Santista").
+    [Fact]
+    public async Task Lista_TrazACidade()
+    {
+        var token = (await SessaoAdmin.ObterAsync(_factory, _client)).Token;
+        var lista = await (await GetAsync("/api/subprefeituras", token)).Content.ReadFromJsonAsync<List<SubprefeituraResumoDto>>(Json);
+
+        lista!.Single(s => s.Nome == "Sé").Cidade.Should().Be("São Paulo");
+        lista!.Single(s => s.Nome == "Santos").Cidade.Should().Be("Baixada Santista");
+    }
 }

@@ -55,7 +55,7 @@ public class SubprefeiturasController : ControllerBase
         var dtos = subs
             .Select(s =>
             {
-                var dto = SubprefeituraDto.Preencher(new SubprefeituraResumoDto { Zona = s.Regiao?.Nome ?? string.Empty }, s);
+                var dto = SubprefeituraDto.Preencher(new SubprefeituraResumoDto { Zona = s.Regiao?.Nome ?? string.Empty, Cidade = s.Regiao?.Cidade?.Nome ?? string.Empty }, s);
                 dto.AlagamentosCge = [.. pontos[s.Id].Select(PontoAlagamentoCgeDto.De)];
                 dto.AlertasOficiais = [.. (alertas.GetValueOrDefault(s.Id) ?? []).Select(AlertaOficialDto.De)];
                 var cemaden = cemadenPorSub.GetValueOrDefault(s.Id);

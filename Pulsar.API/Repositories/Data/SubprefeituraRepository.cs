@@ -47,7 +47,7 @@ public class SubprefeituraRepository : ISubprefeituraRepository
     public async Task<IReadOnlyList<Subprefeitura>> ObterVisiveisComResumoAsync(bool incluirOcultas = false)
         => await _context.Subprefeituras
             .Where(s => s.Ativa && (incluirOcultas || s.Regiao.Cidade.Publica))
-            .Include(s => s.Regiao)
+            .Include(s => s.Regiao).ThenInclude(r => r.Cidade)
             .Include(s => s.Scores.OrderByDescending(sc => sc.Timestamp).ThenByDescending(sc => sc.CriadoEm).Take(1))
             .Include(s => s.Leituras.OrderByDescending(l => l.Timestamp).Take(1))
             .ToListAsync();

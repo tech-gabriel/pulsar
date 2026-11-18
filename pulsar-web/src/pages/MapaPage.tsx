@@ -34,6 +34,7 @@ import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from
 import { useAlturaFluida } from '../motion/useAlturaFluida';
 import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
 import { useJsonPublico } from '../hooks/useJsonPublico';
+import { comContornosDaBaixada } from '../utils/geo';
 import { escolherDestinoComoChegar, rotuloDoPino, rotuloDoTrecho } from '../features/rota/destino';
 import { buscarRuaPerto } from '../api/busca';
 import { useRuaPerto } from '../hooks/useRuaPerto';
@@ -57,6 +58,9 @@ export default function MapaPage() {
   const { favoritos, isFavorito, toggleFavorito, carregando: carregandoFavoritos } = useFavoritos();
   const semFavoritas = !!usuario && !carregandoFavoritos && favoritos.length === 0;
   const favoritas = subprefeituras.filter((s) => isFavorito(s.id));
+  // Baixada escondida até o lançamento: só quem a recebe na lista (o Admin) baixa os contornos dela.
+  const comBaixada = subprefeituras.some((a) => a.cidade === 'Baixada Santista');
+  const contornosDaBaixada = useJsonPublico<FeatureCollection>('/baixada-santista-leve.geojson', comBaixada);
   const isMobile = useIsMobile(768);
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -75,6 +79,10 @@ export default function MapaPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
+  const geojsonMapa = useMemo(() => {
+    const capital = geojson as FeatureCollection | null;
+    return capital && contornosDaBaixada.dados ? comContornosDaBaixada(capital, contornosDaBaixada.dados) : capital;
+  }, [geojson, contornosDaBaixada.dados]);
   // Deep link /app?regiao=<slug> (SEO, sino, busca): reage a CADA troca do parâmetro,
   // não só ao primeiro carregamento. Subprefeitura abre o detalhe; zona só enquadra o mapa.
   // Slug inválido não repassa nada adiante: degradação limpa, sem foco.
@@ -134,7 +142,11 @@ export default function MapaPage() {
   // Uma coisa por vez no celular: com a dica da localização na tela, o convite do push espera.
   const [dicaLocalNaTela, setDicaLocalNaTela] = useState(false);
   // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
-  const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
+  const contornoLeveCapital = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
+  const contornoLeve = useMemo(
+    () => ({ dados: contornoLeveCapital.dados && contornosDaBaixada.dados ? comContornosDaBaixada(contornoLeveCapital.dados, contornosDaBaixada.dados) : contornoLeveCapital.dados }),
+    [contornoLeveCapital.dados, contornosDaBaixada.dados],
+  );
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
   const locaisSalvos = useLocaisSalvos(usuario?.id ?? null);
   const localAberto = lugarAberto ? locaisSalvos.locais[lugarAberto] ?? null : null;
@@ -184,8 +196,6 @@ export default function MapaPage() {
   const ativoTrechos = comTrechos && (perto || !!pontoBusca);
   const contornoCapital = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
   // Baixada escondida: só quem a recebe na lista (o Admin) baixa o desenho dos trechos dela.
-  // ponytail: nome da zona fixo; vira dado da cidade na entrega 4 (mapa com as duas cidades).
-  const comBaixada = subprefeituras.some((a) => a.zona === 'Baixada Santista');
   const contornoBaixada = useJsonPublico<FeatureCollection>('/grade-baixada-santista.geojson', ativoTrechos && comBaixada);
   const contornoTrechos = useMemo(
     () => ({
@@ -343,7 +353,7 @@ export default function MapaPage() {
   // "Rota até aqui" no detalhe: a ordem dos destinos fica em escolherDestinoComoChegar.
   function comoChegar(sub: SubprefeituraMapaDto) {
     const centro = trechoAberto?.origem === 'toque' ? centroDoTrecho(trechoAberto.h3, contornoTrechos.dados) : null;
-    const destino = escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? (geojson as FeatureCollection | null), centro);
+    const destino = escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? geojsonMapa, centro);
     const paraOTrecho = !!centro && destino.lat === centro.lat && destino.lon === centro.lon;
     // Trecho: o rótulo final é a rua, que chega em seguida; até lá diz que está buscando, em vez
     // de mostrar um nome e trocá-lo depois.
@@ -375,7 +385,7 @@ export default function MapaPage() {
   function selecionarPorPonto(ponto: PontoBusca, origem: 'busca' | 'localizacao'): SubprefeituraMapaDto | null {
     setPontoBusca(ponto);
     setTrechoTocado(null); // o trecho passa a ser o do ponto
-    const sel = resolverSelecao(ponto.lat, ponto.lon, geojson as FeatureCollection | null, subprefeituras, origem);
+    const sel = resolverSelecao(ponto.lat, ponto.lon, geojsonMapa, subprefeituras, origem);
     if (sel.aviso) {
       setSubSelecionada(null);
       setAvisoBusca(sel.aviso);
@@ -629,7 +639,7 @@ export default function MapaPage() {
         {isMobile && (rotaAberta ? camposRota(false) : buscaMapa(false))}
 
         <MapaBase
-          geojson={geojson}
+          geojson={geojsonMapa}
           subprefeituras={subprefeituras}
           subSelecionada={subSelecionada}
           onSelecionarSub={handleSelecionarSub}

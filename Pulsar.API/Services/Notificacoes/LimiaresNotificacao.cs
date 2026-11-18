@@ -188,6 +188,8 @@ public static class LimiaresNotificacao
     /// <summary>Até que distância (entre centros de subprefeitura) um posto é "perto".</summary>
     public const double RaioChuvaPertoKm = 8.0;
     public const int CooldownChuvaMedidaPertoHoras = 3;
+    /// <summary>Alerta oficial não Extremo: 1 aviso por área nesta janela; subir de nível passa (user, 18/11/2026).</summary>
+    public const int CooldownAlertaOficialHoras = 3;
 
     /// <summary>
     /// Depois de um Alerta de um perigo, quanto tempo a Atenção DO MESMO PERIGO fica calada

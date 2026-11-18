@@ -81,6 +81,10 @@ public static class Consolidador
         return new EnvioConsolidado(d.UsuarioId, lider.Criterio, payload, grupo);
     }
 
+    /// <summary>Nível gravado na chave "dc:N:..." do alerta oficial; chave de outro formato vale 0.</summary>
+    private static int NivelDaChave(string chave)
+        => chave.StartsWith("dc:", StringComparison.Ordinal) && chave.Length > 4 && chave[4] == ':' && char.IsDigit(chave[3]) ? chave[3] - '0' : 0;
+
     private const string ChuvaComecou = "chuva-comecou";
     private const string ChuvaMedidaPerto = "chuva-medida-perto";
     private const string AlagamentoLugar = Notificacoes.AlagamentoLugar.Nome;
@@ -169,7 +173,13 @@ public static class Consolidador
 
     /// <summary>Sem Cooldown vale a chave exata; com Cooldown, a janela deslizante do gatilho NA subprefeitura.</summary>
     private static bool JaCoberta(IReadOnlyList<EnvioAnterior> recentes, NotificacaoPendente p, DateTime agora)
-        => p.Cooldown is { } cooldown
+        // Com nível (alerta oficial): a chave exata nunca repete; na janela, só um envio de nível
+        // igual ou maior na mesma área cobre (subir de nível avisa na hora).
+        => p.Nivel > 0
+            ? recentes.Any(r => r.Chave == p.Chave)
+              || (p.Cooldown is { } janela && recentes.Any(r => r.SubprefeituraId == p.SubprefeituraId && r.Gatilho == p.Gatilho
+                  && r.EnviadoEm >= agora - janela && NivelDaChave(r.Chave) >= p.Nivel))
+            : p.Cooldown is { } cooldown
             ? recentes.Any(r => r.SubprefeituraId == p.SubprefeituraId && r.Gatilho == p.Gatilho && r.EnviadoEm >= agora - cooldown)
             : recentes.Any(r => r.Chave == p.Chave);
 
@@ -254,6 +264,7 @@ public static class Consolidador
             // Sem "de alagamento": o perigo de cada uma pode ser vento ou calor.
             "alagamento-cge" => ($"Alagamento em {lista} agora", "O CGE registrou pontos de alagamento. Toque para ver onde."),
             "score-alto" => ($"Alerta em {lista}", "Toque para ver o que está acontecendo em cada uma."),
+            "alerta-oficial" => ($"Alerta da Defesa Civil {ListaComPreposicao([.. grupo.Select(p => p.Local).Distinct()])}", "Toque para ver o aviso oficial de cada uma."),
             "atencao" => ($"Atenção em {lista}", "Toque para ver os detalhes."),
             // O grupo tem um critério só (ver Consolidar), então a faixa vale para todas.
             "chuva-prevista" => (grupo[0].Criterio == CriterioOptIn.RiscoAlto
@@ -266,6 +277,18 @@ public static class Consolidador
         };
         // Tag pelo gatilho: o push novo substitui o anterior do mesmo tipo na bandeja.
         return new PushPayload(titulo, corpo, Url: "/", Tag: gatilho);
+    }
+
+    /// <summary>"na Mooca", "na Mooca e na Penha", "na Mooca, na Penha e mais 2".</summary>
+    private static string ListaComPreposicao(IReadOnlyList<string> nomes)
+    {
+        string Em(string n) => NomesSubprefeitura.ComPreposicao(n);
+        return nomes.Count switch
+        {
+            1 => Em(nomes[0]),
+            2 => $"{Em(nomes[0])} e {Em(nomes[1])}",
+            _ => $"{Em(nomes[0])}, {Em(nomes[1])} e mais {nomes.Count - 2}",
+        };
     }
 
     public static string ListaNomes(IReadOnlyList<string> nomes) => nomes.Count switch

@@ -34,6 +34,15 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
   const cidade = variasCidades ? cidadeEscolhida : cidades[0] ?? 'São Paulo';
   const daCidade = useMemo(() => (cidade ? areasDaCidade(subprefeituras, cidade) : []), [subprefeituras, cidade]);
   const singular = rotuloAreas(cidade ?? 'São Paulo', 1).slice(2);
+  // O botão tocado some ao trocar de tela: o foco segue para a cidade escolhida ou para o primeiro cartão.
+  const tituloCidade = useRef<HTMLElement>(null);
+  const primeiroCartao = useRef<HTMLButtonElement>(null);
+  const focoApos = useRef<'cidade' | 'cartoes' | null>(null);
+  useEffect(() => {
+    if (focoApos.current === 'cidade') tituloCidade.current?.focus();
+    if (focoApos.current === 'cartoes') primeiroCartao.current?.focus();
+    focoApos.current = null;
+  }, [cidadeEscolhida]);
   if (!pendenteAplicado && subprefeituras.length > 0) {
     setPendenteAplicado(true);
     const nome = getSubprefeituraPorSlug(lerRegiaoPendente() ?? '')?.nome;
@@ -107,9 +116,9 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
 
       {cidade === null ? (
         <div style={{ marginTop: 14, flex: 1 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Em qual cidade?</p>
+          <h2 style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Em qual cidade?</h2>
           {cidades.map((c) => (
-            <button key={c} type="button" onClick={() => setCidadeEscolhida(c)}
+            <button key={c} ref={c === cidades[0] ? primeiroCartao : undefined} type="button" onClick={() => { focoApos.current = 'cidade'; setCidadeEscolhida(c); }}
               style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 14, padding: 16, marginTop: 10, borderRadius: 16, minHeight: 76,
                 background: 'color-mix(in srgb, var(--text-primary) 5%, transparent)', color: 'var(--text-primary)' }}>
               <span aria-hidden="true" style={{ width: 44, height: 44, borderRadius: 12, display: 'grid', placeItems: 'center', flex: '0 0 auto', fontWeight: 800, fontFamily: 'var(--font-heading)', color: '#fff',
@@ -125,8 +134,8 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
       ) : (<>
       {variasCidades && (
         <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flex: '0 0 auto' }}>
-          <b style={{ fontFamily: 'var(--font-heading)', fontSize: 16 }}>{cidade}</b>
-          <button type="button" onClick={() => { setCidadeEscolhida(null); setBusca(''); }}
+          <b ref={tituloCidade} tabIndex={-1} style={{ fontFamily: 'var(--font-heading)', fontSize: 16, outline: 'none' }}>{cidade}</b>
+          <button type="button" onClick={() => { focoApos.current = 'cartoes'; setCidadeEscolhida(null); setBusca(''); }}
             style={{ minHeight: 44, padding: '0 4px', fontSize: 14, fontWeight: 600, color: 'var(--color-pulsar-600)' }}>Trocar cidade</button>
         </div>
       )}

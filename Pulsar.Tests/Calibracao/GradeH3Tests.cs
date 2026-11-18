@@ -196,7 +196,10 @@ public class GradeH3Tests
     {
         var inteiro = Hex.Buffer(0.001);
         GradeH3.PesoSgb([Celula], [Sgb("Alta", inteiro)])[Celula].Should().BeApproximately(1, 1e-6);
-        GradeH3.PesoSgb([Celula], [Sgb("Média", MetadeOeste())])[Celula].Should().BeInRange(0.2, 0.3);
+        // Trecho que não é pelo menos metade área de risco fica sem "costuma alagar" (opção A do user, 17/11):
+        // metade em Média vale 0,25, abaixo do corte; metade Alta e metade Média vale 0,75 e fica.
+        GradeH3.PesoSgb([Celula], [Sgb("Média", MetadeOeste())])[Celula].Should().Be(0);
+        GradeH3.PesoSgb([Celula], [Sgb("Alta", MetadeOeste()), Sgb("Média", Hex.Buffer(0.001))])[Celula].Should().BeInRange(0.7, 0.8);
         GradeH3.PesoSgb([Celula], [Sgb("Enxurrada", inteiro)])[Celula].Should().BeApproximately(0.5, 1e-6);
         // Média e enxurrada no mesmo lugar não somam: vale a maior, 0,5.
         GradeH3.PesoSgb([Celula], [Sgb("Média", inteiro), Sgb("Enxurrada", inteiro)])[Celula].Should().BeApproximately(0.5, 1e-6);

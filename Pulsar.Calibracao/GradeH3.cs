@@ -171,12 +171,16 @@ public static class GradeH3
         });
     }
 
+    /// <summary>Trecho que não é pelo menos metade área de risco do SGB fica sem "costuma alagar" (opção A do user, 17/11/2026).</summary>
+    public const double CorteSgb = 0.5;
+
     public static Polygon Hexagono(string h3) => new H3Index(h3).GetCellBoundary();
 
     /// <summary>
     /// Peso do SGB em cada célula, de 0 a 1: fração coberta por suscetibilidade Alta mais metade
     /// da fração coberta por Média ou enxurrada (fora da Alta, sem somar as duas). Célula que
-    /// encosta num setor de risco mapeado em campo (setorização) vale 1.
+    /// encosta num setor de risco mapeado em campo (setorização) vale 1. Abaixo de <see cref="CorteSgb"/>, zero:
+    /// sem o corte, 78% dos trechos ganhavam "costuma alagar" e a trava de excesso de alerta reprovava.
     /// </summary>
     public static Dictionary<string, double> PesoSgb(IEnumerable<string> celulas, IReadOnlyList<PoligonoSgb> poligonos)
     {
@@ -192,7 +196,8 @@ public static class GradeH3
             var emMeia = Recorte(meia, hex);
             if (emMeia is not null && emAlta is not null) emMeia = emMeia.Difference(emAlta);
             var peso = ((emAlta?.Area ?? 0) + 0.5 * (emMeia?.Area ?? 0)) / hex.Area;
-            r[c] = Math.Round(Math.Min(1, peso), 4);
+            peso = Math.Round(Math.Min(1, peso), 4);
+            r[c] = peso >= CorteSgb ? peso : 0;
         }
         return r;
     }

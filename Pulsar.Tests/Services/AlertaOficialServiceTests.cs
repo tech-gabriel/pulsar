@@ -117,6 +117,24 @@ public class AlertaOficialServiceTests : IDisposable
         (await _db.ExecucoesSincronizacao.Where(e => e.Fonte == ExecucaoSincronizacao.FonteIdap).CountAsync()).Should().Be(2);
     }
 
+    // Revisão de segurança: um texto maior que a coluna faz o Postgres recusar o lote inteiro, e um
+    // único alerta assim calaria todos os outros a cada ciclo. O texto é cortado no limite.
+    [Fact]
+    public async Task TextosGrandes_SaoCortadosNoLimiteDaColuna_EIdentificadorVazioCai()
+    {
+        var santos = Amostra(comCancel: false).Single(a => a.Identificador == "198701/2026");
+        var gigante = santos with { Identificador = "999/2026", Descricao = new string('x', 10_000), Titulo = new string('y', 2_000), Emissor = new string('z', 500) };
+        var semId = santos with { Identificador = "" };
+
+        await Servico(new FeedFalso([gigante, semId])).SincronizarAsync(Agora);
+
+        var gravado = await _db.AlertasOficiais.SingleAsync();
+        gravado.Identificador.Should().Be("999/2026");
+        gravado.Descricao.Length.Should().Be(4000);
+        gravado.Titulo.Length.Should().Be(500);
+        gravado.Emissor.Length.Should().Be(200);
+    }
+
     [Fact]
     public async Task AlertaVencidoHaMaisDe30Dias_EApagado()
     {

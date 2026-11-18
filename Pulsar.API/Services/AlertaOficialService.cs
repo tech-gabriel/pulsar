@@ -67,14 +67,22 @@ public class AlertaOficialService : IAlertaOficialService
                         cancelados++;
                     }
             if (a.TipoMensagem == "Cancel" || existentes.ContainsKey(a.Identificador)) continue;
+            // Sem identificador utilizável não há upsert nem chave de push: o alerta cai, e só ele.
+            if (a.Identificador.Length is 0 or > 100)
+            {
+                _logger.LogWarning("Alerta oficial sem identificador válido ignorado ({Tamanho} caracteres).", a.Identificador.Length);
+                continue;
+            }
 
             var atingidas = CasamentoAlerta.Areas(a, areas);
             if (atingidas.Count == 0) continue;
             var novo = new AlertaOficial
             {
-                Identificador = a.Identificador, Evento = a.Evento, Gravidade = a.Gravidade, Urgencia = a.Urgencia,
-                InicioUtc = a.InicioUtc, ExpiraUtc = a.ExpiraUtc, Emissor = a.Emissor, Titulo = a.Titulo,
-                Descricao = a.Descricao, RecebidoEmUtc = agoraUtc,
+                // Texto cortado no limite da coluna: um alerta grande demais não pode derrubar o lote inteiro.
+                Identificador = a.Identificador, Evento = Cortar(a.Evento, 120), Gravidade = Cortar(a.Gravidade, 20),
+                Urgencia = Cortar(a.Urgencia, 20), InicioUtc = a.InicioUtc, ExpiraUtc = a.ExpiraUtc,
+                Emissor = Cortar(a.Emissor, 200), Titulo = Cortar(a.Titulo, 500), Descricao = Cortar(a.Descricao, 4000),
+                RecebidoEmUtc = agoraUtc,
                 Areas = atingidas.Select(id => new AlertaOficialArea { SubprefeituraId = id }).ToList(),
             };
             _db.AlertasOficiais.Add(novo);
@@ -98,6 +106,8 @@ public class AlertaOficialService : IAlertaOficialService
             _logger.LogInformation("Alertas oficiais: {Novos} novos, {Cancelados} cancelados ({Lidos} no feed).", novos, cancelados, alertas.Count);
         return new ResultadoSincronizacao(true, novos, cancelados, haAlertaSp);
     }
+
+    private static string Cortar(string texto, int limite) => texto.Length <= limite ? texto : texto[..limite];
 
     public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<AlertaOficial>>> AtivosPorAreaAsync(
         DateTime agoraUtc, CancellationToken ct = default)

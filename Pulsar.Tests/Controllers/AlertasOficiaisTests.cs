@@ -37,7 +37,7 @@ public class AlertasOficiaisTests : IClassFixture<PulsarWebApplicationFactory>
         {
             Identificador = id, Evento = "CHUVAS INTENSAS", Gravidade = "Severe", Urgencia = "Expected",
             InicioUtc = agora.AddMinutes(-20), ExpiraUtc = expira, Emissor = "Defesa Civil Estadual De São Paulo",
-            Titulo = "Defesa Civil:14h05 Chuva forte", Descricao = "Risco de alagamentos.", RecebidoEmUtc = agora,
+            Titulo = "Defesa Civil:14h05 Chuva forte", Descricao = "Risco de alagamentos.", Instrucao = "Em caso de emergência, ligue 199 ou 193.", RecebidoEmUtc = agora,
             Areas = [new AlertaOficialArea { SubprefeituraId = area }],
         };
         db.AlertasOficiais.AddRange(
@@ -72,6 +72,8 @@ public class AlertasOficiaisTests : IClassFixture<PulsarWebApplicationFactory>
         alerta.Emissor.Should().Be("Defesa Civil Estadual De São Paulo");
         alerta.Titulo.Should().Be("Defesa Civil:14h05 Chuva forte");
         alerta.ExpiraUtc.Kind.Should().Be(DateTimeKind.Utc);
+        alerta.Descricao.Should().Be("Risco de alagamentos.");
+        alerta.Instrucao.Should().Be("Em caso de emergência, ligue 199 ou 193.");
     }
 
     // Baixada escondida: o alerta de Santos não chega à conta comum; o Admin vê.

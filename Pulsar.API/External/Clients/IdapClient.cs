@@ -86,7 +86,7 @@ public class IdapClient : IIdapClient
 
         return new AlertaCap(T(a, "identifier"), T(a, "sender"), enviado, T(a, "msgType"), referencias,
             T(info, "event"), T(info, "severity"), T(info, "urgency"), inicio, expira,
-            T(info, "senderName"), T(info, "headline"), T(info, "description"), poligonos, ibge);
+            T(info, "senderName"), T(info, "headline"), T(info, "description"), poligonos, ibge, T(info, "instruction"));
     }
 
     private static bool Data(string s, out DateTime utc)

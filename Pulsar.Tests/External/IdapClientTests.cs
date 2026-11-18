@@ -29,6 +29,7 @@ public class IdapClientTests
         capital.Poligonos.Should().ContainSingle().Which.Should().HaveCount(5);
         capital.Poligonos[0][0].Should().Be((-23.58, -46.67));
         capital.CodigosIbge.Should().BeEmpty();
+        capital.Instrucao.Should().StartWith("Siga as orientações da defesa civil local");
     }
 
     [Fact]

@@ -170,6 +170,11 @@ namespace Pulsar.API.Migrations
                     b.Property<DateTime>("InicioUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Instrucao")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<DateTime>("RecebidoEmUtc")
                         .HasColumnType("timestamp with time zone");
 

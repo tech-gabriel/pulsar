@@ -60,6 +60,7 @@
           <senderName>Defesa Civil Estadual De São Paulo</senderName>
           <headline>Defesa Civil:14h05 Chuva forte na capital. Risco de alagamento. Evite areas de risco!</headline>
           <description>14h05 Chuva forte na região central da capital. Risco de alagamentos e queda de árvores.</description>
+          <instruction>Siga as orientações da defesa civil local e do plano de contingência municipal. Em caso de emergência, ligue 199 ou 193.</instruction>
           <area>
             <areaDesc>SÃO PAULO/SP</areaDesc>
             <polygon>-23.58,-46.67 -23.58,-46.60 -23.52,-46.60 -23.52,-46.67 -23.58,-46.67</polygon>

@@ -14,6 +14,8 @@ public class AlertaOficialDto
     public string Emissor { get; set; } = string.Empty;
     public string Titulo { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
+    /// <summary>A orientação oficial do alerta, como veio. Pode vir vazia.</summary>
+    public string Instrucao { get; set; } = string.Empty;
     public DateTime InicioUtc { get; set; }
     public DateTime ExpiraUtc { get; set; }
 
@@ -25,6 +27,7 @@ public class AlertaOficialDto
         Emissor = a.Emissor,
         Titulo = a.Titulo,
         Descricao = a.Descricao,
+        Instrucao = a.Instrucao,
         InicioUtc = DateTime.SpecifyKind(a.InicioUtc, DateTimeKind.Utc),
         ExpiraUtc = DateTime.SpecifyKind(a.ExpiraUtc, DateTimeKind.Utc),
     };

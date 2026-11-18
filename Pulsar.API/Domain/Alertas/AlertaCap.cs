@@ -19,4 +19,5 @@ public record AlertaCap(
     string Titulo,
     string Descricao,
     IReadOnlyList<IReadOnlyList<(double Lat, double Lon)>> Poligonos,
-    IReadOnlyList<string> CodigosIbge);
+    IReadOnlyList<string> CodigosIbge,
+    string Instrucao = "");

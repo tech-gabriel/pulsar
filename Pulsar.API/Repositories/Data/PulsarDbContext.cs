@@ -291,6 +291,7 @@ public class PulsarDbContext : DbContext
             e.Property(a => a.Emissor).IsRequired().HasMaxLength(200);
             e.Property(a => a.Titulo).IsRequired().HasMaxLength(500);
             e.Property(a => a.Descricao).IsRequired().HasMaxLength(4000);
+            e.Property(a => a.Instrucao).IsRequired().HasMaxLength(1000);
         });
 
         modelBuilder.Entity<AlertaOficialArea>(e =>

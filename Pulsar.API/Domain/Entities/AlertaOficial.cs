@@ -21,6 +21,8 @@ public class AlertaOficial
     public string Emissor { get; set; } = string.Empty;
     public string Titulo { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
+    /// <summary>instruction do CAP: a orientação oficial ("Em caso de emergência, ligue 199 ou 193").</summary>
+    public string Instrucao { get; set; } = string.Empty;
     public DateTime? CanceladoEmUtc { get; set; }
     public DateTime RecebidoEmUtc { get; set; }
 

@@ -81,7 +81,7 @@ public class AlertaOficialService : IAlertaOficialService
                 // Texto cortado no limite da coluna: um alerta grande demais não pode derrubar o lote inteiro.
                 Identificador = a.Identificador, Evento = Cortar(a.Evento, 120), Gravidade = Cortar(a.Gravidade, 20),
                 Urgencia = Cortar(a.Urgencia, 20), InicioUtc = a.InicioUtc, ExpiraUtc = a.ExpiraUtc,
-                Emissor = Cortar(a.Emissor, 200), Titulo = Cortar(a.Titulo, 500), Descricao = Cortar(a.Descricao, 4000),
+                Emissor = Cortar(a.Emissor, 200), Titulo = Cortar(a.Titulo, 500), Descricao = Cortar(a.Descricao, 4000), Instrucao = Cortar(a.Instrucao, 1000),
                 RecebidoEmUtc = agoraUtc,
                 Areas = atingidas.Select(id => new AlertaOficialArea { SubprefeituraId = id }).ToList(),
             };

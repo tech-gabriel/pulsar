@@ -12,6 +12,10 @@ const h = vi.hoisted(() => ({
   dados: {} as object | null,
   subs: [{ id: 's' }] as unknown[],
   favoritos: [{ subprefeituraId: 's', nome: 'Mooca' }] as unknown[],
+  geo: null as { features: { properties?: Record<string, unknown> }[] } | null,
+  // Contornos da Baixada: 'igual' devolve os mesmos dados da capital; null = ainda carregando.
+  baixada: 'igual' as object | null | 'igual',
+  erroBaixada: false,
 }));
 vi.mock('../../../contexts/AuthContext', () => ({ useAuth: () => ({ usuario: { id: 'u1' } }) }));
 vi.mock('../../../contexts/ToastContext', () => ({ useToast: () => ({ showToast: h.toast }) }));
@@ -21,10 +25,14 @@ vi.mock('../../../hooks/useLocaisSalvos', () => ({
   useLocaisSalvos: () => ({ locais: h.locais, carregando: h.carregando, salvar: h.salvar, apagar: h.apagar }),
 }));
 vi.mock('../../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => ({ subprefeituras: h.subs }) }));
-vi.mock('../../../hooks/useJsonPublico', () => ({ useJsonPublico: () => ({ dados: h.dados, erro: false }) }));
+vi.mock('../../../hooks/useJsonPublico', () => ({
+  useJsonPublico: (url: string) => (url.includes('baixada')
+    ? { dados: h.baixada === 'igual' ? h.dados : h.baixada, erro: h.erroBaixada }
+    : { dados: h.dados, erro: false }),
+}));
 vi.mock('../../../features/locais/regras', async (orig) => ({
   ...(await orig<object>()),
-  subprefeituraIdDoPonto: () => h.subId,
+  subprefeituraIdDoPonto: (_p: unknown, geo: typeof h.geo) => { h.geo = geo; return h.subId; },
 }));
 vi.mock('../../../hooks/useBuscaEndereco', () => ({
   useBuscaEndereco: () => ({
@@ -52,7 +60,7 @@ const abrirFolhaDaCasa = () => {
 
 describe('CasaTrabalhoCard', () => {
   beforeEach(() => {
-    h.locais = {}; h.carregando = false; h.subId = 'sub-1'; h.dados = {}; h.subs = [{ id: 's' }];
+    h.locais = {}; h.carregando = false; h.subId = 'sub-1'; h.dados = {}; h.subs = [{ id: 's' }]; h.baixada = 'igual'; h.erroBaixada = false;
     h.favoritos = [{ subprefeituraId: 's', nome: 'Mooca' }];
     h.salvar.mockReset().mockResolvedValue(true);
     h.apagar.mockReset().mockResolvedValue(true);
@@ -196,7 +204,7 @@ describe('CasaTrabalhoCard', () => {
     render(<CasaTrabalhoCard />);
     fireEvent.click(screen.getByRole('button', { name: 'Salvar casa' }));
     escolherNaBusca();
-    await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Esse endereço fica fora da cidade de São Paulo.', 'error'));
+    await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Esse endereço fica fora da área coberta (São Paulo capital).', 'error'));
     expect(h.salvar).not.toHaveBeenCalled();
   });
 
@@ -208,5 +216,38 @@ describe('CasaTrabalhoCard', () => {
     await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Ainda carregando o mapa das regiões. Tente de novo em instantes.', 'info'));
     expect(h.toast).not.toHaveBeenCalledWith(expect.stringContaining('fora da cidade'), 'error');
     expect(h.salvar).not.toHaveBeenCalled();
+  });
+
+  // Quem vê a Baixada (o Admin, até a abertura) acha os municípios dela: os contornos entram juntos.
+  it('com a Baixada na lista, os contornos dela entram na busca da área', async () => {
+    h.dados = { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { nm_subprefeitura: 'X' }, geometry: null }] };
+    h.subs = [{ id: 's', cidade: 'São Paulo' }, { id: 'b', cidade: 'Baixada Santista' }];
+    render(<CasaTrabalhoCard />);
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar trabalho' }));
+    escolherNaBusca();
+    await waitFor(() => expect(h.salvar).toHaveBeenCalled());
+    expect(h.geo!.features.some((f) => f.properties?.nm_regiao_05 === 'Baixada Santista')).toBe(true);
+  });
+
+  // Admin com a Baixada: enquanto os contornos dela carregam, "carregando", não "fora da área".
+  it('contornos da Baixada ainda carregando: avisa que está carregando', async () => {
+    h.subs = [{ id: 's', cidade: 'São Paulo' }, { id: 'b', cidade: 'Baixada Santista' }];
+    h.baixada = null;
+    render(<CasaTrabalhoCard />);
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar trabalho' }));
+    escolherNaBusca();
+    await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Ainda carregando o mapa das regiões. Tente de novo em instantes.', 'info'));
+    expect(h.salvar).not.toHaveBeenCalled();
+  });
+
+  // Se os contornos da Baixada falham, a capital continua salvando.
+  it('contornos da Baixada com erro: a capital segue valendo', async () => {
+    h.subs = [{ id: 's', cidade: 'São Paulo' }, { id: 'b', cidade: 'Baixada Santista' }];
+    h.baixada = null;
+    h.erroBaixada = true;
+    render(<CasaTrabalhoCard />);
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar trabalho' }));
+    escolherNaBusca();
+    await waitFor(() => expect(h.salvar).toHaveBeenCalled());
   });
 });

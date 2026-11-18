@@ -18,8 +18,9 @@ describe('BadgeRisco', () => {
   });
 
   it('exibe o score formatado quando fornecido', () => {
+    // Inteiro, igual ao número do detalhe da área ("75.5" saía com ponto, fora do pt-BR).
     render(<BadgeRisco faixa="ALTO" score={75.5} />);
-    expect(screen.getByText('75.5')).toBeInTheDocument();
+    expect(screen.getByText('76')).toBeInTheDocument();
   });
 
   it('não exibe score quando omitido', () => {

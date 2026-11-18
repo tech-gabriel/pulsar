@@ -17,6 +17,9 @@ public class SubprefeituraDto
     /// <summary>Pontos de alagamento ativos agora segundo o CGE-SP. Vazio quando não há (ou o CGE está fora).</summary>
     public IReadOnlyList<PontoAlagamentoCgeDto> AlagamentosCge { get; set; } = [];
 
+    /// <summary>Alertas oficiais da Defesa Civil valendo agora na área (IDAP), mais recente primeiro.</summary>
+    public IReadOnlyList<AlertaOficialDto> AlertasOficiais { get; set; } = [];
+
     /// <summary>Chuva medida por posto do CGE-SP ou, na falta dele, por estação do CEMADEN. Null quando a região só tem chuva estimada agora.</summary>
     public ChuvaMedidaDto? ChuvaMedida { get; set; }
 

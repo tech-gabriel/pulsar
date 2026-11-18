@@ -12,6 +12,8 @@
   <ItemGroup>
     <Content Remove="Domain/Score/grade-sao-paulo.json" />
     <EmbeddedResource Include="Domain/Score/grade-sao-paulo.json" />
+    <Content Remove="Domain/Score/grade-baixada-santista.json" />
+    <EmbeddedResource Include="Domain/Score/grade-baixada-santista.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -28,10 +28,12 @@ public class GatilhoChuvaPrevistaTests
             ColetadoEm = Agora,
         };
 
-    private static ContextoGatilho Contexto(params FaixaPrevisaoDto[] faixas)
+    private static ContextoGatilho Contexto(params FaixaPrevisaoDto[] faixas) => ContextoEm("Mooca", faixas);
+
+    private static ContextoGatilho ContextoEm(string area, params FaixaPrevisaoDto[] faixas)
         => new()
         {
-            Estado = new EstadoSubprefeitura(new Subprefeitura { Nome = "Mooca", Ativa = true }, null, null),
+            Estado = new EstadoSubprefeitura(new Subprefeitura { Nome = area, Ativa = true }, null, null),
             Fuso = Sp,
             Previsao = faixas,
             AgoraUtc = Agora,
@@ -304,4 +306,13 @@ public class GatilhoChuvaPrevistaTests
         (await new GatilhoChuvaPrevista().AvaliarAsync(ComReferencia(referencia, Faixa(3, 25, 0.9))))
             .Should().ContainSingle();
     }
+
+    // Decisão do user (18/11/2026): na Baixada o aviso de chuva forte prevista sai pela calibração
+    // dela (fator 1,6 sobre os 10 mm da capital); a chuva no app continua forte a partir de 10 mm.
+    [Theory]
+    [InlineData("Santos", 12, false)]
+    [InlineData("Santos", 16, true)]
+    [InlineData("Sé", 10, true)]
+    public async Task Baixada_AvisaPelaCalibracaoDela(string area, double chuva, bool avisa)
+        => (await new GatilhoChuvaPrevista().AvaliarAsync(ContextoEm(area, Faixa(3, chuva, 0.9)))).Any().Should().Be(avisa);
 }

@@ -31,7 +31,10 @@ public sealed record ParametrosScore(
     PontoCurva[] Saturacao48h,
     PontoCurva[] Vento,
     PontoCurva[] Calor,
-    IReadOnlyDictionary<string, double> Fatores)
+    IReadOnlyDictionary<string, double> Fatores,
+    // Quanto mais chuva a cidade precisa para o mesmo risco (o k da calibração): escala os limites
+    // de chuva prevista dos avisos. A chuva mostrada no app não muda (10 mm é forte em todo lugar).
+    double FatorChuva = 1.0)
 {
     /// <summary>Fator de suscetibilidade; subprefeitura fora do dicionário é neutra (1,0).</summary>
     public double Fator(string nomeSubprefeitura)

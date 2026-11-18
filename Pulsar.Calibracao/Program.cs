@@ -12,6 +12,14 @@ internal static class Principal
         // Uso: dotnet run --project Pulsar.Calibracao [-- 2026-01-01 2026-08-31]
         //      dotnet run --project Pulsar.Calibracao -- grade [2026-01-01 2026-08-31]
         //      dotnet run --project Pulsar.Calibracao -- contorno
+        //      dotnet run --project Pulsar.Calibracao -- grade-baixada
+        if (args.Length > 0 && args[0] == "grade-baixada")
+        {
+            using var httpBaixada = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+            httpBaixada.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar-Calibracao/1.0 (app-pulsar.com.br)");
+            await GeracaoGrade.BaixadaAsync(httpBaixada, AppContext.BaseDirectory.Split("bin")[0]);
+            return;
+        }
         if (args.Length > 0 && args[0] == "contorno")
         {
             await GeracaoGrade.ContornoAsync(AppContext.BaseDirectory.Split("bin")[0]);

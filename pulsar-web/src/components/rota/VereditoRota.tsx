@@ -17,9 +17,9 @@ const horaMinuto = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '
  * "Avaliando o caminho…" com o ponto cinza: quando a resposta chega, a cor transiciona (--c)
  * e o texto troca em crossfade, sem desmontar o cartão.
  */
-export default function VereditoRota({ resultado, atualizadoEm }: { resultado: RotaAvaliacao | null; atualizadoEm?: number | null }) {
+export default function VereditoRota({ resultado, atualizadoEm, atravessaSerra = false }: { resultado: RotaAvaliacao | null; atualizadoEm?: number | null; atravessaSerra?: boolean }) {
   const cores = coresParaFaixa(resultado ? FAIXA_DO_ESTADO[resultado.estado] : null);
-  const texto = resultado ? textoVeredito(resultado) : null;
+  const texto = resultado ? textoVeredito(resultado, undefined, atravessaSerra) : null;
   const estado = resultado?.estado ?? 'carregando';
   return (
     <div className="det-hero rota-veredito" role="status" aria-live="polite" style={{ '--c': cores.fill, '--c-escura': cores.text } as CSSProperties}>

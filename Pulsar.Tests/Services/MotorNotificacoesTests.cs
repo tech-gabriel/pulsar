@@ -515,4 +515,48 @@ public class MotorNotificacoesTests
 
         (await NovoMotor(ctx, new GatilhoPorSub("score-alto")).AvaliarEDispararAsync()).Should().Be(1);
     }
+    // Entrega 3 da Baixada: o alerta oficial gravado pelo AlertasOficiaisJob chega ao gatilho pelo contexto.
+    [Fact]
+    public async Task AlertaOficialExtremoAtivo_ViraPush_CanceladoNao()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        var pessoa = await PessoaComAparelhoAsync(ctx, true, Mooca);
+        var agora = DateTime.UtcNow;
+        AlertaOficial Alerta(string id, DateTime? cancelado) => new()
+        {
+            Identificador = id, Evento = "CHUVAS INTENSAS", Gravidade = "Extreme", Urgencia = "Immediate",
+            InicioUtc = agora.AddMinutes(-10), ExpiraUtc = agora.AddHours(2), Emissor = "Defesa Civil Estadual De São Paulo",
+            Titulo = "Defesa Civil: Temporal na zona leste", CanceladoEmUtc = cancelado,
+            Areas = [new AlertaOficialArea { SubprefeituraId = Mooca }],
+        };
+        ctx.AlertasOficiais.AddRange(Alerta("1/2026", null), Alerta("2/2026", agora.AddMinutes(-1)));
+        await ctx.SaveChangesAsync();
+
+        (await NovoMotor(ctx, new GatilhoAlertaOficial()).AvaliarEDispararAsync()).Should().Be(1);
+
+        _pushMock.Verify(p => p.NotificarUsuarioAsync(pessoa, CriterioOptIn.RiscoAlto,
+            It.Is<PushPayload>(x => x.Titulo.Contains("Defesa Civil") && x.Corpo.Contains("Temporal na zona leste")),
+            It.IsAny<CancellationToken>()), Times.Once);
+        (await ctx.NotificacoesEnviadas.Select(n => n.Chave).ToListAsync()).Should().ContainSingle().Which.Should().StartWith("dc:3:");
+    }
+
+    // A rodada extra do alerta Extremo (job de alertas) roda só o gatilho da Defesa Civil: um push de
+    // outro gatilho não sai segundos antes do ciclo normal.
+    [Fact]
+    public async Task SoUmGatilho_AvaliaSoEle()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        using var ctx = NovoContexto(conn);
+        await PessoaComAparelhoAsync(ctx, true, Mooca);
+        var outro = new GatilhoPorSub("score-alto");
+        var dc = new GatilhoPorSub("alerta-oficial");
+
+        await NovoMotor(ctx, outro, dc).AvaliarSoAsync("alerta-oficial");
+
+        outro.Avaliadas.Should().BeEmpty();
+        dc.Avaliadas.Should().NotBeEmpty();
+    }
 }

@@ -34,6 +34,9 @@ import type { SubprefeituraMapaDto, EnderecoBusca, OcorrenciasProximasDto } from
 import { useAlturaFluida } from '../motion/useAlturaFluida';
 import { useRota, ROTULO_LOCALIZACAO } from '../hooks/useRota';
 import { useJsonPublico } from '../hooks/useJsonPublico';
+import { comContornosDaBaixada } from '../utils/geo';
+import type { PontoCritico } from '../features/cidade/pontosCriticos';
+import { areaPorSlug, areasDaCidade, cidadeDaArea, cidadeInicial, cidadesDasAreas, nomeDaCobertura } from '../features/cidade/cidade';
 import { escolherDestinoComoChegar, rotuloDoPino, rotuloDoTrecho } from '../features/rota/destino';
 import { buscarRuaPerto } from '../api/busca';
 import { useRuaPerto } from '../hooks/useRuaPerto';
@@ -51,12 +54,33 @@ import type { OrigemTrecho } from '../components/painel/DetalheSubprefeitura';
 /** ?lugar= do aviso de chuva: "casa" | "trabalho"; outro valor não abre nada. */
 const tipoDoParam = (v: string | null): TipoLocal | null => (v === 'casa' ? 'CASA' : v === 'trabalho' ? 'TRABALHO' : null);
 
+/** Cidade escolhida no painel (D1), lembrada neste navegador. */
+const CHAVE_CIDADE = 'pulsar-cidade-painel';
+
 export default function MapaPage() {
   const { usuario } = useAuth();
   const { subprefeituras, carregando, erro, recarregar, ultimaAtualizacao } = useSubprefeituras();
   const { favoritos, isFavorito, toggleFavorito, carregando: carregandoFavoritos } = useFavoritos();
   const semFavoritas = !!usuario && !carregandoFavoritos && favoritos.length === 0;
   const favoritas = subprefeituras.filter((s) => isFavorito(s.id));
+  // Baixada escondida até o lançamento: só quem a recebe na lista (o Admin) baixa os contornos dela.
+  const comBaixada = subprefeituras.some((a) => a.cidade === 'Baixada Santista');
+  const contornosDaBaixada = useJsonPublico<FeatureCollection>('/baixada-santista-leve.geojson', comBaixada);
+  // D1 (escolha do user, 18/11/2026): a cidade do painel, lembrada entre visitas (/app é só CSR).
+  const [cidadeLembrada, setCidadeLembrada] = useState<string | null>(() => {
+    try { return localStorage.getItem(CHAVE_CIDADE); } catch { return null; }
+  });
+  const cidades = useMemo(() => cidadesDasAreas(subprefeituras), [subprefeituras]);
+  const cidade = cidadeInicial(cidades, favoritas, cidadeLembrada);
+  const areasDoPainel = useMemo(() => areasDaCidade(subprefeituras, cidade), [subprefeituras, cidade]);
+  function lembrarCidade(c: string) {
+    setCidadeLembrada(c);
+  }
+  // Grava fora do render: o deep link (?cidade=, ?regiao=) troca a cidade durante o render.
+  useEffect(() => {
+    if (!cidadeLembrada) return;
+    try { localStorage.setItem(CHAVE_CIDADE, cidadeLembrada); } catch { /* sem storage: vale só nesta visita */ }
+  }, [cidadeLembrada]);
   const isMobile = useIsMobile(768);
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -75,12 +99,18 @@ export default function MapaPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
+  const geojsonMapa = useMemo(() => {
+    const capital = geojson as FeatureCollection | null;
+    return capital && contornosDaBaixada.dados ? comContornosDaBaixada(capital, contornosDaBaixada.dados) : capital;
+  }, [geojson, contornosDaBaixada.dados]);
   // Deep link /app?regiao=<slug> (SEO, sino, busca): reage a CADA troca do parâmetro,
   // não só ao primeiro carregamento. Subprefeitura abre o detalhe; zona só enquadra o mapa.
   // Slug inválido não repassa nada adiante: degradação limpa, sem foco.
   const slugParam = searchParams.get('regiao');
   const [slugAplicado, setSlugAplicado] = useState<string | null>(null);
   const [zonaEmFoco, setZonaEmFoco] = useState<string | null>(null);
+  // Cada troca de cidade no painel conta, mesmo quando a zona em foco não muda (voltar à capital).
+  const [pedidoFoco, setPedidoFoco] = useState(0);
   const [subSelecionada, setSubSelecionada] = useState<SubprefeituraMapaDto | null>(null);
   // Trecho tocado no mapa (índice H3). Toda outra forma de escolher a área o limpa.
   const [trechoTocado, setTrechoTocado] = useState<string | null>(null);
@@ -97,15 +127,35 @@ export default function MapaPage() {
   if (slugParam !== slugAplicado && (subprefeituras.length > 0 || !slugParam)) {
     setSlugAplicado(slugParam);
     const alvo = slugParam ? resolverDeepLink(slugParam) : undefined;
-    const sub = alvo?.nomeSub ? subprefeituras.find((s) => s.nome === alvo.nomeSub) ?? null : null;
+    // O SEO só conhece as áreas da capital; as outras cidades (Baixada) se acham pelo nome.
+    const sub = alvo?.nomeSub ? subprefeituras.find((s) => s.nome === alvo.nomeSub) ?? null
+      : !alvo && slugParam ? areaPorSlug(slugParam, subprefeituras) : null;
     setZonaEmFoco(alvo && !alvo.nomeSub ? alvo.nomeRegiao : null);
     if (sub) {
+      setCidadeLembrada(cidadeDaArea(sub));
       setLugarAberto(null);
       setSubSelecionada(sub);
       setTrechoTocado(null);
     }
   }
   const [painelMobileAberto, setPainelMobileAberto] = useState(false);
+  // Deep link /app?cidade=<nome> (linha "E mais N áreas" do sino, V1 C): troca o painel para a
+  // cidade e o abre no celular. Mesmo padrão do ?regiao= (ajuste no render); o efeito abaixo o tira da URL.
+  const cidadeParam = searchParams.get('cidade');
+  const [cidadeAplicada, setCidadeAplicada] = useState<string | null>(null);
+  if (cidadeParam !== cidadeAplicada && (subprefeituras.length > 0 || !cidadeParam)) {
+    setCidadeAplicada(cidadeParam);
+    if (cidadeParam && cidades.includes(cidadeParam)) {
+      trocarCidade(cidadeParam);
+      setPainelMobileAberto(true);
+    }
+  }
+  useEffect(() => {
+    if (!cidadeParam || cidadeAplicada !== cidadeParam) return;
+    const p = new URLSearchParams(searchParams);
+    p.delete('cidade');
+    setSearchParams(p, { replace: true });
+  }, [cidadeParam, cidadeAplicada, searchParams, setSearchParams]);
   // Tablet: o cartão do pé recolhe até só a busca, para devolver o mapa.
   const [painelRecolhido, setPainelRecolhido] = useState(false);
   const painelRef = useRef<HTMLElement>(null);
@@ -134,7 +184,11 @@ export default function MapaPage() {
   // Uma coisa por vez no celular: com a dica da localização na tela, o convite do push espera.
   const [dicaLocalNaTela, setDicaLocalNaTela] = useState(false);
   // O traçado do corredor roda sobre o contorno leve (247 kB); o completo (4,7 MB) fica só para o desenho do mapa.
-  const contornoLeve = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
+  const contornoLeveCapital = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', rotaAberta);
+  const contornoLeve = useMemo(
+    () => ({ dados: contornoLeveCapital.dados && contornosDaBaixada.dados ? comContornosDaBaixada(contornoLeveCapital.dados, contornosDaBaixada.dados) : contornoLeveCapital.dados }),
+    [contornoLeveCapital.dados, contornosDaBaixada.dados],
+  );
   const rota = useRota(contornoLeve.dados, subprefeituras, rotaAberta);
   const locaisSalvos = useLocaisSalvos(usuario?.id ?? null);
   const localAberto = lugarAberto ? locaisSalvos.locais[lugarAberto] ?? null : null;
@@ -174,6 +228,8 @@ export default function MapaPage() {
   const rotaNoCelular = isMobile && rotaAberta;
   useAlturaFluida(folhaRef, !rotaSemPontos); // a folha sai e volta (AnimatePresence)
   const { ocorrencias } = useOcorrenciasAlagamento(overlayAlagamento);
+  // D3: na Baixada, a gota liga os pontos críticos curados (só quem a vê baixa o arquivo).
+  const pontosCriticos = useJsonPublico<PontoCritico[]>('/pontos-criticos-baixada.json', overlayAlagamento && comBaixada);
 
   // Trechos (hexágonos da grade): só na camada de risco e fora da rota. Os dados vêm quando o
   // mapa chega perto ou quando há um ponto (busca, localização), nunca na abertura de longe.
@@ -182,7 +238,17 @@ export default function MapaPage() {
   // no mapa, sem toque; o trecho de destino fica contornado.
   const comTrechos = camadaAtiva === 'score';
   const ativoTrechos = comTrechos && (perto || !!pontoBusca);
-  const contornoTrechos = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
+  const contornoCapital = useJsonPublico<FeatureCollection>('/grade-sao-paulo.geojson', ativoTrechos);
+  // Baixada escondida: só quem a recebe na lista (o Admin) baixa o desenho dos trechos dela.
+  const contornoBaixada = useJsonPublico<FeatureCollection>('/grade-baixada-santista.geojson', ativoTrechos && comBaixada);
+  const contornoTrechos = useMemo(
+    () => ({
+      dados: contornoCapital.dados && contornoBaixada.dados
+        ? { ...contornoCapital.dados, features: [...contornoCapital.dados.features, ...contornoBaixada.dados.features] }
+        : contornoCapital.dados,
+    }),
+    [contornoCapital.dados, contornoBaixada.dados],
+  );
   // Com uma área aberta as células também vêm: nomeiam a estação da chuva que gerou o risco dela.
   const celulasAgora = useCelulasAgora(ativoTrechos || !!subSelecionada, ultimaAtualizacao?.getTime() ?? null);
   const trechos = useMemo(() => (celulasAgora ? trechosDe(celulasAgora, subprefeituras) : null), [celulasAgora, subprefeituras]);
@@ -331,7 +397,7 @@ export default function MapaPage() {
   // "Rota até aqui" no detalhe: a ordem dos destinos fica em escolherDestinoComoChegar.
   function comoChegar(sub: SubprefeituraMapaDto) {
     const centro = trechoAberto?.origem === 'toque' ? centroDoTrecho(trechoAberto.h3, contornoTrechos.dados) : null;
-    const destino = escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? (geojson as FeatureCollection | null), centro);
+    const destino = escolherDestinoComoChegar(sub, pontoBusca, rotuloBusca, contornoLeve.dados ?? geojsonMapa, centro);
     const paraOTrecho = !!centro && destino.lat === centro.lat && destino.lon === centro.lon;
     // Trecho: o rótulo final é a rua, que chega em seguida; até lá diz que está buscando, em vez
     // de mostrar um nome e trocá-lo depois.
@@ -363,7 +429,7 @@ export default function MapaPage() {
   function selecionarPorPonto(ponto: PontoBusca, origem: 'busca' | 'localizacao'): SubprefeituraMapaDto | null {
     setPontoBusca(ponto);
     setTrechoTocado(null); // o trecho passa a ser o do ponto
-    const sel = resolverSelecao(ponto.lat, ponto.lon, geojson as FeatureCollection | null, subprefeituras, origem);
+    const sel = resolverSelecao(ponto.lat, ponto.lon, geojsonMapa, subprefeituras, origem);
     if (sel.aviso) {
       setSubSelecionada(null);
       setAvisoBusca(sel.aviso);
@@ -441,8 +507,19 @@ export default function MapaPage() {
 
   // Toque numa subprefeitura (mapa, painel, busca): abre o detalhe dela e marca o
   // polígono (highlight + centralização).
+  // Trocar de cidade no painel leva o mapa até ela: a cidade de uma zona só (Baixada) enquadra a
+  // zona; a de várias zonas (capital) volta à vista da cidade.
+  function trocarCidade(c: string) {
+    lembrarCidade(c);
+    setPedidoFoco((n) => n + 1);
+    const zonas = new Set(areasDaCidade(subprefeituras, c).map((a) => a.zona));
+    setZonaEmFoco(zonas.size === 1 ? [...zonas][0] : null);
+    setSubSelecionada(null);
+  }
+
   function handleSelecionarSub(sub: SubprefeituraMapaDto) {
     limparDeepLink();
+    lembrarCidade(cidadeDaArea(sub));
     setLugarAberto(null);
     setSubSelecionada(sub);
     setTrechoTocado(null);
@@ -477,7 +554,7 @@ export default function MapaPage() {
     }
     const id = subprefeituraIdDoPonto(p, contornoLeve.dados, subprefeituras);
     if (!id) {
-      showToast('Esse endereço fica fora da cidade de São Paulo.', 'error');
+      showToast(`Esse endereço fica fora da área coberta (${nomeDaCobertura(subprefeituras)}).`, 'error');
       return false;
     }
     return locaisSalvos.salvar(tipo, p, id, 'rota');
@@ -532,6 +609,9 @@ export default function MapaPage() {
       onTentarDeNovo={rota.tentarDeNovo}
       onCancelarAviso={() => void rota.cancelarAviso()}
       faixaDaArea={(id) => subprefeituras.find((s) => s.id === id)?.faixaRisco}
+      cobertura={nomeDaCobertura(subprefeituras)}
+      atravessaSerra={rota.atravessaSerra}
+      textoSerra={rota.textoSerra}
       onTrocar={(ponto) => {
         (ponto === 'origem' ? rota.setOrigem : rota.setDestino)(null);
         // O De/Para é o mesmo no celular e no painel: um só está montado.
@@ -602,6 +682,8 @@ export default function MapaPage() {
               ultimaAtualizacao={ultimaAtualizacao}
               onRecarregar={recarregar}
               onSelecionar={handleSelecionarSub}
+              cidade={cidade}
+              onTrocarCidade={trocarCidade}
             />
           )}
         </div>
@@ -617,17 +699,19 @@ export default function MapaPage() {
         {isMobile && (rotaAberta ? camposRota(false) : buscaMapa(false))}
 
         <MapaBase
-          geojson={geojson}
+          geojson={geojsonMapa}
           subprefeituras={subprefeituras}
           subSelecionada={subSelecionada}
           onSelecionarSub={handleSelecionarSub}
           camadaAtiva={camadaAtiva}
           zonaEmFoco={zonaEmFoco}
+          pedidoFoco={pedidoFoco}
           subSelecionadaAtiva={!!subSelecionada}
           pontoBusca={rotaAberta ? null : pontoBusca}
           onMoverPonto={handleMoverPonto}
           overlayAlagamento={overlayAlagamento}
           ocorrencias={ocorrencias}
+          pontosCriticos={pontosCriticos.dados ?? undefined}
           rota={rotaAberta ? rota.linha : null}
           destinoSemRota={rotaAberta && !rota.linha ? rota.destino : null}
           semZoom={rotaNoCelular}
@@ -751,7 +835,7 @@ export default function MapaPage() {
               {/* Fechada, a alça é a única linha visível: mostra o resumo. Aberta, o cartão da cidade já resume. */}
               {!painelMobileAberto && (
                 <span className="w-full px-5 mt-2 text-sm font-semibold truncate text-center" style={{ color: 'var(--text-primary)' }}>
-                  {resumoAlertas(subprefeituras, carregando)}
+                  {resumoAlertas(areasDoPainel, carregando)}
                 </span>
               )}
             </button>
@@ -765,6 +849,8 @@ export default function MapaPage() {
                   ultimaAtualizacao={ultimaAtualizacao}
                   onRecarregar={recarregar}
                   onSelecionar={handleSelecionarSub}
+              cidade={cidade}
+              onTrocarCidade={trocarCidade}
                 />
               </div>
             )}

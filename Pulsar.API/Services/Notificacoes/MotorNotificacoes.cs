@@ -56,7 +56,22 @@ public class MotorNotificacoes : IMotorNotificacoes
         _logger = logger;
     }
 
-    public async Task<int> AvaliarEDispararAsync(CancellationToken ct = default)
+    // Uma rodada por vez: o ciclo da coleta e o do alerta Extremo podem coincidir, e duas rodadas
+    // lendo o livro-caixa antes de qualquer uma gravar mandariam o mesmo push duas vezes.
+    private static readonly SemaphoreSlim UmaRodadaPorVez = new(1, 1);
+
+    public Task<int> AvaliarEDispararAsync(CancellationToken ct = default) => RodadaAsync(null, ct);
+
+    public Task<int> AvaliarSoAsync(string gatilho, CancellationToken ct = default) => RodadaAsync(gatilho, ct);
+
+    private async Task<int> RodadaAsync(string? soGatilho, CancellationToken ct)
+    {
+        await UmaRodadaPorVez.WaitAsync(ct);
+        try { return await AvaliarEDispararSozinhoAsync(soGatilho, ct); }
+        finally { UmaRodadaPorVez.Release(); }
+    }
+
+    private async Task<int> AvaliarEDispararSozinhoAsync(string? soGatilho, CancellationToken ct)
     {
         // Sem chaves VAPID nada sai, então avaliar gatilhos e escrever no livro-caixa seria
         // pior que inútil: gravaria a chave de um push que não aconteceu e calaria o aviso de
@@ -73,8 +88,8 @@ public class MotorNotificacoes : IMotorNotificacoes
         if (destinatarios.Count > 0)
         {
             var pendencias = await GerarPendenciasAsync(
-                destinatarios.SelectMany(d => d.Favoritas.Concat(d.LocaisOuVazio.Keys)).ToHashSet(), agora, ct);
-            pendencias.AddRange(await AlagamentoNosLugaresAsync(agora, ct));
+                destinatarios.SelectMany(d => d.Favoritas.Concat(d.LocaisOuVazio.Keys)).ToHashSet(), agora, soGatilho, ct);
+            if (soGatilho is null) pendencias.AddRange(await AlagamentoNosLugaresAsync(agora, ct));
 
             // Lista pela metade decide errado: o gatilho que não chegou a rodar pode ser o de
             // risco alto, e a pendência menor sairia por AUSÊNCIA da maior. Nada foi enviado
@@ -219,8 +234,9 @@ public class MotorNotificacoes : IMotorNotificacoes
 
     /// <summary>Etapa 1: roda os gatilhos em cada subprefeitura acompanhada por alguém.</summary>
     private async Task<List<NotificacaoPendente>> GerarPendenciasAsync(
-        HashSet<Guid> subIds, DateTime agora, CancellationToken ct)
+        HashSet<Guid> subIds, DateTime agora, string? soGatilho, CancellationToken ct)
     {
+        var gatilhos = _gatilhos.Where(g => soGatilho is null || g.Nome == soGatilho).ToList();
         var subs = await _db.Subprefeituras
             .Include(s => s.Regiao)
             .Where(s => subIds.Contains(s.Id) && s.Ativa)
@@ -232,6 +248,12 @@ public class MotorNotificacoes : IMotorNotificacoes
             .Where(p => subIds.Contains(p.SubprefeituraId) && p.Ativo && p.VistoEm >= vistoDesde)
             .ToListAsync(ct))
             .ToLookup(p => p.SubprefeituraId);
+        // Alertas oficiais da Defesa Civil valendo agora, por área (gravados pelo AlertasOficiaisJob).
+        var alertas = (await _db.AlertasOficiais.Include(a => a.Areas)
+                .Where(a => a.CanceladoEmUtc == null && a.InicioUtc <= agora && a.ExpiraUtc > agora)
+                .ToListAsync(ct))
+            .SelectMany(a => a.Areas.Where(ar => subIds.Contains(ar.SubprefeituraId)).Select(ar => (ar.SubprefeituraId, Alerta: a)))
+            .ToLookup(x => x.SubprefeituraId, x => x.Alerta);
         var referencia = await ObterChuvaReferenciaAsync(subs, ct);
         var medidas = await ObterChuvaMedidaAsync(agora, ct);
         // As vizinhas saem de TODAS as subprefeituras ativas, não só das acompanhadas: o posto
@@ -247,7 +269,7 @@ public class MotorNotificacoes : IMotorNotificacoes
             try
             {
                 ctx = await MontarContextoAsync(sub, agora, [.. pontosCge[sub.Id]], referencia?.GetValueOrDefault(sub.Id),
-                    medidas.GetValueOrDefault(sub.Id), MedicoesPerto(sub, todas, medidas), ct);
+                    medidas.GetValueOrDefault(sub.Id), MedicoesPerto(sub, todas, medidas), [.. alertas[sub.Id]], ct);
             }
             catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
             {
@@ -264,7 +286,7 @@ public class MotorNotificacoes : IMotorNotificacoes
                 continue;
             }
 
-            foreach (var gatilho in _gatilhos)
+            foreach (var gatilho in gatilhos)
             {
                 if (ct.IsCancellationRequested) break;
                 try
@@ -285,7 +307,8 @@ public class MotorNotificacoes : IMotorNotificacoes
     private async Task<ContextoGatilho> MontarContextoAsync(
         Subprefeitura sub, DateTime agora, IReadOnlyList<PontoAlagamentoCge> pontosCge,
         IReadOnlyDictionary<DateTime, double>? chuvaReferencia,
-        ChuvaMedidaRegiao? chuvaMedida, IReadOnlyList<MedicaoPerto> chuvaMedidaPerto, CancellationToken ct)
+        ChuvaMedidaRegiao? chuvaMedida, IReadOnlyList<MedicaoPerto> chuvaMedidaPerto,
+        IReadOnlyList<AlertaOficial> alertasOficiais, CancellationToken ct)
     {
         // Os dois últimos: o atual e o do ciclo anterior, para o "2 ciclos seguidos".
         var scores = await _db.ScoresPerigo
@@ -319,6 +342,7 @@ public class MotorNotificacoes : IMotorNotificacoes
             LeiturasRecentes = recentes,
             ChuvaMedida = chuvaMedida,
             ChuvaMedidaPerto = chuvaMedidaPerto,
+            AlertasOficiaisAtivos = alertasOficiais,
         };
     }
 

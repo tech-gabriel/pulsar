@@ -667,6 +667,32 @@ html:not(.light) .det-hero .det-hero-frase { color: var(--text-primary); }
 /* Frases-ponte: por que o número de um lugar difere do de outro (15/11). Secundárias, quebram linha. */
 .det-linha-ponte { display: block; margin-top: 2px; white-space: normal; font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
 .det-faixa-modelo { font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
+
+/* Alerta oficial da Defesa Civil (escolha do user, 18/11/2026). A cor oficial (escala de SP: amarelo, laranja,
+   vermelho; tons do campo ColorRisk dos alertas) fica só na bolinha do selo, que tem o desenho do BadgeRisco.
+   O resto usa o cartão da Chuva (det-bloco + det-faixa) e a linha do CGE (det-linha). */
+.dc-amarelo { --dc: #FFFE00; --dc-bg: color-mix(in srgb, #FFFE00 18%, transparent); --dc-tx: #FDE047; }
+.dc-laranja { --dc: #F96602; --dc-bg: color-mix(in srgb, #F96602 22%, transparent); --dc-tx: #FDBA74; }
+.dc-vermelho { --dc: #FF0000; --dc-bg: color-mix(in srgb, #FF0000 22%, transparent); --dc-tx: #FCA5A5; }
+html.light .dc-amarelo { --dc-bg: color-mix(in srgb, #FFFE00 26%, #fff); --dc-tx: #665A00; }
+html.light .dc-laranja { --dc-bg: color-mix(in srgb, #F96602 16%, #fff); --dc-tx: #9A3A00; }
+html.light .dc-vermelho { --dc-bg: color-mix(in srgb, #FF0000 13%, #fff); --dc-tx: #A30000; }
+.dc-selo { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 2px 8px; border-radius: 999px; font: 500 12px/1.4 var(--font-body); background: var(--dc-bg); color: var(--dc-tx); }
+.dc-selo::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--dc); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .18); }
+.det-linha.dc-linha { gap: 10px; }
+.det-linha.dc-linha > svg { color: var(--dc-tx); }
+/* O evento oficial pode ser longo ("Tempestade local/convectiva - granizo"): quebra em até 2 linhas em vez de cortar. */
+.det-linha.dc-linha > .dc-texto { flex: 1; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.dc-linha-alerta { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; }
+.dc-linha-alerta > span:first-child { flex: 1; min-width: 0; }
+.dc-linha-alerta b { display: block; font: 600 15px/1.3 var(--font-body); color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-linha-alerta small { display: block; margin-top: 2px; font: 400 12px var(--font-body); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-linha-alerta > svg { flex: none; color: var(--text-muted); }
+.dc-folha-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.dc-folha-cab h2 { font: 700 18px/1.25 var(--font-heading); color: var(--text-primary); }
+.dc-folha-de { margin: 2px 0 12px; font: 400 13px var(--font-body); color: var(--text-secondary); }
+.dc-folha-texto { font: 400 14px/1.5 var(--font-body); color: var(--text-primary); white-space: pre-line; }
+.dc-folha-instrucao { margin-top: 10px; font: 400 13px/1.45 var(--font-body); color: var(--text-secondary); }
 .det-faixa-ponte { margin-top: 4px; font: 400 12.5px/1.35 var(--font-body); color: var(--text-secondary); }
 .det-resto > :first-child { margin-top: 14px; }
 .det-sec { margin-top: 20px; }

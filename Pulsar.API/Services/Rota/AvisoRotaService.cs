@@ -70,7 +70,8 @@ public class AvisoRotaService : IAvisoRotaService
                 var caminho = pedido is { OrigemLat: { } latO, OrigemLon: { } lonO, DestinoLat: { } latD, DestinoLon: { } lonD }
                     ? new CaminhoRota(latO, lonO, latD, lonD)
                     : null;
-                var estado = (await _rota.AvaliarAsync(ids, caminho, ct)).Estado;
+                // Os ids já passaram pela visibilidade de quem pediu (o Admin vê a Baixada escondida).
+                var estado = (await _rota.AvaliarAsync(ids, caminho, ct, incluirOcultas: true)).Estado;
                 if (estado is EstadoRota.Esperar or EstadoRota.SemDado)
                     continue;
 

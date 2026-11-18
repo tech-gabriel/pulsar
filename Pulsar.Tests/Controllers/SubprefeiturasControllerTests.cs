@@ -60,7 +60,8 @@ public class SubprefeiturasControllerTests : IClassFixture<PulsarWebApplicationF
         using (var escopo = _factory.Services.CreateScope())
         {
             var db = escopo.ServiceProvider.GetRequiredService<PulsarDbContext>();
-            ativasNoBanco = await db.Subprefeituras.CountAsync(s => s.Ativa);
+            // Usuário comum: só as ativas de cidade pública (a Baixada escondida fica de fora).
+            ativasNoBanco = await db.Subprefeituras.CountAsync(s => s.Ativa && s.Regiao.Cidade.Publica);
         }
 
         subs!.Should().HaveCount(ativasNoBanco);
@@ -379,5 +380,28 @@ public class SubprefeiturasControllerTests : IClassFixture<PulsarWebApplicationF
         var sub = doc.RootElement.EnumerateArray().Single(e => e.GetProperty("id").GetGuid() == tiradentes);
         sub.GetProperty("chuvaMedida").ValueKind.Should().Be(JsonValueKind.Null);
         sub.GetProperty("chuva24h").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    // E4b: alerta oficial também é enfeite da lista: falha na leitura deles abre o mapa igual.
+    [Fact]
+    public async Task Lista_AlertasFalham_AbreIgualSemAlertas()
+    {
+        var token = await TokenUsuarioComumAsync();
+        var quebrado = new Moq.Mock<Pulsar.API.Services.Interfaces.IAlertaOficialService>();
+        quebrado.Setup(c => c.AtivosPorAreaAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("banco fora"));
+        using var client = _factory
+            .WithWebHostBuilder(b => b.ConfigureTestServices(s => s.AddScoped(_ => quebrado.Object)))
+            .CreateClient();
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/api/subprefeituras")
+        {
+            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", token) }
+        };
+
+        var resposta = await client.SendAsync(req);
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var doc = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        doc.RootElement.EnumerateArray().Should().OnlyContain(e => e.GetProperty("alertasOficiais").GetArrayLength() == 0);
     }
 }

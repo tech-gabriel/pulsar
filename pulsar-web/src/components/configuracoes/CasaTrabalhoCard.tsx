@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { BriefcaseBusiness, House, Loader2 } from 'lucide-react';
 import { LinhaAjuste, Seta } from './GrupoAjustes';
 import FolhaInferior from '../ui/FolhaInferior';
@@ -8,6 +8,8 @@ import { useLocaisSalvos } from '../../hooks/useLocaisSalvos';
 import { useBuscaEndereco } from '../../hooks/useBuscaEndereco';
 import { useSubprefeituras } from '../../hooks/useSubprefeituras';
 import { useJsonPublico } from '../../hooks/useJsonPublico';
+import { comContornosDaBaixada } from '../../utils/geo';
+import { BAIXADA, nomeDaCobertura } from '../../features/cidade/cidade';
 import { useFavoritos } from '../../hooks/useFavoritos';
 import { ROTULO_TIPO, subprefeituraIdDoPonto } from '../../features/locais/regras';
 import type { PontoRota } from '../../features/rota/tipos';
@@ -80,7 +82,16 @@ export default function CasaTrabalhoCard() {
   const { locais, carregando, salvar, apagar } = useLocaisSalvos(usuario?.id ?? null);
   const { favoritos } = useFavoritos();
   const { subprefeituras } = useSubprefeituras();
-  const contorno = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', true);
+  const contornoCapital = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', true);
+  // Quem vê a Baixada (o Admin, até a abertura) também salva casa e trabalho nos municípios dela.
+  const comBaixada = subprefeituras.some((s) => s.cidade === BAIXADA);
+  const contornoBaixada = useJsonPublico<FeatureCollection>('/baixada-santista-leve.geojson', comBaixada);
+  // Com a Baixada, espera os contornos dela (null = "carregando"); se falharem, a capital segue valendo.
+  const contorno = useMemo(() => {
+    const capital = contornoCapital.dados;
+    if (!capital || !comBaixada || contornoBaixada.erro) return { dados: capital };
+    return { dados: contornoBaixada.dados ? comContornosDaBaixada(capital, contornoBaixada.dados) : null };
+  }, [comBaixada, contornoCapital.dados, contornoBaixada.dados, contornoBaixada.erro]);
   const [editando, setEditando] = useState<TipoLocal | null>(null);
   const [folha, setFolha] = useState<Folha | null>(null);
   // A folha guarda o último conteúdo enquanto desliza para fora.
@@ -108,7 +119,7 @@ export default function CasaTrabalhoCard() {
     }
     const id = subprefeituraIdDoPonto(p, contorno.dados, subprefeituras);
     if (!id) {
-      showToast('Esse endereço fica fora da cidade de São Paulo.', 'error');
+      showToast(`Esse endereço fica fora da área coberta (${nomeDaCobertura(subprefeituras)}).`, 'error');
       return;
     }
     const atual = locais[tipo];

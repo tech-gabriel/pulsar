@@ -12,13 +12,13 @@ public class GradeCelulasTests
 {
     private static readonly GradeCelulas Grade = new(NullLogger<GradeCelulas>.Instance);
 
-    private static List<string> NomesDoBanco()
+    private static List<string> NomesDoBanco(string? cidade = null)
     {
         using var conn = new SqliteConnection("Data Source=:memory:");
         conn.Open();
         using var ctx = new PulsarDbContext(new DbContextOptionsBuilder<PulsarDbContext>().UseSqlite(conn).Options);
         ctx.Database.EnsureCreated();
-        return ctx.Subprefeituras.Where(s => s.Ativa).Select(s => s.Nome).ToList();
+        return ctx.Subprefeituras.Where(s => s.Ativa && (cidade == null || s.Regiao.Cidade.Nome == cidade)).Select(s => s.Nome).ToList();
     }
 
     // Trava do elo mais frágil: o nome da área no arquivo gerado precisa ser o nome do
@@ -28,15 +28,49 @@ public class GradeCelulasTests
     {
         var nomes = NomesDoBanco();
 
-        nomes.Should().HaveCount(32);
+        nomes.Should().HaveCount(41); // 32 da capital + 9 da Baixada
         foreach (var nome in nomes)
             Grade.DaArea(nome).Should().NotBeEmpty($"{nome} precisa de células");
+    }
+
+    // Divisa Marsilac x Itanhaém/Mongaguá/São Vicente: a capital fica com a célula, para o
+    // mesmo trecho nunca ter dois riscos.
+    [Fact]
+    public void Grade_Real_NenhumTrechoEmDuasAreas()
+        => NomesDoBanco().SelectMany(Grade.DaArea).Select(c => c.H3).Should().OnlyHaveUniqueItems();
+
+    public static TheoryData<string, double, double> SedesDaBaixada => new()
+    {
+        { "Santos", -23.9608, -46.3336 }, { "São Vicente", -23.9631, -46.3919 }, { "Guarujá", -23.9931, -46.2564 },
+        { "Cubatão", -23.8950, -46.4254 }, { "Praia Grande", -24.0058, -46.4028 }, { "Bertioga", -23.8486, -46.1396 },
+        { "Mongaguá", -24.0931, -46.6208 }, { "Itanhaém", -24.1831, -46.7889 }, { "Peruíbe", -24.3200, -46.9983 },
+    };
+
+    // A coleta usa a sede como ponto da área: ela precisa cair num trecho da própria área,
+    // nunca no mar nem no município vizinho. O fator vem do SGB (entrega 2): a área fica em 1,0 e o
+    // trecho que é pelo menos metade área de risco sobe até 25%, nunca desce.
+    [Theory, MemberData(nameof(SedesDaBaixada))]
+    public void Baixada_SedeCaiNumTrechoDaPropriaArea(string area, double lat, double lon)
+    {
+        Grade.DaArea(area).Should().NotBeEmpty().And.OnlyContain(c => c.Fator >= 1.0 && c.Fator <= 1.25);
+        Grade.MaisProxima(lat, lon)!.Sub.Should().Be(area);
+    }
+
+    // "Costuma alagar" é minoria (opção A do user, 18/11): com todo trecho marcado, a frase perde o sentido.
+    [Fact]
+    public void Baixada_CostumaAlagarEmMinoriaDosTrechos()
+    {
+        var todas = SedesDaBaixada.Select(s => (string)s[0]).SelectMany(Grade.DaArea).ToList();
+        var marcados = todas.Count(c => c.Fator > 1.0);
+
+        marcados.Should().BeGreaterThan(0);
+        ((double)marcados / todas.Count).Should().BeLessThan(0.4);
     }
 
     [Fact]
     public void Grade_Real_CelulasUnicasEFatorDentroDaFaixa()
     {
-        var todas = NomesDoBanco().SelectMany(Grade.DaArea).ToList();
+        var todas = NomesDoBanco("São Paulo").SelectMany(Grade.DaArea).ToList();
 
         todas.Should().HaveCount(2277);
         todas.Select(c => c.H3).Should().OnlyHaveUniqueItems();

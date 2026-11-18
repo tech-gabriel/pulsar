@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
+using Pulsar.API.Domain.Cobertura;
+using Pulsar.API.Domain.Score;
 using Pulsar.API.DTOs;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Services.Interfaces;
@@ -17,25 +19,34 @@ public class BuscaService : IBuscaService
 
     private readonly IGeocodingClient _geocodingClient;
     private readonly IMemoryCache _cache;
+    private readonly IGradeCelulas _grade;
 
-    public BuscaService(IGeocodingClient geocodingClient, IMemoryCache cache)
+    public BuscaService(IGeocodingClient geocodingClient, IMemoryCache cache, IGradeCelulas grade)
     {
         _geocodingClient = geocodingClient;
         _cache = cache;
+        _grade = grade;
     }
 
-    public async Task<IReadOnlyList<EnderecoBuscaDto>> BuscarEnderecosAsync(string? consulta, CancellationToken ct = default)
+    public async Task<IReadOnlyList<EnderecoBuscaDto>> BuscarEnderecosAsync(string? consulta, IReadOnlyCollection<string> cidades, CancellationToken ct = default)
     {
         var termo = consulta?.Trim() ?? string.Empty;
         if (termo.Length < MinChars)
             return [];
 
-        var chave = $"busca:{termo.ToLowerInvariant()}";
+        var bbox = CoberturaCidades.Bbox(cidades);
+        var chave = $"busca:{bbox}:{termo.ToLowerInvariant()}";
         if (_cache.TryGetValue(chave, out IReadOnlyList<EnderecoBuscaDto>? cached) && cached is not null)
             return cached;
 
-        var resultados = await _geocodingClient.BuscarAsync(termo, ct);
+        var resultados = await _geocodingClient.BuscarAsync(termo, bbox, ct);
         var dtos = resultados
+            // O bbox do provedor é por interseção: o município de Santos inteiro cruza a caixa da
+            // capital e voltava para a conta comum. Só fica o ponto dentro da cobertura de quem busca.
+            .Where(r => CoberturaCidades.Dentro(r.Latitude, r.Longitude, cidades))
+            // O retângulo da capital também pega São Vicente, Praia Grande e a Zona Noroeste de Santos:
+            // o trecho mais perto do ponto diz de que cidade ele é. Fora da grade, vale o retângulo.
+            .Where(r => CidadeDoPonto(r.Latitude, r.Longitude) is not { } cidade || cidades.Contains(cidade))
             .Select(r => new EnderecoBuscaDto
             {
                 Nome = SemCaixaAlta(string.IsNullOrWhiteSpace(r.Nome) ? r.Descricao : r.Nome),
@@ -56,6 +67,11 @@ public class BuscaService : IBuscaService
         _cache.Set(chave, (IReadOnlyList<EnderecoBuscaDto>)dtos, CacheTtl);
         return dtos;
     }
+
+    private string? CidadeDoPonto(double lat, double lon)
+        => _grade.MaisProxima(lat, lon) is { } celula
+            ? (CalibracaoScore.Baixada.Fatores.ContainsKey(celula.Sub) ? "Baixada Santista" : "São Paulo")
+            : null;
 
     private static readonly HashSet<string> Conectivos = ["da", "de", "do", "das", "dos", "e"];
 

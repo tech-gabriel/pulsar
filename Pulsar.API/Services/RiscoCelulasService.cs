@@ -60,11 +60,13 @@ public class RiscoCelulasService : IRiscoCelulasService
         return RiscoTrecho.MeioTermoDaArea(RiscoTrecho.DaArea(entrada, celulas, await EstacoesAsync(ct)));
     }
 
-    public async Task<CelulasAgoraDto> AgoraAsync(CancellationToken ct = default)
+    public async Task<CelulasAgoraDto> AgoraAsync(bool incluirOcultas = false, CancellationToken ct = default)
     {
         var agora = DateTime.UtcNow;
         var desde = agora.AddHours(-ScoreService.JanelaHoras);
-        var areas = await _db.Subprefeituras.AsNoTracking().Where(a => a.Ativa).Select(a => new { a.Id, a.Nome }).ToListAsync(ct);
+        var areas = await _db.Subprefeituras.AsNoTracking()
+            .Where(a => a.Ativa && (incluirOcultas || a.Regiao.Cidade.Publica))
+            .Select(a => new { a.Id, a.Nome }).ToListAsync(ct);
         // Uma consulta para a cidade inteira: 32 áreas × 192 leituras de 15 min nas 48 h.
         var leituras = (await _db.LeiturasClimaticas.AsNoTracking().Where(l => l.Timestamp >= desde).ToListAsync(ct))
             .ToLookup(l => l.SubprefeituraId);
@@ -124,7 +126,7 @@ public class RiscoCelulasService : IRiscoCelulasService
         if (leituras.Count == 0) return null;
 
         var entrada = ScoreService.MontarEntrada(sub.Nome, leituras);
-        ComponenteScore Alagamento(EntradaScore e, double fator) => CalculadoraScore.Calcular(e, CalibracaoScore.Atual, fator).Alagamento;
+        ComponenteScore Alagamento(EntradaScore e, double fator) => CalculadoraScore.Calcular(e, CalibracaoScore.Para(e.Subprefeitura), fator).Alagamento;
 
         // Três contas por trecho. Modelo: a chuva da área (entrega 1). Medida: a estação
         // substitui o modelo onde existe. Maior: vale a mais alta das duas. Trecho sem

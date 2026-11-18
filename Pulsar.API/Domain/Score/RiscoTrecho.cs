@@ -21,7 +21,7 @@ public static class RiscoTrecho
     public static ComponenteScore ComChuvaMedida(EntradaScore modelo, EstacaoChuva estacao, double fator)
         => CalculadoraScore.Calcular(
             modelo with { Chuva1hMm = estacao.Mm1h, Chuva3hMm = estacao.Mm3h, Chuva48hMm = estacao.Mm48h ?? modelo.Chuva48hMm },
-            CalibracaoScore.Atual, fator).Alagamento;
+            CalibracaoScore.Para(modelo.Subprefeitura), fator).Alagamento;
 
     /// <summary>
     /// O risco de cada trecho de uma área: a chuva de modelo da área com o fator do trecho e,
@@ -36,7 +36,7 @@ public static class RiscoTrecho
         {
             var estacao = EstacaoChuva.MaisProxima(celula.Lat, celula.Lon, estacoes, RaioEstacaoKm);
             var risco = estacao is null
-                ? CalculadoraScore.Calcular(modelo, CalibracaoScore.Atual, celula.Fator).Alagamento
+                ? CalculadoraScore.Calcular(modelo, CalibracaoScore.Para(celula.Sub), celula.Fator).Alagamento
                 : ComChuvaMedida(modelo, estacao, celula.Fator);
             trechos.Add(new TrechoRisco(celula, risco, estacao));
         }

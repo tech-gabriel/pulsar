@@ -41,19 +41,19 @@ public class RotaService : IRotaService
         _logger = logger;
     }
 
-    public async Task<RotaAvaliacaoDto> AvaliarAsync(IReadOnlyList<Guid> ids, CaminhoRota? caminho = null, CancellationToken ct = default)
+    public async Task<RotaAvaliacaoDto> AvaliarAsync(IReadOnlyList<Guid> ids, CaminhoRota? caminho = null, CancellationToken ct = default, bool incluirOcultas = false)
     {
         if (ids.Distinct().Count() != ids.Count)
             throw new ArgumentException("Há subprefeituras repetidas no caminho.");
 
         var agora = DateTime.UtcNow;
-        var ativas = (await _subprefeituraRepo.ObterAtivasComResumoAsync()).ToDictionary(s => s.Id);
+        var ativas = (await _subprefeituraRepo.ObterVisiveisComResumoAsync(incluirOcultas)).ToDictionary(s => s.Id);
         if (ids.Any(id => !ativas.ContainsKey(id)))
             throw new ArgumentException("Subprefeitura desconhecida no caminho.");
 
         var comCge = (await _pontosCge.ObterAtivosAsync(agora - LimiaresNotificacao.ValidadePontoCge))
             .Select(p => p.SubprefeituraId).ToHashSet();
-        var series = await ObterSeriesAsync(ativas.Values.ToList(), ct);
+        var series = await ObterSeriesAsync(ativas.Values.ToList(), incluirOcultas, ct);
         var horaAtual = new DateTime(agora.Year, agora.Month, agora.Day, agora.Hour, 0, 0, DateTimeKind.Utc);
         var limite = horaAtual.AddHours(LimiaresRota.HorizonteEsperaHoras);
 
@@ -150,9 +150,12 @@ public class RotaService : IRotaService
     /// (sem previsão) e também fica em cache por pouco tempo; só o cancelamento do próprio pedido propaga.
     /// </summary>
     private async Task<Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>?> ObterSeriesAsync(
-        IReadOnlyList<Subprefeitura> subs, CancellationToken ct)
+        IReadOnlyList<Subprefeitura> subs, bool incluirOcultas, CancellationToken ct)
     {
-        if (_cache.TryGetValue(ChaveCacheChuva, out Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>? emCache))
+        // O Admin vê a cidade escondida (Baixada antes da abertura): a série dele tem mais áreas e
+        // não pode servir a conta comum, nem a da conta comum servir a ele.
+        var chave = incluirOcultas ? ChaveCacheChuva + ":com-ocultas" : ChaveCacheChuva;
+        if (_cache.TryGetValue(chave, out Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>? emCache))
             return emCache;
         try
         {
@@ -163,7 +166,7 @@ public class RotaService : IRotaService
             {
                 var porId = subs.Select((s, i) => (s.Id, series[i])).ToDictionary(x => x.Id, x => x.Item2);
                 // ponytail: sem trava contra duas chamadas simultâneas no cache frio; uma chamada extra é aceitável.
-                return _cache.Set(ChaveCacheChuva, porId, DuracaoCache);
+                return _cache.Set(chave, porId, DuracaoCache);
             }
             _logger.LogWarning("Open-Meteo devolveu {Recebidas} séries para {Esperadas} subprefeituras: rota sem previsão por hora.",
                 series?.Count ?? 0, subs.Count);
@@ -173,8 +176,8 @@ public class RotaService : IRotaService
             _logger.LogWarning(ex, "Open-Meteo indisponível: a rota segue sem previsão por hora.");
         }
         // Uma chamada lenta que falha depois de outra ter acertado não pode apagar a série boa do cache.
-        if (!_cache.TryGetValue(ChaveCacheChuva, out _))
-            _cache.Set(ChaveCacheChuva, (Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>?)null, LimiaresRota.CacheFalha);
+        if (!_cache.TryGetValue(chave, out _))
+            _cache.Set(chave, (Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>?)null, LimiaresRota.CacheFalha);
         return null;
     }
 }

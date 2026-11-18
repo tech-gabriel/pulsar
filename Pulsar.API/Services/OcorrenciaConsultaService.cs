@@ -80,7 +80,7 @@ public class OcorrenciaConsultaService : IOcorrenciaConsultaService
 
     private async Task<Subprefeitura?> SubprefeituraMaisProximaAsync(double lat, double lon)
     {
-        var ativas = await _subRepo.ObterAtivasAsync();
+        var ativas = await _subRepo.ObterVisiveisAsync();
         return ativas
             .OrderBy(s => GeoDistancia.HaversineMetros(lat, lon, s.Latitude, s.Longitude))
             .FirstOrDefault();

@@ -21,7 +21,7 @@ public class RotaServiceTests
     {
         var sub = new Subprefeitura { Nome = "Mooca", Latitude = -23.5, Longitude = -46.6 };
         var subs = new Mock<ISubprefeituraRepository>();
-        subs.Setup(r => r.ObterAtivasComResumoAsync()).ReturnsAsync([sub]);
+        subs.Setup(r => r.ObterVisiveisComResumoAsync(false)).ReturnsAsync([sub]);
         var cge = new Mock<IPontoAlagamentoCgeRepository>();
         cge.Setup(r => r.ObterAtivosAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
 
@@ -47,6 +47,31 @@ public class RotaServiceTests
         // Chave interna do cache; o valor null (falha) não pode ter tomado o lugar da série.
         cache.TryGetValue("rota-chuva-horaria", out Dictionary<Guid, IReadOnlyDictionary<DateTime, double>>? emCache).Should().BeTrue();
         emCache.Should().NotBeNull();
+    }
+
+    // Achado da revisão da entrega 4: o Admin vê a Baixada e a conta comum não; a previsão guardada
+    // para um não pode servir o outro, senão Santos fica sem previsão por hora na rota do Admin.
+    [Fact]
+    public async Task CacheDaPrevisao_SeparaAdminDaContaComum()
+    {
+        var mooca = new Subprefeitura { Nome = "Mooca", Latitude = -23.55, Longitude = -46.6 };
+        var santos = new Subprefeitura { Nome = "Santos", Latitude = -23.96, Longitude = -46.33 };
+        var subs = new Mock<ISubprefeituraRepository>();
+        subs.Setup(r => r.ObterVisiveisComResumoAsync(false)).ReturnsAsync([mooca]);
+        subs.Setup(r => r.ObterVisiveisComResumoAsync(true)).ReturnsAsync([mooca, santos]);
+        var cge = new Mock<IPontoAlagamentoCgeRepository>();
+        cge.Setup(r => r.ObterAtivosAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        var chuva = new Mock<IChuvaReferenciaClient>();
+        chuva.Setup(c => c.ObterHorariaAsync(It.IsAny<IReadOnlyList<(double, double)>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<(double, double)> pontos, CancellationToken _) =>
+                (IReadOnlyList<IReadOnlyDictionary<DateTime, double>>)pontos.Select(_ => (IReadOnlyDictionary<DateTime, double>)new Dictionary<DateTime, double>()).ToList());
+        var svc = new RotaService(subs.Object, cge.Object, chuva.Object, new MemoryCache(new MemoryCacheOptions()),
+            Mock.Of<IGradeCelulas>(), Mock.Of<ICemadenService>(), NullLogger<RotaService>.Instance);
+
+        await svc.AvaliarAsync([mooca.Id]);
+        await svc.AvaliarAsync([mooca.Id, santos.Id], incluirOcultas: true);
+
+        chuva.Verify(c => c.ObterHorariaAsync(It.Is<IReadOnlyList<(double, double)>>(p => p.Count == 2), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // ---------- Entrega 3b: o caminho é lido nos trechos (hexágonos) por onde passa.
@@ -83,7 +108,7 @@ public class RotaServiceTests
         Mock<ICemadenService> cemaden)
     {
         var subs = new Mock<ISubprefeituraRepository>();
-        subs.Setup(r => r.ObterAtivasComResumoAsync()).ReturnsAsync([sub]);
+        subs.Setup(r => r.ObterVisiveisComResumoAsync(false)).ReturnsAsync([sub]);
         var cge = new Mock<IPontoAlagamentoCgeRepository>();
         cge.Setup(r => r.ObterAtivosAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var svc = new RotaService(subs.Object, cge.Object, Mock.Of<IChuvaReferenciaClient>(),

@@ -54,6 +54,9 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
                 // E-mail de bootstrap de admin usado pelos testes de autorização.
                 ["Admin:Emails:0"]      = EmailAdminBootstrap,
                 ["Admin:Emails:1"]      = EmailAdminSemDono,
+                // Sem o ritmo de 1,1 s do OpenWeatherMap: a coleta falsa de 41 áreas levaria 45 s por teste.
+                ["OpenWeatherMap:IntervaloMinimoMs"] = "0",
+                ["Cemaden:IntervaloMinimoMs"] = "0",
             });
         });
 
@@ -83,7 +86,8 @@ public class PulsarWebApplicationFactory : WebApplicationFactory<Program>
 
             // Remover os jobs agendados: sem ciclos em background nem chamada real ao GeoSampa
             foreach (var job in services.Where(d => d.ImplementationType == typeof(DataCollectionJob)
-                         || d.ImplementationType == typeof(SincronizacaoOcorrenciasJob)).ToList())
+                         || d.ImplementationType == typeof(SincronizacaoOcorrenciasJob)
+                         || d.ImplementationType == typeof(AlertasOficiaisJob)).ToList())
                 services.Remove(job);
 
             // Substituir o cliente de clima real por um fake determinístico, para que a

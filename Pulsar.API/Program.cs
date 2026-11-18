@@ -222,6 +222,14 @@ builder.Services.AddHttpClient("geosampa", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
 });
 
+// Alertas oficiais da Defesa Civil (feed nacional da IDAP): ~13,6 MB por leitura, sem gzip.
+builder.Services.AddHttpClient(IdapClient.NomeHttp, (sp, client) =>
+{
+    client.BaseAddress = new Uri(sp.GetRequiredService<IConfiguration>()["Idap:Url"] ?? "https://idapfile.mdr.gov.br/");
+    client.Timeout = TimeSpan.FromSeconds(120);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Pulsar/1.0 (+https://github.com/tech-gabriel/Pulsar)");
+});
+
 // --- Cache ---
 builder.Services.AddMemoryCache();
 
@@ -270,6 +278,7 @@ builder.Services.AddScoped<ICgeEstacaoClient, CgeEstacaoClient>();
 // Singleton: guarda o token do CEMADEN (cerca de 4 h) entre os ciclos.
 builder.Services.AddSingleton<ICemadenClient, CemadenClient>();
 builder.Services.AddScoped<IGeoSampaClient, GeoSampaClient>();
+builder.Services.AddScoped<IIdapClient, IdapClient>();
 builder.Services.AddScoped<INoticiaService, NoticiaService>();
 builder.Services.AddScoped<IGeocodingClient, MapTilerGeocodingClient>();
 builder.Services.AddScoped<IBuscaService, BuscaService>();

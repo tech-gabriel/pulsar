@@ -41,7 +41,7 @@ public class RotaController : ControllerBase
 
         try
         {
-            return Ok(await _service.AvaliarAsync(req.SubprefeituraIds, caminho, ct));
+            return Ok(await _service.AvaliarAsync(req.SubprefeituraIds, caminho, ct, incluirOcultas: User.IsInRole("ADMIN")));
         }
         catch (ArgumentException ex)
         {

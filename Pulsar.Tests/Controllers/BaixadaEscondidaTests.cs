@@ -173,4 +173,22 @@ public class BaixadaEscondidaTests : IClassFixture<PulsarWebApplicationFactory>
         lista!.Single(s => s.Nome == "Sé").Cidade.Should().Be("São Paulo");
         lista!.Single(s => s.Nome == "Santos").Cidade.Should().Be("Baixada Santista");
     }
+
+    // A rota até a Baixada avalia as pontas: o Admin (que vê a Baixada) consegue; a conta comum não.
+    [Fact]
+    public async Task Rota_AteSantos_AdminAvalia_UsuarioComum400()
+    {
+        async Task<HttpResponseMessage> Avaliar(string token)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/rota/avaliar")
+            {
+                Content = JsonContent.Create(new { subprefeituraIds = new[] { Guid.Parse("20000000-0000-0000-0000-000000000001"), Guid.Parse("20000000-0000-0000-0000-000000000033") } }),
+            };
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            return await _client.SendAsync(req);
+        }
+
+        (await Avaliar(await TokenUsuarioComumAsync())).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await Avaliar((await SessaoAdmin.ObterAsync(_factory, _client)).Token)).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
 }

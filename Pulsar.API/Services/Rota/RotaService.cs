@@ -41,13 +41,13 @@ public class RotaService : IRotaService
         _logger = logger;
     }
 
-    public async Task<RotaAvaliacaoDto> AvaliarAsync(IReadOnlyList<Guid> ids, CaminhoRota? caminho = null, CancellationToken ct = default)
+    public async Task<RotaAvaliacaoDto> AvaliarAsync(IReadOnlyList<Guid> ids, CaminhoRota? caminho = null, CancellationToken ct = default, bool incluirOcultas = false)
     {
         if (ids.Distinct().Count() != ids.Count)
             throw new ArgumentException("Há subprefeituras repetidas no caminho.");
 
         var agora = DateTime.UtcNow;
-        var ativas = (await _subprefeituraRepo.ObterVisiveisComResumoAsync()).ToDictionary(s => s.Id);
+        var ativas = (await _subprefeituraRepo.ObterVisiveisComResumoAsync(incluirOcultas)).ToDictionary(s => s.Id);
         if (ids.Any(id => !ativas.ContainsKey(id)))
             throw new ArgumentException("Subprefeitura desconhecida no caminho.");
 

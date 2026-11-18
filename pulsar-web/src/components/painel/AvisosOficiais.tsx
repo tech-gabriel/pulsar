@@ -41,7 +41,7 @@ export default function AvisosOficiais({ alertas }: { alertas: AlertaOficial[] |
         {porGravidade(alertas).map((a) => (
           <div key={a.identificador} className="det-faixa">
             <button type="button" className="dc-linha-alerta" onClick={() => setAberto(a)}
-              aria-label={`${eventoLegivel(a.evento)}, alerta ${nivelOficial(a.gravidade).rotulo.toLocaleLowerCase('pt-BR')} da ${emissorCurto(a.emissor)}. Ler o alerta completo`}>
+              aria-label={`${eventoLegivel(a.evento)}, alerta ${nivelOficial(a.gravidade).rotulo.toLocaleLowerCase('pt-BR')} da ${emissorCurto(a.emissor)}, até ${horaCurta(a.expiraUtc)}. Ler o alerta completo`}>
               <span>
                 <b>{eventoLegivel(a.evento)}</b>
                 <small>{`${emissorCurto(a.emissor)} · até ${horaCurta(a.expiraUtc)}`}</small>

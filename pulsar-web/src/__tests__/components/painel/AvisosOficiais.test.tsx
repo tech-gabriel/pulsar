@@ -49,4 +49,10 @@ describe('AvisosOficiais', () => {
     expect(screen.getByText(/^Defesa Civil: chuvas intensas até \d\d:\d\d$/)).toBeInTheDocument();
     expect(screen.getByText('Laranja')).toHaveClass('dc-laranja');
   });
+
+  // O leitor de tela ouve o mesmo que a tela mostra, inclusive até quando o alerta vale.
+  it('o nome acessível da linha diz até quando o alerta vale', () => {
+    render(<AvisosOficiais alertas={[alerta({})]} />);
+    expect(screen.getByRole('button', { name: /Ler o alerta completo/ }).getAttribute('aria-label')).toMatch(/até \d\d:\d\d/);
+  });
 });

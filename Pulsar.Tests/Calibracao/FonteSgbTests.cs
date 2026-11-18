@@ -57,6 +57,8 @@ public class FonteSgbTests
         var r = await FonteSgb.PoligonosAsync(new HttpClient(new Paginas(respostas, urls)), cache);
 
         r.Where(p => p.Classe is "Alta" or "Média").Select(p => p.Municipio).Should().BeEquivalentTo(new[] { "Santos", "Cubatão" });
-        urls.Should().Contain(u => u.Contains("inundacao") && u.Contains($"resultOffset={FonteSgb.TamanhoPagina}"));
+        // A próxima página começa onde a anterior terminou de verdade: o servidor pode limitar a
+        // página abaixo do pedido (maxRecordCount), e andar de 1000 em 1000 pularia polígonos.
+        urls.Should().Contain(u => u.Contains("inundacao") && u.Contains("resultOffset=1&"));
     }
 }

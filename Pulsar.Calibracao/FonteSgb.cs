@@ -34,7 +34,9 @@ public static class FonteSgb
             if (!File.Exists(arquivo))
             {
                 var features = new List<string>();
-                for (var offset = 0; ; offset += TamanhoPagina)
+                // Anda pelo que veio de fato: o servidor pode limitar a página abaixo do pedido
+                // (maxRecordCount), e andar de 1000 em 1000 pularia polígonos.
+                for (var offset = 0; ; )
                 {
                     var url = $"{Servico}/{q.Camada}/FeatureServer/0/query?where={Uri.EscapeDataString(q.Onde)}"
                         + $"&geometry={Envelope}&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects"
@@ -43,6 +45,7 @@ public static class FonteSgb
                     var pagina = doc.RootElement.GetProperty("features").EnumerateArray().Select(f => f.GetRawText()).ToList();
                     features.AddRange(pagina);
                     if (!Continua(doc.RootElement) || pagina.Count == 0) break;
+                    offset += pagina.Count;
                 }
                 await File.WriteAllTextAsync(arquivo, "{\"type\":\"FeatureCollection\",\"features\":[" + string.Join(",", features) + "]}");
             }

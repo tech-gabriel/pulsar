@@ -15,6 +15,9 @@ public static class FonteAlagamentosBaixada
     {
         var dias = Baixada.Todas.ToDictionary(b => b.Nome, _ => new HashSet<DateOnly>());
         var linhas = csv.Replace("\r", "").Split('\n');
+        // A primeira linha é pulada como cabeçalho: sem ele, o primeiro dia documentado sumiria.
+        if (linhas[0].Trim().TrimStart('﻿') != "data;municipio;fonte;descricao")
+            throw new FormatException($"alagamentos-baixada.csv: cabeçalho esperado 'data;municipio;fonte;descricao', veio '{linhas[0]}'");
         for (var i = 1; i < linhas.Length; i++)
         {
             if (string.IsNullOrWhiteSpace(linhas[i])) continue;

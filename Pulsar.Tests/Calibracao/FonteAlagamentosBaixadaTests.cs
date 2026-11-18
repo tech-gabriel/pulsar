@@ -38,4 +38,12 @@ public class FonteAlagamentosBaixadaTests
 
         r.Values.Sum(d => d.Count).Should().BeGreaterThan(0);
     }
+
+    // Sem o cabeçalho esperado, a primeira linha de dado sumiria em silêncio: falha com mensagem.
+    [Fact]
+    public void Ler_SemOCabecalho_Falha()
+    {
+        var acao = () => FonteAlagamentosBaixada.Ler("2026-02-23;Santos;https://x.com/a;ruas alagadas\n2026-02-24;Santos;https://x.com/b;idem\n");
+        acao.Should().Throw<FormatException>().WithMessage("*cabeçalho*");
+    }
 }

@@ -692,12 +692,17 @@ public class ConsolidadorTests
 
     // ---------- Alertas oficiais (decisão do user, 18/11/2026): 1 por área a cada 3 h; subir de
     // nível avisa na hora; o Extremo sempre passa; o mesmo alerta nunca avisa duas vezes.
-    private static NotificacaoPendente Dc(Guid sub, string local, int nivel, string id, bool extremo = false)
+    private static NotificacaoPendente Dc(Guid sub, string local, int nivel, string id, bool extremo = false, string perigo = "ALAGAMENTO")
         => P(sub, local, "alerta-oficial", extremo ? 0 : 1, CriterioOptIn.RiscoAlto,
-             extremo ? null : TimeSpan.FromHours(3), $"dc:{nivel}:{id}:{sub}") with { Nivel = nivel };
+             extremo ? null : TimeSpan.FromHours(3), $"dc:{nivel}:{perigo}:{id}:{sub}") with
+        {
+            Nivel = nivel,
+            Payload = new PushPayload($"Alerta da Defesa Civil em {local}", $"Texto oficial {id}", $"/app?regiao={local}", $"alerta-{sub}"),
+            Lembrete = new PushPayload($"Lembrete {local}", "Chuvas intensas até 16:30. Toque para ver o aviso.", $"/app?regiao={local}", $"alerta-{sub}"),
+        };
 
-    private static EnvioAnterior EnvioDc(Guid sub, int nivel, string id, double horasAtras)
-        => new(sub, "alerta-oficial", $"dc:{nivel}:{id}:{sub}", Guid.NewGuid(), Agora.AddHours(-horasAtras));
+    private static EnvioAnterior EnvioDc(Guid sub, int nivel, string id, double horasAtras, string perigo = "ALAGAMENTO")
+        => new(sub, "alerta-oficial", $"dc:{nivel}:{perigo}:{id}:{sub}", Guid.NewGuid(), Agora.AddHours(-horasAtras));
 
     [Fact]
     public void AlertaOficial_ReemissaoEm3h_NaoAvisa()
@@ -727,5 +732,51 @@ public class ConsolidadorTests
     {
         var envio = Consolidador.Consolidar(D(), [Dc(Mooca, "Mooca", 1, "A"), Dc(Penha, "Penha", 1, "B")], Agora);
         envio!.Payload.Titulo.Should().Be("Alerta da Defesa Civil na Mooca e na Penha");
+    }
+
+    // Lembrete (decisão do user, 18/11/2026): depois das 3 h, o mesmo tipo de alerta na mesma área
+    // sai como lembrete curto, sem o horário antigo do texto oficial.
+    [Fact]
+    public void AlertaOficial_MesmoTipoDepoisDe3h_SaiComoLembrete()
+        => Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 1, "A", 4)), [Dc(Mooca, "Mooca", 1, "B")], Agora)!
+            .Payload.Titulo.Should().Be("Lembrete Mooca");
+
+    [Fact]
+    public void AlertaOficial_OutroTipoDepoisDe3h_SaiComOTextoOficial()
+        => Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 1, "A", 4, "VENTO")), [Dc(Mooca, "Mooca", 1, "B")], Agora)!
+            .Payload.Corpo.Should().Be("Texto oficial B");
+
+    [Fact]
+    public void AlertaOficial_ExtremoReemitido_SaiComOTextoOficial()
+        => Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 3, "A", 0.5)), [Dc(Mooca, "Mooca", 3, "B", extremo: true)], Agora)!
+            .Payload.Corpo.Should().Be("Texto oficial B");
+
+    [Fact]
+    public void AlertaOficial_LembretesAgrupados()
+    {
+        var envio = Consolidador.Consolidar(D(null, null, EnvioDc(Mooca, 1, "A", 4), EnvioDc(Penha, 1, "C", 5)),
+            [Dc(Mooca, "Mooca", 1, "B"), Dc(Penha, "Penha", 1, "D")], Agora)!;
+        envio.Payload.Titulo.Should().Be("Alertas da Defesa Civil seguem valendo na Mooca e na Penha");
+        envio.Payload.Corpo.Should().Be("Toque para ver até quando vale cada um.");
+    }
+
+    // O Extremo sai sozinho, com o "extremo" no título; o Severo do mesmo critério fica para o próximo ciclo.
+    [Fact]
+    public void AlertaOficial_GrupoLideradoPorExtremo_SoOsExtremos()
+    {
+        var envio = Consolidador.Consolidar(D(),
+            [Dc(Mooca, "Mooca", 3, "A", extremo: true), Dc(Penha, "Penha", 3, "B", extremo: true), Dc(Lapa, "Lapa", 2, "C")], Agora)!;
+        envio.Incluidas.Select(p => p.Local).Should().BeEquivalentTo(["Mooca", "Penha"]);
+        envio.Payload.Titulo.Should().Be("Alerta extremo da Defesa Civil na Mooca e na Penha");
+    }
+
+    // Dois alertas na mesma área: o push é dela (abre o detalhe) e fala no plural certo.
+    [Fact]
+    public void AlertaOficial_DoisNaMesmaArea_AbreADela()
+    {
+        var envio = Consolidador.Consolidar(D(), [Dc(Mooca, "Mooca", 1, "A"), Dc(Mooca, "Mooca", 1, "B", perigo: "VENTO")], Agora)!;
+        envio.Payload.Titulo.Should().Be("Alertas da Defesa Civil na Mooca");
+        envio.Payload.Corpo.Should().Be("Toque para ver os avisos oficiais.");
+        envio.Payload.Url.Should().Be("/app?regiao=Mooca");
     }
 }

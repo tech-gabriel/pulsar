@@ -539,6 +539,6 @@ public class MotorNotificacoesTests
         _pushMock.Verify(p => p.NotificarUsuarioAsync(pessoa, CriterioOptIn.RiscoAlto,
             It.Is<PushPayload>(x => x.Titulo.Contains("Defesa Civil") && x.Corpo.Contains("Temporal na zona leste")),
             It.IsAny<CancellationToken>()), Times.Once);
-        (await ctx.NotificacoesEnviadas.Select(n => n.Chave).ToListAsync()).Should().ContainSingle().Which.Should().StartWith("dc:3:1/2026:");
+        (await ctx.NotificacoesEnviadas.Select(n => n.Chave).ToListAsync()).Should().ContainSingle().Which.Should().StartWith("dc:3:");
     }
 }

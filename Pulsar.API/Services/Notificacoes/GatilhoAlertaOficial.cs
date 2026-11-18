@@ -39,15 +39,18 @@ public partial class GatilhoAlertaOficial : IGatilhoNotificacao
                 continue;
 
             var em = NomesSubprefeitura.ComPreposicao(ctx.Subprefeitura.Nome);
+            var url = NomesSubprefeitura.UrlDetalhe(ctx.Subprefeitura.Nome);
+            var perigo = PerigoDoEvento(alerta.Evento);
             pendencias.Add(new NotificacaoPendente(
                 Gatilho: Nome,
-                // O nível vai na chave: o consolidador lê dela o nível do último envio da área.
-                Chave: $"dc:{nivel}:{alerta.Identificador}:{ctx.Subprefeitura.Id}",
+                // O nível e o perigo vão na chave: o consolidador lê deles o último envio da área
+                // (nível para a janela de 3 h; perigo para saber se é lembrete do mesmo tipo de alerta).
+                Chave: $"dc:{nivel}:{perigo?.ToString() ?? "GERAL"}:{alerta.Identificador}:{ctx.Subprefeitura.Id}",
                 Criterio: alerta.Gravidade is "Extreme" or "Severe" ? CriterioOptIn.RiscoAlto : CriterioOptIn.RiscoModerado,
                 Payload: new PushPayload(
                     Titulo: extremo ? $"Alerta extremo da Defesa Civil {em}" : $"Alerta da Defesa Civil {em}",
                     Corpo: Corpo(alerta, ctx.Fuso),
-                    Url: NomesSubprefeitura.UrlDetalhe(ctx.Subprefeitura.Nome),
+                    Url: url,
                     Tag: $"alerta-{ctx.Subprefeitura.Id}"),
                 Prioridade: extremo ? LimiaresNotificacao.PrioridadeAlertaExtremo : LimiaresNotificacao.PrioridadeAlertaComSinal,
                 // Decisão do user (18/11/2026): 1 aviso por área a cada 3 h; o Extremo sempre passa.
@@ -55,9 +58,32 @@ public partial class GatilhoAlertaOficial : IGatilhoNotificacao
                 Nivel: nivel,
                 SubprefeituraId: ctx.Subprefeitura.Id,
                 Local: ctx.Subprefeitura.Nome,
-                Perigo: PerigoDoEvento(alerta.Evento)));
+                Perigo: perigo,
+                // Decisão do user (18/11/2026): depois das 3 h, o mesmo tipo de alerta sai como lembrete atualizado.
+                Lembrete: new PushPayload(
+                    Titulo: $"Alerta da Defesa Civil segue valendo {em}",
+                    Corpo: $"{EventoLegivel(alerta.Evento)} até {AteQuando(alerta.ExpiraUtc, ctx.AgoraUtc, ctx.Fuso)}. Toque para ver o aviso.",
+                    Url: url,
+                    Tag: $"alerta-{ctx.Subprefeitura.Id}")));
         }
         return Task.FromResult<IReadOnlyList<NotificacaoPendente>>(pendencias);
+    }
+
+    private static readonly System.Globalization.CultureInfo PtBr = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+
+    /// <summary>"CHUVAS INTENSAS" vira "Chuvas intensas" (como no app).</summary>
+    public static string EventoLegivel(string evento)
+    {
+        var e = evento.Trim().ToLower(PtBr);
+        return e.Length == 0 ? e : char.ToUpper(e[0], PtBr) + e[1..];
+    }
+
+    /// <summary>"16:30" se vence hoje (no fuso da pessoa); "21/11, 16:18" se vence em outro dia (como no app).</summary>
+    public static string AteQuando(DateTime expiraUtc, DateTime agoraUtc, TimeZoneInfo fuso)
+    {
+        var fim = TimeZoneInfo.ConvertTimeFromUtc(expiraUtc, fuso);
+        var hoje = TimeZoneInfo.ConvertTimeFromUtc(agoraUtc, fuso).Date;
+        return fim.Date == hoje ? $"{fim:HH:mm}" : $"{fim:dd/MM}, {fim:HH:mm}";
     }
 
     /// <summary>Nível do alerta pela gravidade do CAP: Moderate 1, Severe 2, Extreme 3; o resto 0 (sem push).</summary>

@@ -58,7 +58,7 @@ public class GatilhoAlertaOficialTests
         p.Prioridade.Should().Be(0); // mesmo nível do Perigo do CGE: fora do teto diário
         p.Criterio.Should().Be(CriterioOptIn.RiscoAlto);
         p.Cooldown.Should().BeNull();
-        p.Chave.Should().Be($"dc:3:198700/2026:{ctx.Subprefeitura.Id}");
+        p.Chave.Should().Be($"dc:3:ALAGAMENTO:198700/2026:{ctx.Subprefeitura.Id}");
         p.Payload.Corpo.Should().Contain("Defesa Civil").And.Contain("14h05").And.Contain("Chuva forte na capital");
         p.Payload.Corpo.Should().NotContain("Defesa Civil:14h05");
         p.Payload.Tag.Should().Be($"alerta-{ctx.Subprefeitura.Id}");
@@ -105,7 +105,7 @@ public class GatilhoAlertaOficialTests
         var ctx = Contexto(Alerta("Extreme"));
         var b = (await Avaliar(ctx)).Single().Chave;
 
-        a.Should().StartWith("dc:3:198700/2026:");
+        a.Should().StartWith("dc:3:ALAGAMENTO:198700/2026:");
         b.Should().EndWith($":198700/2026:{ctx.Subprefeitura.Id}");
     }
 
@@ -149,9 +149,31 @@ public class GatilhoAlertaOficialTests
         var ctx = Contexto(Alerta(gravidade), alagamento: FaixaRisco.MODERADO);
         var p = (await Avaliar(ctx)).Should().ContainSingle().Subject;
         p.Nivel.Should().Be(nivel);
-        p.Chave.Should().Be($"dc:{nivel}:198700/2026:{ctx.Subprefeitura.Id}");
+        p.Chave.Should().Be($"dc:{nivel}:ALAGAMENTO:198700/2026:{ctx.Subprefeitura.Id}");
         (p.Cooldown == TimeSpan.FromHours(3)).Should().Be(comCooldown);
         if (!comCooldown) p.Cooldown.Should().BeNull();
+    }
+
+    // Lembrete (decisão do user, 18/11/2026): depois das 3 h, o mesmo tipo de alerta que segue valendo
+    // sai curto e atualizado, sem o horário antigo do texto da Defesa Civil.
+    [Fact]
+    public async Task Lembrete_TextoCurtoComAteQuando()
+    {
+        var p = (await Avaliar(Contexto(Alerta("Moderate"), alagamento: FaixaRisco.MODERADO))).Single();
+        p.Lembrete.Should().NotBeNull();
+        p.Lembrete!.Titulo.Should().Be($"Alerta da Defesa Civil segue valendo {NomesSubprefeitura.ComPreposicao(p.Local)}");
+        p.Lembrete.Corpo.Should().Be("Chuvas intensas até 16:30. Toque para ver o aviso.");
+        p.Lembrete.Url.Should().Be(p.Payload.Url);
+    }
+
+    // Vencendo em outro dia, o lembrete leva a data (como no app).
+    [Fact]
+    public async Task Lembrete_VenceEmOutroDia_LevaAData()
+    {
+        var alerta = Alerta("Moderate");
+        alerta.ExpiraUtc = new DateTime(2026, 11, 21, 19, 18, 0, DateTimeKind.Utc);
+        (await Avaliar(Contexto(alerta, alagamento: FaixaRisco.MODERADO))).Single().Lembrete!.Corpo
+            .Should().Be("Chuvas intensas até 21/11, 16:18. Toque para ver o aviso.");
     }
 
     // O corte do corpo não pode partir um emoji ao meio (o aparelho mostra um caractere quebrado).

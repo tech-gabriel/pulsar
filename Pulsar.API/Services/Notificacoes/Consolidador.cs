@@ -70,12 +70,16 @@ public static class Consolidador
 
         // Mesmo gatilho E mesmo critério: o aparelho filtra por um critério só, então um
         // grupo misto chegaria a quem não optou por parte dele.
-        var grupo = candidatas.Where(p => p.Gatilho == lider.Gatilho && p.Criterio == lider.Criterio).ToList();
+        // O Extremo da Defesa Civil sai só com outros Extremos: um Severo no mesmo grupo esconderia o
+        // "extremo" do título. O Severo fica para o próximo ciclo.
+        var grupo = candidatas.Where(p => p.Gatilho == lider.Gatilho && p.Criterio == lider.Criterio
+            && (lider.Nivel < NivelExtremo || p.Nivel == NivelExtremo)).ToList();
         var payload = lider.Gatilho switch
         {
             ChuvaComecou => PayloadChuvaComecou(grupo, d),
             ChuvaMedidaPerto => PayloadChuvaMedidaPerto(grupo, d),
             AlagamentoLugar => PayloadAlagamentoLugar(grupo, d),
+            AlertaOficial => PayloadAlertaOficial(grupo, d),
             _ => MontarPayload(grupo),
         };
         return new EnvioConsolidado(d.UsuarioId, lider.Criterio, payload, grupo);
@@ -84,6 +88,45 @@ public static class Consolidador
     /// <summary>Nível gravado na chave "dc:N:..." do alerta oficial; chave de outro formato vale 0.</summary>
     private static int NivelDaChave(string chave)
         => chave.StartsWith("dc:", StringComparison.Ordinal) && chave.Length > 4 && chave[4] == ':' && char.IsDigit(chave[3]) ? chave[3] - '0' : 0;
+
+    private const string AlertaOficial = "alerta-oficial";
+    private const int NivelExtremo = 3;
+
+    /// <summary>Perigo gravado na chave do alerta oficial ("dc:1:ALAGAMENTO:id:sub"); null fora dela.</summary>
+    private static string? PerigoDaChaveDc(string chave)
+    {
+        if (!chave.StartsWith("dc:", StringComparison.Ordinal)) return null;
+        var partes = chave.Split(':');
+        return partes.Length >= 5 ? partes[2] : null;
+    }
+
+    /// <summary>
+    /// Lembrete (decisão do user, 18/11/2026): não Extremo, e a pessoa já foi avisada desse tipo de alerta
+    /// na área, no mesmo nível ou acima. Se passou de JaCoberta, aquele aviso tem mais de 3 h.
+    /// </summary>
+    private static bool EhLembrete(NotificacaoPendente p, IReadOnlyList<EnvioAnterior> recentes)
+        => p.Lembrete is not null && p.Nivel is > 0 and < NivelExtremo
+           && recentes.Any(r => r.SubprefeituraId == p.SubprefeituraId && r.Gatilho == p.Gatilho
+               && NivelDaChave(r.Chave) >= p.Nivel && PerigoDaChaveDc(r.Chave) == PerigoDaChaveDc(p.Chave));
+
+    private static PushPayload PayloadAlertaOficial(IReadOnlyList<NotificacaoPendente> grupo, DestinatarioPush d)
+    {
+        var lembretes = grupo.All(p => EhLembrete(p, d.Recentes));
+        if (grupo.Count == 1) return lembretes ? grupo[0].Lembrete! : grupo[0].Payload;
+
+        var nomes = grupo.Select(p => p.Local).Distinct().ToList();
+        var lista = ListaComPreposicao(nomes);
+        var umaArea = nomes.Count == 1;
+        var (titulo, corpo) = lembretes
+            ? ($"Alertas da Defesa Civil seguem valendo {lista}", "Toque para ver até quando vale cada um.")
+            : grupo[0].Nivel == NivelExtremo
+            ? ($"Alerta extremo da Defesa Civil {lista}", umaArea ? "Toque para ver os avisos oficiais." : "Toque para ver o aviso oficial de cada uma.")
+            : umaArea
+            ? ($"Alertas da Defesa Civil {lista}", "Toque para ver os avisos oficiais.")
+            : ($"Alerta da Defesa Civil {lista}", "Toque para ver o aviso oficial de cada uma.");
+        // Uma área só: o push é dela e abre o detalhe dela.
+        return new PushPayload(titulo, corpo, Url: umaArea ? grupo[0].Payload.Url : "/", Tag: umaArea ? grupo[0].Payload.Tag : AlertaOficial);
+    }
 
     private const string ChuvaComecou = "chuva-comecou";
     private const string ChuvaMedidaPerto = "chuva-medida-perto";
@@ -264,7 +307,6 @@ public static class Consolidador
             // Sem "de alagamento": o perigo de cada uma pode ser vento ou calor.
             "alagamento-cge" => ($"Alagamento em {lista} agora", "O CGE registrou pontos de alagamento. Toque para ver onde."),
             "score-alto" => ($"Alerta em {lista}", "Toque para ver o que está acontecendo em cada uma."),
-            "alerta-oficial" => ($"Alerta da Defesa Civil {ListaComPreposicao([.. grupo.Select(p => p.Local).Distinct()])}", "Toque para ver o aviso oficial de cada uma."),
             "atencao" => ($"Atenção em {lista}", "Toque para ver os detalhes."),
             // O grupo tem um critério só (ver Consolidar), então a faixa vale para todas.
             "chuva-prevista" => (grupo[0].Criterio == CriterioOptIn.RiscoAlto

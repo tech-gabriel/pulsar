@@ -13,6 +13,7 @@
     "snapshot:regioes": "node scripts/gerar-snapshot-regioes.mjs",
     "snapshot:ocorrencias": "node scripts/gerar-snapshot-ocorrencias.mjs",
     "mapa:svg": "node scripts/gerar-mapa-svg.mjs",
+    "mapa:svg:baixada": "node scripts/gerar-mapa-baixada-svg.mjs",
     "snapshot:baixada": "node scripts/gerar-snapshot-baixada.mjs"
   },
   "dependencies": {

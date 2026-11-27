@@ -12,6 +12,7 @@ const lerJson = (arq) => JSON.parse(readFileSync(join(raiz, 'src', 'data', arq),
 
 const institucionais = [
   { loc: '/', changefreq: 'weekly', priority: '1.0' },
+  { loc: '/baixada-santista', changefreq: 'weekly', priority: '0.9' },
   { loc: '/sobre', changefreq: 'monthly', priority: '0.7' },
   { loc: '/novidades', changefreq: 'weekly', priority: '0.6' },
   // Página da temporada de chuva: o conteúdo ao vivo muda a toda hora, o pré-renderizado toda semana.

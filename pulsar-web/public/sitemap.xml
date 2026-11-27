@@ -6,6 +6,11 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://app-pulsar.com.br/baixada-santista</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://app-pulsar.com.br/sobre</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -14,6 +19,11 @@
     <loc>https://app-pulsar.com.br/novidades</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://app-pulsar.com.br/pontos-de-alagamento-hoje</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/privacidade</loc>
@@ -52,193 +62,193 @@
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/se</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/aricanduva-formosa-carrao</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/cidade-tiradentes</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/ermelino-matarazzo</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/guaianases</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/itaim-paulista</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/itaquera</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/mooca</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/penha</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/sapopemba</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/sao-mateus</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/sao-miguel</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/vila-prudente</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/casa-verde-limao-cachoeirinha</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/freguesia-brasilandia</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/jacana-tremembe</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/perus-anhanguera</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/pirituba-jaragua</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/santana-tucuruvi</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/vila-maria-vila-guilherme</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/butanta</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/lapa</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/pinheiros</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/campo-limpo</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/capela-do-socorro</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/cidade-ademar</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/ipiranga</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/jabaquara</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/mboi-mirim</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/parelheiros</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/santo-amaro</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://app-pulsar.com.br/risco-de-alagamento/vila-mariana</loc>
-    <lastmod>2026-10-01</lastmod>
+    <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

@@ -72,7 +72,9 @@ public class PublicoControllerTests : IClassFixture<PulsarWebApplicationFactory>
     {
         var resposta = await _factory.CreateClient().GetAsync(Rota);
 
+        resposta.StatusCode.Should().Be(HttpStatusCode.OK);
         using var json = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
-        json.RootElement.EnumerateArray().Select(i => i.GetProperty("nome").GetString()).Should().Contain("Santos");
+        var nomes = json.RootElement.EnumerateArray().Select(i => i.GetProperty("nome").GetString()).ToList();
+        nomes.Should().Contain(["Santos", "São Vicente", "Guarujá", "Cubatão", "Praia Grande", "Bertioga", "Mongaguá", "Itanhaém", "Peruíbe"]);
     }
 }

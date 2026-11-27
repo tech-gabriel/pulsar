@@ -52,7 +52,7 @@ export function numerosDe(slug: string): { trechos: number; trechosRisco: number
 
 export const ATALHOS_BAIXADA = ['santos', 'sao-vicente', 'guaruja', 'praia-grande', 'cubatao'];
 
-export interface PontoBaixada { nome: string; data: string; fonte: string }
+export interface PontoBaixada { nome: string; data: string; fonte: string; lat: number; lon: number }
 
 /** Pontos onde já alagou no município, do mais recente ao mais antigo (ordem do snapshot). */
 export function pontosDe(slug: string): PontoBaixada[] {

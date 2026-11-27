@@ -5,7 +5,8 @@ const ROTA = '/api/publico/risco-agora';
 const INTERVALO_MS = 5 * 60 * 1000; // a coleta é de 15 em 15 min; o servidor guarda 5 min
 
 /**
- * Risco agora das 32 subprefeituras para as páginas públicas. Usa fetch, não o axios do app:
+ * Risco agora das áreas das cidades públicas (subprefeituras da capital e municípios da Baixada)
+ * para as páginas públicas. Usa fetch, não o axios do app:
  * o interceptor dele trata 401 como sessão expirada e manda para o login, e a página é aberta.
  * Só busca quando `ativo` (depois da escolha da pessoa) e só relê com a aba visível.
  */

@@ -260,9 +260,14 @@ export default function MapaGL(props: PropsMapa) {
     () => pulsaresGeojson(subprefeituras, camadaAtiva, { favoritas, comEtiqueta, ocultos, zonaEmFoco }),
     [subprefeituras, camadaAtiva, favoritas, comEtiqueta, ocultos, zonaEmFoco],
   );
+  // Casa e Trabalho (3B, 28/11): azul do Pulsar quando a área está tranquila ou sem dado; amarelo ou
+  // vermelho só em Atenção e Alerta, sempre pelo risco (na Chuva sem chuva a casa ficava cinza).
   const corDaArea = useMemo(
-    () => Object.fromEntries(subprefeituras.map((s) => [s.id, nivelDaArea(s, camadaAtiva).cor])),
-    [subprefeituras, camadaAtiva],
+    () => Object.fromEntries(subprefeituras.flatMap((s) => {
+      const n = nivelDaArea(s, 'score');
+      return n.nivel === 'atencao' || n.nivel === 'alerta' ? [[s.id, n.cor]] : [];
+    })),
+    [subprefeituras],
   );
 
   useEffect(() => {
@@ -416,7 +421,7 @@ export default function MapaGL(props: PropsMapa) {
             idPrimeiroSimbolo={idPrimeiroSimbolo}
           />
           {/* Abaixo da camada de toque das áreas (e da água, que sobe para logo acima dela). */}
-          <ManchaLayer camada={camadaAtiva} pontos={pontosMancha} idPrimeiroSimbolo={ID_REGIOES_FILL} />
+          <ManchaLayer camada={camadaAtiva} pontos={pontosMancha} idPrimeiroSimbolo={ID_REGIOES_FILL} escuro={theme === 'dark'} />
           {trechos && (
             <TrechosLayer dados={trechos} selecionado={trechoSelecionado} onTocar={onTocarTrecho} idPrimeiroSimbolo={idPrimeiroSimbolo} />
           )}

@@ -29,4 +29,17 @@ describe('ManchaLayer', () => {
     expect(camadas[0].paint['heatmap-weight']).toEqual(['interpolate', ['linear'], ['get', 'mm'], 0, 0, 25, 0.45]);
     expect(camadas.every((c) => c.beforeId === 'rotulo')).toBe(true);
   });
+  it('no escuro usa o tom luminoso da cor (4B): o vermelho não vira vinho', () => {
+    camadas.length = 0;
+    render(<ManchaLayer camada="score" pontos={{ ...vazio, features: [] }} idPrimeiroSimbolo="rotulo" escuro />);
+    expect(JSON.stringify(camadas[1].paint['heatmap-color'])).toContain('248, 113, 113'); // #F87171
+    expect(JSON.stringify(camadas[1].paint['heatmap-color'])).not.toContain('214, 44, 44'); // #D62C2C
+  });
+
+  it('na Temperatura o verde espalha menos que o amarelo e o vermelho (6B)', () => {
+    ids('temperatura');
+    const raio = (i: number) => (camadas[i].paint['heatmap-radius'] as number[])[6]; // raio no zoom 9
+    expect(raio(0)).toBeLessThan(raio(1));
+    expect(raio(1)).toBe(raio(2));
+  });
 });

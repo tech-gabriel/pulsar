@@ -59,7 +59,8 @@ export default function PulsaresLayer({ dados, atenuado, idPrimeiroSimbolo }: Pr
           }} />
       )}
       {!atenuado && (
-        <Layer id="pulsar-pulsar-nome" type="symbol" minzoom={10.3}
+        // Some a partir do zoom 12 (5B, 28/11): de perto quem nomeia é o mapa base ("PINHEIROS" saía duas vezes).
+        <Layer id="pulsar-pulsar-nome" type="symbol" minzoom={10.3} maxzoom={12}
           layout={{
             'text-field': ['get', 'nome'], 'text-font': ['Noto Sans Bold'],
             'text-size': ['interpolate', ['linear'], ['zoom'], 10.3, 9.5, 13, 11.5],

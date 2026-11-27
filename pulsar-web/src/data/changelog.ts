@@ -25,6 +25,33 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.38.0',
+    data: '2026-11-27',
+    resumo: 'Chegou a Baixada Santista.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Baixada Santista no mapa',
+        descricao: 'Santos, São Vicente, Guarujá, Praia Grande, Cubatão, Bertioga, Mongaguá, Itanhaém e Peruíbe agora têm risco de alagamento por trecho, com a chuva medida nas estações do CEMADEN e aviso no celular quando o risco sobe. Troque de cidade no topo do mapa.',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Alertas da Defesa Civil',
+        descricao: 'Os alertas oficiais para São Paulo e para a Baixada aparecem no app com a fonte. No nível extremo, o aviso chega na hora no celular.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Rota até o litoral',
+        descricao: 'A rota avalia a saída e a chegada e avisa que a serra não é avaliada.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Pontos de alagamento hoje na Baixada',
+        descricao: 'Busque sua cidade ou use a localização para ver onde já alagou perto de você.',
+      },
+    ],
+  },
+  {
     versao: '1.37.3',
     data: '2026-11-18',
     itens: [

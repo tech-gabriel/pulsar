@@ -18,7 +18,7 @@ export default function PrivacidadePage() {
     <LandingDocShell
       titulo="Política de Privacidade"
       subtitulo="Como o Pulsar coleta, usa e protege seus dados, em linguagem direta e em conformidade com a LGPD."
-      atualizadoEm="9 de novembro de 2026"
+      atualizadoEm="27 de novembro de 2026"
     >
       <h2>Resumo rápido</h2>
       <ul>

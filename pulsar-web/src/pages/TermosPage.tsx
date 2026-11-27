@@ -19,7 +19,7 @@ export default function TermosPage() {
     <LandingDocShell
       titulo="Termos de Uso"
       subtitulo="As regras para usar o Pulsar. Ao criar uma conta ou usar o serviço, você concorda com elas."
-      atualizadoEm="27 de junho de 2026"
+      atualizadoEm="27 de novembro de 2026"
     >
       <h2>1. O que é o Pulsar</h2>
       <p>

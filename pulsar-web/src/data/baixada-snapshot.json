@@ -8,7 +8,9 @@
         {
           "nome": "Vale Verde",
           "data": "2025-08-06",
-          "fonte": "https://jovempan.com.br/brasil/temporal-alaga-ruas-arrasta-carros-e-causa-transtornos-em-cidades-da-baixada-santista/"
+          "fonte": "https://jovempan.com.br/brasil/temporal-alaga-ruas-arrasta-carros-e-causa-transtornos-em-cidades-da-baixada-santista/",
+          "lat": -23.91295,
+          "lon": -46.46457
         }
       ]
     },
@@ -24,37 +26,51 @@
         {
           "nome": "Rua Governador Pedro de Toledo",
           "data": "2025-08-06",
-          "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/"
+          "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/",
+          "lat": -23.97025,
+          "lon": -46.32498
         },
         {
           "nome": "Avenida Nossa Senhora de Fátima com Rua Ana Santos",
           "data": "2025-08-06",
-          "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/"
+          "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/",
+          "lat": -23.93229,
+          "lon": -46.35948
         },
         {
           "nome": "Avenida Rangel Pestana",
           "data": "2025-08-06",
-          "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/"
+          "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/",
+          "lat": -23.94271,
+          "lon": -46.33259
         },
         {
           "nome": "Rua Doutor Arnaldo de Carvalho",
           "data": "2025-02-18",
-          "fonte": "https://www.boqnews.com/cidades/fortes-chuvas-deixam-moradores-ilhados-e-veiculos-de-baixo-da-agua-em-santos/"
+          "fonte": "https://www.boqnews.com/cidades/fortes-chuvas-deixam-moradores-ilhados-e-veiculos-de-baixo-da-agua-em-santos/",
+          "lat": -23.95945,
+          "lon": -46.33552
         },
         {
           "nome": "Tetéu",
           "data": "2025-01-29",
-          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores",
+          "lat": -23.93998,
+          "lon": -46.35929
         },
         {
           "nome": "Rua Greenhalgh",
           "data": "2025-01-29",
-          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores",
+          "lat": -23.96546,
+          "lon": -46.31093
         },
         {
           "nome": "Praça Washington",
           "data": "2025-01-26",
-          "fonte": "https://santaportal.com.br/baixada/temporal-causa-alagamentos-e-gera-transtornos-nas-cidades-da-regiao"
+          "fonte": "https://santaportal.com.br/baixada/temporal-causa-alagamentos-e-gera-transtornos-nas-cidades-da-regiao",
+          "lat": -23.96542,
+          "lon": -46.35117
         }
       ]
     },
@@ -65,12 +81,16 @@
         {
           "nome": "Jardim Progresso",
           "data": "2025-02-18",
-          "fonte": "https://santaportal.com.br/saovicente/tempestade-causa-alagamentos-na-baixada-santista/"
+          "fonte": "https://santaportal.com.br/saovicente/tempestade-causa-alagamentos-na-baixada-santista/",
+          "lat": -23.93893,
+          "lon": -46.28518
         },
         {
           "nome": "Avenida Santos Dumont",
           "data": "2025-01-29",
-          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores",
+          "lat": -23.96766,
+          "lon": -46.28072
         }
       ]
     },
@@ -86,7 +106,9 @@
         {
           "nome": "Agenor de Campos",
           "data": "2026-01-04",
-          "fonte": "https://vtvnews.com.br/baixada-santista/chuva-intensa-causa-alagamentos-e-afeta-abastecimento-de-agua-na-baixada-is-bs"
+          "fonte": "https://vtvnews.com.br/baixada-santista/chuva-intensa-causa-alagamentos-e-afeta-abastecimento-de-agua-na-baixada-is-bs",
+          "lat": -24.1274,
+          "lon": -46.69163
         }
       ]
     },
@@ -97,17 +119,23 @@
         {
           "nome": "Avenida das Nações Unidas",
           "data": "2025-02-18",
-          "fonte": "https://santaportal.com.br/saovicente/tempestade-causa-alagamentos-na-baixada-santista/"
+          "fonte": "https://santaportal.com.br/saovicente/tempestade-causa-alagamentos-na-baixada-santista/",
+          "lat": -23.971,
+          "lon": -46.39923
         },
         {
           "nome": "Avenida Presidente Wilson",
           "data": "2025-01-29",
-          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores",
+          "lat": -23.96818,
+          "lon": -46.37656
         },
         {
           "nome": "Rua Augusto de Oliveira Santos",
           "data": "2025-01-26",
-          "fonte": "https://santaportal.com.br/baixada/temporal-causa-alagamentos-e-gera-transtornos-nas-cidades-da-regiao"
+          "fonte": "https://santaportal.com.br/baixada/temporal-causa-alagamentos-e-gera-transtornos-nas-cidades-da-regiao",
+          "lat": -23.9797,
+          "lon": -46.46888
         }
       ]
     },
@@ -118,7 +146,9 @@
         {
           "nome": "Mirim",
           "data": "2025-01-29",
-          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores",
+          "lat": -24.03129,
+          "lon": -46.49167
         }
       ]
     },

@@ -27,9 +27,8 @@ const PUBLICO = join(__dirname, '../../../public');
 const leve = JSON.parse(readFileSync(join(PUBLICO, 'subprefeituras-leve.geojson'), 'utf8'));
 const pontos = JSON.parse(readFileSync(join(PUBLICO, 'pontos-alagamento.json'), 'utf8'));
 const leveBaixada = JSON.parse(readFileSync(join(PUBLICO, 'baixada-santista-leve.geojson'), 'utf8'));
-const pontosBaixada = JSON.parse(readFileSync(join(PUBLICO, 'pontos-criticos-baixada.json'), 'utf8'));
 const ARQUIVOS: [string, unknown][] = [
-  ['baixada-santista-leve', leveBaixada], ['pontos-criticos-baixada', pontosBaixada], ['subprefeituras-leve', leve], ['pontos-alagamento', pontos],
+  ['baixada-santista-leve', leveBaixada], ['subprefeituras-leve', leve], ['pontos-alagamento', pontos],
 ];
 vi.mock('../../hooks/useJsonPublico', () => ({
   useJsonPublico: (url: string, ativo: boolean) => {
@@ -154,6 +153,14 @@ describe('AlagamentosHojePage', () => {
     expect(screen.getByText('Você')).toBeInTheDocument();
     expect(screen.getByText('2 km')).toBeInTheDocument();
     expect(screen.queryByText('Ponto onde já alagou')).not.toBeInTheDocument();
+  });
+
+  it('os pinos da Baixada vêm do snapshot: o mapa não espera fetch nenhum', () => {
+    estado.falhaJson = 'pontos';
+    abrir();
+    escolherBairro('Santos');
+    expect(screen.getByRole('heading', { name: '7 pontos onde já alagou em Santos' })).toBeInTheDocument();
+    expect(screen.getByTestId('mapa-perto')).toHaveAttribute('data-pontos', '7');
   });
 
   it('Santos pela busca segue sem Você', () => {

@@ -14,8 +14,7 @@ import { horaCurta, quandoAtualizado } from '../utils/data';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { PALETA } from '../utils/paleta';
 import { normalizarNome } from '../utils/texto';
-import { CIDADE_BAIXADA, municipios, numerosDe, type MunicipioSeo } from '../data/baixada-seo';
-import type { PontoCritico } from '../features/cidade/pontosCriticos';
+import { CIDADE_BAIXADA, municipios, pontosDe, type MunicipioSeo } from '../data/baixada-seo';
 import {
   municipioDoPonto, municipioPorNome, periodoLegivel, pontosDaSubprefeitura, pontosPerto, slugPorNomeApi, subprefeituraDoDistrito, subprefeituraDoPonto,
   type Periodo, type Ponto,
@@ -72,7 +71,6 @@ export default function AlagamentosHojePage() {
     contornoSp: useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', coords !== null || tipo === 'subprefeitura'),
     contornoBaixada: useJsonPublico<FeatureCollection>('/baixada-santista-leve.geojson', coords !== null || tipo === 'municipio'),
     pontosSp: useJsonPublico<{ periodo: Periodo; pontos: Ponto[] }>('/pontos-alagamento.json', tipo === 'subprefeitura'),
-    pontosBaixada: useJsonPublico<PontoCritico[]>('/pontos-criticos-baixada.json', tipo === 'municipio'),
   };
   const risco = useRiscoAgora(regiao !== null);
 
@@ -254,7 +252,6 @@ interface DadosDaPagina {
   contornoSp: Carga<FeatureCollection>;
   contornoBaixada: Carga<FeatureCollection>;
   pontosSp: Carga<{ periodo: Periodo; pontos: Ponto[] }>;
-  pontosBaixada: Carga<PontoCritico[]>;
 }
 
 /** O que a região escolhida mostra. É o único lugar que sabe se ela é da capital ou da Baixada. */
@@ -274,7 +271,7 @@ function vistaDa(regiao: Regiao, d: DadosDaPagina): Vista {
       area: mun,
       ehDaArea: (r) => normalizarNome(r.nome) === normalizarNome(mun.nome),
       mostraCge: false,
-      pontos: <PontosDoMunicipio mun={mun} centro={centro} pontos={d.pontosBaixada} contorno={d.contornoBaixada.dados} />,
+      pontos: <PontosDoMunicipio mun={mun} centro={centro} contorno={d.contornoBaixada.dados} />,
     };
   }
   const { area: sub, centro } = regiao;
@@ -417,19 +414,15 @@ function PontosDaSubprefeitura({ sub, centro, pontos, contorno }: {
 }
 
 /**
- * Baixada: os pontos onde já alagou, da lista curada. O número vem do snapshot, o lugar de cada um do JSON público.
+ * Baixada: os pontos onde já alagou, da lista curada. O número e os pinos vêm do mesmo snapshot do build,
+ * então nunca se desencontram e não dependem de fetch.
  * Com localização, o mapa ganha o "Você" e o raio de 2 km só de referência: os pontos seguem sendo os da cidade inteira.
  */
-function PontosDoMunicipio({ mun, centro, pontos, contorno }: {
-  mun: MunicipioSeo; centro?: Coordenada; pontos: Carga<PontoCritico[]>; contorno: FeatureCollection | null;
+function PontosDoMunicipio({ mun, centro, contorno }: {
+  mun: MunicipioSeo; centro?: Coordenada; contorno: FeatureCollection | null;
 }) {
-  const total = numerosDe(mun.slug)?.pontos ?? 0;
-  const noMapa = useMemo(
-    () => (pontos.dados ?? []).filter((p) => p.municipio === mun.nome).map((p) => ({ lat: p.lat, lon: p.lon, tipo: 'ALAGAMENTO' as const })),
-    [pontos.dados, mun.nome],
-  );
-  // O mapa enquadra os pontos uma vez, ao nascer: com ponto marcado, ele espera a lista chegar.
-  const esperando = total > 0 && !pontos.dados && !pontos.erro;
+  const noMapa = useMemo(() => pontosDe(mun.slug).map((p) => ({ lat: p.lat, lon: p.lon, tipo: 'ALAGAMENTO' as const })), [mun.slug]);
+  const total = noMapa.length;
   return (
     <section className="ah-secao" aria-labelledby="ah-perto">
       <h2 id="ah-perto">
@@ -438,13 +431,9 @@ function PontosDoMunicipio({ mun, centro, pontos, contorno }: {
           : `${plural(total, 'ponto onde já alagou', 'pontos onde já alagou')} ${mun.emNome}`}
       </h2>
       {total > 0 && <p className="ah-apoio">Marcados a partir de notícias da região. Mostram onde costuma alagar, não o que está alagado agora.</p>}
-      {esperando ? (
-        <div className="mapa-perto" aria-hidden="true" />
-      ) : (
-        <MapaProtegido>
-          <MapaPerto pontos={noMapa} centro={centro} nomeSubprefeitura={mun.nome} contorno={contorno} enquadrarPontos />
-        </MapaProtegido>
-      )}
+      <MapaProtegido>
+        <MapaPerto pontos={noMapa} centro={centro} nomeSubprefeitura={mun.nome} contorno={contorno} enquadrarPontos />
+      </MapaProtegido>
       {(total > 0 || centro) && (
         <div className="ah-legenda">
           {total > 0 && <span><i style={{ background: PALETA.azul }} /> Ponto onde já alagou</span>}

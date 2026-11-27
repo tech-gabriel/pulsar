@@ -49,6 +49,7 @@ import { useLocaisSalvos } from '../hooks/useLocaisSalvos';
 import { pontoDoLocal, subprefeituraIdDoPonto } from '../features/locais/regras';
 import { centroDoTrecho, estacaoMaisForte, h3DoPonto, montarTrechos, ondeChoveuMais, trechosDe } from '../features/cidade/trechos';
 import { useCelulasAgora } from '../hooks/useCelulasAgora';
+import FraseQueCabe from '../components/ui/FraseQueCabe';
 import type { OrigemTrecho } from '../components/painel/DetalheSubprefeitura';
 
 /** ?lugar= do aviso de chuva: "casa" | "trabalho"; outro valor não abre nada. */
@@ -850,9 +851,7 @@ export default function MapaPage() {
               <span className="w-9 h-[5px] rounded-full flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--text-primary) 22%, transparent)' }} />
               {/* Fechada, a alça é a única linha visível: mostra o resumo. Aberta, o cartão da cidade já resume. */}
               {!painelMobileAberto && (
-                <span className="w-full px-5 mt-2 text-sm font-semibold truncate text-center" style={{ color: 'var(--text-primary)' }}>
-                  {resumoDoMapa({ camada: camadaAtiva, areas: areasDoPainel, carregando, casa: nivelDaCasa })}
-                </span>
+                <FraseQueCabe className="w-full px-5 mt-2 text-sm font-semibold text-center text-[var(--text-primary)]" frases={resumoDoMapa({ camada: camadaAtiva, areas: areasDoPainel, carregando, casa: nivelDaCasa })} />
               )}
             </button>
             {painelMobileAberto && (

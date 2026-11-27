@@ -8,7 +8,10 @@ export interface Etiqueta {
   nivel: 'atencao' | 'alerta';
   perigo: 'chuva' | 'calor' | 'vento';
   valor: string;
+  /** A frase inteira: vai para o leitor de tela e para o cartão. */
   motivo: string;
+  /** O número que faz agir, para a etiqueta de perto (1B, 28/11): "38 mm em 3 h". */
+  curto: string;
   lon: number;
   lat: number;
 }
@@ -18,6 +21,16 @@ export interface Caixa { x: number; y: number; w: number; h: number }
 /** "4,2" -> 4.2, "32°" -> 32. */
 const numero = (valor: string) => parseFloat(valor.replace('°', '').replace(',', '.')) || 0;
 
+function motivoCurto(a: SubprefeituraMapaDto, perigo: Etiqueta['perigo']): string {
+  const l = a.ultimaLeitura;
+  if (perigo === 'calor') return `Sensação ${Math.round(l?.sensacaoTermica ?? 0)} °C`;
+  if (perigo === 'vento') return `Vento ${Math.round(l?.ventoKmH ?? 0)} km/h`;
+  // A medida das estações manda quando existe, como na frase longa (motivoDoRisco).
+  const s = a.scoreAtual;
+  const mm = (s?.chuva3hMedidaMm ?? 0) > 0 ? s!.chuva3hMedidaMm! : (s?.chuva3hMm ?? 0);
+  return `${Math.round(mm)} mm em 3 h`;
+}
+
 export function etiquetasDaCamada(areas: SubprefeituraMapaDto[], camada: CamadaMapa): Etiqueta[] {
   const itens: { e: Etiqueta; n: number }[] = [];
   for (const a of areas) {
@@ -25,7 +38,7 @@ export function etiquetasDaCamada(areas: SubprefeituraMapaDto[], camada: CamadaM
     if ((n.nivel !== 'atencao' && n.nivel !== 'alerta') || !n.perigo || n.valor == null || n.motivo == null) continue;
     const nota = camada === 'score' && a.scoreAtual ? a.scoreAtual.valor : numero(n.valor);
     itens.push({
-      e: { areaId: a.id, nome: nomeAbreviado(a.nome), nivel: n.nivel, perigo: n.perigo, valor: n.valor, motivo: n.motivo, lon: a.longitude, lat: a.latitude },
+      e: { areaId: a.id, nome: nomeAbreviado(a.nome), nivel: n.nivel, perigo: n.perigo, valor: n.valor, motivo: n.motivo, curto: motivoCurto(a, n.perigo), lon: a.longitude, lat: a.latitude },
       n: nota,
     });
   }

@@ -77,9 +77,19 @@ export function nivelDaArea(sub: SubprefeituraMapaDto, camada: CamadaMapa): Nive
 
 const FAIXA_CASA = { atencao: 'Atenção', alerta: 'Alerta' } as const;
 
+/** A conta dos alertas em versão curta ("1 alerta, 2 atenção"), ou nada quando não há risco. */
+function contaCurta(areas: { faixaRisco: string | null }[]): string | null {
+  const alertas = areas.filter((r) => r.faixaRisco === 'ALTO').length;
+  const atencao = areas.filter((r) => r.faixaRisco === 'MODERADO').length;
+  const partes = [alertas > 0 && `${alertas} ${alertas > 1 ? 'alertas' : 'alerta'}`, atencao > 0 && `${atencao} atenção`].filter(Boolean);
+  return partes.length ? partes.join(', ') : null;
+}
+
 /**
- * A frase do cartão de baixo. No Vento, o mais forte e de onde vem ("vento de", nunca "rajadas":
- * o número é a média). Nas outras, a conta dos alertas, que nunca diz "tranquilo" sem dado.
+ * A frase do cartão de baixo, em versões da mais longa para a mais curta: o cartão usa a primeira
+ * que cabe numa linha (2A, 28/11: nunca cortada nem quebrada). No Vento, o mais forte e de onde vem
+ * ("vento de", nunca "rajadas": o número é a média). Nas outras, a conta dos alertas, que nunca diz
+ * "tranquilo" sem dado.
  */
 export function resumoDoMapa(o: {
   camada: CamadaMapa;
@@ -87,16 +97,21 @@ export function resumoDoMapa(o: {
   carregando: boolean;
   cidadeNome?: string;
   casa?: { nivel: Nivel } | null;
-}): string {
+}): string[] {
   const forte = o.camada === 'vento'
     ? o.areas.reduce<SubprefeituraMapaDto | null>((m, a) => (a.ultimaLeitura && a.ultimaLeitura.ventoKmH > (m?.ultimaLeitura?.ventoKmH ?? -1) ? a : m), null)
     : null;
-  const base = forte?.ultimaLeitura
-    ? (() => {
-        const de = rumo(forte.ultimaLeitura.ventoDirecaoGraus);
-        return `Vento ${de ? `de ${de}, ` : 'de '}até ${Math.round(forte.ultimaLeitura.ventoKmH)} km/h`;
-      })()
-    : resumoAlertas(o.areas, o.carregando, o.cidadeNome);
+  let bases: string[];
+  if (forte?.ultimaLeitura) {
+    const de = rumo(forte.ultimaLeitura.ventoDirecaoGraus);
+    const km = Math.round(forte.ultimaLeitura.ventoKmH);
+    bases = de ? [`Vento de ${de}, até ${km} km/h`, `Vento de até ${km} km/h`] : [`Vento de até ${km} km/h`];
+  } else {
+    const curta = contaCurta(o.areas);
+    bases = [resumoAlertas(o.areas, o.carregando, o.cidadeNome), ...(curta ? [curta] : [])];
+  }
   const n = o.casa?.nivel;
-  return n === 'atencao' || n === 'alerta' ? `${base}. Sua casa está em ${FAIXA_CASA[n]}` : base;
+  if (n !== 'atencao' && n !== 'alerta') return bases;
+  const faixa = FAIXA_CASA[n];
+  return [`${bases[0]} · Casa em ${faixa}`, ...bases.map((b) => `${b} · Casa: ${faixa}`)];
 }

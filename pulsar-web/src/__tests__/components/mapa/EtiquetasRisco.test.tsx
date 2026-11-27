@@ -30,7 +30,7 @@ vi.mock('react-map-gl/maplibre', () => ({
 import EtiquetasRisco from '../../../components/mapa/EtiquetasRisco';
 
 const etq = (areaId: string, nome: string, nivel: Etiqueta['nivel'], lon: number): Etiqueta => ({
-  areaId, nome, nivel, perigo: 'chuva', valor: '78', motivo: 'Chuva de 32 mm em 3 h', lon, lat: -23.5,
+  areaId, nome, nivel, perigo: 'chuva', valor: '78', motivo: 'Chuva de 32 mm em 3 h', curto: '32 mm em 3 h', lon, lat: -23.5,
 });
 
 // Sé e Lapa longe uma da outra (x 300 e 100); Mooca fora da tela (x 500): nenhum lado cabe.

@@ -124,7 +124,7 @@ export default function EtiquetasRisco({ etiquetas, bloqueios, onAbrir, onOculta
               </span>
               <span className="etiqueta-texto">
                 <b>{e.nome} <em>{e.valor}</em></b>
-                {!compacta && <small>{FAIXA[e.nivel]} · {e.motivo}</small>}
+                {!compacta && <small>{FAIXA[e.nivel]} · {e.curto}</small>}
               </span>
             </button>
           );

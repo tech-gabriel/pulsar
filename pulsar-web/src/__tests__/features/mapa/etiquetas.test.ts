@@ -16,7 +16,7 @@ function sub(id: string, faixa: FaixaRisco, valor: number): SubprefeituraMapaDto
 }
 
 const et = (areaId: string, nivel: 'atencao' | 'alerta'): Etiqueta => ({
-  areaId, nome: areaId, nivel, perigo: 'chuva', valor: '1', motivo: 'm', lon: 0, lat: 0,
+  areaId, nome: areaId, nivel, perigo: 'chuva', valor: '1', motivo: 'm', curto: 'c', lon: 0, lat: 0,
 });
 const caixa = (x: number, y: number) => ({ x, y, w: 50, h: 20 });
 const tela = { w: 400, h: 400 };
@@ -28,6 +28,18 @@ describe('etiquetasDaCamada', () => {
     ], 'score');
     expect(r.map((e) => e.areaId)).toEqual(['e', 'b', 'd', 'a']);
     expect(r[0]).toMatchObject({ nivel: 'alerta', perigo: 'chuva', valor: '80', nome: 'Mooca' });
+  });
+  it('motivo curto para a etiqueta de perto (1B): o número que faz agir, sem a frase inteira', () => {
+    const chuva = { ...sub('a', 'ALTO', 80), scoreAtual: { ...sub('a', 'ALTO', 80).scoreAtual!, chuva3hMm: 20.4, chuva3hMedidaMm: 37.6 } } as SubprefeituraMapaDto;
+    const modelo = { ...sub('b', 'ALTO', 80), scoreAtual: { ...sub('b', 'ALTO', 80).scoreAtual!, chuva3hMm: 20.4, chuva3hMedidaMm: 0 } } as SubprefeituraMapaDto;
+    expect(etiquetasDaCamada([chuva], 'score')[0].curto).toBe('38 mm em 3 h'); // a medida manda
+    expect(etiquetasDaCamada([modelo], 'score')[0].curto).toBe('20 mm em 3 h');
+    const quente = { ...sub('c', 'ALTO', 70), ultimaLeitura: { sensacaoTermica: 42.6, ventoKmH: 10, chuvaMmH: 0 } } as unknown as SubprefeituraMapaDto;
+    quente.scoreAtual!.componentes!.calor = { valor: 70, faixa: 'ALTO' };
+    expect(etiquetasDaCamada([quente], 'temperatura')[0].curto).toBe('Sensação 43 °C');
+    const ventoso = { ...sub('d', 'ALTO', 70), ultimaLeitura: { sensacaoTermica: 25, ventoKmH: 62.7, chuvaMmH: 0 } } as unknown as SubprefeituraMapaDto;
+    ventoso.scoreAtual!.componentes!.vento = { valor: 70, faixa: 'ALTO' };
+    expect(etiquetasDaCamada([ventoso], 'vento')[0].curto).toBe('Vento 63 km/h');
   });
 });
 

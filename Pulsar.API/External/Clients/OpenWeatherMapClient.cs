@@ -35,6 +35,9 @@ internal sealed class WindData
 {
     [JsonPropertyName("speed")]
     public double Speed { get; set; }
+
+    [JsonPropertyName("deg")]
+    public double? Deg { get; set; }
 }
 
 internal sealed class MainData
@@ -85,13 +88,20 @@ public class OpenWeatherMapClient : IWeatherClient
 
         await Task.WhenAll(weatherTask, uviTask);
 
-        var weather = await weatherTask;
-        var uvi = await uviTask;
+        return ParseWeather(await weatherTask, await uviTask);
+    }
+
+    /// <summary>Resposta do /weather (units=metric) mais o UV já obtido vira o DTO. Vento em m/s vira km/h.</summary>
+    public static DadosClimaticosDto ParseWeather(string json, double uvi)
+    {
+        var weather = JsonSerializer.Deserialize<WeatherResponse>(json, _jsonOptions)
+            ?? throw new WeatherApiException("Resposta inválida da API /weather.");
 
         return new DadosClimaticosDto
         {
             ChuvaMmH = weather.Rain?.OneHour ?? 0.0,
             VentoKmH = (weather.Wind?.Speed ?? 0.0) * 3.6,
+            VentoDirecaoGraus = weather.Wind?.Deg,
             VisibilidadeKm = weather.Visibility / 1000.0,
             IndiceUv = uvi,
             TemperaturaC = weather.Main?.Temp ?? 0.0,
@@ -101,7 +111,7 @@ public class OpenWeatherMapClient : IWeatherClient
         };
     }
 
-    private async Task<WeatherResponse> ObterWeatherAsync(
+    private async Task<string> ObterWeatherAsync(
         HttpClient client, double lat, double lon, string apiKey, CancellationToken ct)
     {
         var url = $"weather?lat={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)}&lon={lon.ToString(System.Globalization.CultureInfo.InvariantCulture)}&appid={apiKey}&units=metric";
@@ -110,9 +120,7 @@ public class OpenWeatherMapClient : IWeatherClient
         if (!response.IsSuccessStatusCode)
             throw new WeatherApiException($"Falha ao obter dados climáticos: {response.StatusCode}", (int)response.StatusCode);
 
-        var content = await response.Content.ReadAsStringAsync(ct);
-        return JsonSerializer.Deserialize<WeatherResponse>(content, _jsonOptions)
-            ?? throw new WeatherApiException("Resposta inválida da API /weather.");
+        return await response.Content.ReadAsStringAsync(ct);
     }
 
     /// <summary>

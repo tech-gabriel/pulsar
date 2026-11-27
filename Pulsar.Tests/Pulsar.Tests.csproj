@@ -31,6 +31,7 @@
   <ItemGroup>
     <None Include="External\Fixtures\*.html" CopyToOutputDirectory="PreserveNewest" />
     <None Include="External\Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="External\Fixtures\*.xml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

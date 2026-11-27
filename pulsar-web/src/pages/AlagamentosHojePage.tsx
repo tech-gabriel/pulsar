@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { FeatureCollection } from 'geojson';
 import { ArrowRight, Bell, ChevronDown, Droplets, LockKeyhole, MapPin, Navigation, Search, TriangleAlert } from 'lucide-react';
@@ -14,8 +14,10 @@ import { horaCurta, quandoAtualizado } from '../utils/data';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { PALETA } from '../utils/paleta';
 import { normalizarNome } from '../utils/texto';
+import { CIDADE_BAIXADA, municipios, numerosDe, type MunicipioSeo } from '../data/baixada-seo';
+import type { PontoCritico } from '../features/cidade/pontosCriticos';
 import {
-  periodoLegivel, pontosDaSubprefeitura, pontosPerto, slugPorNomeApi, subprefeituraDoDistrito, subprefeituraDoPonto,
+  municipioDoPonto, municipioPorNome, periodoLegivel, pontosDaSubprefeitura, pontosPerto, slugPorNomeApi, subprefeituraDoDistrito, subprefeituraDoPonto,
   type Periodo, type Ponto,
 } from '../features/alagamentosHoje/regras';
 import type { RiscoAgoraPublico } from '../types';
@@ -26,19 +28,20 @@ const MapaPerto = lazy(() => import('../features/alagamentosHoje/MapaPerto'));
 const PATH = '/pontos-de-alagamento-hoje';
 const ORIGEM = 'alagamentos-hoje';
 
-interface Regiao {
-  sub: SubprefeituraSeo;
-  centro?: { lat: number; lon: number };
-}
+type Coordenada = { lat: number; lon: number };
+/** O que a pessoa escolheu: uma subprefeitura da capital ou um município da Baixada. */
+type Regiao =
+  | { tipo: 'subprefeitura'; area: SubprefeituraSeo; centro?: Coordenada }
+  | { tipo: 'municipio'; area: MunicipioSeo; centro?: Coordenada };
 type EstadoLocalizacao = 'ocioso' | 'procurando' | 'negada' | 'indisponivel' | 'semResposta' | 'fora' | 'semContorno';
 
 /** Sem resposta do navegador nesse tempo, a pessoa ignorou o pedido (o timeout da API só conta depois do sim). */
 const ESPERA_LOCALIZACAO_MS = 20_000;
 
-const DISTRITOS = [...new Set(subprefeituras.flatMap((s) => s.distritos))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+const OPCOES = [...new Set([...subprefeituras.flatMap((s) => s.distritos), ...municipios.map((m) => m.nome)])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
 /** "na Mooca" vira "a Mooca"; "em Itaquera" vira "Itaquera" (para "Ver a Mooca no mapa"). */
-const comArtigo = (sub: SubprefeituraSeo) => sub.emNome.replace(/^na /, 'a ').replace(/^no /, 'o ').replace(/^em /, '');
+const comArtigo = (area: { emNome: string }) => area.emNome.replace(/^na /, 'a ').replace(/^no /, 'o ').replace(/^em /, '');
 
 const plural = (n: number, um: string, varios: string) => `${n.toLocaleString('pt-BR')} ${n === 1 ? um : varios}`;
 
@@ -53,32 +56,39 @@ const PERIODO_SNAPSHOT = periodoLegivel(ocorrenciasSnapshot.periodo as Periodo);
 export default function AlagamentosHojePage() {
   useSeoHead({
     path: PATH,
-    title: 'Pontos de alagamento em SP hoje · Pulsar',
-    descricao: 'Veja o risco de alagamento agora na sua região de São Paulo, as ruas alagadas neste momento e onde costuma alagar perto de você.',
-    jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Pontos de alagamento em SP hoje', url: `https://app-pulsar.com.br${PATH}` },
+    title: 'Pontos de alagamento hoje em SP e na Baixada Santista · Pulsar',
+    descricao: 'Veja o risco de alagamento agora na sua região de São Paulo ou da Baixada Santista, as ruas alagadas neste momento e onde costuma alagar perto de você.',
+    jsonLd: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Pontos de alagamento hoje em SP e na Baixada Santista', url: `https://app-pulsar.com.br${PATH}` },
   });
 
   const { usuario } = useAuth();
   const [regiao, setRegiao] = useState<Regiao | null>(null);
   const [localizacao, setLocalizacao] = useState<EstadoLocalizacao>('ocioso');
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [coords, setCoords] = useState<Coordenada | null>(null);
   const [bairro, setBairro] = useState('');
 
-  const contorno = useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', coords !== null || regiao !== null);
-  const pontos = useJsonPublico<{ periodo: Periodo; pontos: Ponto[] }>('/pontos-alagamento.json', regiao !== null);
+  const tipo = regiao?.tipo;
+  const dados: DadosDaPagina = {
+    contornoSp: useJsonPublico<FeatureCollection>('/subprefeituras-leve.geojson', coords !== null || tipo === 'subprefeitura'),
+    contornoBaixada: useJsonPublico<FeatureCollection>('/baixada-santista-leve.geojson', coords !== null || tipo === 'municipio'),
+    pontosSp: useJsonPublico<{ periodo: Periodo; pontos: Ponto[] }>('/pontos-alagamento.json', tipo === 'subprefeitura'),
+    pontosBaixada: useJsonPublico<PontoCritico[]>('/pontos-criticos-baixada.json', tipo === 'municipio'),
+  };
   const risco = useRiscoAgora(regiao !== null);
 
-  // Localização chegou e o contorno também: resolve a subprefeitura (ajuste durante o render).
-  if (coords && contorno.dados && localizacao === 'procurando') {
-    const sub = subprefeituraDoPonto(coords.lat, coords.lon, contorno.dados);
-    setLocalizacao(sub ? 'ocioso' : 'fora');
-    if (sub) setRegiao({ sub, centro: coords });
-    setCoords(null);
-  }
-  // O contorno não baixou: sem ele não dá para achar a subprefeitura. Nunca fica "procurando" para sempre.
-  if (coords && contorno.erro && localizacao === 'procurando') {
-    setLocalizacao('semContorno');
-    setCoords(null);
+  // Localização chegou: resolve a subprefeitura ou o município pelos contornos (ajuste durante o render).
+  // Só diz "fora" com os dois contornos na mão; sem um deles, nunca fica "procurando" para sempre.
+  if (coords && localizacao === 'procurando') {
+    const { contornoSp, contornoBaixada } = dados;
+    const sub = contornoSp.dados ? subprefeituraDoPonto(coords.lat, coords.lon, contornoSp.dados) : null;
+    const mun = !sub && contornoBaixada.dados ? municipioDoPonto(coords.lat, coords.lon, contornoBaixada.dados) : null;
+    const respondeu = (c: { dados: unknown; erro: boolean }) => c.dados !== null || c.erro;
+    if (sub || mun || (respondeu(contornoSp) && respondeu(contornoBaixada))) {
+      if (sub) setRegiao({ tipo: 'subprefeitura', area: sub, centro: coords });
+      else if (mun) setRegiao({ tipo: 'municipio', area: mun, centro: coords });
+      setLocalizacao(sub || mun ? 'ocioso' : contornoSp.erro || contornoBaixada.erro ? 'semContorno' : 'fora');
+      setCoords(null);
+    }
   }
 
   // Cada pedido de localização ganha um número; resposta de pedido antigo (ou chegada depois de
@@ -126,10 +136,12 @@ export default function AlagamentosHojePage() {
   /** Só confirma numa escolha explícita (item da lista, Enter, sair do campo), nunca no meio da digitação. */
   function escolherBairro(valor: string) {
     const sub = subprefeituraDoDistrito(valor) ?? subprefeituras.find((s) => normalizarNome(s.nome) === normalizarNome(valor));
-    if (sub) {
+    const mun = sub ? undefined : municipioPorNome(valor);
+    const escolhida: Regiao | null = sub ? { tipo: 'subprefeitura', area: sub } : mun ? { tipo: 'municipio', area: mun } : null;
+    if (escolhida) {
       encerrarPedido();
       setCoords(null);
-      setRegiao({ sub });
+      setRegiao(escolhida);
       setLocalizacao('ocioso');
     }
   }
@@ -141,17 +153,14 @@ export default function AlagamentosHojePage() {
           <Link to="/">Início</Link> · Alagamentos hoje
         </nav>
         <header className="ah-cabeca">
-          <h1>Pontos de alagamento em SP hoje</h1>
+          <h1>Pontos de alagamento hoje em SP e na Baixada</h1>
           <p>O risco agora na sua região, as ruas alagadas neste momento e onde costuma alagar perto de você.</p>
         </header>
 
         {regiao ? (
           <RegiaoEscolhida
-            regiao={regiao}
+            vista={vistaDa(regiao, dados)}
             risco={risco}
-            pontos={pontos.dados}
-            pontosErro={pontos.erro}
-            contorno={contorno.dados}
             logado={!!usuario}
             onTrocar={() => {
               setRegiao(null);
@@ -193,6 +202,7 @@ export default function AlagamentosHojePage() {
             {zonas.map((z) => (
               <li key={z.slug}><Link to={`${PREFIXO_REGIAO}/${z.slug}`}>{z.nome}</Link></li>
             ))}
+            <li><Link to={CIDADE_BAIXADA.path}>{CIDADE_BAIXADA.nome}</Link></li>
           </ul>
         </nav>
       </main>
@@ -211,11 +221,11 @@ function Escolha({ localizacao, bairro, onLocalizar, onDigitar, onBairro }: {
       {localizacao === 'negada' && <p className="ah-aviso" role="status">A localização está bloqueada neste navegador. Escolha o bairro abaixo.</p>}
       {localizacao === 'indisponivel' && <p className="ah-aviso" role="status">Não deu para achar a sua localização agora. Escolha o bairro abaixo ou tente de novo.</p>}
       {localizacao === 'semResposta' && <p className="ah-aviso" role="status">A localização não respondeu. Escolha o bairro abaixo ou tente de novo.</p>}
-      {localizacao === 'fora' && <p className="ah-aviso" role="status">Esse lugar fica fora da cidade de São Paulo. Escolha um bairro da capital.</p>}
+      {localizacao === 'fora' && <p className="ah-aviso" role="status">Esse lugar fica fora das cidades que o Pulsar cobre. Escolha um bairro de São Paulo ou uma cidade da Baixada Santista.</p>}
       {localizacao === 'semContorno' && <p className="ah-aviso" role="status">Não deu para achar a sua região agora. Escolha o bairro abaixo.</p>}
       <label className="ah-campo">
         <Search size={18} aria-hidden="true" />
-        <span className="sr-only">Bairro</span>
+        <span className="sr-only">Bairro ou cidade</span>
         <input
           list="ah-distritos"
           value={bairro}
@@ -227,48 +237,80 @@ function Escolha({ localizacao, bairro, onLocalizar, onDigitar, onBairro }: {
           }}
           onKeyDown={(e) => e.key === 'Enter' && onBairro(e.currentTarget.value)}
           onBlur={(e) => onBairro(e.currentTarget.value)}
-          placeholder="Ou digite o seu bairro"
+          placeholder="Ou digite o bairro ou a cidade"
           autoComplete="off"
         />
       </label>
       <datalist id="ah-distritos">
-        {DISTRITOS.map((d) => <option key={d} value={d} />)}
+        {OPCOES.map((d) => <option key={d} value={d} />)}
       </datalist>
-      <p className="ah-privacidade"><LockKeyhole size={14} aria-hidden="true" /> A localização fica no seu aparelho, só para achar a sua subprefeitura.</p>
+      <p className="ah-privacidade"><LockKeyhole size={14} aria-hidden="true" /> A localização fica no seu aparelho, só para achar a sua região.</p>
     </div>
   );
 }
 
-function RegiaoEscolhida({ regiao, risco, pontos, pontosErro, contorno, logado, onTrocar }: {
-  regiao: Regiao;
+type Carga<T> = { dados: T | null; erro: boolean };
+interface DadosDaPagina {
+  contornoSp: Carga<FeatureCollection>;
+  contornoBaixada: Carga<FeatureCollection>;
+  pontosSp: Carga<{ periodo: Periodo; pontos: Ponto[] }>;
+  pontosBaixada: Carga<PontoCritico[]>;
+}
+
+/** O que a região escolhida mostra. É o único lugar que sabe se ela é da capital ou da Baixada. */
+interface Vista {
+  area: { slug: string; nome: string; emNome: string; deNome: string };
+  /** O item desta área na resposta do risco agora (a API devolve pelo nome). */
+  ehDaArea: (r: RiscoAgoraPublico) => boolean;
+  /** O CGE só cobre a capital. */
+  mostraCge: boolean;
+  pontos: ReactNode;
+}
+
+function vistaDa(regiao: Regiao, d: DadosDaPagina): Vista {
+  if (regiao.tipo === 'municipio') {
+    const { area: mun, centro } = regiao;
+    return {
+      area: mun,
+      ehDaArea: (r) => normalizarNome(r.nome) === normalizarNome(mun.nome),
+      mostraCge: false,
+      pontos: <PontosDoMunicipio mun={mun} centro={centro} pontos={d.pontosBaixada} contorno={d.contornoBaixada.dados} />,
+    };
+  }
+  const { area: sub, centro } = regiao;
+  return {
+    area: sub,
+    ehDaArea: (r) => slugPorNomeApi(r.nome) === sub.slug,
+    mostraCge: true,
+    pontos: <PontosDaSubprefeitura sub={sub} centro={centro} pontos={d.pontosSp} contorno={d.contornoSp.dados} />,
+  };
+}
+
+function RegiaoEscolhida({ vista, risco, logado, onTrocar }: {
+  vista: Vista;
   risco: { dados: RiscoAgoraPublico[] | null; erro: boolean; carregando: boolean; atualizar: () => void };
-  pontos: { periodo: Periodo; pontos: Ponto[] } | null;
-  pontosErro: boolean;
-  contorno: FeatureCollection | null;
   logado: boolean;
   onTrocar: () => void;
 }) {
-  const { sub, centro } = regiao;
-  const atual = risco.dados?.find((r) => slugPorNomeApi(r.nome) === sub.slug) ?? null;
-  const perto = useMemo(
-    () => (pontos ? (centro ? pontosPerto(pontos.pontos, centro) : pontosDaSubprefeitura(pontos.pontos, sub.slug)) : []),
-    [pontos, centro, sub.slug],
-  );
-  const destino = logado ? `/app?regiao=${sub.slug}` : `/cadastro?regiao=${sub.slug}`;
-  const aoConvidar = () => track.clicouConviteRegiao(ORIGEM, sub.slug, logado);
+  const { area } = vista;
+  const atual = risco.dados?.find(vista.ehDaArea) ?? null;
+  // Sem score a faixa da API cai em BAIXO por padrão, e área fora da resposta não tem leitura nenhuma:
+  // nunca afirmar "Tranquilo" sem leitura.
+  const semLeitura = atual ? atual.score == null : risco.dados !== null;
+  const destino = logado ? `/app?regiao=${area.slug}` : `/cadastro?regiao=${area.slug}`;
+  const aoConvidar = () => track.clicouConviteRegiao(ORIGEM, area.slug, logado);
 
   return (
     <>
       <button type="button" className="ah-pilula" onClick={onTrocar}>
-        <MapPin size={16} aria-hidden="true" /> {sub.nome} <ChevronDown size={16} aria-hidden="true" />
+        <MapPin size={16} aria-hidden="true" /> {area.nome} <ChevronDown size={16} aria-hidden="true" />
         <span className="sr-only">, trocar a região</span>
       </button>
 
-      <section className="ah-risco" aria-label={`Risco agora ${sub.emNome}`}>
-        <p className="ah-risco-titulo">Risco agora {sub.emNome}</p>
-        {atual && atual.score == null ? (
-          // Sem score a faixa da API cai em BAIXO por padrão: nunca afirmar "Tranquilo" sem leitura.
-          <p className="ah-erro" role="status">Sem leitura agora {sub.emNome}. O risco volta a aparecer na próxima coleta.</p>
+      <section className="ah-risco" aria-label={`Risco agora ${area.emNome}`}>
+        <p className="ah-risco-titulo">Risco agora {area.emNome}</p>
+        {semLeitura ? (
+          <p className="ah-erro" role="status">Sem leitura agora {area.emNome}. O risco volta a aparecer na próxima coleta.</p>
         ) : atual ? (
           <>
             <div className="det-hero" style={{ '--c': coresParaFaixa(atual.faixaRisco).fill } as React.CSSProperties}>
@@ -297,7 +339,7 @@ function RegiaoEscolhida({ regiao, risco, pontos, pontosErro, contorno, logado, 
         )}
       </section>
 
-      {atual && atual.alagamentosCge.length > 0 && (
+      {vista.mostraCge && atual && atual.alagamentosCge.length > 0 && (
         <section className="ah-cartao" aria-label="Alagando agora">
           <p className="ah-cge-titulo"><TriangleAlert size={16} aria-hidden="true" /> Alagando agora</p>
           <ul className="ah-cge">
@@ -317,39 +359,99 @@ function RegiaoEscolhida({ regiao, risco, pontos, pontosErro, contorno, logado, 
         </section>
       )}
 
-      <section className="ah-secao" aria-labelledby="ah-perto">
-        <h2 id="ah-perto">
-          {!pontos
-            ? (pontosErro ? 'Não deu para carregar os alagamentos registrados' : 'Carregando os alagamentos registrados…')
-            : `${perto.length === 0 ? 'Nenhum alagamento registrado' : plural(perto.length, 'alagamento registrado', 'alagamentos registrados')} ${centro ? 'a até 2 km de você' : sub.emNome}`}
-        </h2>
-        {pontos && (
-          <p className="ah-apoio">
-            Ocorrências da Defesa Civil {periodoLegivel(pontos.periodo)}. Mostram onde costuma alagar, não o que está alagado agora.
-          </p>
-        )}
-        {/* Chunk do mapa que não baixa (deploy novo, rede caindo) ou WebGL que falha não derruba a página. */}
-        <ErrorBoundary fallback={<p className="mapa-perto ah-mapa-erro" role="status">Não deu para abrir o mapa agora. A contagem acima continua valendo.</p>}>
-          <Suspense fallback={<div className="mapa-perto" aria-hidden="true" />}>
-            <MapaPerto pontos={perto} centro={centro} nomeSubprefeitura={sub.nome} contorno={contorno} />
-          </Suspense>
-        </ErrorBoundary>
-        <div className="ah-legenda">
-          <span><i style={{ background: PALETA.azul }} /> Alagamento</span>
-          <span><i style={{ background: PALETA.azulProfundo }} /> Inundação</span>
-          {centro && <span><i style={{ background: PALETA.voce }} /> Você</span>}
-          {centro && <span><b /> 2 km</span>}
-        </div>
-      </section>
+      {vista.pontos}
 
       <section className="ah-convite" aria-labelledby="ah-convite">
-        <h2 id="ah-convite">{logado ? `Acompanhe ${comArtigo(sub)} no Pulsar` : `Receba o alerta ${sub.deNome} no celular`}</h2>
-        <p>Só quando {comArtigo(sub)} entrar em Atenção ou Alerta. Fora isso, silêncio.</p>
+        <h2 id="ah-convite">{logado ? `Acompanhe ${comArtigo(area)} no Pulsar` : `Receba o alerta ${area.deNome} no celular`}</h2>
+        <p>Só quando {comArtigo(area)} entrar em Atenção ou Alerta. Fora isso, silêncio.</p>
         <Link to={destino} className="landing-cta ah-cta-cheio" onClick={aoConvidar}>
-          {logado ? `Ver ${comArtigo(sub)} no mapa` : 'Criar conta grátis'}
+          {logado ? `Ver ${comArtigo(area)} no mapa` : 'Criar conta grátis'}
         </Link>
         {!logado && <p className="ah-entrar">Já tem conta? <Link to={`/login`}>Entrar</Link></p>}
       </section>
     </>
+  );
+}
+
+/** Chunk do mapa que não baixa (deploy novo, rede caindo) ou WebGL que falha não derruba a página. */
+function MapaProtegido({ children }: { children: ReactNode }) {
+  return (
+    <ErrorBoundary fallback={<p className="mapa-perto ah-mapa-erro" role="status">Não deu para abrir o mapa agora. A contagem acima continua valendo.</p>}>
+      <Suspense fallback={<div className="mapa-perto" aria-hidden="true" />}>{children}</Suspense>
+    </ErrorBoundary>
+  );
+}
+
+/** Capital: alagamentos registrados pela Defesa Civil (GeoSampa), na subprefeitura ou a até 2 km de você. */
+function PontosDaSubprefeitura({ sub, centro, pontos, contorno }: {
+  sub: SubprefeituraSeo; centro?: Coordenada; pontos: Carga<{ periodo: Periodo; pontos: Ponto[] }>; contorno: FeatureCollection | null;
+}) {
+  const { dados } = pontos;
+  const perto = useMemo(
+    () => (dados ? (centro ? pontosPerto(dados.pontos, centro) : pontosDaSubprefeitura(dados.pontos, sub.slug)) : []),
+    [dados, centro, sub.slug],
+  );
+  return (
+    <section className="ah-secao" aria-labelledby="ah-perto">
+      <h2 id="ah-perto">
+        {!dados
+          ? (pontos.erro ? 'Não deu para carregar os alagamentos registrados' : 'Carregando os alagamentos registrados…')
+          : `${perto.length === 0 ? 'Nenhum alagamento registrado' : plural(perto.length, 'alagamento registrado', 'alagamentos registrados')} ${centro ? 'a até 2 km de você' : sub.emNome}`}
+      </h2>
+      {dados && (
+        <p className="ah-apoio">
+          Ocorrências da Defesa Civil {periodoLegivel(dados.periodo)}. Mostram onde costuma alagar, não o que está alagado agora.
+        </p>
+      )}
+      <MapaProtegido>
+        <MapaPerto pontos={perto} centro={centro} nomeSubprefeitura={sub.nome} contorno={contorno} />
+      </MapaProtegido>
+      <div className="ah-legenda">
+        <span><i style={{ background: PALETA.azul }} /> Alagamento</span>
+        <span><i style={{ background: PALETA.azulProfundo }} /> Inundação</span>
+        {centro && <span><i style={{ background: PALETA.voce }} /> Você</span>}
+        {centro && <span><b /> 2 km</span>}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Baixada: os pontos onde já alagou, da lista curada. O número vem do snapshot, o lugar de cada um do JSON público.
+ * Com localização, o mapa ganha o "Você" e o raio de 2 km só de referência: os pontos seguem sendo os da cidade inteira.
+ */
+function PontosDoMunicipio({ mun, centro, pontos, contorno }: {
+  mun: MunicipioSeo; centro?: Coordenada; pontos: Carga<PontoCritico[]>; contorno: FeatureCollection | null;
+}) {
+  const total = numerosDe(mun.slug)?.pontos ?? 0;
+  const noMapa = useMemo(
+    () => (pontos.dados ?? []).filter((p) => p.municipio === mun.nome).map((p) => ({ lat: p.lat, lon: p.lon, tipo: 'ALAGAMENTO' as const })),
+    [pontos.dados, mun.nome],
+  );
+  // O mapa enquadra os pontos uma vez, ao nascer: com ponto marcado, ele espera a lista chegar.
+  const esperando = total > 0 && !pontos.dados && !pontos.erro;
+  return (
+    <section className="ah-secao" aria-labelledby="ah-perto">
+      <h2 id="ah-perto">
+        {total === 0
+          ? `Ainda não marcamos nenhum ponto onde já alagou ${mun.emNome}`
+          : `${plural(total, 'ponto onde já alagou', 'pontos onde já alagou')} ${mun.emNome}`}
+      </h2>
+      {total > 0 && <p className="ah-apoio">Marcados a partir de notícias da região. Mostram onde costuma alagar, não o que está alagado agora.</p>}
+      {esperando ? (
+        <div className="mapa-perto" aria-hidden="true" />
+      ) : (
+        <MapaProtegido>
+          <MapaPerto pontos={noMapa} centro={centro} nomeSubprefeitura={mun.nome} contorno={contorno} enquadrarPontos />
+        </MapaProtegido>
+      )}
+      {(total > 0 || centro) && (
+        <div className="ah-legenda">
+          {total > 0 && <span><i style={{ background: PALETA.azul }} /> Ponto onde já alagou</span>}
+          {centro && <span><i style={{ background: PALETA.voce }} /> Você</span>}
+          {centro && <span><b /> 2 km</span>}
+        </div>
+      )}
+    </section>
   );
 }

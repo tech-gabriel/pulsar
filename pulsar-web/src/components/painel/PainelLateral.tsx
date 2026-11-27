@@ -5,7 +5,7 @@ import { SkeletonCard } from '../ui/Skeleton';
 import { containerStagger, itemStagger } from '../../motion/presets';
 import CidadeAgora from '../../features/cidade/CidadeAgora';
 import LinhaArea from '../../features/cidade/LinhaArea';
-import { CIDADE_ATUAL } from '../../features/cidade/cidade';
+import { areasDaCidade, cidadesDasAreas, rotuloAreas } from '../../features/cidade/cidade';
 import { buscarAreas, emAtencao, ordenarPorRisco, resumoCidade, type Area } from '../../features/cidade/areas';
 
 interface Props {
@@ -17,6 +17,9 @@ interface Props {
   ultimaAtualizacao: Date | null;
   onRecarregar: () => void;
   onSelecionar: (area: Area) => void;
+  /** Cidade mostrada no resumo e nas listas (com mais de uma, o seletor troca). Padrão: a primeira. */
+  cidade?: string;
+  onTrocarCidade?: (cidade: string) => void;
 }
 
 function minutosAtras(data: Date | null): string {
@@ -42,10 +45,16 @@ function Secao({ children, estrela = false }: { children: React.ReactNode; estre
  * toque. Substitui a lista de zonas.
  */
 export default function PainelLateral({
-  areas, favoritas, carregando, erro, ultimaAtualizacao, onRecarregar, onSelecionar,
+  areas: todasAsAreas, favoritas, carregando, erro, ultimaAtualizacao, onRecarregar, onSelecionar, cidade: cidadePedida, onTrocarCidade,
 }: Props) {
   const [verTodas, setVerTodas] = useState(false);
   const [busca, setBusca] = useState('');
+  // D1 (escolha do user, 18/11/2026): com mais de uma cidade, o resumo, a lista de risco e o
+  // "ver todas" são da cidade escolhida; as favoritas aparecem sempre, de qualquer cidade.
+  const cidades = useMemo(() => cidadesDasAreas(todasAsAreas), [todasAsAreas]);
+  const cidade = cidadePedida && cidades.includes(cidadePedida) ? cidadePedida : cidades[0] ?? 'São Paulo';
+  const areas = useMemo(() => areasDaCidade(todasAsAreas, cidade), [todasAsAreas, cidade]);
+  const variasCidades = cidades.length > 1;
   const resumo = useMemo(() => resumoCidade(areas), [areas]);
   // Quem já está em "Suas subprefeituras" não se repete em "Em risco agora".
   const atencao = useMemo(
@@ -82,29 +91,36 @@ export default function PainelLateral({
               </button>
               <div>
                 <h2 style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 19, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-                  {areas.length} subprefeituras
+                  {rotuloAreas(cidade, areas.length)}
                 </h2>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{CIDADE_ATUAL.nome} · pior risco primeiro</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{cidade} · pior risco primeiro</p>
               </div>
             </div>
             <label className="flex items-center gap-2 px-3 mb-2 rounded-xl min-h-11" style={{ background: 'var(--bg-input)' }}>
               <Search size={15} style={{ color: 'var(--text-muted)' }} />
-              <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar subprefeitura"
-                aria-label="Buscar subprefeitura" className="flex-1 bg-transparent outline-none text-sm min-h-11" style={{ color: 'var(--text-primary)' }} />
+              <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder={`Buscar ${rotuloAreas(cidade, 1).slice(2)}`}
+                aria-label={`Buscar ${rotuloAreas(cidade, 1).slice(2)}`} className="flex-1 bg-transparent outline-none text-sm min-h-11" style={{ color: 'var(--text-primary)' }} />
             </label>
             {todas.length === 0
-              ? <p className="px-2 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>Nenhuma subprefeitura com esse nome.</p>
+              ? <p className="px-2 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>{cidade === 'São Paulo' ? 'Nenhuma subprefeitura com esse nome.' : `Nenhum ${rotuloAreas(cidade, 1).slice(2)} com esse nome.`}</p>
               : linhas(todas)}
           </motion.div>
         ) : (
           <motion.div variants={containerStagger} initial="inicial" animate="animar">
-            <motion.div variants={itemStagger} className="pt-1"><CidadeAgora resumo={resumo} cidadeNome={CIDADE_ATUAL.nome} /></motion.div>
-            {favoritas.length > 0 && (<><Secao estrela>Suas subprefeituras</Secao>{linhas(favoritas)}</>)}
+            {variasCidades && (
+              <div className="seletor-cidade" role="group" aria-label="Cidade">
+                {cidades.map((c) => (
+                  <button key={c} type="button" aria-pressed={c === cidade} onClick={() => onTrocarCidade?.(c)}>{c}</button>
+                ))}
+              </div>
+            )}
+            <motion.div variants={itemStagger} className="pt-1"><CidadeAgora resumo={resumo} cidadeNome={cidade} /></motion.div>
+            {favoritas.length > 0 && (<><Secao estrela>{variasCidades ? 'Suas áreas' : 'Suas subprefeituras'}</Secao>{linhas(favoritas)}</>)}
             {atencao.length > 0 && (<><Secao>Em risco agora</Secao>{linhas(atencao)}</>)}
             {areas.length > 0 && (
               <motion.button variants={itemStagger} type="button" onClick={() => setVerTodas(true)}
                 className="w-full min-h-11 mt-1 flex items-center justify-center gap-1 text-sm font-semibold" style={{ color: 'var(--text-accent)' }}>
-                {`Ver as ${areas.length} subprefeituras`} <ChevronRight size={15} aria-hidden="true" />
+                {`Ver ${cidade === 'São Paulo' ? 'as' : 'os'} ${rotuloAreas(cidade, areas.length)}`} <ChevronRight size={15} aria-hidden="true" />
               </motion.button>
             )}
           </motion.div>

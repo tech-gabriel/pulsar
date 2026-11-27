@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { rotuloPerigo, type ResumoCidade } from './areas';
+import { naCidade, rotuloAreas } from './cidade';
 import './cidade.css';
 
 interface Props {
@@ -22,13 +23,13 @@ export default function CidadeAgora({ resumo, cidadeNome, distribuicao = false, 
       ? `${alto} em alerta${moderado > 0 ? `, ${moderado} em atenção` : ''}`
       : moderado > 0
         ? `${moderado} em atenção`
-        : `Tudo tranquilo em ${cidadeNome}`;
+        : `Tudo tranquilo ${naCidade(cidadeNome)}`;
   const perigo = pior ? rotuloPerigo(pior) : null;
   const sub = semDados
     ? 'Os dados aparecem assim que a coleta chegar'
     : pior && (alto > 0 || moderado > 0)
       ? `Pior: ${pior.nome}${perigo ? ` · ${perigo}` : ''}`
-      : 'Nenhuma subprefeitura em atenção';
+      : rotuloAreas(cidadeNome, 1).endsWith('município') ? 'Nenhum município em atenção' : 'Nenhuma subprefeitura em atenção';
   const tom = semDados ? 'sem' : alto > 0 ? 'alto' : moderado > 0 ? 'moderado' : '';
   const total = alto + moderado + baixo;
 

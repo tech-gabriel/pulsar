@@ -34,7 +34,7 @@ public class AvisoRotaServiceTests
         _push.SetupGet(p => p.Habilitado).Returns(pushHabilitado);
         _push.Setup(p => p.NotificarUsuarioAsync(It.IsAny<Guid>(), It.IsAny<CriterioOptIn>(), It.IsAny<PushPayload>(), It.IsAny<CancellationToken>()))
              .ReturnsAsync(1);
-        _rota.Setup(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), It.IsAny<CaminhoRota?>(), It.IsAny<CancellationToken>()))
+        _rota.Setup(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), It.IsAny<CaminhoRota?>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()))
              .ReturnsAsync(new RotaAvaliacaoDto(estado, null, null, [], []));
         return new AvisoRotaService(ctx, _rota.Object, _push.Object, NullLogger<AvisoRotaService>.Instance);
     }
@@ -129,7 +129,7 @@ public class AvisoRotaServiceTests
         var enviados = await svc.AvaliarEDispararAsync(Agora.AddMinutes(15));
 
         enviados.Should().Be(0);
-        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), It.IsAny<CaminhoRota?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), It.IsAny<CaminhoRota?>(), It.IsAny<CancellationToken>(), It.IsAny<bool>()), Times.Never);
         (await ctx.PedidosAvisoRota.CountAsync()).Should().Be(1);
     }
 
@@ -267,13 +267,15 @@ public class AvisoRotaServiceTests
         var svc = Novo(ctx, EstadoRota.Esperar);
         var usuario = Guid.NewGuid();
         var caminho = new CaminhoRota(-23.55, -46.63, -23.54, -46.60);
+    // E4b: o pedido ja foi validado pela visibilidade de quem pediu (o Admin ve a Baixada): o job
+    // avalia com as areas escondidas, senao o pedido do Admin ate Santos falharia a cada ciclo.
         ctx.AssinaturasPush.Add(new AssinaturaPush { UsuarioId = usuario, Endpoint = "https://push/caminho" });
         await ctx.SaveChangesAsync();
 
         await svc.RegistrarAsync(usuario, [Mooca], "Mooca", Agora, caminho);
         await svc.AvaliarEDispararAsync(Agora.AddMinutes(15));
 
-        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), caminho, It.IsAny<CancellationToken>()), Times.Once);
+        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), caminho, It.IsAny<CancellationToken>(), true), Times.Once);
     }
 
     [Fact]
@@ -289,6 +291,6 @@ public class AvisoRotaServiceTests
         await svc.RegistrarAsync(usuario, [Mooca], "Mooca", Agora);
         await svc.AvaliarEDispararAsync(Agora.AddMinutes(15));
 
-        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), null, It.IsAny<CancellationToken>()), Times.Once);
+        _rota.Verify(r => r.AvaliarAsync(It.IsAny<IReadOnlyList<Guid>>(), null, It.IsAny<CancellationToken>(), true), Times.Once);
     }
 }

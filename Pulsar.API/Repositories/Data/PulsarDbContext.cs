@@ -21,6 +21,7 @@ public class PulsarDbContext : DbContext
     public DbSet<EstacaoCemaden> EstacoesCemaden => Set<EstacaoCemaden>();
     public DbSet<LeituraEstacaoCemaden> LeiturasEstacaoCemaden => Set<LeituraEstacaoCemaden>();
     public DbSet<ExecucaoSincronizacao> ExecucoesSincronizacao => Set<ExecucaoSincronizacao>();
+    public DbSet<AlertaOficial> AlertasOficiais => Set<AlertaOficial>();
     public DbSet<PedidoAvisoRota> PedidosAvisoRota => Set<PedidoAvisoRota>();
     public DbSet<Sugestao> Sugestoes => Set<Sugestao>();
     public DbSet<UsuarioSubprefeitura> UsuarioSubprefeituras => Set<UsuarioSubprefeitura>();
@@ -55,7 +56,7 @@ public class PulsarDbContext : DbContext
             e.HasKey(c => c.Id);
             e.Property(c => c.Nome).IsRequired().HasMaxLength(100);
             e.Property(c => c.Uf).IsRequired().HasMaxLength(2);
-            e.Property(c => c.CodigoIbge).IsRequired().HasMaxLength(7);
+            e.Property(c => c.CodigoIbge).HasMaxLength(7);
             e.HasIndex(c => c.CodigoIbge).IsUnique();
             e.HasMany(c => c.Regioes)
              .WithOne(r => r.Cidade)
@@ -78,6 +79,7 @@ public class PulsarDbContext : DbContext
         {
             e.HasKey(s => s.Id);
             e.Property(s => s.Nome).IsRequired().HasMaxLength(100);
+            e.Property(s => s.CodigoIbge).HasMaxLength(7);
             e.HasIndex(s => s.RegiaoId);
             e.HasMany(s => s.Leituras)
              .WithOne(l => l.Subprefeitura)
@@ -277,6 +279,28 @@ public class PulsarDbContext : DbContext
              .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<AlertaOficial>(e =>
+        {
+            e.HasKey(a => a.Id);
+            e.HasIndex(a => a.Identificador).IsUnique();
+            e.HasIndex(a => a.ExpiraUtc);
+            e.Property(a => a.Identificador).IsRequired().HasMaxLength(100);
+            e.Property(a => a.Evento).IsRequired().HasMaxLength(120);
+            e.Property(a => a.Gravidade).IsRequired().HasMaxLength(20);
+            e.Property(a => a.Urgencia).IsRequired().HasMaxLength(20);
+            e.Property(a => a.Emissor).IsRequired().HasMaxLength(200);
+            e.Property(a => a.Titulo).IsRequired().HasMaxLength(500);
+            e.Property(a => a.Descricao).IsRequired().HasMaxLength(4000);
+            e.Property(a => a.Instrucao).IsRequired().HasMaxLength(1000);
+        });
+
+        modelBuilder.Entity<AlertaOficialArea>(e =>
+        {
+            e.HasKey(x => new { x.AlertaOficialId, x.SubprefeituraId });
+            e.HasOne(x => x.AlertaOficial).WithMany(a => a.Areas).HasForeignKey(x => x.AlertaOficialId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Subprefeitura).WithMany().HasForeignKey(x => x.SubprefeituraId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<ExecucaoSincronizacao>(e =>
         {
             e.HasKey(x => x.Id);
@@ -368,8 +392,13 @@ public class PulsarDbContext : DbContext
         var idSul    = new Guid("10000000-0000-0000-0000-000000000005");
 
         var idSaoPaulo = new Guid("30000000-0000-0000-0000-000000000001");
+        var idBaixada  = new Guid("30000000-0000-0000-0000-000000000002");
+        var idRegiaoBaixada = new Guid("10000000-0000-0000-0000-000000000006");
         modelBuilder.Entity<Cidade>().HasData(
-            new { Id = idSaoPaulo, Nome = "São Paulo", Uf = "SP", CodigoIbge = "3550308", CriadoEm = seedDate, AtualizadoEm = seedDate });
+            new { Id = idSaoPaulo, Nome = "São Paulo", Uf = "SP", CodigoIbge = "3550308", Publica = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            // Baixada Santista (projeto 3, 17/11/2026): uma cidade com os 9 municípios como áreas.
+            // Aberta ao público em 27/11/2026 (E5); o código IBGE fica em cada área.
+            new { Id = idBaixada, Nome = "Baixada Santista", Uf = "SP", Publica = true, CriadoEm = seedDate, AtualizadoEm = seedDate });
 
         const string fusoSp = "America/Sao_Paulo";
         modelBuilder.Entity<Regiao>().HasData(
@@ -377,7 +406,8 @@ public class PulsarDbContext : DbContext
             new { Id = idLeste,  Nome = "Leste",  CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
             new { Id = idNorte,  Nome = "Norte",  CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
             new { Id = idOeste,  Nome = "Oeste",  CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
-            new { Id = idSul,    Nome = "Sul",    CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate }
+            new { Id = idSul,    Nome = "Sul",    CidadeId = idSaoPaulo, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate },
+            new { Id = idRegiaoBaixada, Nome = "Baixada Santista", CidadeId = idBaixada, FusoHorario = fusoSp, CriadoEm = seedDate, AtualizadoEm = seedDate }
         );
 
         // --- Subprefeituras (32) — centróides WGS-84 calculados dos polígonos oficiais ---
@@ -423,6 +453,25 @@ public class PulsarDbContext : DbContext
         };
 
         modelBuilder.Entity<Subprefeitura>().HasData(subprefeituras);
+
+        // Os 9 municípios da Baixada como áreas. A posição é a da sede (centro urbano), não o
+        // centro do polígono: em Santos, Bertioga, Itanhaém e Peruíbe ele cai na serra, e a coleta
+        // de clima e a estação mais perto sairiam erradas.
+        object Municipio(int n, string nome, string ibge, double lat, double lon) => new
+        {
+            Id = new Guid($"20000000-0000-0000-0000-0000000000{n:D2}"), RegiaoId = idRegiaoBaixada, Nome = nome,
+            CodigoIbge = ibge, Latitude = lat, Longitude = lon, Ativa = true, CriadoEm = seedDate, AtualizadoEm = seedDate,
+        };
+        modelBuilder.Entity<Subprefeitura>().HasData(
+            Municipio(33, "Santos",       "3548500", -23.9608, -46.3336),
+            Municipio(34, "São Vicente",  "3551009", -23.9631, -46.3919),
+            Municipio(35, "Guarujá",      "3518701", -23.9931, -46.2564),
+            Municipio(36, "Cubatão",      "3513504", -23.8950, -46.4254),
+            Municipio(37, "Praia Grande", "3541000", -24.0058, -46.4028),
+            Municipio(38, "Bertioga",     "3506359", -23.8486, -46.1396),
+            Municipio(39, "Mongaguá",     "3531100", -24.0931, -46.6208),
+            Municipio(40, "Itanhaém",     "3522109", -24.1831, -46.7889),
+            Municipio(41, "Peruíbe",      "3537602", -24.3200, -46.9983));
 
         // --- Catálogo de dicas por perigo (3 perigos × Atenção/Alerta × 3 = 18) ---
         // Fontes: orientações da Defesa Civil (chuva, alagamento, vendaval) e guia de onda

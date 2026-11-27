@@ -9,8 +9,9 @@ namespace Pulsar.API.Services;
 
 /// <summary>
 /// Traz a chuva acumulada das estações do CEMADEN para o banco, uma vez por ciclo, e responde
-/// qual estação vale para cada subprefeitura. Uma chamada por município: para cobrir outra
-/// cidade basta acrescentar o código do IBGE em Cemaden:Municipios. A tela lê daqui, nunca do
+/// qual estação vale para cada subprefeitura. Uma chamada por município, e os municípios saem das
+/// áreas ativas (código IBGE da área, ou o da cidade quando a área é subprefeitura): outra cidade
+/// entra cadastrando as áreas, sem configuração. A tela lê daqui, nunca do
 /// CEMADEN: se ele cai, as leituras envelhecem e a região fica sem esse dado sozinha.
 /// </summary>
 public class CemadenService : ICemadenService
@@ -46,18 +47,15 @@ public class CemadenService : ICemadenService
         limpo = System.Text.RegularExpressions.Regex.Replace(limpo, @"(\p{L})(\d+)$", "$1 $2");
         return Acentos.GetValueOrDefault(limpo, limpo);
     }
-    private static readonly string[] MunicipiosPadrao = ["3550308"];
 
     private readonly PulsarDbContext _db;
     private readonly ICemadenClient _client;
-    private readonly IConfiguration _configuration;
     private readonly ILogger<CemadenService> _logger;
 
-    public CemadenService(PulsarDbContext db, ICemadenClient client, IConfiguration configuration, ILogger<CemadenService> logger)
+    public CemadenService(PulsarDbContext db, ICemadenClient client, ILogger<CemadenService> logger)
     {
         _db = db;
         _client = client;
-        _configuration = configuration;
         _logger = logger;
     }
 
@@ -70,8 +68,13 @@ public class CemadenService : ICemadenService
         }
 
         var agora = DateTime.UtcNow;
-        var municipios = _configuration.GetSection("Cemaden:Municipios").Get<string[]>() is { Length: > 0 } lista
-            ? lista : MunicipiosPadrao;
+        var municipios = await _db.Subprefeituras.AsNoTracking()
+            .Where(s => s.Ativa)
+            .Select(s => s.CodigoIbge ?? s.Regiao.Cidade.CodigoIbge)
+            .Where(c => c != null)
+            .Select(c => c!)
+            .Distinct()
+            .ToListAsync(ct);
 
         foreach (var codIbge in municipios)
         {

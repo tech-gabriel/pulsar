@@ -47,7 +47,7 @@ public class EstatisticasControllerTests : IClassFixture<PulsarWebApplicationFac
         raiz.GetProperty("geradoEm").GetString().Should().Be(hoje.ToString("yyyy-MM-dd"));
 
         var subs = raiz.GetProperty("subprefeituras");
-        subs.EnumerateObject().Should().HaveCount(32);
+        subs.EnumerateObject().Should().HaveCount(41).And.Contain(p => p.Name == "santos");
         var m = subs.GetProperty("mooca");
         m.GetProperty("diasCompletos").GetInt32().Should().Be(1);
         m.GetProperty("diasAlerta").GetInt32().Should().Be(1);
@@ -58,6 +58,6 @@ public class EstatisticasControllerTests : IClassFixture<PulsarWebApplicationFac
 
         var zonas = raiz.GetProperty("zonas");
         zonas.EnumerateObject().Select(p => p.Name).Should()
-            .BeEquivalentTo(["zona-centro", "zona-leste", "zona-norte", "zona-oeste", "zona-sul"]);
+            .BeEquivalentTo(["zona-centro", "zona-leste", "zona-norte", "zona-oeste", "zona-sul", "zona-baixada-santista"]);
     }
 }

@@ -29,8 +29,28 @@ public class SubprefeituraRepository : ISubprefeituraRepository
 
     public async Task<Subprefeitura?> ObterComRegiaoAsync(Guid id)
         => await _context.Subprefeituras
-            .Include(s => s.Regiao)
+            .Include(s => s.Regiao).ThenInclude(r => r.Cidade)
             .FirstOrDefaultAsync(s => s.Id == id);
+
+    public async Task<Subprefeitura?> ObterVisivelAsync(Guid id, bool incluirOcultas = false)
+        => await _context.Subprefeituras
+            .FirstOrDefaultAsync(s => s.Id == id && s.Ativa && (incluirOcultas || s.Regiao.Cidade.Publica));
+
+    public async Task<IReadOnlyList<Subprefeitura>> ObterVisiveisAsync(bool incluirOcultas = false)
+        => await _context.Subprefeituras
+            .Where(s => s.Ativa && (incluirOcultas || s.Regiao.Cidade.Publica))
+            .ToListAsync();
+
+    public async Task<IReadOnlyList<string>> ObterNomesDasCidadesVisiveisAsync(bool incluirOcultas = false)
+        => await _context.Cidades.Where(c => incluirOcultas || c.Publica).Select(c => c.Nome).ToListAsync();
+
+    public async Task<IReadOnlyList<Subprefeitura>> ObterVisiveisComResumoAsync(bool incluirOcultas = false)
+        => await _context.Subprefeituras
+            .Where(s => s.Ativa && (incluirOcultas || s.Regiao.Cidade.Publica))
+            .Include(s => s.Regiao).ThenInclude(r => r.Cidade)
+            .Include(s => s.Scores.OrderByDescending(sc => sc.Timestamp).ThenByDescending(sc => sc.CriadoEm).Take(1))
+            .Include(s => s.Leituras.OrderByDescending(l => l.Timestamp).Take(1))
+            .ToListAsync();
 
     public async Task<Subprefeitura?> ObterComUltimaLeituraAsync(Guid id)
         => await _context.Subprefeituras

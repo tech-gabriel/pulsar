@@ -12,13 +12,14 @@ import { tooltipSubprefeituraHtml } from './tooltipSub';
 import { ZOOM, ZOOM_TRECHOS } from './zoom';
 import { ID_TRECHOS_FILL } from './TrechosLayer';
 import { criarRepouso } from './repouso';
+import { CAMADAS_TOQUE_POR_CIMA } from './camadasPorCima';
 
 export const ID_FONTE_REGIOES = 'pulsar-regioes';
 const FILL = 'pulsar-regioes-fill';
 const BORDA = 'pulsar-regioes-borda';
 const SEL = 'pulsar-regioes-sel';
 /** Camadas que, quando tocadas, não selecionam a subprefeitura de baixo (alagamentos e trechos). */
-const CAMADAS_POR_CIMA = ['pulsar-ocorr-cluster-toque', 'pulsar-ocorr-cluster', 'pulsar-ocorr-ponto', ID_TRECHOS_FILL];
+const CAMADAS_POR_CIMA = [...CAMADAS_TOQUE_POR_CIMA, ID_TRECHOS_FILL];
 
 const HOVER: ExpressionSpecification = ['boolean', ['feature-state', 'hover'], false];
 const BASE_FILL: ExpressionSpecification = ['+', ['get', 'fillOpacity'], ['case', HOVER, 0.15, 0]];

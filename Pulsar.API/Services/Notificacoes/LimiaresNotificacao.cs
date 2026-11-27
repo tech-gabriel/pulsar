@@ -145,6 +145,12 @@ public static class LimiaresNotificacao
     // PrioridadePerigoCge é o terceiro nível acima de tudo: o CGE dizendo que alagou. Também
     // isenta do teto diário, pelo mesmo motivo do score alto.
     public const int PrioridadePerigoCge = 0;
+    // Alerta oficial da Defesa Civil (regra C do user): o Extremo é tão grave quanto o Perigo do
+    // CGE; os outros níveis só saem com sinal próprio do Pulsar, e aí valem como o score alto.
+    public const int PrioridadeAlertaExtremo = PrioridadePerigoCge;
+    public const int PrioridadeAlertaComSinal = 1;
+    /// <summary>Chuva medida em 3 h que conta como sinal próprio para um alerta oficial de chuva.</summary>
+    public const double ChuvaMedidaSinalMm = 1.0;
     public const int PrioridadeScoreAlto = 1;
     public const int PrioridadeChuvaPrevista = 2;
     // Chuva forte MEDIDA num posto ao lado (AS7): é fato, então vence o "começou a chover",
@@ -182,6 +188,17 @@ public static class LimiaresNotificacao
     /// <summary>Até que distância (entre centros de subprefeitura) um posto é "perto".</summary>
     public const double RaioChuvaPertoKm = 8.0;
     public const int CooldownChuvaMedidaPertoHoras = 3;
+    /// <summary>Alerta oficial não Extremo: 1 aviso por área nesta janela; subir de nível passa (user, 18/11/2026).</summary>
+    public const int CooldownAlertaOficialHoras = 3;
+
+    /// <summary>
+    /// Até quantas horas depois do último aviso do mesmo tipo o alerta novo sai como lembrete ("segue valendo").
+    /// Além disso é outra onda, e o texto oficial diz mais.
+    /// </summary>
+    public const int JanelaLembreteAlertaOficialHoras = 6;
+
+    /// <summary>Nome do gatilho da Defesa Civil: o job de alertas roda só ele no alerta Extremo.</summary>
+    public const string GatilhoAlertaOficial = "alerta-oficial";
 
     /// <summary>
     /// Depois de um Alerta de um perigo, quanto tempo a Atenção DO MESMO PERIGO fica calada

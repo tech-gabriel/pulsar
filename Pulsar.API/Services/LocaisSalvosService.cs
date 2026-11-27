@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Cobertura;
 using Microsoft.EntityFrameworkCore;
 using Pulsar.API.Domain.Entities;
 using Pulsar.API.Domain.Enums;
@@ -37,14 +38,20 @@ public class LocaisSalvosService : ILocaisSalvosService
         }).ToList();
     }
 
-    public async Task<SalvarLocalResponseDto> SalvarAsync(Guid usuarioId, TipoLocal tipo, SalvarLocalRequestDto req)
+    public async Task<SalvarLocalResponseDto> SalvarAsync(Guid usuarioId, TipoLocal tipo, SalvarLocalRequestDto req, bool incluirOcultas = false)
     {
         var rotulo = (req.Rotulo ?? string.Empty).Trim();
         if (rotulo.Length == 0 || rotulo.Length > LocalSalvo.MaxRotulo)
             throw new ArgumentException("Endereço inválido.");
-        if (!LocalSalvo.DentroDeSaoPaulo(req.Latitude, req.Longitude))
-            throw new ArgumentException("Esse endereço fica fora da cidade de São Paulo.");
-        var sub = await _db.Subprefeituras.AsNoTracking().FirstOrDefaultAsync(s => s.Id == req.SubprefeituraId)
+        // Só as cidades que a pessoa vê: a caixa da Baixada (que pega parte do ABC) não vale para
+        // quem não a vê. O Admin vê a cidade escondida para conferir antes da abertura.
+        var cidades = await _db.Cidades.Where(c => incluirOcultas || c.Publica).Select(c => c.Nome).ToListAsync();
+        if (!CoberturaCidades.Dentro(req.Latitude, req.Longitude, cidades))
+            throw new ArgumentException("Esse endereço fica fora da área coberta pelo Pulsar.");
+        // Área de cidade escondida só para o Admin: senão ela entrava nos favoritos e ligava push
+        // para quem não a vê.
+        var sub = await _db.Subprefeituras.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == req.SubprefeituraId && (incluirOcultas || s.Regiao.Cidade.Publica))
             ?? throw new ArgumentException("Subprefeitura não encontrada.");
 
         var agora = DateTime.UtcNow;

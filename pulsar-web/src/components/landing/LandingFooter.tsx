@@ -5,6 +5,7 @@ import SeloVersao from '../SeloVersao';
 import { track } from '../../analytics';
 import { INSTAGRAM_URL } from '../../data/social';
 import { zonas, PREFIXO_REGIAO } from '../../data/regioes-seo';
+import { CIDADE_BAIXADA } from '../../data/baixada-seo';
 
 export default function LandingFooter() {
   return (
@@ -19,8 +20,8 @@ export default function LandingFooter() {
             <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 18, letterSpacing: '-0.035em', color: 'var(--text-primary)' }}>
               pulsar
             </p>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              Monitoramento climático de São Paulo
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', textWrap: 'balance' }}>
+              Monitoramento climático de São Paulo e da Baixada Santista
             </p>
           </div>
         </div>
@@ -64,7 +65,7 @@ export default function LandingFooter() {
           className="mb-3 text-center sm:text-left"
           style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', fontFamily: 'var(--font-heading)' }}
         >
-          Risco de alagamento por região de São Paulo
+          Risco de alagamento por região
         </p>
         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-5 gap-y-2.5" style={{ fontSize: 14 }}>
           {zonas.map((z) => (
@@ -77,6 +78,13 @@ export default function LandingFooter() {
               {z.nome}
             </Link>
           ))}
+          <Link
+            to={CIDADE_BAIXADA.path}
+            className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            {CIDADE_BAIXADA.nome}
+          </Link>
           <Link
             to="/pontos-de-alagamento-hoje"
             className="inline-block py-1 transition-colors hover:text-[var(--text-primary)]"

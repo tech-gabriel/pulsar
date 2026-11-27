@@ -1,4 +1,5 @@
-// Regenera public/sitemap.xml a partir das URLs institucionais + zonas + subprefeituras.
+// Regenera public/sitemap.xml a partir das URLs institucionais + zonas + subprefeituras +
+// municípios da Baixada.
 // Roda no build (antes do vite build) para não divergir do routeamento. Os slugs
 // vêm das chaves dos snapshots JSON (o .ts não é importável em todo Node do build).
 // O teste seo-consistencia.test.ts garante que batem com regiaoPaths().
@@ -12,6 +13,7 @@ const lerJson = (arq) => JSON.parse(readFileSync(join(raiz, 'src', 'data', arq),
 
 const institucionais = [
   { loc: '/', changefreq: 'weekly', priority: '1.0' },
+  { loc: '/baixada-santista', changefreq: 'weekly', priority: '0.9' },
   { loc: '/sobre', changefreq: 'monthly', priority: '0.7' },
   { loc: '/novidades', changefreq: 'weekly', priority: '0.6' },
   // Página da temporada de chuva: o conteúdo ao vivo muda a toda hora, o pré-renderizado toda semana.
@@ -29,7 +31,13 @@ const subsUrls = Object.keys(ocorrencias.subprefeituras).map((s) => ({
   loc: `/risco-de-alagamento/${s}`, changefreq: 'weekly', priority: '0.7', lastmod: ocorrencias.geradoEm,
 }));
 
-const todas = [...institucionais, ...zonasUrls, ...subsUrls];
+// Municípios da Baixada: mudam quando o snapshot da Baixada é regerado.
+const baixada = lerJson('baixada-snapshot.json');
+const municipiosUrls = Object.keys(baixada.municipios).map((s) => ({
+  loc: `/risco-de-alagamento/${s}`, changefreq: 'weekly', priority: '0.7', lastmod: baixada.geradoEm,
+}));
+
+const todas = [...institucionais, ...zonasUrls, ...subsUrls, ...municipiosUrls];
 const urls = todas
   .map((u) => `  <url>\n    <loc>${ORIGIN}${u.loc}</loc>\n${u.lastmod ? `    <lastmod>${u.lastmod}</lastmod>\n` : ''}    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`)
   .join('\n');

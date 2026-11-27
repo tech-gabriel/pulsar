@@ -21,9 +21,13 @@ public class CelulasController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Obter(
         [FromServices] IRiscoCelulasService riscoCelulas, [FromServices] IMemoryCache cache, CancellationToken ct = default)
-        => Ok(await cache.GetOrCreateAsync("celulas-agora", async entrada =>
+    {
+        // Duas visões em cache: a do Admin traz também a cidade escondida (Baixada em conferência).
+        var admin = User.IsInRole("ADMIN");
+        return Ok(await cache.GetOrCreateAsync(admin ? "celulas-agora-admin" : "celulas-agora", async entrada =>
         {
             entrada.AbsoluteExpirationRelativeToNow = Validade;
-            return await riscoCelulas.AgoraAsync(ct);
+            return await riscoCelulas.AgoraAsync(admin, ct);
         }));
+    }
 }

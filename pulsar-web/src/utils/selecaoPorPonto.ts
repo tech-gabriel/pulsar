@@ -1,6 +1,7 @@
 import type { FeatureCollection } from 'geojson';
 import { resolverRegiaoPorPonto } from './geo';
 import { normalizarNome } from './texto';
+import { nomeDaCobertura } from '../features/cidade/cidade';
 
 export type OrigemPonto = 'busca' | 'localizacao';
 
@@ -10,9 +11,9 @@ export interface Selecao<S> {
   aviso: string | null;
 }
 
-const AVISO_FORA: Record<OrigemPonto, string> = {
-  busca: 'Esse endereço está fora da área coberta (São Paulo capital).',
-  localizacao: 'Você parece estar fora de São Paulo capital, a área que cobrimos hoje.',
+const AVISO_FORA: Record<OrigemPonto, (cobertura: string) => string> = {
+  busca: (c) => `Esse endereço está fora da área coberta (${c}).`,
+  localizacao: (c) => `Você parece estar fora de ${c}, a área que cobrimos hoje.`,
 };
 
 /**
@@ -21,7 +22,7 @@ const AVISO_FORA: Record<OrigemPonto, string> = {
  * o aviso adequado à origem (busca × localização). Lógica antes embutida em
  * `handleSelecionarEndereco`, agora compartilhada por busca e geolocalização.
  */
-export function resolverSelecao<S extends { nome: string; zona: string }>(
+export function resolverSelecao<S extends { nome: string; zona: string; cidade?: string }>(
   lat: number,
   lon: number,
   geojson: FeatureCollection | null,
@@ -30,7 +31,7 @@ export function resolverSelecao<S extends { nome: string; zona: string }>(
 ): Selecao<S> {
   const resolvido = resolverRegiaoPorPonto(lat, lon, geojson);
   if (!resolvido) {
-    return { sub: null, zona: null, aviso: AVISO_FORA[origem] };
+    return { sub: null, zona: null, aviso: AVISO_FORA[origem](nomeDaCobertura(subprefeituras)) };
   }
   const sub =
     subprefeituras.find(

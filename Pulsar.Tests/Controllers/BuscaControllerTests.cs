@@ -16,6 +16,7 @@ namespace Pulsar.Tests.Controllers;
 public class BuscaControllerTests : IClassFixture<PulsarWebApplicationFactory>
 {
     private readonly HttpClient _client;
+    private readonly PulsarWebApplicationFactory _factory;
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -23,7 +24,11 @@ public class BuscaControllerTests : IClassFixture<PulsarWebApplicationFactory>
     };
 
     public BuscaControllerTests(PulsarWebApplicationFactory factory)
-        => _client = factory.CreateClient();
+    {
+        _factory = factory;
+        _client = factory.CreateClient();
+        CidadeEscondida.EsconderBaixada(factory);
+    }
 
     [Fact]
     public async Task BuscarEnderecos_SemToken_Retorna401()
@@ -93,6 +98,33 @@ public class BuscaControllerTests : IClassFixture<PulsarWebApplicationFactory>
     [Fact]
     public async Task RuaPerto_SemToken_Retorna401()
         => (await _client.GetAsync("/api/busca/rua?lat=-23.555&lon=-46.59")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+    // Baixada escondida até o lançamento: a conta comum busca só na capital; o Admin, nas duas.
+    [Fact]
+    public async Task Busca_UsuarioComum_MandaSoACaixaDaCapital()
+    {
+        var token = await TokenAsync();
+        (await EnviarAsync("/api/busca/enderecos?q=cobertura%20comum", token)).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        FakeGeocodingClient.BboxPorConsulta["cobertura comum"].Should().Be("-46.83,-24.01,-46.36,-23.35");
+    }
+
+    [Fact]
+    public async Task Busca_Admin_MandaAsDuas()
+    {
+        var token = (await SessaoAdmin.ObterAsync(_factory, _client)).Token;
+        (await EnviarAsync("/api/busca/enderecos?q=cobertura%20admin", token)).StatusCode.Should().Be(HttpStatusCode.OK);
+
+        FakeGeocodingClient.BboxPorConsulta["cobertura admin"].Should().Be("-47.13,-24.5,-45.79,-23.35");
+    }
+
+    [Fact]
+    public async Task RuaPerto_EmSantos_AdminOk_UsuarioComum400()
+    {
+        const string santos = "/api/busca/rua?lat=-23.9608&lon=-46.3336";
+        (await EnviarAsync(santos, await TokenAsync())).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await EnviarAsync(santos, (await SessaoAdmin.ObterAsync(_factory, _client)).Token)).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
 
     // ── Helpers ────────────────────────────────────────────────
 

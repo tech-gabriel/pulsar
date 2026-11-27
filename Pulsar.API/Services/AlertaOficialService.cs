@@ -1,0 +1,140 @@
+using Microsoft.EntityFrameworkCore;
+using Pulsar.API.Domain.Alertas;
+using Pulsar.API.Domain.Entities;
+using Pulsar.API.Domain.Score;
+using Pulsar.API.External.Interfaces;
+using Pulsar.API.Repositories.Data;
+using Pulsar.API.Services.Interfaces;
+
+namespace Pulsar.API.Services;
+
+/// <summary>
+/// Traz os alertas oficiais da Defesa Civil para o banco. O motor de notificações e o app leem
+/// daqui, nunca do feed: uma queda da IDAP só deixa os alertas gravados valerem até a validade.
+/// </summary>
+public class AlertaOficialService : IAlertaOficialService
+{
+    /// <summary>Quanto tempo um alerta fica guardado depois da validade (conferência e calibração).</summary>
+    public static readonly TimeSpan Retencao = TimeSpan.FromDays(30);
+
+    private readonly PulsarDbContext _db;
+    private readonly IIdapClient _feed;
+    private readonly IGradeCelulas _grade;
+    private readonly ILogger<AlertaOficialService> _logger;
+
+    public AlertaOficialService(PulsarDbContext db, IIdapClient feed, IGradeCelulas grade, ILogger<AlertaOficialService> logger)
+    {
+        _db = db;
+        _feed = feed;
+        _grade = grade;
+        _logger = logger;
+    }
+
+    public async Task<ResultadoSincronizacao> SincronizarAsync(DateTime agoraUtc, CancellationToken ct = default)
+    {
+        var execucao = new ExecucaoSincronizacao
+        {
+            Fonte = ExecucaoSincronizacao.FonteIdap, IniciadoEm = agoraUtc, CriadoEm = agoraUtc, AtualizadoEm = agoraUtc,
+        };
+        var alertas = await _feed.ObterAsync(ct);
+        if (alertas is null)
+        {
+            execucao.FinalizadoEm = DateTime.UtcNow;
+            execucao.Erro = "Feed da IDAP indisponível.";
+            _db.ExecucoesSincronizacao.Add(execucao);
+            await _db.SaveChangesAsync(ct);
+            return new ResultadoSincronizacao(false, 0, 0, false);
+        }
+
+        var subs = await _db.Subprefeituras.Include(s => s.Regiao).ThenInclude(r => r.Cidade)
+            .Where(s => s.Ativa).ToListAsync(ct);
+        var areas = subs.Select(s => new AreaParaCasar(s.Id, s.CodigoIbge ?? s.Regiao.Cidade.CodigoIbge,
+            _grade.DaArea(s.Nome).Select(c => (c.Lat, c.Lon)).ToList())).ToList();
+
+        var ids = alertas.Select(a => a.Identificador).Concat(alertas.SelectMany(a => a.Referencias)).ToHashSet();
+        var existentes = await _db.AlertasOficiais.Where(a => ids.Contains(a.Identificador))
+            .ToDictionaryAsync(a => a.Identificador, ct);
+
+        // Última leitura boa: um Extremo gravado antes, com início entre ela e agora, passou a valer nesta.
+        var anterior = await _db.ExecucoesSincronizacao
+            .Where(e => e.Fonte == ExecucaoSincronizacao.FonteIdap && e.Sucesso && e.IniciadoEm < agoraUtc)
+            .MaxAsync(e => (DateTime?)e.IniciadoEm, ct);
+
+        int novos = 0, cancelados = 0, novosExtremos = 0;
+        foreach (var a in alertas.OrderBy(a => a.EnviadoUtc))
+        {
+            // Cancel e Update encerram o alerta a que se referem; o Update segue como alerta novo.
+            if (a.TipoMensagem is "Cancel" or "Update")
+                foreach (var r in a.Referencias)
+                    if (existentes.TryGetValue(r, out var antigo) && antigo.CanceladoEmUtc is null)
+                    {
+                        antigo.CanceladoEmUtc = a.EnviadoUtc;
+                        cancelados++;
+                    }
+            if (a.TipoMensagem == "Cancel" || existentes.ContainsKey(a.Identificador)) continue;
+            // Sem identificador utilizável não há upsert nem chave de push: o alerta cai, e só ele.
+            if (a.Identificador.Length is 0 or > 100)
+            {
+                _logger.LogWarning("Alerta oficial sem identificador válido ignorado ({Tamanho} caracteres).", a.Identificador.Length);
+                continue;
+            }
+
+            var atingidas = CasamentoAlerta.Areas(a, areas);
+            if (atingidas.Count == 0) continue;
+            var novo = new AlertaOficial
+            {
+                // Texto cortado no limite da coluna: um alerta grande demais não pode derrubar o lote inteiro.
+                Identificador = a.Identificador, Evento = Cortar(a.Evento, 120), Gravidade = Cortar(a.Gravidade, 20),
+                Urgencia = Cortar(a.Urgencia, 20), InicioUtc = a.InicioUtc, ExpiraUtc = a.ExpiraUtc,
+                Emissor = Cortar(a.Emissor, 200), Titulo = Cortar(a.Titulo, 500), Descricao = Cortar(a.Descricao, 4000), Instrucao = Cortar(a.Instrucao, 1000),
+                RecebidoEmUtc = agoraUtc,
+                Areas = atingidas.Select(id => new AlertaOficialArea { SubprefeituraId = id }).ToList(),
+            };
+            _db.AlertasOficiais.Add(novo);
+            existentes[a.Identificador] = novo;
+            novos++;
+            // O motor só vê o alerta a partir do início: Extremo com início futuro conta quando começa a valer.
+            if (novo.Gravidade == "Extreme" && novo.InicioUtc <= agoraUtc) novosExtremos++;
+        }
+
+        var limite = agoraUtc - Retencao;
+        _db.AlertasOficiais.RemoveRange(await _db.AlertasOficiais.Where(a => a.ExpiraUtc < limite).ToListAsync(ct));
+
+        if (anterior is { } desde)
+            novosExtremos += await _db.AlertasOficiais.CountAsync(a => a.Gravidade == "Extreme" && a.CanceladoEmUtc == null
+                && a.RecebidoEmUtc <= desde && a.InicioUtc > desde && a.InicioUtc <= agoraUtc && a.ExpiraUtc > agoraUtc, ct);
+
+        execucao.Sucesso = true;
+        execucao.Lidas = alertas.Count;
+        execucao.Novas = novos;
+        execucao.FinalizadoEm = DateTime.UtcNow;
+        _db.ExecucoesSincronizacao.Add(execucao);
+        await _db.SaveChangesAsync(ct);
+
+        var haAlertaSp = alertas.Any(a => a.TipoMensagem != "Cancel" && a.InicioUtc <= agoraUtc && agoraUtc < a.ExpiraUtc
+            && (a.Emissor.Contains("São Paulo", StringComparison.OrdinalIgnoreCase) || a.Emissor.Contains("(SP)", StringComparison.Ordinal)));
+        if (novos > 0 || cancelados > 0)
+            _logger.LogInformation("Alertas oficiais: {Novos} novos, {Cancelados} cancelados ({Lidos} no feed).", novos, cancelados, alertas.Count);
+        return new ResultadoSincronizacao(true, novos, cancelados, haAlertaSp, novosExtremos);
+    }
+
+    /// <summary>Corta no limite sem partir um emoji ao meio (surrogate solto o Postgres recusa em UTF-8).</summary>
+    private static string Cortar(string texto, int limite)
+    {
+        if (texto.Length <= limite) return texto;
+        var n = char.IsHighSurrogate(texto[limite - 1]) ? limite - 1 : limite;
+        return texto[..n];
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<AlertaOficial>>> AtivosPorAreaAsync(
+        DateTime agoraUtc, CancellationToken ct = default)
+    {
+        var ativos = await _db.AlertasOficiais.Include(a => a.Areas)
+            .Where(a => a.CanceladoEmUtc == null && a.InicioUtc <= agoraUtc && a.ExpiraUtc > agoraUtc)
+            .ToListAsync(ct);
+        return ativos.SelectMany(a => a.Areas.Select(ar => (ar.SubprefeituraId, Alerta: a)))
+            .GroupBy(x => x.SubprefeituraId)
+            .ToDictionary(g => g.Key,
+                g => (IReadOnlyList<AlertaOficial>)g.Select(x => x.Alerta).OrderByDescending(x => x.InicioUtc).ToList());
+    }
+}

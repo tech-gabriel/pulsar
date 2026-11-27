@@ -66,4 +66,15 @@ public class PublicoControllerTests : IClassFixture<PulsarWebApplicationFactory>
         itens.Where(i => i.GetProperty("nome").GetString() != "Mooca")
             .Should().OnlyContain(i => i.GetProperty("alagamentosCge").GetArrayLength() == 0);
     }
+
+    [Fact]
+    public async Task RiscoAgora_ComBaixadaPublica_IncluiOsMunicipios()
+    {
+        var resposta = await _factory.CreateClient().GetAsync(Rota);
+
+        resposta.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var json = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        var nomes = json.RootElement.EnumerateArray().Select(i => i.GetProperty("nome").GetString()).ToList();
+        nomes.Should().Contain(["Santos", "São Vicente", "Guarujá", "Cubatão", "Praia Grande", "Bertioga", "Mongaguá", "Itanhaém", "Peruíbe"]);
+    }
 }

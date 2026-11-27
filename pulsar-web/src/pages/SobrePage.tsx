@@ -10,14 +10,14 @@ import { useSeoHead } from '../hooks/useSeoHead';
 export default function SobrePage() {
   useSeoHead({
     title: 'Pulsar · Sobre',
-    descricao: 'Por que o Pulsar existe e como ele calcula o risco climático de São Paulo, subprefeitura por subprefeitura.',
+    descricao: 'Por que o Pulsar existe e como ele calcula o risco climático de São Paulo e da Baixada Santista, região por região.',
     path: '/sobre',
   });
 
   return (
     <LandingDocShell
       titulo="Sobre o Pulsar"
-      subtitulo="Um mapa vivo do risco climático de São Paulo, feito para ajudar as pessoas a decidir melhor no dia a dia."
+      subtitulo="Um mapa vivo do risco climático de São Paulo e da Baixada Santista, feito para ajudar as pessoas a decidir melhor no dia a dia."
     >
       <h2>Por que o Pulsar existe</h2>
       <p>
@@ -32,9 +32,9 @@ export default function SobrePage() {
 
       <h2>Como funciona, em resumo</h2>
       <p>
-        A cada 15 minutos, coletamos as condições climáticas de toda a cidade a partir de
-        fontes oficiais. Com esses dados, calculamos um <strong>Score de Perigo</strong> de 0 a 100
-        para cada uma das 32 subprefeituras. Você acompanha tudo num mapa de calor e num painel,
+        A cada 15 minutos, coletamos as condições climáticas de São Paulo e da Baixada Santista a
+        partir de fontes oficiais. Com esses dados, calculamos um <strong>Score de Perigo</strong> de 0
+        a 100 para cada uma das 32 subprefeituras da capital e cada um dos 9 municípios da Baixada. Você acompanha tudo num mapa de calor e num painel,
         e pode ser avisado quando a sua região mudar de patamar.
       </p>
 

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -11,13 +13,15 @@ const dados = vi.hoisted(() => ({
   adicionarVarios: vi.fn(),
   ativar: vi.fn(),
   favoritos: [] as { subprefeituraId: string }[],
+  subprefeituras: [{ id: 's1', nome: 'Mooca', zona: 'Leste', faixaRisco: 'BAIXO' }] as { id: string; nome: string; zona: string; cidade?: string; faixaRisco: string }[],
+  detectar: vi.fn(),
 }));
 vi.mock('../../hooks/useFavoritos', () => ({ useFavoritos: () => ({ favoritos: dados.favoritos, carregando: false, adicionarVarios: dados.adicionarVarios, isFavorito: () => false, toggleFavorito: vi.fn() }) }));
 vi.mock('../../hooks/useNotificacoesPrefs', () => ({ useNotificacoesPrefs: () => ({ prefs: { alertaAlto: true, alertaModerado: false, resumoDiario: false } }) }));
 vi.mock('../../hooks/usePushSubscription', () => ({ usePushSubscription: () => ({ estado: 'inativo', ocupado: false, ativar: dados.ativar, desativar: vi.fn() }) }));
 vi.mock('../../features/ativacao/useInstalacao', () => ({ useInstalacao: () => ({ instalacao: 'indisponivel', plataforma: 'desktop', instalar: vi.fn() }), estaInstalado: () => false }));
-vi.mock('../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => ({ subprefeituras: [{ id: 's1', nome: 'Mooca', zona: 'Leste', faixaRisco: 'BAIXO' }], carregando: false, erro: null, recarregar: vi.fn(), ultimaAtualizacao: null }) }));
-vi.mock('../../hooks/useGeolocalizacao', () => ({ useGeolocalizacao: () => ({ detectar: vi.fn(), carregando: false }) }));
+vi.mock('../../hooks/useSubprefeituras', () => ({ useSubprefeituras: () => ({ subprefeituras: dados.subprefeituras, carregando: false, erro: null, recarregar: vi.fn(), ultimaAtualizacao: null }) }));
+vi.mock('../../hooks/useGeolocalizacao', () => ({ useGeolocalizacao: () => ({ detectar: dados.detectar, carregando: false }) }));
 
 import BoasVindasPage from '../../pages/BoasVindasPage';
 
@@ -27,6 +31,8 @@ describe('BoasVindasPage', () => {
     navigate.mockClear();
     dados.ativar.mockReset();
     dados.favoritos = [];
+    dados.subprefeituras = [{ id: 's1', nome: 'Mooca', zona: 'Leste', faixaRisco: 'BAIXO' }];
+    dados.detectar.mockReset();
     dados.adicionarVarios.mockReset().mockImplementation(async (ids: string[]) => {
       dados.favoritos = ids.map((subprefeituraId) => ({ subprefeituraId }));
       return true;
@@ -74,5 +80,22 @@ describe('BoasVindasPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Pular' }));
     expect(localStorage.getItem('pulsar-ativacao-vista-v1')).toBe('1');
     expect(navigate).toHaveBeenCalledWith('/app?regiao=itaquera', { replace: true });
+  });
+
+  // A localização nas boas-vindas resolve também as áreas da Baixada (para quem a vê).
+  it('a localização acha um município da Baixada', async () => {
+    dados.subprefeituras = [
+      { id: 's1', nome: 'Mooca', zona: 'Leste', cidade: 'São Paulo', faixaRisco: 'BAIXO' },
+      { id: 'b8', nome: 'Itanhaém', zona: 'Baixada Santista', cidade: 'Baixada Santista', faixaRisco: 'BAIXO' },
+    ];
+    const baixada = readFileSync(join(process.cwd(), 'public', 'baixada-santista-leve.geojson'), 'utf-8');
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(new Response(
+      url.includes('baixada-santista-leve') ? baixada : JSON.stringify({ type: 'FeatureCollection', features: [] })))));
+    dados.detectar.mockResolvedValue({ lat: -24.1831, lon: -46.7889 });
+    render(<MemoryRouter><BoasVindasPage /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: 'Começar' }));
+    await new Promise((r) => setTimeout(r, 50)); // os contornos chegam
+    fireEvent.click(await screen.findByRole('button', { name: /Usar minha localização/ }));
+    expect(await screen.findByRole('checkbox', { name: 'Itanhaém' })).toBeChecked();
   });
 });

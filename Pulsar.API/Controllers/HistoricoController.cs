@@ -34,8 +34,8 @@ public class HistoricoController : ControllerBase
         if (horas < 1 || horas > 24)
             return BadRequest(new { mensagem = "O parâmetro 'horas' deve estar entre 1 e 24." });
 
-        var subprefeitura = await _subprefeituraRepository.ObterPorIdAsync(id);
-        if (subprefeitura is null || !subprefeitura.Ativa)
+        var subprefeitura = await _subprefeituraRepository.ObterVisivelAsync(id, incluirOcultas: User.IsInRole("ADMIN"));
+        if (subprefeitura is null)
             return NotFound(new { mensagem = "Subprefeitura não encontrada." });
 
         var leituras = (await _leituraRepository.ObterHistoricoAsync(id, horas)).ToList();

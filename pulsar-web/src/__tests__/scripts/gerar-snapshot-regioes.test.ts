@@ -28,11 +28,11 @@ describe('gerar-snapshot-regioes: validar', () => {
   it('rejeita conjunto incompleto de subprefeituras (o sitemap depende das chaves)', () => {
     expect(() => validar(ESPERADO, resposta((r) => {
       delete (r.subprefeituras as Record<string, unknown>).mooca;
-    }))).toThrow(/subprefeituras: esperava 32/);
+    }))).toThrow(/subprefeituras: faltando mooca/);
   });
 
   it('rejeita zonas faltando', () => {
-    expect(() => validar(ESPERADO, resposta((r) => { r.zonas = {}; }))).toThrow(/zonas: esperava 5/);
+    expect(() => validar(ESPERADO, resposta((r) => { r.zonas = {}; }))).toThrow(/zonas: faltando/);
   });
 
   it('rejeita valor sem diasCompletos', () => {
@@ -61,5 +61,15 @@ describe('gerar-snapshot-regioes: validar', () => {
       delete s.lapa;
       s['lapa-nova'] = null;
     }))).toThrow(/lapa/);
+  });
+
+  it('descarta as áreas da Baixada: 32+9 áreas e 5+1 zonas viram só as 32 e 5 de SP', () => {
+    const out = validar(ESPERADO, resposta((r) => {
+      const s = r.subprefeituras as Record<string, unknown>;
+      for (const m of ['santos', 'sao-vicente', 'guaruja', 'cubatao', 'praia-grande', 'bertioga', 'mongagua', 'itanhaem', 'peruibe']) s[m] = est;
+      (r.zonas as Record<string, unknown>)['zona-baixada-santista'] = null;
+    }));
+    expect(Object.keys(out.subprefeituras).sort()).toEqual(ESPERADO.subprefeituras.slice().sort());
+    expect(Object.keys(out.zonas).sort()).toEqual(ESPERADO.zonas.slice().sort());
   });
 });

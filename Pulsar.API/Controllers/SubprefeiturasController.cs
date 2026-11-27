@@ -1,3 +1,4 @@
+using Pulsar.API.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Pulsar.API.DTOs;
@@ -24,14 +25,16 @@ public class SubprefeiturasController : ControllerBase
     private readonly IPontoAlagamentoCgeRepository _pontosCge;
     private readonly IEstacaoCgeService _estacoesCge;
     private readonly ICemadenService _cemaden;
+    private readonly IAlertaOficialService _alertas;
     private readonly ILogger<SubprefeiturasController> _logger;
 
     public SubprefeiturasController(
         ISubprefeituraRepository subprefeituraRepository, IPrevisaoService previsaoService, IPontoAlagamentoCgeRepository pontosCge,
-        IEstacaoCgeService estacoesCge, ICemadenService cemaden, ILogger<SubprefeiturasController> logger)
+        IEstacaoCgeService estacoesCge, ICemadenService cemaden, IAlertaOficialService alertas, ILogger<SubprefeiturasController> logger)
     {
         _estacoesCge = estacoesCge;
         _cemaden = cemaden;
+        _alertas = alertas;
         _logger = logger;
         _subprefeituraRepository = subprefeituraRepository;
         _previsaoService = previsaoService;
@@ -43,17 +46,19 @@ public class SubprefeiturasController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<SubprefeituraResumoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ObterTodas()
     {
-        var subs = await _subprefeituraRepository.ObterAtivasComResumoAsync();
+        var subs = await _subprefeituraRepository.ObterVisiveisComResumoAsync(incluirOcultas: User.IsInRole("ADMIN"));
         // Mesma validade que o aviso de Perigo usa: o mapa não mostra ponto que o push não mandaria.
         var pontos = (await _pontosCge.ObterAtivosAsync(DateTime.UtcNow - LimiaresNotificacao.ValidadePontoCge))
             .ToLookup(p => p.SubprefeituraId);
         var medidas = await ObterChuvaMedidaAsync();
         var cemadenPorSub = await ObterChuvaCemadenAsync();
+        var alertas = await ObterAlertasOficiaisAsync();
         var dtos = subs
             .Select(s =>
             {
-                var dto = SubprefeituraDto.Preencher(new SubprefeituraResumoDto { Zona = s.Regiao?.Nome ?? string.Empty }, s);
+                var dto = SubprefeituraDto.Preencher(new SubprefeituraResumoDto { Zona = s.Regiao?.Nome ?? string.Empty, Cidade = s.Regiao?.Cidade?.Nome ?? string.Empty }, s);
                 dto.AlagamentosCge = [.. pontos[s.Id].Select(PontoAlagamentoCgeDto.De)];
+                dto.AlertasOficiais = [.. (alertas.GetValueOrDefault(s.Id) ?? []).Select(AlertaOficialDto.De)];
                 var cemaden = cemadenPorSub.GetValueOrDefault(s.Id);
                 dto.ChuvaMedida = ChuvaMedidaDto.De(medidas.GetValueOrDefault(s.Id), cemaden);
                 dto.Chuva24h = Chuva24hDto.De(cemaden);
@@ -62,6 +67,20 @@ public class SubprefeiturasController : ControllerBase
             .OrderByDescending(d => d.ScoreAtual?.Valor ?? -1)
             .ThenBy(d => d.Nome, StringComparer.Ordinal);
         return Ok(dtos);
+    }
+
+    /// <summary>Alerta oficial também é enfeite da lista: falha na leitura abre o mapa sem eles.</summary>
+    private async Task<IReadOnlyDictionary<Guid, IReadOnlyList<AlertaOficial>>> ObterAlertasOficiaisAsync()
+    {
+        try
+        {
+            return await _alertas.AtivosPorAreaAsync(DateTime.UtcNow, HttpContext.RequestAborted);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Falha ao ler os alertas oficiais para a lista de subprefeituras.");
+            return new Dictionary<Guid, IReadOnlyList<AlertaOficial>>();
+        }
     }
 
     /// <summary>
@@ -104,8 +123,8 @@ public class SubprefeiturasController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ObterPrevisao(Guid id, CancellationToken ct)
     {
-        var sub = await _subprefeituraRepository.ObterPorIdAsync(id);
-        if (sub is null || !sub.Ativa)
+        var sub = await _subprefeituraRepository.ObterVisivelAsync(id, incluirOcultas: User.IsInRole("ADMIN"));
+        if (sub is null)
             return NotFound(new { mensagem = "Subprefeitura não encontrada." });
 
         return Ok(await _previsaoService.ObterFaixasSubprefeituraAsync(id, MaxFaixasPrevisao, ct));

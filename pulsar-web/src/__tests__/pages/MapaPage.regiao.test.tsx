@@ -58,6 +58,18 @@ afterEach(() => {
 });
 
 describe('MapaPage deep-link', () => {
+
+  // V1 C: a linha "E mais N áreas" do sino abre a lista da cidade no painel (e enquadra a cidade).
+  it('?cidade=<nome> troca o painel para a cidade e enquadra o mapa nela', async () => {
+    SUBS.push({ ...ITAQUERA, id: 'b1', nome: 'Santos', zona: 'Baixada Santista', cidade: 'Baixada Santista' } as typeof ITAQUERA);
+    try {
+      render(<MemoryRouter initialEntries={['/app?cidade=Baixada%20Santista']}><MapaPage /></MemoryRouter>);
+      await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toHaveTextContent('|Baixada Santista'));
+      expect(screen.getAllByRole('button', { name: 'Baixada Santista', pressed: true }).length).toBeGreaterThan(0);
+      // A cidade fica lembrada para a próxima visita.
+      await waitFor(() => expect(localStorage.getItem('pulsar-cidade-painel')).toBe('Baixada Santista'));
+    } finally { SUBS.pop(); localStorage.removeItem('pulsar-cidade-painel'); }
+  });
   it('?regiao=<zona> enquadra a zona no mapa, sem painel de zona', async () => {
     render(<MemoryRouter initialEntries={['/app?regiao=zona-leste']}><MapaPage /></MemoryRouter>);
     await waitFor(() => expect(screen.getByTestId('mapa-base-stub')).toHaveTextContent('|Leste'));
@@ -72,6 +84,14 @@ describe('MapaPage deep-link', () => {
   it('?regiao=<subprefeitura> abre o detalhe dela', async () => {
     render(<MemoryRouter initialEntries={['/app?regiao=itaquera']}><MapaPage /></MemoryRouter>);
     await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Itaquera' }).length).toBeGreaterThan(0));
+  });
+
+  it('?regiao=<município da Baixada> abre o detalhe dele (página pública da cidade)', async () => {
+    SUBS.push({ ...ITAQUERA, id: 'b1', nome: 'Santos', zona: 'Baixada Santista', cidade: 'Baixada Santista' } as typeof ITAQUERA);
+    try {
+      render(<MemoryRouter initialEntries={['/app?regiao=santos']}><MapaPage /></MemoryRouter>);
+      await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Santos' }).length).toBeGreaterThan(0));
+    } finally { SUBS.pop(); localStorage.removeItem('pulsar-cidade-painel'); }
   });
 
   it('reage à troca do parâmetro com o mapa já aberto (sino, busca)', async () => {

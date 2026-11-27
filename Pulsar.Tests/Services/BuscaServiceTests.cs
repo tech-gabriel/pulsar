@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Pulsar.API.Domain.Score;
 using Microsoft.Extensions.Caching.Memory;
 using Pulsar.API.External.Interfaces;
 using Pulsar.API.Services;
@@ -11,13 +12,15 @@ namespace Pulsar.Tests.Services;
 /// </summary>
 public class BuscaServiceTests
 {
+    private static readonly string[] Capital = ["São Paulo"];
+
     private sealed class StubGeocodingClient : IGeocodingClient
     {
         public int Chamadas { get; private set; }
         public string NomeRua { get; set; } = "Rua Taquari";
         public IReadOnlyList<EnderecoGeocodificado> Resultado { get; set; } = [];
 
-        public Task<IReadOnlyList<EnderecoGeocodificado>> BuscarAsync(string consulta, CancellationToken ct = default)
+        public Task<IReadOnlyList<EnderecoGeocodificado>> BuscarAsync(string consulta, string bbox, CancellationToken ct = default)
         {
             Chamadas++;
             return Task.FromResult(Resultado);
@@ -52,7 +55,10 @@ public class BuscaServiceTests
     }
 
     private static BuscaService CriarService(IGeocodingClient client)
-        => new(client, new MemoryCache(new MemoryCacheOptions()));
+        => new(client, new MemoryCache(new MemoryCacheOptions()), Grade);
+
+    // A grade real (a mesma da produção): o filtro de cobertura depende dos trechos de cada cidade.
+    private static readonly GradeCelulas Grade = new(Microsoft.Extensions.Logging.Abstractions.NullLogger<GradeCelulas>.Instance);
 
     [Theory]
     [InlineData(null)]
@@ -64,7 +70,7 @@ public class BuscaServiceTests
         var stub = new StubGeocodingClient();
         var service = CriarService(stub);
 
-        var resultado = await service.BuscarEnderecosAsync(termo);
+        var resultado = await service.BuscarEnderecosAsync(termo, Capital);
 
         resultado.Should().BeEmpty();
         stub.Chamadas.Should().Be(0);
@@ -84,7 +90,7 @@ public class BuscaServiceTests
             ],
         };
 
-        var resultado = await CriarService(stub).BuscarEnderecosAsync("rua da mooca dedupe");
+        var resultado = await CriarService(stub).BuscarEnderecosAsync("rua da mooca dedupe", Capital);
 
         // O POI "Rua Da Mooca 1001" é a mesma rua com número: sai também.
         resultado.Select(r => r.Nome).Should().Equal("Rua da Mooca");
@@ -102,7 +108,7 @@ public class BuscaServiceTests
             ],
         };
 
-        var resultado = await CriarService(stub).BuscarEnderecosAsync("mooca poi outro");
+        var resultado = await CriarService(stub).BuscarEnderecosAsync("mooca poi outro", Capital);
 
         resultado.Should().HaveCount(2);
     }
@@ -127,7 +133,7 @@ public class BuscaServiceTests
         };
         var service = CriarService(stub);
 
-        var resultado = await service.BuscarEnderecosAsync("paulista");
+        var resultado = await service.BuscarEnderecosAsync("paulista", Capital);
 
         resultado.Should().HaveCount(1);
         resultado[0].Nome.Should().Be("Av. Paulista");
@@ -146,10 +152,59 @@ public class BuscaServiceTests
         };
         var service = CriarService(stub);
 
-        await service.BuscarEnderecosAsync("paulista");
+        await service.BuscarEnderecosAsync("paulista", Capital);
         // Trim + lower geram a mesma chave de cache → não chama o client de novo.
-        await service.BuscarEnderecosAsync("  PAULISTA ");
+        await service.BuscarEnderecosAsync("  PAULISTA ", Capital);
 
         stub.Chamadas.Should().Be(1);
+    }
+
+    // O Admin (com a Baixada) e a conta comum veem resultados diferentes para o mesmo termo:
+    // o cache de um não pode servir o outro.
+    [Fact]
+    public async Task Busca_CacheSeparaPorCobertura()
+    {
+        var stub = new StubGeocodingClient { Resultado = [new EnderecoGeocodificado("X", 1, 2)] };
+        var service = CriarService(stub);
+
+        await service.BuscarEnderecosAsync("avenida ana costa", Capital);
+        await service.BuscarEnderecosAsync("avenida ana costa", ["São Paulo", "Baixada Santista"]);
+
+        stub.Chamadas.Should().Be(2);
+    }
+
+    // A busca devolve só o que cai na cobertura de quem busca: o centro de Santos que o provedor
+    // manda (o contorno do município cruza a caixa da capital) não chega à conta comum.
+    [Fact]
+    public async Task Busca_DescartaResultadoForaDaCobertura()
+    {
+        var stub = new StubGeocodingClient
+        {
+            Resultado =
+            [
+                new EnderecoGeocodificado("Santos, São Paulo, Brasil", -23.96094, -46.31663, "Santos", "municipality"),
+                new EnderecoGeocodificado("Rua da Mooca, São Paulo", -23.556, -46.598, "Rua da Mooca", "address"),
+            ],
+        };
+        var resultado = await CriarService(stub).BuscarEnderecosAsync("santos e mooca", Capital);
+        resultado.Select(r => r.Nome).Should().Equal("Rua da Mooca");
+    }
+
+    // O retângulo da capital pega São Vicente, Praia Grande e a Zona Noroeste de Santos: quem decide
+    // a cidade do ponto é o trecho mais perto dele. A conta comum não recebe a Baixada; o Admin sim.
+    [Fact]
+    public async Task Busca_PontoDaBaixadaDentroDaCaixaDaCapital_SoParaQuemVeABaixada()
+    {
+        var stub = new StubGeocodingClient
+        {
+            Resultado =
+            [
+                new EnderecoGeocodificado("São Vicente, São Paulo, Brasil", -23.96642, -46.38614, "São Vicente", "municipality"),
+                new EnderecoGeocodificado("Praia Grande, São Paulo, Brasil", -24.00898, -46.41449, "Praia Grande", "municipality"),
+                new EnderecoGeocodificado("Rua da Mooca, São Paulo", -23.556, -46.598, "Rua da Mooca", "address"),
+            ],
+        };
+        (await CriarService(stub).BuscarEnderecosAsync("vicente", Capital)).Select(r => r.Nome).Should().Equal("Rua da Mooca");
+        (await CriarService(stub).BuscarEnderecosAsync("vicente", ["São Paulo", "Baixada Santista"])).Should().HaveCount(3);
     }
 }

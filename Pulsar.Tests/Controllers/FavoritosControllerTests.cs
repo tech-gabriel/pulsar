@@ -138,6 +138,20 @@ public class FavoritosControllerTests : IClassFixture<PulsarWebApplicationFactor
     }
 
     [Fact]
+    public async Task AdicionarFavorito_Santos_ContaComumConsegue()
+    {
+        var (token, usuarioId) = await CadastrarAsync();
+        Autenticar(token);
+        var santos = Guid.Parse("20000000-0000-0000-0000-000000000033");
+
+        var resp = await _client.PostAsJsonAsync($"/api/usuarios/{usuarioId}/favoritos",
+            new AdicionarFavoritoRequestDto { SubprefeituraId = santos });
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        Limpar();
+    }
+
+    [Fact]
     public async Task UsuarioExcluido_FavoritasSomemPorCascata()
     {
         var (token, usuarioId) = await CadastrarAsync();

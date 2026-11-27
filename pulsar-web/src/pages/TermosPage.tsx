@@ -19,12 +19,12 @@ export default function TermosPage() {
     <LandingDocShell
       titulo="Termos de Uso"
       subtitulo="As regras para usar o Pulsar. Ao criar uma conta ou usar o serviço, você concorda com elas."
-      atualizadoEm="27 de junho de 2026"
+      atualizadoEm="27 de novembro de 2026"
     >
       <h2>1. O que é o Pulsar</h2>
       <p>
-        O Pulsar é uma ferramenta de monitoramento e visualização do risco climático da cidade de
-        São Paulo, organizada por subprefeitura. Ele reúne e interpreta dados de fontes públicas
+        O Pulsar é uma ferramenta de monitoramento e visualização do risco climático de São Paulo e
+        da Baixada Santista, organizada por subprefeitura na capital e por município na Baixada. Ele reúne e interpreta dados de fontes públicas
         para apoiar suas decisões do dia a dia. O projeto é mantido por uma pessoa física, de forma
         independente.
       </p>

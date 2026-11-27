@@ -72,7 +72,7 @@ public static class GradeH3
             ?? throw new InvalidOperationException($"Área do geojson sem correspondência nas subprefeituras: '{nomeDoGeojson}'");
     }
 
-    private static string Chave(string nome)
+    internal static string Chave(string nome)
         => new(nome.Normalize(NormalizationForm.FormD)
             .Where(c => char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark && char.IsLetterOrDigit(c))
             .Select(char.ToUpperInvariant).ToArray());
@@ -82,13 +82,16 @@ public static class GradeH3
     /// toca alguma área, para que nenhum ponto da cidade fique sem trecho; na divisa, a
     /// célula fica com a área que ocupa a maior parte dela.
     /// </summary>
-    public static IReadOnlyDictionary<string, string> Celulas(string geojson)
+    /// <param name="nomeDaArea">Traduz o nome do geojson para o nome do banco. Padrão: as
+    /// subprefeituras da capital. A Baixada já grava no geojson o nome do banco.</param>
+    public static IReadOnlyDictionary<string, string> Celulas(string geojson, Func<string, string>? nomeDaArea = null)
     {
+        nomeDaArea ??= NomeCanonico;
         var areas = new List<(string Nome, Polygon Poligono, Geometry Valido)>();
         using var doc = JsonDocument.Parse(geojson);
         foreach (var f in doc.RootElement.GetProperty("features").EnumerateArray())
         {
-            var nome = NomeCanonico(f.GetProperty("properties").GetProperty("nm_subprefeitura").GetString() ?? "");
+            var nome = nomeDaArea(f.GetProperty("properties").GetProperty("nm_subprefeitura").GetString() ?? "");
             var geo = f.GetProperty("geometry");
             var coords = geo.GetProperty("coordinates");
             var poligonos = geo.GetProperty("type").GetString() == "MultiPolygon"
@@ -124,7 +127,7 @@ public static class GradeH3
         return celulas;
     }
 
-    private static Polygon Poligono(JsonElement aneis)
+    internal static Polygon Poligono(JsonElement aneis)
     {
         var lista = aneis.EnumerateArray()
             .Select(a => GeometryFactory.Default.CreateLinearRing(
@@ -165,6 +168,68 @@ public static class GradeH3
         {
             var m = kv.Value <= 0 ? 1.0 : 1 + AcrescimoMaximo * (distintos.IndexOf(kv.Value) + 1) / distintos.Count;
             return Math.Round(p.Fator(areaDaCelula[kv.Key]) * m, 4);
+        });
+    }
+
+    /// <summary>Trecho que não é pelo menos metade área de risco do SGB fica sem "costuma alagar" (opção A do user, 17/11/2026).</summary>
+    public const double CorteSgb = 0.5;
+
+    public static Polygon Hexagono(string h3) => new H3Index(h3).GetCellBoundary();
+
+    /// <summary>
+    /// Peso do SGB em cada célula, de 0 a 1: fração coberta por suscetibilidade Alta mais metade
+    /// da fração coberta por Média ou enxurrada (fora da Alta, sem somar as duas). Célula que
+    /// encosta num setor de risco mapeado em campo (setorização) vale 1. Abaixo de <see cref="CorteSgb"/>, zero:
+    /// sem o corte, 78% dos trechos ganhavam "costuma alagar" e a trava de excesso de alerta reprovava.
+    /// </summary>
+    public static Dictionary<string, double> PesoSgb(IEnumerable<string> celulas, IReadOnlyList<PoligonoSgb> poligonos)
+    {
+        var alta = Indice(poligonos.Where(p => p.Classe == "Alta"));
+        var meia = Indice(poligonos.Where(p => p.Classe is "Média" or "Enxurrada"));
+        var setor = Indice(poligonos.Where(p => p.Classe == "Setor"));
+        var r = new Dictionary<string, double>();
+        foreach (var c in celulas)
+        {
+            var hex = Hexagono(c);
+            if (setor.Query(hex.EnvelopeInternal).Any(g => g.Intersects(hex))) { r[c] = 1; continue; }
+            var emAlta = Recorte(alta, hex);
+            var emMeia = Recorte(meia, hex);
+            if (emMeia is not null && emAlta is not null) emMeia = emMeia.Difference(emAlta);
+            var peso = ((emAlta?.Area ?? 0) + 0.5 * (emMeia?.Area ?? 0)) / hex.Area;
+            peso = Math.Round(Math.Min(1, peso), 4);
+            r[c] = peso >= CorteSgb ? peso : 0;
+        }
+        return r;
+    }
+
+    private static NetTopologySuite.Index.Strtree.STRtree<Geometry> Indice(IEnumerable<PoligonoSgb> ps)
+    {
+        var t = new NetTopologySuite.Index.Strtree.STRtree<Geometry>();
+        foreach (var p in ps) t.Insert(p.Forma.EnvelopeInternal, p.Forma);
+        t.Build();
+        return t;
+    }
+
+    /// <summary>A parte do hexágono coberta pelos polígonos do índice, já unida (sem contar sobreposição duas vezes).</summary>
+    private static Geometry? Recorte(NetTopologySuite.Index.Strtree.STRtree<Geometry> t, Polygon hex)
+    {
+        var pedacos = t.Query(hex.EnvelopeInternal).Select(g => g.Intersection(hex)).Where(g => !g.IsEmpty).ToList();
+        return pedacos.Count == 0 ? null : NetTopologySuite.Operation.Union.UnaryUnionOp.Union(pedacos);
+    }
+
+    /// <summary>
+    /// Fator da célula = fator da área × m, com m pelo rank do peso entre os pesos positivos
+    /// distintos (a mesma régua de <see cref="Fatores"/> na capital). Peso zero fica com o da área.
+    /// </summary>
+    public static Dictionary<string, double> FatoresPorPeso(
+        IReadOnlyDictionary<string, double> peso, IReadOnlyDictionary<string, string> areaDaCelula,
+        IReadOnlyDictionary<string, double> fatorDaArea)
+    {
+        var distintos = peso.Values.Where(v => v > 0).Distinct().OrderBy(v => v).ToList();
+        return peso.ToDictionary(kv => kv.Key, kv =>
+        {
+            var m = kv.Value <= 0 ? 1.0 : 1 + AcrescimoMaximo * (distintos.IndexOf(kv.Value) + 1) / distintos.Count;
+            return Math.Round(fatorDaArea[areaDaCelula[kv.Key]] * m, 4);
         });
     }
 }

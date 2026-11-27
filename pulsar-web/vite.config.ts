@@ -139,7 +139,7 @@ export default defineConfig({
       manifest: {
         name: 'Pulsar — Monitoramento Climático',
         short_name: 'Pulsar',
-        description: 'Monitoramento climático em tempo real para São Paulo, com alertas de risco por região.',
+        description: 'Monitoramento climático em tempo real para São Paulo e a Baixada Santista, com alertas de risco por região.',
         lang: 'pt-BR',
         start_url: '/app',
         display: 'standalone',

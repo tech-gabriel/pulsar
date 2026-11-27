@@ -25,14 +25,15 @@ function trechoEm(r: RotaAvaliacao): TrechoRota | undefined {
 
 // Só a chuva medida agora decide (16/11/2026): "pode ir" e "com atenção" não citam hora prevista.
 // A previsão só aparece no "esperar até".
-export function textoVeredito(r: RotaAvaliacao, fuso?: string): { titulo: string; detalhe: string } {
+export function textoVeredito(r: RotaAvaliacao, fuso?: string, atravessaSerra = false): { titulo: string; detalhe: string } {
   const trecho = trechoEm(r);
   const em = trecho ? emNomeDe(trecho.nome) : 'no caminho';
   const hora = (utc: string | null) => (utc ? rotuloHora(utc, fuso) : null);
 
   switch (r.estado) {
     case 'PodeIr':
-      return { titulo: 'Pode ir: caminho tranquilo', detalhe: 'Sem chuva forte medida no caminho agora.' };
+      // Entre cidades só as pontas são avaliadas: a frase não promete o caminho todo (a serra fica de fora).
+      return { titulo: 'Pode ir: caminho tranquilo', detalhe: atravessaSerra ? 'Sem chuva forte medida na saída e na chegada agora.' : 'Sem chuva forte medida no caminho agora.' };
     case 'ComAtencao':
       return { titulo: 'Pode ir, com atenção', detalhe: `Está chovendo ${em}. Fique de olho.` };
     case 'Esperar': {
@@ -47,4 +48,17 @@ export function textoVeredito(r: RotaAvaliacao, fuso?: string): { titulo: string
     default:
       return { titulo: 'Sem leitura recente no caminho', detalhe: `Não temos dado recente ${em}. Confira antes de sair.` };
   }
+}
+
+/** Rota entre a capital e a Baixada: a serra não tem trecho nem medida (desenho de 17/11/2026). */
+export const TEXTO_SERRA = 'A serra não é avaliada: confira a Ecovias antes de descer';
+
+/**
+ * O texto da serra pelo sentido (decisão do user, 18/11/2026): descendo ou subindo pela Ecovias
+ * (Anchieta e Imigrantes, o caminho até a Baixada a partir de qualquer ponta da capital); com
+ * Bertioga numa das pontas a estrada é a Mogi-Bertioga, fora da Ecovias.
+ */
+export function textoSerra(desce: boolean, bertioga: boolean): string {
+  if (bertioga) return 'A serra não é avaliada: confira as condições da estrada antes de ir';
+  return desce ? TEXTO_SERRA : 'A serra não é avaliada: confira a Ecovias antes de subir';
 }

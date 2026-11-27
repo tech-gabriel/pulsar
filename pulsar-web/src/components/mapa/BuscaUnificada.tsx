@@ -6,6 +6,7 @@ import { useDicaLocalizacao } from '../../hooks/useDicaLocalizacao';
 import type { EnderecoBusca } from '../../types';
 import BadgeRisco from '../ui/BadgeRisco';
 import { buscarAreas, type Area } from '../../features/cidade/areas';
+import { cidadesDasAreas } from '../../features/cidade/cidade';
 
 interface Props {
   /** Subprefeituras para achar pelo nome (resultado local, aparece antes dos endereços). */
@@ -247,7 +248,7 @@ export default function BuscaUnificada({ areas, onSelecionarArea, onSelecionar, 
         <ul ref={listaRef} onKeyDown={teclarNaLista} className="superficie rounded-2xl mt-1.5 max-h-72 overflow-y-auto overflow-x-hidden">
           {subs.length > 0 && (
             <>
-              <li className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wider mapa-txt-suave">Subprefeituras</li>
+              <li className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wider mapa-txt-suave">{cidadesDasAreas(areas).length > 1 ? 'Áreas' : 'Subprefeituras'}</li>
               {subs.map((a) => (
                 <li key={a.id}>
                   <button type="button" onClick={() => selecionarArea(a)} className="mapa-item flex w-full items-center gap-2 px-3 py-2.5 text-left min-h-11">

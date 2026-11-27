@@ -18,7 +18,7 @@ export default function PrivacidadePage() {
     <LandingDocShell
       titulo="Política de Privacidade"
       subtitulo="Como o Pulsar coleta, usa e protege seus dados, em linguagem direta e em conformidade com a LGPD."
-      atualizadoEm="9 de novembro de 2026"
+      atualizadoEm="27 de novembro de 2026"
     >
       <h2>Resumo rápido</h2>
       <ul>
@@ -35,7 +35,7 @@ export default function PrivacidadePage() {
           queira publicar nome civil/endereço completos, basta acrescentar aqui. */}
       <h2>1. Quem somos e quem é o responsável</h2>
       <p>
-        O Pulsar é um projeto independente de monitoramento climático da cidade de São Paulo,
+        O Pulsar é um projeto independente de monitoramento climático de São Paulo e da Baixada Santista,
         mantido por uma pessoa física. Para fins da Lei Geral de Proteção de Dados (LGPD, Lei
         nº 13.709/2018), o responsável pelo tratamento dos seus dados (controlador) é o mantenedor
         do projeto, que você pode contatar pelo e-mail indicado no fim desta página. Esse mesmo
@@ -50,7 +50,7 @@ export default function PrivacidadePage() {
           e e-mail).
         </li>
         <li>
-          <strong>Preferências de uso:</strong> subprefeituras favoritas, tema (claro ou escuro) e suas
+          <strong>Preferências de uso:</strong> regiões favoritas, tema (claro ou escuro) e suas
           configurações de notificação.
         </li>
         <li>
@@ -103,7 +103,7 @@ export default function PrivacidadePage() {
           de uso do serviço.
         </li>
         <li>
-          <strong>Personalizar a experiência</strong> (subprefeituras favoritas, tema) e
+          <strong>Personalizar a experiência</strong> (regiões favoritas, tema) e
           <strong> enviar as notificações que você ativou:</strong> execução do contrato e,
           no caso do push, o seu consentimento.
         </li>

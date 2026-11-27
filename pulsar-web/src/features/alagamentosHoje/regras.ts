@@ -1,5 +1,6 @@
 import type { FeatureCollection } from 'geojson';
 import { subprefeituras, type SubprefeituraSeo } from '../../data/regioes-seo';
+import { municipios, type MunicipioSeo } from '../../data/baixada-seo';
 import { resolverRegiaoPorPonto } from '../../utils/geo';
 import { normalizarNome } from '../../utils/texto';
 
@@ -48,6 +49,17 @@ export function subprefeituraDoDistrito(distrito: string): SubprefeituraSeo | un
 export function subprefeituraDoPonto(lat: number, lon: number, geojsonLeve: FeatureCollection | null): SubprefeituraSeo | null {
   const achada = resolverRegiaoPorPonto(lat, lon, geojsonLeve);
   return achada ? (porNome.get(normalizarNome(achada.subprefeituraNome)) ?? null) : null;
+}
+
+/** Município da Baixada pelo nome, sem acento nem caixa ("guaruja" acha Guarujá). */
+export function municipioPorNome(nome: string): MunicipioSeo | undefined {
+  return municipios.find((m) => normalizarNome(m.nome) === normalizarNome(nome));
+}
+
+/** Em qual município da Baixada o ponto está, pelo contorno leve da Baixada. Fora: null. */
+export function municipioDoPonto(lat: number, lon: number, geojsonLeve: FeatureCollection | null): MunicipioSeo | null {
+  const achada = resolverRegiaoPorPonto(lat, lon, geojsonLeve);
+  return achada ? (municipioPorNome(achada.subprefeituraNome) ?? null) : null;
 }
 
 /** Nome que a API devolve (o mesmo do seed) para o slug das páginas. */

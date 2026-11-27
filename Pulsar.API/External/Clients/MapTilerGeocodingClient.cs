@@ -5,13 +5,11 @@ namespace Pulsar.API.External.Clients;
 
 /// <summary>
 /// Geocoding via MapTiler (https://docs.maptiler.com/cloud/api/geocoding/).
-/// Resultados enviesados para o município de São Paulo (bbox + proximity, country=br).
+/// Resultados limitados à cobertura de quem busca (bbox) e enviesados para o centro de SP (proximity).
 /// Sem chave configurada (MapTiler:ApiKey), degrada para lista vazia sem quebrar.
 /// </summary>
 public class MapTilerGeocodingClient : IGeocodingClient
 {
-    // Bounding box do município de São Paulo: minLon,minLat,maxLon,maxLat (oeste,sul,leste,norte).
-    private const string BboxSaoPaulo = "-46.826,-24.008,-46.365,-23.357";
     // Centro de SP em lon,lat — enviesa os resultados por proximidade.
     private const string ProximitySaoPaulo = "-46.6333,-23.5505";
     private const int LimiteResultados = 6;
@@ -33,7 +31,7 @@ public class MapTilerGeocodingClient : IGeocodingClient
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<EnderecoGeocodificado>> BuscarAsync(string consulta, CancellationToken ct = default)
+    public async Task<IReadOnlyList<EnderecoGeocodificado>> BuscarAsync(string consulta, string bbox, CancellationToken ct = default)
     {
         var apiKey = _configuration["MapTiler:ApiKey"];
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -48,7 +46,7 @@ public class MapTilerGeocodingClient : IGeocodingClient
             $"?key={apiKey}" +
             "&country=br&language=pt&autocomplete=true" +
             $"&limit={LimiteResultados}&types={TiposBusca}" +
-            $"&bbox={BboxSaoPaulo}&proximity={ProximitySaoPaulo}";
+            $"&bbox={bbox}&proximity={ProximitySaoPaulo}";
 
         using var response = await client.GetAsync(url, ct);
         response.EnsureSuccessStatusCode();

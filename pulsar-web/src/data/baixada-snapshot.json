@@ -1,0 +1,131 @@
+{
+  "geradoEm": "2026-11-27",
+  "municipios": {
+    "cubatao": {
+      "trechos": 212,
+      "trechosRisco": 75,
+      "pontos": [
+        {
+          "nome": "Vale Verde",
+          "data": "2025-08-06",
+          "fonte": "https://jovempan.com.br/brasil/temporal-alaga-ruas-arrasta-carros-e-causa-transtornos-em-cidades-da-baixada-santista/"
+        }
+      ]
+    },
+    "bertioga": {
+      "trechos": 739,
+      "trechosRisco": 65,
+      "pontos": []
+    },
+    "santos": {
+      "trechos": 397,
+      "trechosRisco": 129,
+      "pontos": [
+        {
+          "nome": "Rua Governador Pedro de Toledo",
+          "data": "2025-08-06",
+          "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/"
+        },
+        {
+          "nome": "Avenida Nossa Senhora de Fátima com Rua Ana Santos",
+          "data": "2025-08-06",
+          "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/"
+        },
+        {
+          "nome": "Avenida Rangel Pestana",
+          "data": "2025-08-06",
+          "fonte": "https://www.abcdoabc.com.br/fortes-chuvas-em-santos-causam-alagamentos-e-interdicoes/"
+        },
+        {
+          "nome": "Rua Doutor Arnaldo de Carvalho",
+          "data": "2025-02-18",
+          "fonte": "https://www.boqnews.com/cidades/fortes-chuvas-deixam-moradores-ilhados-e-veiculos-de-baixo-da-agua-em-santos/"
+        },
+        {
+          "nome": "Tetéu",
+          "data": "2025-01-29",
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+        },
+        {
+          "nome": "Rua Greenhalgh",
+          "data": "2025-01-29",
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+        },
+        {
+          "nome": "Praça Washington",
+          "data": "2025-01-26",
+          "fonte": "https://santaportal.com.br/baixada/temporal-causa-alagamentos-e-gera-transtornos-nas-cidades-da-regiao"
+        }
+      ]
+    },
+    "guaruja": {
+      "trechos": 236,
+      "trechosRisco": 87,
+      "pontos": [
+        {
+          "nome": "Jardim Progresso",
+          "data": "2025-02-18",
+          "fonte": "https://santaportal.com.br/saovicente/tempestade-causa-alagamentos-na-baixada-santista/"
+        },
+        {
+          "nome": "Avenida Santos Dumont",
+          "data": "2025-01-29",
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+        }
+      ]
+    },
+    "itanhaem": {
+      "trechos": 853,
+      "trechosRisco": 234,
+      "pontos": []
+    },
+    "mongagua": {
+      "trechos": 200,
+      "trechosRisco": 37,
+      "pontos": [
+        {
+          "nome": "Agenor de Campos",
+          "data": "2026-01-04",
+          "fonte": "https://vtvnews.com.br/baixada-santista/chuva-intensa-causa-alagamentos-e-afeta-abastecimento-de-agua-na-baixada-is-bs"
+        }
+      ]
+    },
+    "sao-vicente": {
+      "trechos": 210,
+      "trechosRisco": 89,
+      "pontos": [
+        {
+          "nome": "Avenida das Nações Unidas",
+          "data": "2025-02-18",
+          "fonte": "https://santaportal.com.br/saovicente/tempestade-causa-alagamentos-na-baixada-santista/"
+        },
+        {
+          "nome": "Avenida Presidente Wilson",
+          "data": "2025-01-29",
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+        },
+        {
+          "nome": "Rua Augusto de Oliveira Santos",
+          "data": "2025-01-26",
+          "fonte": "https://santaportal.com.br/baixada/temporal-causa-alagamentos-e-gera-transtornos-nas-cidades-da-regiao"
+        }
+      ]
+    },
+    "praia-grande": {
+      "trechos": 225,
+      "trechosRisco": 75,
+      "pontos": [
+        {
+          "nome": "Mirim",
+          "data": "2025-01-29",
+          "fonte": "https://santaportal.com.br/baixada/chuva-castiga-baixada-santista-e-defesa-civil-reforca-alerta-para-moradores"
+        }
+      ]
+    },
+    "peruibe": {
+      "trechos": 515,
+      "trechosRisco": 115,
+      "pontos": []
+    }
+  }
+}

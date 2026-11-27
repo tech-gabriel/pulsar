@@ -15,14 +15,12 @@ public class CidadeSeedTests
         using var ctx = new PulsarDbContext(new DbContextOptionsBuilder<PulsarDbContext>().UseSqlite(conn).Options);
         ctx.Database.EnsureCreated();
 
-        var cidades = await ctx.Cidades.ToListAsync();
-        cidades.Should().ContainSingle();
-        cidades[0].Nome.Should().Be("São Paulo");
-        cidades[0].Uf.Should().Be("SP");
-        cidades[0].CodigoIbge.Should().Be("3550308");
+        var sp = await ctx.Cidades.SingleAsync(c => c.CodigoIbge == "3550308");
+        sp.Nome.Should().Be("São Paulo");
+        sp.Uf.Should().Be("SP");
 
-        var regioes = await ctx.Regioes.ToListAsync();
-        regioes.Should().HaveCount(5);
-        regioes.Should().OnlyContain(r => r.CidadeId == cidades[0].Id);
+        // As 5 zonas da capital apontam para ela; a 6ª região é a da Baixada (BaixadaSeedTests).
+        var regioes = await ctx.Regioes.Where(r => r.CidadeId == sp.Id).ToListAsync();
+        regioes.Select(r => r.Nome).Should().BeEquivalentTo("Centro", "Leste", "Norte", "Oeste", "Sul");
     }
 }

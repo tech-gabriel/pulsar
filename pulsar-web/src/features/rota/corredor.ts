@@ -3,6 +3,7 @@ import { resolverRegiaoPorPonto } from '../../utils/geo';
 import { normalizarNome } from '../../utils/texto';
 import { distanciaKm } from '../alagamentosHoje/regras';
 import type { PontoRota } from './tipos';
+import { textoSerra } from './textos';
 
 export const PASSO_CORREDOR_M = 200;
 
@@ -50,4 +51,27 @@ export function idsDosTrechos(nomes: string[], subs: { id: string; nome: string 
   // Únicos, na ordem do caminho: a API recusa (400) id repetido.
   const ids = nomes.map((n) => porNome.get(normalizarNome(n))).filter((id): id is string => !!id);
   return [...new Set(ids)];
+}
+
+/**
+ * As áreas que a rota avalia. Na mesma cidade, as do caminho (idsDosTrechos). Entre cidades
+ * (capital ↔ Baixada), só as pontas: a serra no meio não tem trecho nem medida, e o painel diz
+ * isso (TEXTO_SERRA). Área sem cidade (snapshot do SSG) conta como São Paulo.
+ */
+export function idsDaRota(
+  corredor: Corredor,
+  subs: { id: string; nome: string; cidade?: string }[],
+): { ids: string[]; atravessaSerra: boolean; textoSerra: string | null } {
+  if (!corredor.ok || corredor.nomes.length === 0) return { ids: [], atravessaSerra: false, textoSerra: null };
+  const porNome = new Map(subs.map((s) => [normalizarNome(s.nome), s]));
+  const area = (nome: string) => porNome.get(normalizarNome(nome));
+  const saida = area(corredor.nomes[0]);
+  const chegada = area(corredor.nomes[corredor.nomes.length - 1]);
+  const cidade = (s: { cidade?: string } | undefined) => s?.cidade ?? 'São Paulo';
+  if (saida && chegada && cidade(saida) !== cidade(chegada)) {
+    const desce = cidade(saida) === 'São Paulo';
+    const bertioga = [saida, chegada].some((a) => normalizarNome(a.nome) === normalizarNome('Bertioga'));
+    return { ids: [saida.id, chegada.id], atravessaSerra: true, textoSerra: textoSerra(desce, bertioga) };
+  }
+  return { ids: idsDosTrechos(corredor.nomes, subs), atravessaSerra: false, textoSerra: null };
 }

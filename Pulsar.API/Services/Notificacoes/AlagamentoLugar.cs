@@ -91,7 +91,7 @@ public class AlagamentoLugar : IAlagamentoLugar
         var c = LimiaresNotificacao.CulturaCopy;
         var km = Math.Max(0.1, GeoDistancia.HaversineMetros(celula.Lat, celula.Lon, estacao.Lat, estacao.Lon) / 1000);
         // O fator do trecho acima do da área é o histórico de alagamento dele.
-        var costumaAlagar = celula.Fator > CalibracaoScore.Atual.Fator(celula.Sub) + 1e-9;
+        var costumaAlagar = celula.Fator > CalibracaoScore.Para(celula.Sub).Fator(celula.Sub) + 1e-9;
         var corpo = string.Create(c, $"Choveu {estacao.Mm3h:0.#} mm nas últimas 3 horas, medidos a {km:0.0} km.")
             + (costumaAlagar ? " Esse trecho costuma alagar." : "")
             + " Toque para ver no mapa.";

@@ -23,9 +23,9 @@ describe('página de município da Baixada', () => {
     expect(screen.getByText('129 dos 397 trechos de Santos ficam em área de risco de inundação. A chuva vem das estações do CEMADEN e os alertas, da Defesa Civil.')).toBeInTheDocument();
     expect(screen.getByText('129')).toBeInTheDocument();
     expect(screen.getByText('de 397 no mapa da cidade')).toBeInTheDocument();
-    // cartão do mais recente + os 3 pontos do mesmo dia na lista
-    expect(screen.getAllByText('06/08/2025')).toHaveLength(4);
-    expect(screen.getByText('alagamento mais recente marcado')).toBeInTheDocument();
+    const cartaoRecente = screen.getByText('alagamento mais recente marcado').parentElement!;
+    expect(cartaoRecente).toHaveTextContent('06/08/2025');
+    expect(cartaoRecente).toHaveTextContent('Rua Governador Pedro de Toledo');
     expect(screen.queryByText(/alagamentos registrados/i)).toBeNull();
     expect(within(screen.getByRole('navigation', { name: 'breadcrumb' })).getByRole('link', { name: 'Baixada Santista' }))
       .toHaveAttribute('href', '/baixada-santista');

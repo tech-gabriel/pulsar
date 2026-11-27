@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronRight, Navigation, Search, X } from 'lucide-react';
 import type { FaixaRisco } from '../../../types';
 import { normalizarNome } from '../../../utils/texto';
-import { emNomeDe, getSubprefeituraPorSlug } from '../../../data/regioes-seo';
-import { lerRegiaoPendente, limparRegiaoPendente } from '../regiaoPendente';
+import { emNomeDe } from '../../../data/regioes-seo';
+import { lerRegiaoPendente, limparRegiaoPendente, nomeDaRegiaoPendente } from '../regiaoPendente';
 import { areasDaCidade, cidadeDaArea, cidadesDasAreas, rotuloAreas, zonaDaArea } from '../../cidade/cidade';
 
 const MAX = 10;
@@ -45,7 +45,7 @@ export default function TelaEscolher({ subprefeituras, localizar, onContinuar }:
   }, [cidadeEscolhida]);
   if (!pendenteAplicado && subprefeituras.length > 0) {
     setPendenteAplicado(true);
-    const nome = getSubprefeituraPorSlug(lerRegiaoPendente() ?? '')?.nome;
+    const nome = nomeDaRegiaoPendente(lerRegiaoPendente() ?? '');
     const sub = nome ? subprefeituras.find((s) => normalizarNome(s.nome) === normalizarNome(nome)) : undefined;
     if (sub) setSelecionadas([sub.id]);
     if (sub) setCidadeEscolhida(cidadeDaArea(sub));

@@ -9,6 +9,11 @@ describe('regiaoPendente', () => {
     expect(lerRegiaoPendente(2000)).toBe('mooca');
   });
 
+  it('guarda e lê o slug de um município da Baixada', () => {
+    guardarRegiaoPendente('santos', 1000);
+    expect(lerRegiaoPendente(2000)).toBe('santos');
+  });
+
   it('zona e slug inválido não são guardados', () => {
     guardarRegiaoPendente('zona-leste', 1000);
     expect(lerRegiaoPendente(1000)).toBeNull();

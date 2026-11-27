@@ -68,7 +68,7 @@ describe('BaixadaPage', () => {
     expect(screen.getByText('Chuva forte chegando em Santos')).toBeInTheDocument();
     const cidades = within(screen.getByRole('navigation', { name: 'Baixada Santista' })).getAllByRole('link');
     expect(cidades).toHaveLength(9);
-    expect(screen.getByRole('link', { name: /^Santoss?129$/ })).toHaveAttribute('href', '/risco-de-alagamento/santos');
+    expect(screen.getByRole('link', { name: 'Santos 129' })).toHaveAttribute('href', '/risco-de-alagamento/santos');
     expect(screen.getByText('CEMADEN')).toBeInTheDocument();
     expect(screen.queryByText('CGE-SP')).toBeNull();
     expect(screen.queryByText(/Fonte: GeoSampa/)).toBeNull();

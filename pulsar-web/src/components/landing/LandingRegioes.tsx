@@ -24,7 +24,7 @@ function Chip({ slug, nome, numero }: { slug: string; nome: string; numero: numb
   return (
     <li>
       <Link to={`${PREFIXO_REGIAO}/${slug}`} className="lp-chip inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px]">
-        {nome}
+        {nome}{' '}
         <span className="lp-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>{numero}</span>
       </Link>
     </li>

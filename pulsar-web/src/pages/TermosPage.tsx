@@ -23,8 +23,8 @@ export default function TermosPage() {
     >
       <h2>1. O que é o Pulsar</h2>
       <p>
-        O Pulsar é uma ferramenta de monitoramento e visualização do risco climático da cidade de
-        São Paulo, organizada por subprefeitura. Ele reúne e interpreta dados de fontes públicas
+        O Pulsar é uma ferramenta de monitoramento e visualização do risco climático de São Paulo e
+        da Baixada Santista, organizada por subprefeitura na capital e por município na Baixada. Ele reúne e interpreta dados de fontes públicas
         para apoiar suas decisões do dia a dia. O projeto é mantido por uma pessoa física, de forma
         independente.
       </p>

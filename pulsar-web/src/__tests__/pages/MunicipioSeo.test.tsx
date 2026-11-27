@@ -27,6 +27,7 @@ describe('página de município da Baixada', () => {
     expect(cartaoRecente).toHaveTextContent('06/08/2025');
     expect(cartaoRecente).toHaveTextContent('Rua Governador Pedro de Toledo');
     expect(screen.queryByText(/alagamentos registrados/i)).toBeNull();
+    expect(screen.getByText('Como calculamos:').parentElement).toHaveTextContent('medida pelas estações do CEMADEN a até 5 km dele; onde não há estação, vale a estimativa do OpenWeatherMap');
     expect(within(screen.getByRole('navigation', { name: 'breadcrumb' })).getByRole('link', { name: 'Baixada Santista' }))
       .toHaveAttribute('href', '/baixada-santista');
     expect(screen.getByRole('link', { name: /ver risco ao vivo em Santos/i })).toHaveAttribute('href', '/cadastro?regiao=santos');

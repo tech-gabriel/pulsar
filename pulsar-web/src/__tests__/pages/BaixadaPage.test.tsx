@@ -59,7 +59,15 @@ describe('BaixadaPage', () => {
 
   it('seletor marca a Baixada', () => {
     renderBaixada();
-    expect(screen.getByRole('link', { name: 'Baixada Santista' })).toHaveAttribute('aria-current', 'page');
+    expect(within(screen.getByRole('navigation', { name: 'Cidade' })).getByRole('link', { name: 'Baixada Santista' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('rodapé diz as duas cidades e leva à Baixada', () => {
+    renderBaixada();
+    const rodape = within(screen.getByRole('contentinfo'));
+    expect(rodape.getByText('Monitoramento climático de São Paulo e da Baixada Santista')).toBeInTheDocument();
+    expect(within(rodape.getByRole('navigation', { name: 'Risco de alagamento por região' })).getByRole('link', { name: 'Baixada Santista' }))
+      .toHaveAttribute('href', '/baixada-santista');
   });
 
   it('seções de baixo com os dados da Baixada', () => {

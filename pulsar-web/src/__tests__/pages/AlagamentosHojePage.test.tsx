@@ -74,6 +74,14 @@ describe('AlagamentosHojePage', () => {
     expect(screen.queryByText(/Tranquilo|Atenção|Alerta/)).not.toBeInTheDocument();
   });
 
+  it('a busca e os atalhos de região falam das duas cidades', () => {
+    abrir();
+    expect(screen.getByLabelText('Bairro ou cidade')).toHaveAttribute('placeholder', 'Ou digite o bairro ou a cidade');
+    expect(screen.getByText(/só para achar a sua região\./)).toBeInTheDocument();
+    const regioes = within(screen.getByRole('navigation', { name: 'Risco de alagamento por região' }));
+    expect(regioes.getByRole('link', { name: 'Baixada Santista' })).toHaveAttribute('href', '/baixada-santista');
+  });
+
   it('escolher o bairro mostra o risco da subprefeitura com o motivo e o convite com a região', () => {
     abrir();
     escolherBairro('Tatuapé');

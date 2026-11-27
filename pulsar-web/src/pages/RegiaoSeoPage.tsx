@@ -158,7 +158,7 @@ function headMunicipio({ slug, nome, emNome }: MunicipioSeo, path: string) {
 function headNaoEncontrada() {
   return {
     title: 'Região não encontrada · Pulsar',
-    descricao: 'Esta região não existe no Pulsar. Veja as zonas de risco de alagamento de São Paulo.',
+    descricao: 'Esta região não existe no Pulsar. Veja o risco de alagamento em São Paulo e na Baixada Santista.',
   };
 }
 
@@ -170,9 +170,12 @@ function NaoEncontrada() {
           Região não encontrada
         </h1>
         <p className="mt-3" style={{ color: 'var(--text-secondary)' }}>
-          Veja as{' '}
+          Veja o risco de alagamento em{' '}
           <Link to="/" style={{ color: 'var(--text-accent)', textDecoration: 'underline' }}>
-            zonas de São Paulo no Pulsar
+            São Paulo
+          </Link>{' '}e na{' '}
+          <Link to={CIDADE_BAIXADA.path} style={{ color: 'var(--text-accent)', textDecoration: 'underline' }}>
+            {CIDADE_BAIXADA.nome}
           </Link>.
         </p>
       </main>

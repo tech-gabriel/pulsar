@@ -14,7 +14,7 @@ import { horaCurta, quandoAtualizado } from '../utils/data';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 import { PALETA } from '../utils/paleta';
 import { normalizarNome } from '../utils/texto';
-import { municipios, numerosDe, type MunicipioSeo } from '../data/baixada-seo';
+import { CIDADE_BAIXADA, municipios, numerosDe, type MunicipioSeo } from '../data/baixada-seo';
 import type { PontoCritico } from '../features/cidade/pontosCriticos';
 import {
   municipioDoPonto, municipioPorNome, periodoLegivel, pontosDaSubprefeitura, pontosPerto, slugPorNomeApi, subprefeituraDoDistrito, subprefeituraDoPonto,
@@ -201,6 +201,7 @@ export default function AlagamentosHojePage() {
             {zonas.map((z) => (
               <li key={z.slug}><Link to={`${PREFIXO_REGIAO}/${z.slug}`}>{z.nome}</Link></li>
             ))}
+            <li><Link to={CIDADE_BAIXADA.path}>{CIDADE_BAIXADA.nome}</Link></li>
           </ul>
         </nav>
       </main>
@@ -223,7 +224,7 @@ function Escolha({ localizacao, bairro, onLocalizar, onDigitar, onBairro }: {
       {localizacao === 'semContorno' && <p className="ah-aviso" role="status">Não deu para achar a sua região agora. Escolha o bairro abaixo.</p>}
       <label className="ah-campo">
         <Search size={18} aria-hidden="true" />
-        <span className="sr-only">Bairro</span>
+        <span className="sr-only">Bairro ou cidade</span>
         <input
           list="ah-distritos"
           value={bairro}
@@ -235,14 +236,14 @@ function Escolha({ localizacao, bairro, onLocalizar, onDigitar, onBairro }: {
           }}
           onKeyDown={(e) => e.key === 'Enter' && onBairro(e.currentTarget.value)}
           onBlur={(e) => onBairro(e.currentTarget.value)}
-          placeholder="Ou digite o seu bairro"
+          placeholder="Ou digite o bairro ou a cidade"
           autoComplete="off"
         />
       </label>
       <datalist id="ah-distritos">
         {OPCOES.map((d) => <option key={d} value={d} />)}
       </datalist>
-      <p className="ah-privacidade"><LockKeyhole size={14} aria-hidden="true" /> A localização fica no seu aparelho, só para achar a sua subprefeitura.</p>
+      <p className="ah-privacidade"><LockKeyhole size={14} aria-hidden="true" /> A localização fica no seu aparelho, só para achar a sua região.</p>
     </div>
   );
 }

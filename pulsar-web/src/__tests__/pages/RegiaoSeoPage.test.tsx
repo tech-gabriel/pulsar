@@ -67,5 +67,7 @@ describe('RegiaoSeoPage', () => {
   it('slug inválido renderiza estado de "não encontrada" sem quebrar', () => {
     renderRota('/risco-de-alagamento/zona-inexistente');
     expect(screen.getByText(/não encontrada/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'São Paulo' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Baixada Santista' })).toHaveAttribute('href', '/baixada-santista');
   });
 });

@@ -4,13 +4,16 @@ import type { CidadeLanding } from './LandingBento';
 type Fonte = { Icon: LucideIcon; label: string };
 const OWM: Fonte = { Icon: CloudSun, label: 'OpenWeatherMap' };
 const A_CADA_15: Fonte = { Icon: RefreshCw, label: 'Atualização a cada 15 min' };
+const CEMADEN: Fonte = { Icon: CloudRain, label: 'CEMADEN' };
+const DEFESA_CIVIL: Fonte = { Icon: Building2, label: 'Defesa Civil' };
 
+// CGE e GeoSampa só existem na capital; CEMADEN e os alertas da Defesa Civil valem nas duas.
 const FONTES: Record<CidadeLanding, Fonte[]> = {
-  sp: [OWM, { Icon: Building2, label: 'CGE-SP' }, { Icon: MapPinned, label: 'GeoSampa, da Prefeitura' }, A_CADA_15],
+  sp: [OWM, CEMADEN, { Icon: Building2, label: 'CGE-SP' }, DEFESA_CIVIL, { Icon: MapPinned, label: 'GeoSampa, da Prefeitura' }, A_CADA_15],
   baixada: [
     OWM,
-    { Icon: CloudRain, label: 'CEMADEN' },
-    { Icon: Building2, label: 'Defesa Civil' },
+    CEMADEN,
+    DEFESA_CIVIL,
     { Icon: MapPinned, label: 'Serviço Geológico do Brasil' },
     A_CADA_15,
   ],

@@ -95,7 +95,7 @@ export default function MunicipioSeoView({ municipio }: { municipio: MunicipioSe
         <section className="landing-prose mt-10">
           <h2>Como o Pulsar ajuda</h2>
           <p><strong>O que é risco de alagamento:</strong> a combinação de chuva forte, solo saturado e escoamento que pode causar pontos de alagamento e transtorno na mobilidade.</p>
-          <p><strong>Como calculamos:</strong> o Pulsar mede três perigos por cidade, com dados meteorológicos do OpenWeatherMap coletados a cada 15 minutos: alagamento (chuva da última hora, das últimas 3 horas e acumulada em 48 horas, mais as áreas de risco de inundação do Serviço Geológico do Brasil), vento forte e calor extremo. O risco exibido é o pior dos três.</p>
+          <p><strong>Como calculamos:</strong> o Pulsar mede três perigos por cidade, com dados coletados a cada 15 minutos: alagamento (chuva da última hora, das últimas 3 horas e acumulada em 48 horas, mais as áreas de risco de inundação do Serviço Geológico do Brasil), vento forte e calor extremo. A chuva de cada trecho é a medida pelas estações do CEMADEN a até 5 km dele; onde não há estação, vale a estimativa do OpenWeatherMap, que também dá o vento e a temperatura. O risco exibido é o pior dos três.</p>
           <p><strong>O que fazer em Alerta:</strong> evite áreas historicamente alagáveis, replaneje deslocamentos e acompanhe o alerta do Pulsar.</p>
         </section>
 

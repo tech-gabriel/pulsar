@@ -12,9 +12,10 @@ export default function TelaPromessa({ onComecar }: { onComecar: () => void }) {
         <span className="at-anel" /><span className="at-anel" /><span className="at-anel" /><span className="at-pino" />
       </div>
       <h1 ref={titulo} tabIndex={-1} className="at-titulo">Saiba antes que a <em>água chegue.</em></h1>
-      <p className="at-texto">Acompanhamos a chuva em São Paulo e avisamos você antes do risco, nos lugares que importam para você.</p>
+      <p className="at-texto">Acompanhamos a chuva em São Paulo e na Baixada Santista e avisamos você antes do risco, nos lugares que importam para você.</p>
       <div className="at-fatos">
-        <div className="at-fato"><b>32</b><span>subprefeituras</span></div>
+        {/* 32 subprefeituras da capital + 9 municípios da Baixada. */}
+        <div className="at-fato"><b>41</b><span>regiões</span></div>
         <div className="at-fato"><b>15 min</b><span>atualização</span></div>
         <div className="at-fato"><b>3</b><span>perigos</span></div>
       </div>

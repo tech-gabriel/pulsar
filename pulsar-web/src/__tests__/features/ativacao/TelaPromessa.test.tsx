@@ -7,7 +7,8 @@ describe('TelaPromessa', () => {
     const onComecar = vi.fn();
     const { container } = render(<TelaPromessa onComecar={onComecar} />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Saiba antes que a água chegue.');
-    expect(container.textContent).toMatch(/32\s*subprefeituras/);
+    expect(container.textContent).toMatch(/41\s*regiões/);
+    expect(container.textContent).toMatch(/São Paulo e na Baixada Santista/);
     expect(container.textContent).toMatch(/15 min\s*atualização/);
     expect(container.textContent).toMatch(/3\s*perigos/);
     expect(container.textContent).not.toMatch(/grátis/i);

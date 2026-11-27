@@ -27,6 +27,7 @@ public class BuscaControllerTests : IClassFixture<PulsarWebApplicationFactory>
     {
         _factory = factory;
         _client = factory.CreateClient();
+        CidadeEscondida.EsconderBaixada(factory);
     }
 
     [Fact]

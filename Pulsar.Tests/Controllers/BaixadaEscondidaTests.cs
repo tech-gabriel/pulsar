@@ -14,8 +14,9 @@ using Pulsar.Tests.Helpers;
 namespace Pulsar.Tests.Controllers;
 
 /// <summary>
-/// A Baixada Santista é coletada e calculada, mas só o Admin a vê enquanto não for liberada
-/// (cidade com Publica = false). Toda lista que chega ao usuário comum fica só com a capital.
+/// Mecanismo de cidade escondida (Cidade.Publica = false): só o Admin a vê, e toda lista que chega
+/// ao usuário comum fica só com a capital. A Baixada já é pública no seed, então a classe a esconde
+/// no banco do teste para exercitar a regra que vale para a próxima cidade.
 /// </summary>
 public class BaixadaEscondidaTests : IClassFixture<PulsarWebApplicationFactory>
 {
@@ -29,6 +30,7 @@ public class BaixadaEscondidaTests : IClassFixture<PulsarWebApplicationFactory>
     {
         _factory = factory;
         _client = factory.CreateClient();
+        CidadeEscondida.EsconderBaixada(factory);
         SemearLeituras();
     }
 

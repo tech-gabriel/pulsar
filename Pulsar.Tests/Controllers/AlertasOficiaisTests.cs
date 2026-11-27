@@ -24,6 +24,7 @@ public class AlertasOficiaisTests : IClassFixture<PulsarWebApplicationFactory>
     {
         _factory = factory;
         _client = factory.CreateClient();
+        CidadeEscondida.EsconderBaixada(factory);
         Semear();
     }
 

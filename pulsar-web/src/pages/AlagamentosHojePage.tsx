@@ -225,7 +225,7 @@ function Escolha({ localizacao, bairro, onLocalizar, onDigitar, onBairro }: {
         <Search size={18} aria-hidden="true" />
         <span className="sr-only">Bairro ou cidade</span>
         <input
-          list="ah-distritos"
+          list="ah-lugares"
           value={bairro}
           onChange={(e) => {
             onDigitar(e.target.value);
@@ -239,7 +239,7 @@ function Escolha({ localizacao, bairro, onLocalizar, onDigitar, onBairro }: {
           autoComplete="off"
         />
       </label>
-      <datalist id="ah-distritos">
+      <datalist id="ah-lugares">
         {OPCOES.map((d) => <option key={d} value={d} />)}
       </datalist>
       <p className="ah-privacidade"><LockKeyhole size={14} aria-hidden="true" /> A localização fica no seu aparelho, só para achar a sua região.</p>

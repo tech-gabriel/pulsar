@@ -15,7 +15,8 @@ namespace Pulsar.API.Controllers;
 [Authorize]
 public class RotaController : ControllerBase
 {
-    private const int MaxSubprefeituras = 32;
+    // Guarda de tamanho, não o número de áreas de uma cidade (a capital tem 32; entre cidades vão só as pontas).
+    private const int MaxSubprefeituras = 64;
     private readonly IRotaService _service;
     private readonly IAvisoRotaService _aviso;
     private readonly ISubprefeituraRepository _subprefeituras;

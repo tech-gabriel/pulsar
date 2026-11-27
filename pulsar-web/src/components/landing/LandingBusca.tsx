@@ -4,6 +4,7 @@ import { subprefeituras } from '../../data/regioes-seo';
 import { buscarRegiao } from '../../data/landing-dados';
 import { gsap, useGSAP, COM_MOVIMENTO } from '../../motion/gsap';
 import CartaoRegiao from './CartaoRegiao';
+import SeletorCidade from './SeletorCidade';
 import MapaAlagamentos, { LegendaMapa } from './MapaAlagamentos';
 
 const ATALHOS = ['butanta', 'mooca', 'sao-miguel', 'campo-limpo', 'santana-tucuruvi'];
@@ -50,7 +51,8 @@ export default function LandingBusca() {
 
       <div className="relative max-w-[1180px] mx-auto px-4 sm:px-8 pt-10 sm:pt-14 pb-14 lg:pb-16 grid lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-14 items-center">
         <div className="text-center lg:text-left">
-          <p className="lp-rotulo">Risco de alagamento em São Paulo</p>
+          <p className="lp-rotulo">Risco de alagamento em</p>
+          <div className="mt-3"><SeletorCidade atual="sao-paulo" /></div>
           <h1 className="lp-titulo mt-4 font-bold leading-[1.02]" style={{ fontSize: 'clamp(40px, 6vw, 68px)', color: 'var(--text-primary)' }}>
             Vai alagar no seu bairro?
           </h1>

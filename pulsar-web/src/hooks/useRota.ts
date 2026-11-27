@@ -11,8 +11,9 @@ import { normalizarNome } from '../utils/texto';
 import { useNotificacoesPrefs } from './useNotificacoesPrefs';
 import { usePushSubscription } from './usePushSubscription';
 
-// A API recusa (400) mais de 32 ids; hoje a cidade tem 32 subprefeituras, então é só uma guarda.
-const MAX_TRECHOS = 32;
+// A API recusa (400) mais de 64 ids. É só uma guarda de tamanho: dentro de uma cidade o caminho tem
+// no máximo as áreas dela (a capital tem 32) e entre cidades vão só as duas pontas.
+const MAX_TRECHOS = 64;
 export const REAVALIAR_MS = 5 * 60_000;
 
 export const ROTULO_LOCALIZACAO = 'Minha localização';

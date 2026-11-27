@@ -25,6 +25,17 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.38.1',
+    data: '2026-11-27',
+    itens: [
+      {
+        tipo: 'correcao',
+        titulo: 'Pontos de alagamento hoje na Baixada',
+        descricao: 'O número de pontos e os pinos do mapa agora chegam sempre juntos, mesmo com a internet fraca.',
+      },
+    ],
+  },
+  {
     versao: '1.38.0',
     data: '2026-11-27',
     resumo: 'Chegou a Baixada Santista.',

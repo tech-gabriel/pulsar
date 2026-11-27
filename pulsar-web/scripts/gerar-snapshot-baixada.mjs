@@ -3,6 +3,8 @@
 // trechos da grade H3 (fator > 1 = costuma alagar) e pontos de alagamento documentados.
 // Sem rede: lê a grade do backend e public/pontos-criticos-baixada.json.
 // Roda em todo build com --manter-se-falhar (mantém o JSON commitado se algo falhar).
+// Só reescreve o arquivo quando os municípios mudam: sem isso, cada build trocaria o geradoEm
+// (e o lastmod do sitemap) sem dado novo.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -19,18 +21,35 @@ export function montar(grade, pontos, hoje = new Date()) {
     m.trechos++;
     if (c.fator > 1) m.trechosRisco++;
   }
-  for (const p of pontos) de(p.municipio).pontos.push({ nome: p.nome, data: p.data, fonte: p.fonte });
+  // lat e lon vão junto: as páginas públicas põem os pinos no mapa direto do snapshot, sem fetch.
+  for (const p of pontos) de(p.municipio).pontos.push({ nome: p.nome, data: p.data, fonte: p.fonte, lat: p.lat, lon: p.lon });
   for (const m of Object.values(municipios)) m.pontos.sort((a, b) => b.data.localeCompare(a.data));
   return { geradoEm: hoje.toISOString().slice(0, 10), municipios };
+}
+
+/** Os municípios mudaram em relação ao snapshot anterior (o geradoEm não conta)? */
+export function mudou(anterior, novo) {
+  return JSON.stringify(anterior?.municipios) !== JSON.stringify(novo.municipios);
 }
 
 function main() {
   const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
   const dest = join(raiz, 'src', 'data', 'baixada-snapshot.json');
+  const caminhoGrade = join(raiz, '..', 'Pulsar.API', 'Domain', 'Score', 'grade-baixada-santista.json');
+  // O build no Docker só copia pulsar-web/: sem a grade, o commitado é o esperado, não um erro.
+  if (!existsSync(caminhoGrade) && existsSync(dest)) {
+    console.log('Snapshot da Baixada: sem a grade do backend neste build, usando o commitado.');
+    return;
+  }
   try {
-    const grade = JSON.parse(readFileSync(join(raiz, '..', 'Pulsar.API', 'Domain', 'Score', 'grade-baixada-santista.json'), 'utf8'));
+    const grade = JSON.parse(readFileSync(caminhoGrade, 'utf8'));
     const pontos = JSON.parse(readFileSync(join(raiz, 'public', 'pontos-criticos-baixada.json'), 'utf8'));
     const out = montar(grade, pontos);
+    const anterior = existsSync(dest) ? JSON.parse(readFileSync(dest, 'utf8')) : null;
+    if (!mudou(anterior, out)) {
+      console.log('Snapshot da Baixada: sem mudança, mantendo o arquivo.');
+      return;
+    }
     writeFileSync(dest, JSON.stringify(out, null, 2) + '\n');
     console.log(`Snapshot da Baixada: ${Object.keys(out.municipios).length} municípios`);
   } catch (err) {

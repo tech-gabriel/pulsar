@@ -122,8 +122,9 @@ export const routes: RouteObject[] = [
 ];
 
 // Árvore podada para o SSG: RootLayout + públicas + regiões (sem auth/app/lazy).
-// O plugin recebe os paths explícitos do react-ssg.config.ts, gerando 42 arquivos:
-// 5 institucionais (/, /sobre, /privacidade, /termos, /novidades) + 5 zonas + 32 subprefeituras.
+// O plugin recebe os paths explícitos do react-ssg.config.ts, gerando 53 páginas:
+// 6 institucionais (/, /sobre, /privacidade, /termos, /novidades, /pontos-de-alagamento-hoje)
+// + /baixada-santista + 5 zonas + 32 subprefeituras + 9 municípios da Baixada.
 export const routesSSG: RouteObject[] = [
   {
     element: <RootLayout />,

@@ -61,10 +61,10 @@ public class RotaControllerTests : IClassFixture<PulsarWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Avaliar_Mais32_400()
+    public async Task Avaliar_Mais64_400()
     {
         var client = await LogadoAsync(_factory);
-        var ids = Enumerable.Range(0, 33).Select(_ => Guid.NewGuid()).ToList();
+        var ids = Enumerable.Range(0, 65).Select(_ => Guid.NewGuid()).ToList();
         (await client.PostAsJsonAsync(Rota, new AvaliarRotaRequest(ids))).StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 

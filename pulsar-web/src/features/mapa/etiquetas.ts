@@ -37,12 +37,27 @@ export function compacta(zoom: number): boolean {
   return zoom < 11.5;
 }
 
+/**
+ * Distância entre o ponto da área e a borda da etiqueta quando ela sai do centro: o raio do pino
+ * de Casa e Trabalho (22 px, toque de 44) mais a folga. Menos que isso, os quatro lados batiam
+ * no pino e a área em Alerta debaixo dele sumia.
+ */
+const AFASTAMENTO = 26;
+
+/**
+ * Cada etiqueta tenta o centro da área e, se bater em algo (pino de Casa ou Trabalho, outra
+ * etiqueta, borda da tela), os quatro lados: acima, abaixo, à direita, à esquerda. Quem cede é a
+ * etiqueta, nunca o pino (regra de 17/11). Sem lado livre, ela fica oculta e quem chama mostra o
+ * pulsar com a nota no lugar. `desvios` diz quanto cada mostrada saiu do centro, em px.
+ */
 export function colocarEtiquetas(
   itens: { etiqueta: Etiqueta; caixa: Caixa }[],
   bloqueios: Caixa[],
   tela: { w: number; h: number },
   folga = 4,
-): { mostradas: Etiqueta[]; ocultas: Etiqueta[] } {
+  /** O que a página põe por cima do mapa (busca, botões, cartão de baixo): lugar coberto não vale. */
+  coberta: (c: Caixa) => boolean = () => false,
+): { mostradas: Etiqueta[]; ocultas: Etiqueta[]; desvios: Record<string, { x: number; y: number }> } {
   const bate = (a: Caixa, b: Caixa) =>
     a.x < b.x + b.w + folga && b.x < a.x + a.w + folga && a.y < b.y + b.h + folga && b.y < a.y + a.h + folga;
   const fora = (c: Caixa) => c.x < 0 || c.y < 0 || c.x + c.w > tela.w || c.y + c.h > tela.h;
@@ -51,9 +66,17 @@ export function colocarEtiquetas(
   const ocupadas = [...bloqueios];
   const mostradas: Etiqueta[] = [];
   const ocultas: Etiqueta[] = [];
+  const desvios: Record<string, { x: number; y: number }> = {};
   for (const { etiqueta, caixa } of ordem) {
-    if (fora(caixa) || ocupadas.some((o) => bate(caixa, o))) ocultas.push(etiqueta);
-    else { ocupadas.push(caixa); mostradas.push(etiqueta); }
+    const dy = caixa.h / 2 + AFASTAMENTO;
+    const dx = caixa.w / 2 + AFASTAMENTO;
+    const lugar = [{ x: 0, y: 0 }, { x: 0, y: -dy }, { x: 0, y: dy }, { x: dx, y: 0 }, { x: -dx, y: 0 }]
+      .map((d) => ({ d, c: { ...caixa, x: caixa.x + d.x, y: caixa.y + d.y } }))
+      .find(({ c }) => !fora(c) && !ocupadas.some((o) => bate(c, o)) && !coberta(c));
+    if (!lugar) { ocultas.push(etiqueta); continue; }
+    ocupadas.push(lugar.c);
+    mostradas.push(etiqueta);
+    desvios[etiqueta.areaId] = lugar.d;
   }
-  return { mostradas, ocultas };
+  return { mostradas, ocultas, desvios };
 }

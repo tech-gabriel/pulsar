@@ -44,16 +44,18 @@ export default function EtiquetasRisco({ etiquetas, bloqueios, onAbrir, onOculta
 
   useEffect(() => {
     if (!mapa) return;
+    // Quanto cada etiqueta saiu do centro da área para não cobrir um pino ou outra etiqueta.
+    let desvios: Record<string, { x: number; y: number }> = {};
     const posicionar = () => {
       for (const e of atual.current.etiquetas) {
         const el = els.current.get(e.areaId);
         if (!el) continue;
         const p = mapa.project([e.lon, e.lat]);
-        el.style.transform = `translate(${p.x}px, ${p.y}px) translate(-50%, -50%)`;
+        const d = desvios[e.areaId] ?? { x: 0, y: 0 };
+        el.style.transform = `translate(${p.x + d.x}px, ${p.y + d.y}px) translate(-50%, -50%)`;
       }
     };
     const arrumar = () => {
-      posicionar();
       const itens = atual.current.etiquetas.flatMap((etiqueta) => {
         const el = els.current.get(etiqueta.areaId);
         if (!el) return [];
@@ -61,8 +63,22 @@ export default function EtiquetasRisco({ etiquetas, bloqueios, onAbrir, onOculta
         const w = el.offsetWidth, h = el.offsetHeight;
         return [{ etiqueta, caixa: { x: p.x - w / 2, y: p.y - h / 2, w, h } }];
       });
-      const box = mapa.getCanvasContainer();
-      const { ocultas: fora } = colocarEtiquetas(itens, atual.current.bloqueios(), { w: box.clientWidth, h: box.clientHeight });
+      // O canvas tem o tamanho da tela do mapa; o canvasContainer não (os filhos são absolutos: 0 x 0).
+      const box = mapa.getCanvas();
+      // Coberta = nos cantos ou no centro, o que está por cima não é do mapa (busca, botões, convites,
+      // cartão de baixo). Pinos e etiquetas moram no canvasContainer e já entram pela colisão.
+      const origem = box.getBoundingClientRect();
+      const camadaDoMapa = mapa.getCanvasContainer();
+      const coberta = (c: Caixa) =>
+        [[c.x + 2, c.y + 2], [c.x + c.w - 2, c.y + 2], [c.x + 2, c.y + c.h - 2], [c.x + c.w - 2, c.y + c.h - 2], [c.x + c.w / 2, c.y + c.h / 2]]
+          .some(([x, y]) => {
+            const el = document.elementFromPoint?.(origem.left + x, origem.top + y);
+            return !!el && !camadaDoMapa.contains(el);
+          });
+      const r = colocarEtiquetas(itens, atual.current.bloqueios(), { w: box.clientWidth, h: box.clientHeight }, 4, coberta);
+      desvios = r.desvios;
+      posicionar();
+      const fora = r.ocultas;
       const novas = new Set(fora.map((e) => e.areaId));
       setOcultas((antes) => (iguais(antes, novas) ? antes : novas));
     };

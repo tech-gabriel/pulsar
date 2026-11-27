@@ -45,7 +45,9 @@ export default function PulsaresLayer({ dados, atenuado, idPrimeiroSimbolo }: Pr
           'circle-stroke-opacity': OPACIDADE(0.85),
         }} />
       {!atenuado && (
-        <Layer {...base} id="pulsar-pulsar-nota" type="symbol"
+        // Nota e nome por cima dos rótulos do mapa: entram primeiro na colocação, e o nome de bairro
+        // que bater neles é que sai (antes, "JARDIM EUROPA" passava por cima da nota).
+        <Layer id="pulsar-pulsar-nota" type="symbol"
           filter={['!=', ['get', 'nota'], '']}
           layout={{ 'text-field': ['get', 'nota'], 'text-font': ['Noto Sans Bold'], 'text-size': 11, 'text-allow-overlap': true }}
           paint={{
@@ -57,7 +59,7 @@ export default function PulsaresLayer({ dados, atenuado, idPrimeiroSimbolo }: Pr
           }} />
       )}
       {!atenuado && (
-        <Layer {...base} id="pulsar-pulsar-nome" type="symbol" minzoom={10.3}
+        <Layer id="pulsar-pulsar-nome" type="symbol" minzoom={10.3}
           layout={{
             'text-field': ['get', 'nome'], 'text-font': ['Noto Sans Bold'],
             'text-size': ['interpolate', ['linear'], ['zoom'], 10.3, 9.5, 13, 11.5],

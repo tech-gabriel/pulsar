@@ -32,24 +32,39 @@ describe('etiquetasDaCamada', () => {
 });
 
 describe('colocarEtiquetas', () => {
-  it('sobrepostas: o alerta fica', () => {
-    const { mostradas, ocultas } = colocarEtiquetas(
+  it('sobrepostas: o alerta fica no ponto e a outra cede para um lado', () => {
+    const r = colocarEtiquetas(
       [{ etiqueta: et('a', 'atencao'), caixa: caixa(100, 100) }, { etiqueta: et('b', 'alerta'), caixa: caixa(110, 105) }], [], tela);
-    expect(mostradas.map((e) => e.areaId)).toEqual(['b']);
-    expect(ocultas.map((e) => e.areaId)).toEqual(['a']);
+    expect(r.mostradas.map((e) => e.areaId)).toEqual(['b', 'a']);
+    expect(r.desvios.b).toEqual({ x: 0, y: 0 });
+    expect(r.desvios.a).not.toEqual({ x: 0, y: 0 });
   });
-  it('bate em bloqueio: oculta', () => {
+  it('bate no pino da Casa: a etiqueta sai de cima dele, o pino fica (regra de 17/11)', () => {
     const r = colocarEtiquetas([{ etiqueta: et('a', 'alerta'), caixa: caixa(100, 100) }], [caixa(120, 110)], tela);
-    expect(r.ocultas).toHaveLength(1);
+    expect(r.ocultas).toHaveLength(0);
+    expect(r.desvios.a).toEqual({ x: 0, y: -36 }); // acima: meia altura (10) + 26 (raio do pino + folga)
   });
-  it('fora da tela: oculta', () => {
+  it('sem lado livre: oculta (vira pulsar com a nota)', () => {
+    // Tela do tamanho da caixa: qualquer lado sai da tela, e o centro bate no bloqueio.
+    const r = colocarEtiquetas([{ etiqueta: et('a', 'alerta'), caixa: caixa(0, 0) }], [caixa(10, 5)], { w: 50, h: 20 });
+    expect(r.ocultas.map((e) => e.areaId)).toEqual(['a']);
+    expect(r.desvios.a).toBeUndefined();
+  });
+  it('fora da tela no ponto: tenta o lado que cabe', () => {
     const r = colocarEtiquetas([{ etiqueta: et('a', 'alerta'), caixa: caixa(380, 100) }], [], tela);
-    expect(r.ocultas).toHaveLength(1);
+    expect(r.ocultas).toHaveLength(0);
+    expect(r.desvios.a).toEqual({ x: -51, y: 0 }); // à esquerda: meia largura (25) + 26
   });
-  it('folga conta: a 3 px colide, a 5 px nao', () => {
+  it('folga conta: a 3 px colide e cede, a 5 px fica no ponto', () => {
     const a = { etiqueta: et('a', 'alerta'), caixa: caixa(100, 100) };
-    expect(colocarEtiquetas([a, { etiqueta: et('b', 'alerta'), caixa: caixa(153, 100) }], [], tela).ocultas).toHaveLength(1);
-    expect(colocarEtiquetas([a, { etiqueta: et('b', 'alerta'), caixa: caixa(155, 100) }], [], tela).ocultas).toHaveLength(0);
+    expect(colocarEtiquetas([a, { etiqueta: et('b', 'alerta'), caixa: caixa(153, 100) }], [], tela).desvios.b).not.toEqual({ x: 0, y: 0 });
+    expect(colocarEtiquetas([a, { etiqueta: et('b', 'alerta'), caixa: caixa(155, 100) }], [], tela).desvios.b).toEqual({ x: 0, y: 0 });
+  });
+  it('coberta pela interface (busca, cartão, botões): tenta outro lado', () => {
+    // A parte de cima da tela (y < 80) está sob a interface; a etiqueta não fica ali.
+    const coberta = (c: { y: number }) => c.y < 80;
+    const r = colocarEtiquetas([{ etiqueta: et('a', 'alerta'), caixa: caixa(100, 70) }], [], tela, 4, coberta);
+    expect(r.desvios.a).toEqual({ x: 0, y: 36 }); // acima também está coberto: vai para baixo
   });
   it('tela de 320 px com 14 etiquetas: nenhuma some', () => {
     const itens = Array.from({ length: 14 }, (_, i) => ({ etiqueta: et(`e${i}`, 'atencao'), caixa: caixa(i * 20, 10) }));

@@ -3,18 +3,21 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Etiqueta } from '../../../features/mapa/etiquetas';
 
 // Mapa falso: tela de 400 x 800, cada lon vira um x fixo (lon * 1000 + 46900), lat fica no meio.
-const container = vi.hoisted(() => {
-  const div = document.createElement('div');
-  Object.defineProperty(div, 'clientWidth', { value: 400 });
-  Object.defineProperty(div, 'clientHeight', { value: 800 });
-  document.body.appendChild(div); // o portal entra aqui; fora da página o screen não acha
-  return div;
+// Como no MapLibre, o canvasContainer não tem tamanho (filhos absolutos); quem tem é o canvas.
+const { container, canvas } = vi.hoisted(() => {
+  const container = document.createElement('div');
+  document.body.appendChild(container); // o portal entra aqui; fora da página o screen não acha
+  const canvas = document.createElement('canvas');
+  Object.defineProperty(canvas, 'clientWidth', { value: 400 });
+  Object.defineProperty(canvas, 'clientHeight', { value: 800 });
+  return { container, canvas };
 });
 vi.mock('react-map-gl/maplibre', () => ({
   useMap: () => ({
     current: {
       getMap: () => ({
         getCanvasContainer: () => container,
+        getCanvas: () => canvas,
         getZoom: () => 12,
         project: ([lon]: [number, number]) => ({ x: lon * 1000 + 46900, y: 400 }),
         on: vi.fn(),
@@ -30,10 +33,10 @@ const etq = (areaId: string, nome: string, nivel: Etiqueta['nivel'], lon: number
   areaId, nome, nivel, perigo: 'chuva', valor: '78', motivo: 'Chuva de 32 mm em 3 h', lon, lat: -23.5,
 });
 
-// Sé e Lapa longe uma da outra (x 300 e 100); Mooca no mesmo ponto da Sé, em Atenção.
+// Sé e Lapa longe uma da outra (x 300 e 100); Mooca fora da tela (x 500): nenhum lado cabe.
 const se = etq('se', 'Sé', 'alerta', -46.6);
 const lapa = etq('lapa', 'Lapa', 'atencao', -46.8);
-const mooca = etq('mooca', 'Mooca', 'atencao', -46.6);
+const mooca = etq('mooca', 'Mooca', 'atencao', -46.4);
 
 const montar = async (onAbrir = vi.fn(), onOcultas = vi.fn()) => {
   render(<EtiquetasRisco etiquetas={[se, lapa, mooca]} bloqueios={() => []} onAbrir={onAbrir} onOcultas={onOcultas} />);

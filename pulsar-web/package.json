@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/gerar-snapshot-baixada.mjs --manter-se-falhar && node scripts/gerar-snapshot-ocorrencias.mjs --manter-se-falhar && node scripts/gerar-snapshot-regioes.mjs --manter-se-falhar && node scripts/gerar-sitemap.mjs && tsc -b && vite build",
+    "build": "node scripts/gerar-centros-trechos.mjs && node scripts/gerar-snapshot-baixada.mjs --manter-se-falhar && node scripts/gerar-snapshot-ocorrencias.mjs --manter-se-falhar && node scripts/gerar-snapshot-regioes.mjs --manter-se-falhar && node scripts/gerar-sitemap.mjs && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",

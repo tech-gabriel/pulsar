@@ -26,11 +26,16 @@ vi.mock('../../features/alagamentosHoje/MapaPerto', () => ({
 const PUBLICO = join(__dirname, '../../../public');
 const leve = JSON.parse(readFileSync(join(PUBLICO, 'subprefeituras-leve.geojson'), 'utf8'));
 const pontos = JSON.parse(readFileSync(join(PUBLICO, 'pontos-alagamento.json'), 'utf8'));
+const leveBaixada = JSON.parse(readFileSync(join(PUBLICO, 'baixada-santista-leve.geojson'), 'utf8'));
+const pontosBaixada = JSON.parse(readFileSync(join(PUBLICO, 'pontos-criticos-baixada.json'), 'utf8'));
+const ARQUIVOS: [string, unknown][] = [
+  ['baixada-santista-leve', leveBaixada], ['pontos-criticos-baixada', pontosBaixada], ['subprefeituras-leve', leve], ['pontos-alagamento', pontos],
+];
 vi.mock('../../hooks/useJsonPublico', () => ({
   useJsonPublico: (url: string, ativo: boolean) => {
     if (!ativo || (estado.semDados && url.includes(estado.semDados))) return { dados: null, erro: false };
     if (estado.falhaJson && url.includes(estado.falhaJson)) return { dados: null, erro: true };
-    return { dados: url.includes('leve') ? leve : pontos, erro: false };
+    return { dados: ARQUIVOS.find(([nome]) => url.includes(nome))![1], erro: false };
   },
 }));
 
@@ -62,7 +67,7 @@ describe('AlagamentosHojePage', () => {
 
   it('sem escolha: título, escolha da região, ranking e nenhuma faixa de risco', () => {
     abrir();
-    expect(screen.getByRole('heading', { level: 1, name: 'Pontos de alagamento em SP hoje' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Pontos de alagamento hoje em SP e na Baixada' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Ver a minha região/ })).toBeInTheDocument();
     expect(screen.getByLabelText(/bairro/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Onde mais alagou em SP' })).toBeInTheDocument();
@@ -98,11 +103,72 @@ describe('AlagamentosHojePage', () => {
     expect(screen.getByLabelText(/bairro/i)).toBeInTheDocument();
   });
 
-  it('localização fora do município: diz que fica fora da cidade', async () => {
+  it('localização em Guarulhos: fora das duas cidades', async () => {
     geolocalizacao((ok) => ok({ coords: { latitude: -23.4628, longitude: -46.5333, accuracy: 30 } } as GeolocationPosition));
     abrir();
     fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
-    expect(await screen.findByText(/fora da cidade de São Paulo/)).toBeInTheDocument();
+    expect(await screen.findByText('Esse lugar fica fora das cidades que o Pulsar cobre. Escolha um bairro de São Paulo ou uma cidade da Baixada Santista.')).toBeInTheDocument();
+  });
+
+  it('fora das duas cidades mostra o aviso novo', async () => {
+    geolocalizacao((ok) => ok({ coords: { latitude: -22.9, longitude: -43.2, accuracy: 30 } } as GeolocationPosition));
+    abrir();
+    fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
+    expect(await screen.findByText(/fora das cidades que o Pulsar cobre/)).toBeInTheDocument();
+  });
+
+  it('localização em Santos escolhe Santos', async () => {
+    geolocalizacao((ok) => ok({ coords: { latitude: -23.96, longitude: -46.33, accuracy: 30 } } as GeolocationPosition));
+    abrir();
+    fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
+    expect(await screen.findByRole('heading', { name: '7 pontos onde já alagou em Santos' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Santos/ })).toBeInTheDocument();
+  });
+
+  it('busca "guaruja" escolhe Guarujá, com os pontos do snapshot e a legenda de um item', () => {
+    abrir();
+    escolherBairro('guaruja');
+    expect(screen.getByRole('heading', { name: '2 pontos onde já alagou no Guarujá' })).toBeInTheDocument();
+    expect(screen.getByText('Marcados a partir de notícias da região. Mostram onde costuma alagar, não o que está alagado agora.')).toBeInTheDocument();
+    expect(screen.getByText('Ponto onde já alagou')).toBeInTheDocument();
+    expect(screen.queryByText('Inundação')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Criar conta grátis' })).toHaveAttribute('href', '/cadastro?regiao=guaruja');
+  });
+
+  it('município com um ponto só fala no singular', () => {
+    abrir();
+    escolherBairro('Cubatão');
+    expect(screen.getByRole('heading', { name: '1 ponto onde já alagou em Cubatão' })).toBeInTheDocument();
+  });
+
+  it('município sem ponto marcado: frase honesta, mapa com o contorno e sem legenda', () => {
+    abrir();
+    escolherBairro('Bertioga');
+    expect(screen.getByRole('heading', { name: 'Ainda não marcamos nenhum ponto onde já alagou em Bertioga' })).toBeInTheDocument();
+    expect(screen.getByTestId('mapa-perto')).toBeInTheDocument();
+    expect(screen.queryByText('Ponto onde já alagou')).not.toBeInTheDocument();
+  });
+
+  it('Baixada sem risco agora não vira Tranquilo', () => {
+    abrir();
+    escolherBairro('Santos');
+    expect(screen.getByText(/Sem leitura agora em Santos/)).toBeInTheDocument();
+    expect(screen.queryByText('Tranquilo')).not.toBeInTheDocument();
+  });
+
+  it('Baixada com risco na resposta mostra a faixa pelo nome', () => {
+    estado.risco = { dados: [mooca({ nome: 'Santos' })], erro: false, carregando: false, atualizar: () => {} };
+    abrir();
+    escolherBairro('Santos');
+    expect(within(screen.getByRole('region', { name: /Risco agora em Santos/ })).getByText('Atenção')).toBeInTheDocument();
+  });
+
+  it('Baixada não mostra o bloco do CGE nem os alagamentos do GeoSampa', () => {
+    estado.risco = { dados: [mooca({ nome: 'Santos', alagamentosCge: [{ via: 'Av. Ana Costa', referencia: 'Gonzaga', inicioUtc: '2026-11-02T18:52:00Z', transitavel: false }] })], erro: false, carregando: false, atualizar: () => {} };
+    abrir();
+    escolherBairro('Santos');
+    expect(screen.queryByText('Alagando agora')).not.toBeInTheDocument();
+    expect(screen.queryByText(/alagamentos? registrados?/)).not.toBeInTheDocument();
   });
 
   it('localização na Mooca: conta os alagamentos a até 2 km de você', async () => {

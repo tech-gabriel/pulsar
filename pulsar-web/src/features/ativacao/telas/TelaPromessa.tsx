@@ -15,7 +15,7 @@ export default function TelaPromessa({ onComecar }: { onComecar: () => void }) {
       <p className="at-texto">Acompanhamos a chuva em São Paulo e na Baixada Santista e avisamos você antes do risco, nos lugares que importam para você.</p>
       <div className="at-fatos">
         {/* 32 subprefeituras da capital + 9 municípios da Baixada. */}
-        <div className="at-fato"><b>41</b><span>regiões</span></div>
+        <div className="at-fato"><b>41</b><span>áreas</span></div>
         <div className="at-fato"><b>15 min</b><span>atualização</span></div>
         <div className="at-fato"><b>3</b><span>perigos</span></div>
       </div>

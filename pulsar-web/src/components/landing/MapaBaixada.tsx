@@ -49,7 +49,7 @@ export default function MapaBaixada({ selecionado, onSelecionar, className = '' 
           </path>
         );
       })}
-      {selecionado && <circle r={8} fill="none" stroke="var(--color-pulsar-600)" strokeWidth={4} opacity={0} pointerEvents="none" />}
+      {selecionado && <circle cx={0} cy={0} r={8} fill="none" stroke="var(--color-pulsar-600)" strokeWidth={4} opacity={0} pointerEvents="none" />}
     </svg>
   );
 }

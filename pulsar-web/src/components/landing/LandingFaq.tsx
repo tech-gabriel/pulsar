@@ -10,7 +10,7 @@ const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: 'De onde vêm os dados?',
-    a: 'De fontes oficiais e públicas. Em São Paulo, a chuva medida vem dos postos do CGE-SP (Centro de Gerenciamento de Emergências de São Paulo) e das estações do CEMADEN, os alagamentos ativos vêm do CGE-SP e o histórico de alagamentos, do GeoSampa, da Prefeitura. Na Baixada Santista, a chuva medida vem das estações do CEMADEN e as áreas de risco de inundação, do Serviço Geológico do Brasil. Onde não há estação perto, vale a chuva estimada pelo OpenWeatherMap, conferida com o Open-Meteo. Os alertas oficiais vêm da Defesa Civil. Atualizamos tudo a cada 15 minutos.',
+    a: 'A maior parte vem de fontes oficiais. Em São Paulo, a chuva medida vem dos postos do CGE-SP (Centro de Gerenciamento de Emergências de São Paulo) e das estações do CEMADEN, os alagamentos ativos vêm do CGE-SP e o histórico de alagamentos é o da Defesa Civil de São Paulo, publicado no GeoSampa. Na Baixada Santista, a chuva medida vem das estações do CEMADEN e as áreas de risco de inundação, do Serviço Geológico do Brasil. Os alertas oficiais vêm da Defesa Civil. Onde não há estação perto, vale a chuva estimada pelo OpenWeatherMap, conferida com o Open-Meteo, duas fontes públicas de previsão. Atualizamos tudo a cada 15 minutos.',
   },
   {
     q: 'Onde o Pulsar funciona?',
@@ -22,7 +22,7 @@ const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: 'Como o Score de Perigo é calculado?',
-    a: 'O Pulsar mede três perigos em cada região: alagamento, vento forte e calor extremo. O de alagamento considera a chuva da última hora, das últimas 3 horas e dos últimos dois dias, que encharca o solo, além do histórico de ocorrências da Defesa Civil na capital e das áreas de risco de inundação do Serviço Geológico do Brasil na Baixada. O Score exibido é o pior dos três, e o app mostra qual deles pesou. Os critérios foram testados contra alagamentos de verdade: os registrados em 2026 na capital e os noticiados em 2025 e 2026 na Baixada.',
+    a: 'O Pulsar mede três perigos em cada região: alagamento, vento forte e calor extremo. O de alagamento considera a chuva da última hora, das últimas 3 horas e dos últimos dois dias, que encharca o solo, e onde costuma alagar: na capital, o histórico de alagamentos da Defesa Civil de São Paulo, publicado no GeoSampa; na Baixada, as áreas de risco de inundação do Serviço Geológico do Brasil. O Score exibido é o pior dos três, e o app mostra qual deles pesou. Os critérios foram testados contra alagamentos de verdade: os registrados em 2026 na capital e os noticiados em 2025 e 2026 na Baixada.',
   },
   {
     q: 'Como recebo os alertas?',

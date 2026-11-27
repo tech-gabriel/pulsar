@@ -20,7 +20,7 @@ export default function LandingFooter() {
             <p style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 18, letterSpacing: '-0.035em', color: 'var(--text-primary)' }}>
               pulsar
             </p>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', textWrap: 'balance' }}>
               Monitoramento climático de São Paulo e da Baixada Santista
             </p>
           </div>

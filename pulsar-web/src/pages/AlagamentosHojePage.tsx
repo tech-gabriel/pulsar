@@ -32,7 +32,7 @@ type Coordenada = { lat: number; lon: number };
 /** O que a pessoa escolheu: uma subprefeitura da capital ou um município da Baixada. */
 type Regiao =
   | { tipo: 'subprefeitura'; area: SubprefeituraSeo; centro?: Coordenada }
-  | { tipo: 'municipio'; area: MunicipioSeo };
+  | { tipo: 'municipio'; area: MunicipioSeo; centro?: Coordenada };
 type EstadoLocalizacao = 'ocioso' | 'procurando' | 'negada' | 'indisponivel' | 'semResposta' | 'fora' | 'semContorno';
 
 /** Sem resposta do navegador nesse tempo, a pessoa ignorou o pedido (o timeout da API só conta depois do sim). */
@@ -85,7 +85,7 @@ export default function AlagamentosHojePage() {
     const respondeu = (c: { dados: unknown; erro: boolean }) => c.dados !== null || c.erro;
     if (sub || mun || (respondeu(contornoSp) && respondeu(contornoBaixada))) {
       if (sub) setRegiao({ tipo: 'subprefeitura', area: sub, centro: coords });
-      else if (mun) setRegiao({ tipo: 'municipio', area: mun });
+      else if (mun) setRegiao({ tipo: 'municipio', area: mun, centro: coords });
       setLocalizacao(sub || mun ? 'ocioso' : contornoSp.erro || contornoBaixada.erro ? 'semContorno' : 'fora');
       setCoords(null);
     }
@@ -137,10 +137,11 @@ export default function AlagamentosHojePage() {
   function escolherBairro(valor: string) {
     const sub = subprefeituraDoDistrito(valor) ?? subprefeituras.find((s) => normalizarNome(s.nome) === normalizarNome(valor));
     const mun = sub ? undefined : municipioPorNome(valor);
-    if (sub || mun) {
+    const escolhida: Regiao | null = sub ? { tipo: 'subprefeitura', area: sub } : mun ? { tipo: 'municipio', area: mun } : null;
+    if (escolhida) {
       encerrarPedido();
       setCoords(null);
-      setRegiao(sub ? { tipo: 'subprefeitura', area: sub } : { tipo: 'municipio', area: mun! });
+      setRegiao(escolhida);
       setLocalizacao('ocioso');
     }
   }
@@ -268,12 +269,12 @@ interface Vista {
 
 function vistaDa(regiao: Regiao, d: DadosDaPagina): Vista {
   if (regiao.tipo === 'municipio') {
-    const mun = regiao.area;
+    const { area: mun, centro } = regiao;
     return {
       area: mun,
       ehDaArea: (r) => normalizarNome(r.nome) === normalizarNome(mun.nome),
       mostraCge: false,
-      pontos: <PontosDoMunicipio mun={mun} pontos={d.pontosBaixada} contorno={d.contornoBaixada.dados} />,
+      pontos: <PontosDoMunicipio mun={mun} centro={centro} pontos={d.pontosBaixada} contorno={d.contornoBaixada.dados} />,
     };
   }
   const { area: sub, centro } = regiao;
@@ -415,8 +416,13 @@ function PontosDaSubprefeitura({ sub, centro, pontos, contorno }: {
   );
 }
 
-/** Baixada: os pontos onde já alagou, da lista curada. O número vem do snapshot, o lugar de cada um do JSON público. */
-function PontosDoMunicipio({ mun, pontos, contorno }: { mun: MunicipioSeo; pontos: Carga<PontoCritico[]>; contorno: FeatureCollection | null }) {
+/**
+ * Baixada: os pontos onde já alagou, da lista curada. O número vem do snapshot, o lugar de cada um do JSON público.
+ * Com localização, o mapa ganha o "Você" e o raio de 2 km só de referência: os pontos seguem sendo os da cidade inteira.
+ */
+function PontosDoMunicipio({ mun, centro, pontos, contorno }: {
+  mun: MunicipioSeo; centro?: Coordenada; pontos: Carga<PontoCritico[]>; contorno: FeatureCollection | null;
+}) {
   const total = numerosDe(mun.slug)?.pontos ?? 0;
   const noMapa = useMemo(
     () => (pontos.dados ?? []).filter((p) => p.municipio === mun.nome).map((p) => ({ lat: p.lat, lon: p.lon, tipo: 'ALAGAMENTO' as const })),
@@ -436,12 +442,14 @@ function PontosDoMunicipio({ mun, pontos, contorno }: { mun: MunicipioSeo; ponto
         <div className="mapa-perto" aria-hidden="true" />
       ) : (
         <MapaProtegido>
-          <MapaPerto pontos={noMapa} nomeSubprefeitura={mun.nome} contorno={contorno} enquadrarPontos />
+          <MapaPerto pontos={noMapa} centro={centro} nomeSubprefeitura={mun.nome} contorno={contorno} enquadrarPontos />
         </MapaProtegido>
       )}
-      {total > 0 && (
+      {(total > 0 || centro) && (
         <div className="ah-legenda">
-          <span><i style={{ background: PALETA.azul }} /> Ponto onde já alagou</span>
+          {total > 0 && <span><i style={{ background: PALETA.azul }} /> Ponto onde já alagou</span>}
+          {centro && <span><i style={{ background: PALETA.voce }} /> Você</span>}
+          {centro && <span><b /> 2 km</span>}
         </div>
       )}
     </section>

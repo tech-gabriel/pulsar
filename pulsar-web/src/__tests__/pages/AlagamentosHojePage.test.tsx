@@ -17,9 +17,9 @@ vi.mock('../../hooks/useSeoHead', () => ({ useSeoHead: () => {} }));
 vi.mock('../../hooks/useRiscoAgora', () => ({ useRiscoAgora: () => estado.risco }));
 vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ usuario: estado.usuario }) }));
 vi.mock('../../features/alagamentosHoje/MapaPerto', () => ({
-  default: () => {
+  default: (p: { pontos: unknown[]; centro?: unknown }) => {
     if (estado.mapaQuebra) throw new Error('chunk do mapa não baixou');
-    return <div data-testid="mapa-perto" />;
+    return <div data-testid="mapa-perto" data-pontos={p.pontos.length} data-voce={p.centro ? 'sim' : 'nao'} />;
   },
 }));
 
@@ -133,6 +133,37 @@ describe('AlagamentosHojePage', () => {
     expect(screen.getByRole('button', { name: /Santos/ })).toBeInTheDocument();
   });
 
+  it('localização em Santos: a cidade inteira no mapa, com Você e o raio de 2 km', async () => {
+    geolocalizacao((ok) => ok({ coords: { latitude: -23.9667, longitude: -46.3334, accuracy: 30 } } as GeolocationPosition));
+    abrir();
+    fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
+    expect(await screen.findByRole('heading', { name: '7 pontos onde já alagou em Santos' })).toBeInTheDocument();
+    const mapa = await screen.findByTestId('mapa-perto');
+    expect(mapa).toHaveAttribute('data-pontos', '7');
+    expect(mapa).toHaveAttribute('data-voce', 'sim');
+    expect(screen.getByText('Ponto onde já alagou')).toBeInTheDocument();
+    expect(screen.getByText('Você')).toBeInTheDocument();
+    expect(screen.getByText('2 km')).toBeInTheDocument();
+  });
+
+  it('localização em Bertioga: frase de zero pontos, legenda só com Você e 2 km', async () => {
+    geolocalizacao((ok) => ok({ coords: { latitude: -23.8486, longitude: -46.1389, accuracy: 30 } } as GeolocationPosition));
+    abrir();
+    fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
+    expect(await screen.findByRole('heading', { name: 'Ainda não marcamos nenhum ponto onde já alagou em Bertioga' })).toBeInTheDocument();
+    expect(screen.getByText('Você')).toBeInTheDocument();
+    expect(screen.getByText('2 km')).toBeInTheDocument();
+    expect(screen.queryByText('Ponto onde já alagou')).not.toBeInTheDocument();
+  });
+
+  it('Santos pela busca segue sem Você', () => {
+    abrir();
+    escolherBairro('Santos');
+    expect(screen.getByTestId('mapa-perto')).toHaveAttribute('data-voce', 'nao');
+    expect(screen.queryByText('Você')).not.toBeInTheDocument();
+    expect(screen.queryByText('2 km')).not.toBeInTheDocument();
+  });
+
   it('busca "guaruja" escolhe Guarujá, com os pontos do snapshot e a legenda de um item', () => {
     abrir();
     escolherBairro('guaruja');
@@ -185,6 +216,10 @@ describe('AlagamentosHojePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Ver a minha região/ }));
     await waitFor(() => expect(screen.getByRole('region', { name: /Risco agora na Mooca/ })).toBeInTheDocument());
     expect(screen.getByText(/a até 2 km de você/)).toBeInTheDocument();
+    expect(screen.getByTestId('mapa-perto')).toHaveAttribute('data-voce', 'sim');
+    expect(screen.getByText('Você')).toBeInTheDocument();
+    expect(screen.getByText('2 km')).toBeInTheDocument();
+    expect(screen.getByText('Alagamento')).toBeInTheDocument();
   });
 
   it('logado: o convite leva ao mapa da região', () => {

@@ -23,26 +23,31 @@ const geo: FeatureCollection = {
 describe('montarRegioes', () => {
   it('sem par fica cinza neutro e sem subId', () => {
     const p = montarRegioes(geo, subs, 'score', null, null).features[2].properties;
-    expect(p).toMatchObject({ subId: null, fill: '#94a3b8', borda: '#94a3b8', fillOpacity: 0.12, bordaOpacidade: 0.3, peso: 1, estado: 'normal' });
+    expect(p).toMatchObject({ subId: null, borda: '#94a3b8', bordaOpacidade: 0.3, peso: 1, estado: 'normal' });
   });
 
   it('normal usa o estilo da camada com borda a 0,6', () => {
     const e = estiloCamada(subs[0], 'score');
     const p = montarRegioes(geo, subs, 'score', null, null).features[0].properties;
-    expect(p).toMatchObject({ subId: 'pin', fill: e.fillColor, fillOpacity: e.fillOpacity, borda: e.borderColor, bordaOpacidade: 0.6, peso: e.weight, estado: 'normal' });
+    expect(p).toMatchObject({ subId: 'pin', borda: e.borderColor, bordaOpacidade: 0.6, peso: e.weight, estado: 'normal' });
   });
 
   it('selecionada ganha borda branca e +0,1', () => {
     const p = montarRegioes(geo, subs, 'score', 'pin', null).features[0].properties;
     expect(p).toMatchObject({ estado: 'selecionada', borda: '#ffffff', bordaOpacidade: 1, peso: 2 });
-    expect(p.fillOpacity).toBeCloseTo(estiloCamada(subs[0], 'score').fillOpacity + 0.1);
+  });
+
+  it('a feature nao carrega mais fill nem fillOpacity', () => {
+    for (const f of montarRegioes(geo, subs, 'score', 'pin', 'oeste').features) {
+      expect(f.properties).not.toHaveProperty('fill');
+      expect(f.properties).not.toHaveProperty('fillOpacity');
+    }
   });
 
   it('com zona: fora esmaece e dentro destaca', () => {
     const [pin, se] = montarRegioes(geo, subs, 'score', null, 'oeste').features.map((f) => f.properties);
-    expect(se).toMatchObject({ estado: 'fora', fillOpacity: 0.05, bordaOpacidade: 0.15, peso: 1 });
+    expect(se).toMatchObject({ estado: 'fora', bordaOpacidade: 0.15, peso: 1 });
     expect(pin).toMatchObject({ estado: 'foco', borda: '#ffffff', bordaOpacidade: 0.9, peso: 2 });
-    expect(pin.fillOpacity).toBeCloseTo(estiloCamada(subs[0], 'score').fillOpacity + 0.05);
   });
 
   it('selecionada dentro da zona continua selecionada', () => {

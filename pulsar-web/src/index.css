@@ -341,6 +341,18 @@ html:not(.light) .cge-alag { background: color-mix(in srgb, #ef4444 16%, transpa
 .lugar-marcador:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: 2px; border-radius: 999px; }
 .lugar-ponto { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--color-pulsar-600); color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
 .lugar-etiqueta { display: flex; align-items: center; gap: 6px; padding: 6px 11px 6px 8px; border-radius: 999px; font: 600 13px/1 var(--font-body); white-space: nowrap; }
+/* Etiqueta da área em risco (mapa limpo, 27/11/2026): pílula sólida com disco da faixa. Alerta em
+   losango, Atenção em círculo (quem não distingue as cores lê pela forma). Valores do protótipo. */
+.etiqueta-risco { position: absolute; left: 0; top: 0; z-index: 2; display: flex; align-items: center; gap: 7px; padding: 4px 10px 4px 4px; border: 0; border-radius: 999px; background: #16283A; color: var(--text-primary); font-family: var(--font-body); white-space: nowrap; text-align: left; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 4px 12px -4px rgba(0, 0, 0, .6); }
+html.light .etiqueta-risco { background: #fff; box-shadow: 0 1px 2px rgba(15, 23, 42, .18), 0 4px 12px -4px rgba(15, 23, 42, .25); }
+.etiqueta-risco:focus-visible { outline: 3px solid var(--color-pulsar-500); outline-offset: 2px; }
+.etiqueta-disco { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; background: #F2C200; color: #3a2e00; }
+.etiqueta-disco.losango { border-radius: 5px; transform: rotate(45deg) scale(.86); background: #D62C2C; color: #fff; }
+.etiqueta-disco.losango svg { transform: rotate(-45deg); }
+.etiqueta-texto { display: flex; flex-direction: column; line-height: 1.15; }
+.etiqueta-texto b { font-size: 12.5px; font-weight: 700; }
+.etiqueta-texto em { margin-left: 3px; font: 700 12px var(--font-mono); font-style: normal; color: var(--text-secondary); }
+.etiqueta-texto small { font-size: 11px; font-weight: 500; color: var(--text-secondary); }
 /* Alagamento na região: anel e selo, visíveis antes de qualquer toque. */
 .lugar-ponto, .lugar-etiqueta { position: relative; }
 .lugar-marcador[data-alerta] .lugar-ponto,

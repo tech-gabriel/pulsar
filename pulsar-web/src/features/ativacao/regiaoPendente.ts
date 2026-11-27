@@ -1,13 +1,19 @@
 import { getSubprefeituraPorSlug } from '../../data/regioes-seo';
+import { getMunicipioPorSlug } from '../../data/baixada-seo';
 
-// A subprefeitura que a pessoa escolheu numa página pública (/cadastro?regiao=<slug>) chega
+// A subprefeitura (ou município da Baixada) que a pessoa escolheu numa página pública (/cadastro?regiao=<slug>) chega
 // marcada no onboarding. Fica no navegador porque o caminho até lá passa pela confirmação de
 // e-mail ou pelo Google; vence em 24 h. Só marca, quem salva é a pessoa no Continuar.
 const CHAVE = 'pulsar-regiao-pendente-v1';
 const VALIDADE_MS = 24 * 60 * 60 * 1000;
 
+/** O nome da área marcável do slug: subprefeitura ou município da Baixada. Zona não marca nada. */
+export function nomeDaRegiaoPendente(slug: string): string | undefined {
+  return getSubprefeituraPorSlug(slug)?.nome ?? getMunicipioPorSlug(slug)?.nome;
+}
+
 export function guardarRegiaoPendente(slug: string, agora = Date.now()): void {
-  if (!getSubprefeituraPorSlug(slug)) return; // zona ou slug inválido: nada a marcar
+  if (!nomeDaRegiaoPendente(slug)) return; // zona ou slug inválido: nada a marcar
   try {
     localStorage.setItem(CHAVE, JSON.stringify({ slug, em: agora }));
   } catch {
@@ -20,7 +26,7 @@ export function lerRegiaoPendente(agora = Date.now()): string | null {
     const bruto = localStorage.getItem(CHAVE);
     if (!bruto) return null;
     const { slug, em } = JSON.parse(bruto) as { slug?: string; em?: number };
-    if (!slug || typeof em !== 'number' || agora - em > VALIDADE_MS || !getSubprefeituraPorSlug(slug)) {
+    if (!slug || typeof em !== 'number' || agora - em > VALIDADE_MS || !nomeDaRegiaoPendente(slug)) {
       localStorage.removeItem(CHAVE);
       return null;
     }

@@ -86,6 +86,14 @@ describe('MapaPage deep-link', () => {
     await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Itaquera' }).length).toBeGreaterThan(0));
   });
 
+  it('?regiao=<município da Baixada> abre o detalhe dele (página pública da cidade)', async () => {
+    SUBS.push({ ...ITAQUERA, id: 'b1', nome: 'Santos', zona: 'Baixada Santista', cidade: 'Baixada Santista' } as typeof ITAQUERA);
+    try {
+      render(<MemoryRouter initialEntries={['/app?regiao=santos']}><MapaPage /></MemoryRouter>);
+      await waitFor(() => expect(screen.getAllByRole('heading', { name: 'Santos' }).length).toBeGreaterThan(0));
+    } finally { SUBS.pop(); localStorage.removeItem('pulsar-cidade-painel'); }
+  });
+
   it('reage à troca do parâmetro com o mapa já aberto (sino, busca)', async () => {
     function Ir() { const navigate = useNavigate(); return <button onClick={() => navigate('/app?regiao=itaquera')}>ir</button>; }
     render(<MemoryRouter initialEntries={['/app']}><Ir /><MapaPage /></MemoryRouter>);

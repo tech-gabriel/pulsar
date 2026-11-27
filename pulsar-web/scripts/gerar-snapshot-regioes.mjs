@@ -24,22 +24,27 @@ export function validar(esperado, dados) {
   if (!dados || typeof dados !== 'object') throw new Error('resposta não é um objeto JSON');
   if (typeof dados.janelaDias !== 'number') throw new Error('janelaDias ausente');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dados.geradoEm))) throw new Error(`geradoEm inválido: ${dados.geradoEm}`);
+  // A API também devolve as áreas da Baixada (ex.: "santos", "zona-baixada-santista"); o snapshot
+  // guarda só as de SP. Os números da Baixada vêm de baixada-snapshot.json e o sitemap lista as
+  // páginas de zona pelas chaves deste JSON.
+  const filtrado = {};
   for (const campo of ['subprefeituras', 'zonas']) {
     const grupo = dados[campo];
     if (!grupo || typeof grupo !== 'object') throw new Error(`${campo} ausente`);
-    const n = Object.keys(grupo).length;
-    if (n !== esperado[campo].length) throw new Error(`${campo}: esperava ${esperado[campo].length} chaves, veio ${n}`);
     const faltando = esperado[campo].filter((slug) => !(slug in grupo));
     if (faltando.length) throw new Error(`${campo}: faltando ${faltando.join(', ')}`);
-    for (const [slug, v] of Object.entries(grupo)) {
+    filtrado[campo] = {};
+    for (const slug of esperado[campo]) {
+      const v = grupo[slug];
       if (v !== null && typeof v?.diasCompletos !== 'number') throw new Error(`${campo}.${slug} sem diasCompletos`);
+      filtrado[campo][slug] = v;
     }
   }
   return {
     geradoEm: dados.geradoEm,
     janelaDias: dados.janelaDias,
-    subprefeituras: dados.subprefeituras,
-    zonas: dados.zonas,
+    subprefeituras: filtrado.subprefeituras,
+    zonas: filtrado.zonas,
   };
 }
 
@@ -56,7 +61,7 @@ async function main() {
     const out = validar(esperado, await res.json());
     writeFileSync(dest, JSON.stringify(out, null, 2) + '\n');
     const acesas = Object.values(out.subprefeituras).filter((v) => v && v.diasCompletos >= 60).length;
-    console.log(`Snapshot de regiões: ${out.geradoEm}, ${acesas}/32 subprefeituras com 60+ dias completos`);
+    console.log(`Snapshot de regiões: ${out.geradoEm}, ${acesas}/${esperado.subprefeituras.length} subprefeituras com 60+ dias completos`);
   } catch (err) {
     if (process.argv.includes('--manter-se-falhar') && existsSync(dest)) {
       console.warn(`AVISO: snapshot de regiões não atualizado, mantendo o anterior. ${err.message}`);

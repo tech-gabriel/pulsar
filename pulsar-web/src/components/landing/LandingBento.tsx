@@ -5,6 +5,30 @@ import { PALETA, comAlfa } from '../../utils/paleta';
 import { gsap, useGSAP, COM_MOVIMENTO } from '../../motion/gsap';
 import iconePulsar from '../../assets/logos/pulsar-icone.svg';
 import MapaAlagamentos, { LegendaMapa } from './MapaAlagamentos';
+import MapaBaixada, { LegendaMapaBaixada } from './MapaBaixada';
+import { municipios, numerosDe } from '../../data/baixada-seo';
+
+export type CidadeLanding = 'sp' | 'baixada';
+
+const TRECHOS_BAIXADA = municipios.reduce((s, m) => s + (numerosDe(m.slug)?.trechosRisco ?? 0), 0);
+
+// O que muda entre a landing da capital e a da Baixada; o resto do bento é igual.
+const TEXTOS = {
+  sp: {
+    mapa: 'A cidade inteira num mapa',
+    mapaTexto: `Cada subprefeitura com o próprio risco. Aqui, os ${TOTAL_ALAGAMENTOS} alagamentos registrados em ${ANO}.`,
+    chegando: 'na Mooca',
+    passou: 'pela Mooca',
+    cruzados: 'o histórico de alagamentos da Prefeitura',
+  },
+  baixada: {
+    mapa: 'A Baixada inteira num mapa',
+    mapaTexto: `Cada cidade com o próprio risco. Aqui, os ${TRECHOS_BAIXADA.toLocaleString('pt-BR')} trechos que costumam alagar.`,
+    chegando: 'em Santos',
+    passou: 'pelo Guarujá',
+    cruzados: 'as áreas de risco do Serviço Geológico do Brasil',
+  },
+};
 
 const SCORE_EXEMPLO = 64;
 const ARCO = Math.PI * 52;
@@ -23,7 +47,8 @@ function TituloTile({ titulo, texto }: { titulo: string; texto: string }) {
 }
 
 /** O produto em blocos: mapa, aviso no celular, score. Cada bloco ganha vida ao entrar na tela. */
-export default function LandingBento() {
+export default function LandingBento({ cidade = 'sp' }: { cidade?: CidadeLanding }) {
+  const t = TEXTOS[cidade];
   const raiz = useRef<HTMLElement>(null);
 
   useGSAP(() => {
@@ -51,17 +76,18 @@ export default function LandingBento() {
       </div>
       <div className="mt-10 grid gap-4 md:grid-cols-6">
         <Tile className="md:col-span-4 md:row-span-2">
-          <TituloTile titulo="A cidade inteira num mapa" texto={`Cada subprefeitura com o próprio risco. Aqui, os ${TOTAL_ALAGAMENTOS} alagamentos registrados em ${ANO}.`} />
+          <TituloTile titulo={t.mapa} texto={t.mapaTexto} />
           <div className="mt-4 flex flex-col items-center gap-3">
-            <MapaAlagamentos entrada className="max-h-[440px]" />
-            <LegendaMapa />
+            {cidade === 'baixada'
+              ? <><MapaBaixada className="max-h-[440px]" /><LegendaMapaBaixada /></>
+              : <><MapaAlagamentos entrada className="max-h-[440px]" /><LegendaMapa /></>}
           </div>
         </Tile>
         <Tile className="md:col-span-2">
           <TituloTile titulo="Aviso antes da chuva" texto="Escolha suas regiões e receba a notificação quando o risco subir." />
           <div className="mt-5 flex flex-col gap-2.5">
-            <Notificacao titulo="Chuva forte chegando na Mooca" texto="Risco subiu para Atenção. Previsão de 25 mm na próxima hora." quando="agora" />
-            <Notificacao titulo="Risco voltou ao normal" texto="A chuva passou pela Mooca. Bom caminho." quando="há 2 h" apagada />
+            <Notificacao titulo={`Chuva forte chegando ${t.chegando}`} texto="Risco subiu para Atenção. Previsão de 25 mm na próxima hora." quando="agora" />
+            <Notificacao titulo="Risco voltou ao normal" texto={`A chuva passou ${t.passou}. Bom caminho.`} quando="há 2 h" apagada />
           </div>
         </Tile>
         <Tile className="md:col-span-2">
@@ -79,7 +105,7 @@ export default function LandingBento() {
         <Tile className="md:col-span-3">
           <div className="flex gap-3 items-start">
             <CloudRain size={22} style={{ color: 'var(--text-accent)' }} className="shrink-0" aria-hidden="true" />
-            <TituloTile titulo="Atualizado a cada 15 minutos" texto="Chuva, vento e calor de fontes públicas, cruzados com o histórico de alagamentos da Prefeitura." />
+            <TituloTile titulo="Atualizado a cada 15 minutos" texto={`Chuva, vento e calor de fontes públicas, cruzados com ${t.cruzados}.`} />
           </div>
         </Tile>
         <Tile className="md:col-span-3">

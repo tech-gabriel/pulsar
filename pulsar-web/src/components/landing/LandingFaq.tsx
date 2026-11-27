@@ -10,23 +10,23 @@ const PERGUNTAS: { q: string; a: string }[] = [
   },
   {
     q: 'De onde vêm os dados?',
-    a: 'De fontes oficiais e públicas: as condições climáticas vêm do OpenWeatherMap e os boletins e ocorrências, da CGE-SP (Centro de Gerenciamento de Emergências de São Paulo). Atualizamos tudo a cada 15 minutos.',
+    a: 'A maior parte vem de fontes oficiais. Em São Paulo, a chuva medida vem dos postos do CGE-SP (Centro de Gerenciamento de Emergências de São Paulo) e das estações do CEMADEN, os alagamentos ativos vêm do CGE-SP e o histórico de alagamentos é o da Defesa Civil de São Paulo, publicado no GeoSampa. Na Baixada Santista, a chuva medida vem das estações do CEMADEN e as áreas de risco de inundação, do Serviço Geológico do Brasil. Os alertas oficiais vêm da Defesa Civil. Onde não há estação perto, vale a chuva estimada pelo OpenWeatherMap, conferida com o Open-Meteo, duas fontes públicas de previsão. Atualizamos tudo a cada 15 minutos.',
   },
   {
-    q: 'Para qual cidade o Pulsar funciona?',
-    a: 'Hoje cobrimos a cidade de São Paulo inteira, dividida nas suas 32 subprefeituras. A arquitetura já foi pensada para crescer para outras regiões no futuro.',
+    q: 'Onde o Pulsar funciona?',
+    a: 'Em São Paulo e na Baixada Santista. Na capital, o mapa cobre as 32 subprefeituras. Na Baixada, os 9 municípios: Bertioga, Cubatão, Guarujá, Itanhaém, Mongaguá, Peruíbe, Praia Grande, Santos e São Vicente.',
   },
   {
     q: 'O que é o Score de Perigo?',
-    a: 'É um índice de 0 a 100 calculado por subprefeitura a partir dos dados climáticos mais recentes. Quanto maior, maior a atenção recomendada para aquela região naquele momento. Até 30 é Tranquilo, até 60 Atenção e acima disso, Alerta.',
+    a: 'É um índice de 0 a 100 calculado para cada subprefeitura da capital e cada município da Baixada a partir dos dados climáticos mais recentes. Quanto maior, maior a atenção recomendada para aquela região naquele momento. Até 30 é Tranquilo, até 60 Atenção e acima disso, Alerta.',
   },
   {
     q: 'Como o Score de Perigo é calculado?',
-    a: 'O Pulsar mede três perigos em cada subprefeitura: alagamento, vento forte e calor extremo. O de alagamento considera a chuva da última hora, das últimas 3 horas e dos últimos dois dias, que encharca o solo, além do histórico de ocorrências da Defesa Civil na região. O Score exibido é o pior dos três, e o app mostra qual deles pesou. Os critérios foram testados contra os alagamentos registrados em 2026.',
+    a: 'O Pulsar mede três perigos em cada região: alagamento, vento forte e calor extremo. O de alagamento considera a chuva da última hora, das últimas 3 horas e dos últimos dois dias, que encharca o solo, e onde costuma alagar: na capital, o histórico de alagamentos da Defesa Civil de São Paulo, publicado no GeoSampa; na Baixada, as áreas de risco de inundação do Serviço Geológico do Brasil. O Score exibido é o pior dos três, e o app mostra qual deles pesou. Os critérios foram testados contra alagamentos de verdade: os registrados em 2026 na capital e os noticiados em 2025 e 2026 na Baixada.',
   },
   {
     q: 'Como recebo os alertas?',
-    a: 'Dentro do app você vê em destaque as subprefeituras em Alerta. Você também escolhe as subprefeituras que acompanha, como casa e trabalho, e ativa notificações para ser avisado quando elas mudarem de patamar.',
+    a: 'Dentro do app você vê em destaque as regiões em Alerta. Você também escolhe as regiões que acompanha, como casa e trabalho, e ativa notificações para ser avisado quando elas mudarem de patamar.',
   },
   {
     q: 'O Pulsar substitui a Defesa Civil?',

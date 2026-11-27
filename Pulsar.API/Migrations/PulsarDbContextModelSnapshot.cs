@@ -316,7 +316,7 @@ namespace Pulsar.API.Migrations
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Nome = "Baixada Santista",
-                            Publica = false,
+                            Publica = true,
                             Uf = "SP"
                         });
                 });

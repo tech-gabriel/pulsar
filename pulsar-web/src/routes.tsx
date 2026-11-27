@@ -14,6 +14,7 @@ import PrivacidadePage from './pages/PrivacidadePage';
 import TermosPage from './pages/TermosPage';
 import NovidadesPage from './pages/NovidadesPage';
 import RegiaoSeoPage from './pages/RegiaoSeoPage';
+import BaixadaPage from './pages/BaixadaPage';
 import { PREFIXO_REGIAO } from './data/regioes-seo';
 
 function RotaProtegida() {
@@ -45,6 +46,7 @@ function RotaLanding() {
 // árvore do SSG. Definidas uma única vez para não divergir.
 export const rotasPublicas: RouteObject[] = [
   { element: <RotaLanding />, children: [{ index: true, element: <LandingPage /> }] },
+  { path: 'baixada-santista', element: <RotaLanding />, children: [{ index: true, element: <BaixadaPage /> }] },
   { path: 'sobre', element: <SobrePage /> },
   { path: 'privacidade', element: <PrivacidadePage /> },
   { path: 'termos', element: <TermosPage /> },

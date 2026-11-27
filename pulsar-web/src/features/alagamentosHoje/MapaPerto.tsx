@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Map, { Layer, Marker, Source } from 'react-map-gl/maplibre';
 import type { StyleSpecification } from 'maplibre-gl';
-import type { Feature, FeatureCollection, Polygon } from 'geojson';
+import type { Feature, FeatureCollection, MultiPolygon, Polygon } from 'geojson';
 import maplibregl from '../../components/mapa/maplibre';
 import { estiloBaseCompartilhado } from '../../components/mapa/estiloBase';
 import { circuloGeojson } from '../../components/mapa/geometria';
@@ -10,14 +10,23 @@ import { PALETA } from '../../utils/paleta';
 import { normalizarNome } from '../../utils/texto';
 import type { Ponto } from './regras';
 
+/** Anel externo do contorno; num MultiPolygon, o do maior pedaço (as ilhas ficam fora do enquadramento). */
+function anelPrincipal(f: Feature<Polygon | MultiPolygon> | undefined) {
+  if (!f) return undefined;
+  if (f.geometry.type === 'Polygon') return f.geometry.coordinates[0];
+  // ponytail: "maior" pelo número de vértices, não pela área; basta para ilha pequena ao lado do continente.
+  return f.geometry.coordinates.map((p) => p[0]).reduce((a, b) => (b.length > a.length ? b : a));
+}
 
 interface Props {
-  pontos: Ponto[];
+  pontos: Pick<Ponto, 'lat' | 'lon' | 'tipo'>[];
   /** Localização da pessoa: desenha o raio de 2 km e o "você". */
   centro?: { lat: number; lon: number };
   /** Sem localização (escolha por bairro): enquadra a subprefeitura pelo contorno leve. */
   nomeSubprefeitura: string;
   contorno: FeatureCollection | null;
+  /** Enquadra os pontos (e o raio, com localização), não o contorno inteiro (município da Baixada: o contorno pega mangue e ilhas). */
+  enquadrarPontos?: boolean;
 }
 
 /**
@@ -25,7 +34,7 @@ interface Props {
  * próprio, só depois da escolha), por isso a página e o Google não pagam por ele.
  * Gestos cooperativos: no celular a página rola com um dedo e o mapa mexe com dois.
  */
-export default function MapaPerto({ pontos, centro, nomeSubprefeitura, contorno }: Props) {
+export default function MapaPerto({ pontos, centro, nomeSubprefeitura, contorno, enquadrarPontos = false }: Props) {
   const { theme } = useTheme();
   const [estilo, setEstilo] = useState<StyleSpecification | null>(null);
   useEffect(() => {
@@ -37,21 +46,26 @@ export default function MapaPerto({ pontos, centro, nomeSubprefeitura, contorno 
   }, [theme]);
 
   const poligono = useMemo(
-    () => (contorno?.features ?? []).find((f) => normalizarNome(String(f.properties?.nm_subprefeitura ?? '')) === normalizarNome(nomeSubprefeitura)) as Feature<Polygon> | undefined,
+    () => (contorno?.features ?? []).find((f) => normalizarNome(String(f.properties?.nm_subprefeitura ?? '')) === normalizarNome(nomeSubprefeitura)) as Feature<Polygon | MultiPolygon> | undefined,
     [contorno, nomeSubprefeitura],
   );
+  const raio = useMemo(() => (centro ? circuloGeojson(centro.lat, centro.lon, 2000) : null), [centro]);
   const limites = useMemo(() => {
-    const anel = (centro ? circuloGeojson(centro.lat, centro.lon, 2600) : poligono)?.geometry.coordinates[0];
+    const cerca = enquadrarPontos ? [...pontos.map((p) => [p.lon, p.lat]), ...(raio?.geometry.coordinates[0] ?? [])] : [];
+    const anel = cerca.length > 0
+      ? cerca
+      : centro
+        ? circuloGeojson(centro.lat, centro.lon, 2600).geometry.coordinates[0]
+        : anelPrincipal(poligono);
     if (!anel) return null;
     const lons = anel.map((c) => c[0]);
     const lats = anel.map((c) => c[1]);
     return [[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]] as [[number, number], [number, number]];
-  }, [centro, poligono]);
+  }, [centro, raio, poligono, enquadrarPontos, pontos]);
   const dados = useMemo<FeatureCollection>(() => ({
     type: 'FeatureCollection',
     features: pontos.map((p) => ({ type: 'Feature', properties: { tipo: p.tipo }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })),
   }), [pontos]);
-  const raio = useMemo(() => (centro ? circuloGeojson(centro.lat, centro.lon, 2000) : null), [centro]);
 
   if (!estilo || !limites) return <div className="mapa-perto" aria-hidden="true" />;
 
@@ -60,14 +74,15 @@ export default function MapaPerto({ pontos, centro, nomeSubprefeitura, contorno 
       <Map
         mapLib={maplibregl}
         mapStyle={estilo}
-        initialViewState={{ bounds: limites, fitBoundsOptions: { padding: 16 } }}
+        initialViewState={{ bounds: limites, fitBoundsOptions: enquadrarPontos ? { padding: centro ? 24 : 40, maxZoom: 14 } : { padding: 16 } }}
         cooperativeGestures
         attributionControl={{ compact: true }}
         style={{ width: '100%', height: '100%' }}
         // A atribuição compacta nasce aberta e só recolhe no primeiro arrasto; num mapa de 280 px ela cobriria o pé.
         onLoad={(e) => e.target.getContainer().querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show')}
       >
-        {poligono && !centro && (
+        {/* Na capital o raio substitui o contorno; na Baixada o raio é só referência e o contorno fica. */}
+        {poligono && (!centro || enquadrarPontos) && (
           <Source id="perto-sub" type="geojson" data={poligono}>
             <Layer id="perto-sub-linha" type="line" paint={{ 'line-color': PALETA.azul, 'line-width': 2 }} />
           </Source>

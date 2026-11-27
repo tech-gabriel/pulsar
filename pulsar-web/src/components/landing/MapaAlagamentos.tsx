@@ -59,7 +59,7 @@ export default function MapaAlagamentos({ selecionada, onSelecionar, entrada = f
           </path>
         );
       })}
-      {selecionada && <circle r={8} fill="none" stroke="var(--color-pulsar-600)" strokeWidth={4} opacity={0} pointerEvents="none" />}
+      {selecionada && <circle cx={0} cy={0} r={8} fill="none" stroke="var(--color-pulsar-600)" strokeWidth={4} opacity={0} pointerEvents="none" />}
     </svg>
   );
 }

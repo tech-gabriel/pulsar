@@ -25,10 +25,10 @@ public class BaixadaSeedTests : IDisposable
     }
 
     [Fact]
-    public void Baixada_ExisteEscondidaComNoveAreasAtivas()
+    public void Baixada_ExistePublicaComNoveAreasAtivas()
     {
         var baixada = _db.Cidades.Include(c => c.Regioes).ThenInclude(r => r.Subprefeituras).Single(c => c.Nome == "Baixada Santista");
-        baixada.Publica.Should().BeFalse();
+        baixada.Publica.Should().BeTrue();
         baixada.CodigoIbge.Should().BeNull();
         var regiao = baixada.Regioes.Should().ContainSingle().Subject;
         regiao.FusoHorario.Should().Be("America/Sao_Paulo");

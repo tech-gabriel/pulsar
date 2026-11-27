@@ -80,7 +80,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <span key={i}>{i > 0 && ' '}<span className="auth-palavra" aria-hidden="true"><span>{p}</span></span></span>
             ))}
           </p>
-          <p className="auth-vitrine-sub">Risco de chuva e alagamento nas 32 subprefeituras de São Paulo, em tempo real.</p>
+          <p className="auth-vitrine-sub">Risco de chuva e alagamento em São Paulo e na Baixada Santista, em tempo real.</p>
           <span className="auth-vitrine-selo"><i aria-hidden="true" />Atualizado a cada 15 minutos</span>
         </div>
         {/* O mapa ocupa o espaço que sobra embaixo do texto: nunca passa por trás dele. */}

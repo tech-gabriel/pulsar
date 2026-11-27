@@ -6,7 +6,7 @@ import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import TitleManager from '../../components/TitleManager';
 import { useSeoHead } from '../../hooks/useSeoHead';
 
-const TITULO_DO_TEMPLATE = 'Pulsar: alerta de alagamento e chuva forte em São Paulo';
+const TITULO_DO_TEMPLATE = 'Pulsar: alerta de alagamento em São Paulo e na Baixada Santista';
 
 function PaginaPublica() {
   useSeoHead({ title: 'Pulsar · Termos de Uso', descricao: 'Termos.', path: '/termos' });

@@ -124,6 +124,17 @@ describe('TelaEscolher com duas cidades', () => {
     await waitFor(() => expect(onContinuar).toHaveBeenCalledWith(['b1', 's1']));
   });
 
+  it('região pendente de município da Baixada: abre na Baixada com ele marcado', async () => {
+    const { guardarRegiaoPendente } = await import('../../../features/ativacao/regiaoPendente');
+    guardarRegiaoPendente('santos');
+    render(<TelaEscolher subprefeituras={duas} localizar={vi.fn()} onContinuar={vi.fn()} />);
+    expect(screen.getByRole('checkbox', { name: 'Santos' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Guarujá' })).not.toBeChecked();
+    expect(screen.queryByRole('checkbox', { name: 'Mooca' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Trocar cidade' })).toBeInTheDocument();
+    expect(screen.getByText('Baixada Santista', { selector: 'b' })).toBeInTheDocument();
+  });
+
   it('a localização escolhe a cidade junto com a área', async () => {
     render(<TelaEscolher subprefeituras={duas} localizar={vi.fn().mockResolvedValue('b2')} onContinuar={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /Usar minha localização/ }));

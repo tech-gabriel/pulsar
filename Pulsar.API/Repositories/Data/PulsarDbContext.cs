@@ -397,8 +397,8 @@ public class PulsarDbContext : DbContext
         modelBuilder.Entity<Cidade>().HasData(
             new { Id = idSaoPaulo, Nome = "São Paulo", Uf = "SP", CodigoIbge = "3550308", Publica = true, CriadoEm = seedDate, AtualizadoEm = seedDate },
             // Baixada Santista (projeto 3, 17/11/2026): uma cidade com os 9 municípios como áreas.
-            // Escondida até a conferência do user; o código IBGE fica em cada área.
-            new { Id = idBaixada, Nome = "Baixada Santista", Uf = "SP", Publica = false, CriadoEm = seedDate, AtualizadoEm = seedDate });
+            // Aberta ao público em 27/11/2026 (E5); o código IBGE fica em cada área.
+            new { Id = idBaixada, Nome = "Baixada Santista", Uf = "SP", Publica = true, CriadoEm = seedDate, AtualizadoEm = seedDate });
 
         const string fusoSp = "America/Sao_Paulo";
         modelBuilder.Entity<Regiao>().HasData(

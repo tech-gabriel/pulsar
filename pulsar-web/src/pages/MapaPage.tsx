@@ -23,7 +23,7 @@ import ConvitePush from '../components/notificacoes/ConvitePush';
 import BannerEscolherSubprefeituras from '../components/mapa/BannerEscolherSubprefeituras';
 import { useGeolocalizacao, GeoError } from '../hooks/useGeolocalizacao';
 import { resolverSelecao } from '../utils/selecaoPorPonto';
-import { resumoAlertas } from '../utils/risco';
+import { nivelDaArea, resumoDoMapa } from '../features/mapa/nivel';
 import { useToast } from '../contexts/ToastContext';
 import { resolverDeepLink } from '../data/regioes-seo';
 import OverlayAlagamentoToggle from '../components/mapa/OverlayAlagamentoToggle';
@@ -205,6 +205,9 @@ export default function MapaPage() {
       .map((l) => l.tipo),
     [lugaresNoMapa, subprefeituras],
   );
+  // O cartão de baixo diz quando a casa está em risco (mapa limpo, 3B): pelo risco, em qualquer camada.
+  const areaDaCasa = subprefeituras.find((s) => s.id === lugaresNoMapa.find((l) => l.tipo === 'CASA')?.subprefeituraId);
+  const nivelDaCasa = areaDaCasa ? { nivel: nivelDaArea(areaDaCasa, 'score').nivel } : null;
   // Deep link do aviso de chuva (/app?lugar=casa): aplica quando os locais chegam, mesmo padrão
   // do ?regiao= (ajuste de estado no render); o efeito abaixo tira o parâmetro da URL.
   const lugarParam = searchParams.get('lugar');
@@ -249,8 +252,17 @@ export default function MapaPage() {
     }),
     [contornoCapital.dados, contornoBaixada.dados],
   );
-  // Com uma área aberta as células também vêm: nomeiam a estação da chuva que gerou o risco dela.
-  const celulasAgora = useCelulasAgora(ativoTrechos || !!subSelecionada, ultimaAtualizacao?.getTime() ?? null);
+  // Sempre, de longe também: a mancha precisa do risco de cada trecho (mapa limpo). Com uma área
+  // aberta elas também nomeiam a estação da chuva que gerou o risco dela.
+  const celulasAgora = useCelulasAgora(true, ultimaAtualizacao?.getTime() ?? null);
+  // Centros dos trechos (arquivo leve do build): a mancha e o vento sem baixar a grade pesada.
+  const centrosCapital = useJsonPublico<Record<string, [number, number]>>('/centros-sao-paulo.json', true);
+  const centrosBaixada = useJsonPublico<Record<string, [number, number]>>('/centros-baixada-santista.json', comBaixada);
+  const centros = useMemo(
+    () => (centrosCapital.dados && centrosBaixada.dados ? { ...centrosCapital.dados, ...centrosBaixada.dados } : centrosCapital.dados),
+    [centrosCapital.dados, centrosBaixada.dados],
+  );
+  const idsFavoritas = useMemo(() => new Set(favoritos.map((f) => f.subprefeituraId)), [favoritos]);
   const trechos = useMemo(() => (celulasAgora ? trechosDe(celulasAgora, subprefeituras) : null), [celulasAgora, subprefeituras]);
   const dadosTrechos = useMemo(
     () => (contornoTrechos.dados && trechos ? montarTrechos(contornoTrechos.dados, trechos) : null),
@@ -727,6 +739,10 @@ export default function MapaPage() {
           onTocarTrecho={rotaAberta ? undefined : handleTocarTrecho}
           onPerto={setPerto}
           pontoMedida={pontoMedida}
+          celulas={celulasAgora?.celulas ?? null}
+          trechosAgora={trechos}
+          centros={centros}
+          favoritas={idsFavoritas}
         />
 
         {/* Na rota do celular os controles do mapa saem: a tela é do caminho (voltam ao fechar). */}
@@ -835,7 +851,7 @@ export default function MapaPage() {
               {/* Fechada, a alça é a única linha visível: mostra o resumo. Aberta, o cartão da cidade já resume. */}
               {!painelMobileAberto && (
                 <span className="w-full px-5 mt-2 text-sm font-semibold truncate text-center" style={{ color: 'var(--text-primary)' }}>
-                  {resumoAlertas(areasDoPainel, carregando)}
+                  {resumoDoMapa({ camada: camadaAtiva, areas: areasDoPainel, carregando, casa: nivelDaCasa })}
                 </span>
               )}
             </button>

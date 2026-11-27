@@ -15,7 +15,9 @@ import { criarRepouso } from './repouso';
 import { CAMADAS_TOQUE_POR_CIMA } from './camadasPorCima';
 
 export const ID_FONTE_REGIOES = 'pulsar-regioes';
-const FILL = 'pulsar-regioes-fill';
+/** A mancha entra antes desta camada, e a água do mapa base sobe para logo antes dela. */
+export const ID_REGIOES_FILL = 'pulsar-regioes-fill';
+const FILL = ID_REGIOES_FILL;
 const BORDA = 'pulsar-regioes-borda';
 const SEL = 'pulsar-regioes-sel';
 /** Camadas que, quando tocadas, não selecionam a subprefeitura de baixo (alagamentos e trechos). */
@@ -36,8 +38,6 @@ interface Props {
   camadaAtiva: Camada;
   zonaEmFoco: string | null;
   idPrimeiroSimbolo: string | undefined;
-  /** Sem efeito desde o mapa limpo (área não pinta); mantido porque MapaGL ainda passa. */
-  comTrechos?: boolean;
 }
 
 export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, idPrimeiroSimbolo }: Props) {

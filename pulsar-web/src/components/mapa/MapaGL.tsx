@@ -8,9 +8,17 @@ import { comChaveMapTiler, estiloBaseCompartilhado, urlReservaMapTiler } from '.
 import { circuloGeojson, deslocamentoDoPainel, paddingDaRota, paddingDoPainel } from './geometria';
 import { ZOOM, ZOOM_TRECHOS, zoomCidade } from './zoom';
 import ZoomControles from './ZoomControles';
-import RegioesLayer from './RegioesLayer';
+import RegioesLayer, { ID_REGIOES_FILL } from './RegioesLayer';
 import TrechosLayer from './TrechosLayer';
-import ScoreLabel from './ScoreLabel';
+import ManchaLayer from './ManchaLayer';
+import PulsaresLayer from './PulsaresLayer';
+import EtiquetasRisco from './EtiquetasRisco';
+import VentoLayer from './VentoLayer';
+import { aguaPorCima, viasCinza } from './estiloBase';
+import { pontosDaMancha } from '../../features/mapa/mancha';
+import { pulsaresGeojson } from '../../features/mapa/pulsares';
+import { etiquetasDaCamada, type Caixa } from '../../features/mapa/etiquetas';
+import { nivelDaArea } from '../../features/mapa/nivel';
 import OcorrenciasLayer from './OcorrenciasLayer';
 import PontosCriticosLayer from './PontosCriticosLayer';
 import type { FeatureCollection } from 'geojson';
@@ -74,13 +82,41 @@ function PinoChegada() {
   );
 }
 
+/** O mapa não sai do Brasil (mapa limpo): arrastar para longe não mostra oceano vazio. */
+const BRASIL: [number, number, number, number] = [-74.5, -34.5, -28.5, 6]; // oeste, sul, leste, norte
+const SEM_FAVORITAS = new Set<string>();
+
+/** Casa, Trabalho e o ponto buscado em px do mapa: nenhuma etiqueta de risco os cobre. */
+function caixasQueBloqueiam(mapa: maplibregl.Map): Caixa[] {
+  const c = mapa.getContainer();
+  const b = c.getBoundingClientRect();
+  return [...c.querySelectorAll('.lugar-marcador, .pino-busca')].map((el) => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left - b.left, y: r.top - b.top, w: r.width, h: r.height };
+  });
+}
+
+/**
+ * Água por cima da mancha e vias expressas em cinza no Risco. Roda a cada `styledata`: a água só
+ * se move quando alguma mancha ficou por cima dela (mover sempre geraria outro styledata), e as
+ * vias com o mesmo valor não mudam nada no estilo.
+ */
+function arrumarBase(mapa: maplibregl.Map, tema: 'light' | 'dark', risco: boolean) {
+  if (!mapa.getLayer(ID_REGIOES_FILL)) return;
+  const ordem = mapa.getLayersOrder();
+  const mancha = ordem.findLastIndex((id) => id.startsWith('pulsar-mancha'));
+  const aguaEmbaixo = ordem.some((id, i) => i < mancha && /water|ocean|sea/.test(id) && mapa.getLayer(id)?.type === 'fill');
+  if (aguaEmbaixo) aguaPorCima(mapa, ID_REGIOES_FILL);
+  viasCinza(mapa, tema, risco);
+}
+
 /** Primeiro rótulo do estilo base: as camadas do Pulsar entram antes dele (nomes por cima do risco). */
 function primeiroSimbolo(mapa: maplibregl.Map): string | undefined {
   return mapa.getStyle()?.layers.find((l) => l.type === 'symbol' && !l.id.startsWith('pulsar-'))?.id;
 }
 
 export default function MapaGL(props: PropsMapa) {
-  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, pontosCriticos = [], rota, destinoSemRota = null, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, pedidoFoco = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto, pontoMedida = null } = props;
+  const { geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, subSelecionadaAtiva, pontoBusca, onMoverPonto, overlayAlagamento, ocorrencias, pontosCriticos = [], rota, destinoSemRota = null, semZoom = false, lugares, onTocarLugar, lugarEmFoco, voltarDoLugar = 0, pedidoFoco = 0, lugaresEmAlerta, trechos, trechoSelecionado = null, onTocarTrecho, onPerto, pontoMedida = null, celulas = null, trechosAgora = null, centros = null, favoritas = SEM_FAVORITAS } = props;
   const { theme } = useTheme();
   const isMobile = useIsMobile(768);
   const mapRef = useRef<MapRef>(null);
@@ -206,6 +242,40 @@ export default function MapaGL(props: PropsMapa) {
     [rota],
   );
 
+  // Mapa limpo: mancha onde há risco, um pulsar por área e etiqueta nas áreas em risco.
+  const celulasOuNada = useMemo(() => celulas ?? [], [celulas]);
+  const pontosMancha = useMemo(
+    () => pontosDaMancha(camadaAtiva, centros ?? {}, trechosAgora, subprefeituras, celulasOuNada),
+    [camadaAtiva, centros, trechosAgora, subprefeituras, celulasOuNada],
+  );
+  // Na Chuva a mancha azul já diz onde chove; com alagamentos ligados o mapa fica em foco neles.
+  const etiquetas = useMemo(
+    () => (overlayAlagamento || camadaAtiva === 'chuva' ? [] : etiquetasDaCamada(subprefeituras, camadaAtiva).filter((e) => !ocultos.has(e.areaId))),
+    [overlayAlagamento, camadaAtiva, subprefeituras, ocultos],
+  );
+  // A área cuja etiqueta não coube vira pulsar colorido com a nota: nunca some (decisão 1A).
+  const [semLugar, setSemLugar] = useState<Set<string>>(() => new Set());
+  const comEtiqueta = useMemo(() => new Set(etiquetas.map((e) => e.areaId).filter((id) => !semLugar.has(id))), [etiquetas, semLugar]);
+  const pulsares = useMemo(
+    () => pulsaresGeojson(subprefeituras, camadaAtiva, { favoritas, comEtiqueta, ocultos, zonaEmFoco }),
+    [subprefeituras, camadaAtiva, favoritas, comEtiqueta, ocultos, zonaEmFoco],
+  );
+  const corDaArea = useMemo(
+    () => Object.fromEntries(subprefeituras.map((s) => [s.id, nivelDaArea(s, camadaAtiva).cor])),
+    [subprefeituras, camadaAtiva],
+  );
+
+  useEffect(() => {
+    const mapa = mapRef.current?.getMap();
+    if (!carregou || !mapa) return;
+    const arrumar = () => arrumarBase(mapa, theme, camadaAtiva === 'score');
+    arrumar();
+    mapa.on('styledata', arrumar);
+    return () => {
+      mapa.off('styledata', arrumar);
+    };
+  }, [carregou, theme, camadaAtiva]);
+
   // Antes do efeito de desenho (layout, roda primeiro), que lê a rota atual daqui.
   useLayoutEffect(() => {
     rotaRef.current = rota;
@@ -307,6 +377,7 @@ export default function MapaGL(props: PropsMapa) {
       mapLib={maplibregl}
       mapStyle={estilo}
       initialViewState={{ longitude: centroCidade(larguraInicial)[0], latitude: SP[1], zoom: zoomCidade(larguraInicial) }}
+      maxBounds={BRASIL}
       style={{ width: '100%', height: '100%' }}
       attributionControl={false}
       locale={{ 'AttributionControl.ToggleAttribution': 'Créditos do mapa' }}
@@ -323,7 +394,7 @@ export default function MapaGL(props: PropsMapa) {
         onPerto?.(e.target.getZoom() >= ZOOM_TRECHOS.carregar);
       }}
       onZoomEnd={(e) => onPerto?.(e.viewState.zoom >= ZOOM_TRECHOS.carregar)}
-      // styledata dispara a cada mudança de pintura (a animação da borda muda a cada 70 ms): só
+      // styledata dispara a cada mudança de pintura ou de camada: só
       // recalcula quando o rótulo de referência sumiu, ou seja, quando o estilo base foi trocado.
       onStyleData={(e) => {
         if (idPrimeiroSimbolo && e.target.getLayer(idPrimeiroSimbolo)) return;
@@ -343,22 +414,27 @@ export default function MapaGL(props: PropsMapa) {
             camadaAtiva={camadaAtiva}
             zonaEmFoco={zonaEmFoco}
             idPrimeiroSimbolo={idPrimeiroSimbolo}
-            comTrechos={!!trechos}
           />
+          {/* Abaixo da camada de toque das áreas (e da água, que sobe para logo acima dela). */}
+          <ManchaLayer camada={camadaAtiva} pontos={pontosMancha} idPrimeiroSimbolo={ID_REGIOES_FILL} />
           {trechos && (
             <TrechosLayer dados={trechos} selecionado={trechoSelecionado} onTocar={onTocarTrecho} idPrimeiroSimbolo={idPrimeiroSimbolo} />
           )}
-          <ScoreLabel
-            subprefeituras={subprefeituras}
-            subSelecionada={subSelecionada}
-            camadaAtiva={camadaAtiva}
-            zonaEmFoco={zonaEmFoco}
-            atenuado={overlayAlagamento}
-            ocultos={ocultos}
-            onSelecionar={onSelecionarSub}
-            comTrechos={!!trechos}
-            pontosFixos={onTocarLugar ? lugares : undefined}
-          />
+          <PulsaresLayer dados={pulsares} atenuado={overlayAlagamento} idPrimeiroSimbolo={idPrimeiroSimbolo} />
+          {camadaAtiva === 'vento' && celulas && centros && (
+            <VentoLayer areas={subprefeituras} celulas={celulas} centros={centros} tema={theme} reduzido={reduzido} beforeId={idPrimeiroSimbolo} />
+          )}
+          {etiquetas.length > 0 && (
+            <EtiquetasRisco
+              etiquetas={etiquetas}
+              bloqueios={() => (mapRef.current ? caixasQueBloqueiam(mapRef.current.getMap()) : [])}
+              onAbrir={(id) => {
+                const sub = subprefeituras.find((s) => s.id === id);
+                if (sub) onSelecionarSub(sub);
+              }}
+              onOcultas={setSemLugar}
+            />
+          )}
         </>
       )}
 
@@ -412,14 +488,14 @@ export default function MapaGL(props: PropsMapa) {
           draggable
           onDragEnd={(e) => onMoverPonto(e.lngLat.lat, e.lngLat.lng)}
         >
-          <div title="Arraste para ajustar o ponto" role="img" aria-label="Ponto buscado. Arraste para ajustar.">
+          <div className="pino-busca" title="Arraste para ajustar o ponto" role="img" aria-label="Ponto buscado. Arraste para ajustar.">
             <PinBusca />
           </div>
         </Marker>
       )}
       {carregou && overlayAlagamento && ocorrencias.length > 0 && <OcorrenciasLayer ocorrencias={ocorrencias} />}
       {carregou && overlayAlagamento && pontosCriticos.length > 0 && <PontosCriticosLayer pontos={pontosCriticos} />}
-      {carregou && lugares && lugares.length > 0 && onTocarLugar && <MarcadoresLugares lugares={lugares} onTocar={onTocarLugar} emAlerta={lugaresEmAlerta} areas={subprefeituras} />}
+      {carregou && lugares && lugares.length > 0 && onTocarLugar && <MarcadoresLugares lugares={lugares} onTocar={onTocarLugar} emAlerta={lugaresEmAlerta} areas={subprefeituras} corDaArea={corDaArea} />}
     </Map>
   );
 }

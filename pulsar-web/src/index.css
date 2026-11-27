@@ -339,7 +339,7 @@ html:not(.light) .cge-alag { background: color-mix(in srgb, #ef4444 16%, transpa
 .lugar-marcador[data-modo="etiqueta"] .lugar-haste { height: 2px; } /* largura vem do componente */
 .lugar-marcador[data-modo="etiqueta"] .lugar-pe { margin-top: 0; }
 .lugar-marcador:focus-visible { outline: 2px solid var(--color-pulsar-300); outline-offset: 2px; border-radius: 999px; }
-.lugar-ponto { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--color-pulsar-600); color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
+.lugar-ponto { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 999px; background: var(--cor-lugar, var(--color-pulsar-600)); color: var(--cor-lugar-icone, #fff); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
 .lugar-etiqueta { display: flex; align-items: center; gap: 6px; padding: 6px 11px 6px 8px; border-radius: 999px; font: 600 13px/1 var(--font-body); white-space: nowrap; }
 /* Etiqueta da área em risco (mapa limpo, 27/11/2026): pílula sólida com disco da faixa. Alerta em
    losango, Atenção em círculo (quem não distingue as cores lê pela forma). Valores do protótipo. */
@@ -358,9 +358,9 @@ html.light .etiqueta-risco { background: #fff; box-shadow: 0 1px 2px rgba(15, 23
 .lugar-marcador[data-alerta] .lugar-ponto,
 .lugar-marcador[data-alerta] .lugar-etiqueta { box-shadow: 0 0 0 3px var(--cor-alerta), 0 1px 4px rgba(0, 0, 0, 0.35); }
 .lugar-selo-alerta { position: absolute; top: -7px; right: -7px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 999px; background: var(--cor-alerta); color: #fff; border: 1.5px solid #fff; }
-.lugar-etiqueta-icone { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--color-pulsar-600); color: #fff; }
-.lugar-haste { width: 2px; height: 8px; background: var(--color-pulsar-600); }
-.lugar-pe { width: 9px; height: 9px; margin-top: -1px; border-radius: 999px; background: var(--color-pulsar-600); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); }
+.lugar-etiqueta-icone { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--cor-lugar, var(--color-pulsar-600)); color: var(--cor-lugar-icone, #fff); }
+.lugar-haste { width: 2px; height: 8px; background: var(--cor-lugar, var(--color-pulsar-600)); }
+.lugar-pe { width: 9px; height: 9px; margin-top: -1px; border-radius: 999px; background: var(--cor-lugar, var(--color-pulsar-600)); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); }
 @media (prefers-reduced-motion: no-preference) {
   .lugar-ponto, .lugar-etiqueta { animation: lugar-entra 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
 }

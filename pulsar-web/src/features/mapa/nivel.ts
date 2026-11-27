@@ -1,7 +1,7 @@
 import type { FaixaRisco, SubprefeituraMapaDto } from '../../types';
 import { faixaChuva, faixaVento, type Camada } from '../../utils/camadas';
 import { PALETA } from '../../utils/paleta';
-import { motivoDoRisco } from '../../utils/risco';
+import { motivoDoRisco, resumoAlertas } from '../../utils/risco';
 
 export type CamadaMapa = Camada;
 export type Nivel = 'semDado' | 'tranquilo' | 'atencao' | 'alerta';
@@ -73,4 +73,30 @@ export function nivelDaArea(sub: SubprefeituraMapaDto, camada: CamadaMapa): Nive
   const de = rumo(l.ventoDirecaoGraus);
   const n = montar(NIVEL[comp.vento.faixa], String(km), 'vento', `Vento de ${km} km/h${de ? `, vindo de ${de}` : ''}`, cor);
   return { ...n, banda: CORES_VENTO.indexOf(cor) };
+}
+
+const FAIXA_CASA = { atencao: 'Atenção', alerta: 'Alerta' } as const;
+
+/**
+ * A frase do cartão de baixo. No Vento, o mais forte e de onde vem ("vento de", nunca "rajadas":
+ * o número é a média). Nas outras, a conta dos alertas, que nunca diz "tranquilo" sem dado.
+ */
+export function resumoDoMapa(o: {
+  camada: CamadaMapa;
+  areas: SubprefeituraMapaDto[];
+  carregando: boolean;
+  cidadeNome?: string;
+  casa?: { nivel: Nivel } | null;
+}): string {
+  const forte = o.camada === 'vento'
+    ? o.areas.reduce<SubprefeituraMapaDto | null>((m, a) => (a.ultimaLeitura && a.ultimaLeitura.ventoKmH > (m?.ultimaLeitura?.ventoKmH ?? -1) ? a : m), null)
+    : null;
+  const base = forte?.ultimaLeitura
+    ? (() => {
+        const de = rumo(forte.ultimaLeitura.ventoDirecaoGraus);
+        return `Vento ${de ? `de ${de}, ` : 'de '}até ${Math.round(forte.ultimaLeitura.ventoKmH)} km/h`;
+      })()
+    : resumoAlertas(o.areas, o.carregando, o.cidadeNome);
+  const n = o.casa?.nivel;
+  return n === 'atencao' || n === 'alerta' ? `${base}. Sua casa está em ${FAIXA_CASA[n]}` : base;
 }

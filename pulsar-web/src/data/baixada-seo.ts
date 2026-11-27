@@ -51,3 +51,12 @@ export function numerosDe(slug: string): { trechos: number; trechosRisco: number
 }
 
 export const ATALHOS_BAIXADA = ['santos', 'sao-vicente', 'guaruja', 'praia-grande', 'cubatao'];
+
+export interface PontoBaixada { nome: string; data: string; fonte: string }
+
+/** Pontos onde já alagou no município, do mais recente ao mais antigo (ordem do snapshot). */
+export function pontosDe(slug: string): PontoBaixada[] {
+  return (snapshot.municipios as Record<string, { pontos: PontoBaixada[] }>)[slug]?.pontos ?? [];
+}
+
+export const BAIXADA_GERADO_EM = snapshot.geradoEm;

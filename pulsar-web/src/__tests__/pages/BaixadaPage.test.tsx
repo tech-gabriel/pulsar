@@ -30,7 +30,7 @@ describe('BaixadaPage', () => {
   it('abre em Santos com os números reais', () => {
     renderBaixada();
     expect(screen.getByRole('heading', { level: 1, name: 'Vai alagar na sua cidade?' })).toBeInTheDocument();
-    expect(screen.getByText('129')).toBeInTheDocument();
+    expect(screen.getByText('129', { selector: 'p' })).toBeInTheDocument();
     expect(screen.getByText('trechos que costumam alagar, de 397 no mapa da cidade')).toBeInTheDocument();
     expect(screen.getByText('7')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Receber alertas de Santos/ })).toHaveAttribute('href', '/cadastro');
@@ -60,6 +60,20 @@ describe('BaixadaPage', () => {
   it('seletor marca a Baixada', () => {
     renderBaixada();
     expect(screen.getByRole('link', { name: 'Baixada Santista' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('seções de baixo com os dados da Baixada', () => {
+    renderBaixada();
+    expect(screen.getByText('Cada cidade com o próprio risco. Aqui, os 906 trechos que costumam alagar.')).toBeInTheDocument();
+    expect(screen.getByText('Chuva forte chegando em Santos')).toBeInTheDocument();
+    const cidades = within(screen.getByRole('navigation', { name: 'Baixada Santista' })).getAllByRole('link');
+    expect(cidades).toHaveLength(9);
+    expect(screen.getByRole('link', { name: /^Santoss?129$/ })).toHaveAttribute('href', '/risco-de-alagamento/santos');
+    expect(screen.getByText('CEMADEN')).toBeInTheDocument();
+    expect(screen.queryByText('CGE-SP')).toBeNull();
+    expect(screen.queryByText(/Fonte: GeoSampa/)).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Ainda com dúvidas?' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Criar conta grátis/ })).toBeInTheDocument();
   });
 
   it('quem está logado vai para o app', async () => {

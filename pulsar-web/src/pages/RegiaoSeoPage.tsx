@@ -4,6 +4,8 @@ import { zonas, subprefeituras, PREFIXO_REGIAO } from '../data/regioes-seo';
 import { useSeoHead } from '../hooks/useSeoHead';
 import { primeiraQueCabe } from '../utils/texto';
 import BlocoEstatisticas from '../components/seo/BlocoEstatisticas';
+import MunicipioSeoView from '../components/seo/MunicipioSeoView';
+import { BAIXADA_GERADO_EM, CIDADE_BAIXADA, getMunicipioPorSlug, numerosDe, type MunicipioSeo } from '../data/baixada-seo';
 
 const ORIGIN = 'https://app-pulsar.com.br';
 
@@ -22,8 +24,8 @@ const navH2Style = { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSiz
 const linkStyle = { color: 'var(--text-accent)', textDecoration: 'underline', textUnderlineOffset: 2 };
 
 /**
- * Página pública de SEO por zona ou subprefeitura (/risco-de-alagamento/:zona).
- * Os dois tipos dividem a mesma rota (slugs não colidem: zonas são "zona-*").
+ * Página pública de SEO por zona, subprefeitura ou município da Baixada (/risco-de-alagamento/:zona).
+ * Os três dividem a mesma rota e resolvem nessa ordem (slugs não colidem; baixada-seo.test garante).
  * Conteúdo templated + curado + snapshots, tudo em HTML estático (prerenderizado).
  * O risco AO VIVO não fica aqui: é a isca do CTA para o cadastro (deep-link).
  */
@@ -31,14 +33,19 @@ export default function RegiaoSeoPage() {
   const { zona: slug = '' } = useParams<{ zona: string }>();
   const zona = getRegiaoView(slug);
   const sub = zona ? undefined : getSubprefeituraView(slug);
+  const municipio = zona || sub ? undefined : getMunicipioPorSlug(slug);
 
   // useSeoHead precisa ser chamado incondicionalmente (regra dos hooks), então o
-  // head de todos os casos (zona, subprefeitura, não encontrada) é calculado aqui.
+  // head de todos os casos (zona, subprefeitura, município, não encontrada) é calculado aqui.
   const path = `${PREFIXO_REGIAO}/${slug}`;
-  useSeoHead({ path, ...(zona ? headZona(zona, path) : sub ? headSub(sub, path) : headNaoEncontrada()) });
+  useSeoHead({
+    path,
+    ...(zona ? headZona(zona, path) : sub ? headSub(sub, path) : municipio ? headMunicipio(municipio, path) : headNaoEncontrada()),
+  });
 
   if (zona) return <ZonaView view={zona} />;
   if (sub) return <SubprefeituraSeoView view={sub} />;
+  if (municipio) return <MunicipioSeoView municipio={municipio} />;
   return <NaoEncontrada />;
 }
 
@@ -103,6 +110,43 @@ function headSub(view: SubprefeituraView, path: string) {
           itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Início', item: `${ORIGIN}/` },
             { '@type': 'ListItem', position: 2, name: zona.nome, item: zonaUrl },
+            { '@type': 'ListItem', position: 3, name: nome, item: url },
+          ],
+        },
+      ],
+    },
+  };
+}
+
+function headMunicipio({ slug, nome, emNome }: MunicipioSeo, path: string) {
+  const { trechos, trechosRisco } = numerosDe(slug)!;
+  const title = `Risco de alagamento ${emNome}, ${CIDADE_BAIXADA.nome} · Pulsar`;
+  const descricao = `Veja onde costuma alagar ${emNome}: ${trechosRisco} de ${trechos} trechos ficam em área de risco de inundação. Receba alertas no celular quando o risco subir.`;
+  const url = `${ORIGIN}${path}`;
+  const baixadaUrl = `${ORIGIN}${CIDADE_BAIXADA.path}`;
+  return {
+    title,
+    descricao,
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebPage',
+          name: title,
+          description: descricao,
+          url,
+          dateModified: BAIXADA_GERADO_EM,
+          about: {
+            '@type': 'City',
+            name: nome,
+            containedInPlace: { '@type': 'Place', name: CIDADE_BAIXADA.nome, url: baixadaUrl },
+          },
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Início', item: `${ORIGIN}/` },
+            { '@type': 'ListItem', position: 2, name: CIDADE_BAIXADA.nome, item: baixadaUrl },
             { '@type': 'ListItem', position: 3, name: nome, item: url },
           ],
         },

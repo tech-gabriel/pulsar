@@ -9,6 +9,8 @@ import { describe, it, expect } from 'vitest';
 import { regiaoPaths } from '../../data/regioes-seo';
 import ocorrencias from '../../data/ocorrencias-snapshot.json';
 import regioesSnapshot from '../../data/regioes-snapshot.json';
+import baixadaSnapshot from '../../data/baixada-snapshot.json';
+import { municipios } from '../../data/baixada-seo';
 
 const raizWeb = process.cwd().endsWith('pulsar-web') ? process.cwd() : resolve(process.cwd(), 'pulsar-web');
 const ler = (arq: string) => readFileSync(resolve(raizWeb, arq), 'utf8');
@@ -24,5 +26,12 @@ describe('consistência das URLs de SEO', () => {
     expect(ler('react-ssg.config.ts')).toContain("'/baixada-santista'");
     expect(ler('scripts/gerar-sitemap.mjs')).toContain("loc: '/baixada-santista'");
     expect(ler('public/sitemap.xml')).toContain('<loc>https://app-pulsar.com.br/baixada-santista</loc>');
+  });
+
+  it('os 9 municípios da Baixada são prerenderizados e estão no sitemap', () => {
+    expect(Object.keys(baixadaSnapshot.municipios).sort()).toEqual(municipios.map((m) => m.slug).sort());
+    expect(ler('react-ssg.config.ts')).toMatch(/municipios\.map\(/);
+    const sitemap = ler('public/sitemap.xml');
+    for (const m of municipios) expect(sitemap).toContain(`<loc>https://app-pulsar.com.br/risco-de-alagamento/${m.slug}</loc>`);
   });
 });

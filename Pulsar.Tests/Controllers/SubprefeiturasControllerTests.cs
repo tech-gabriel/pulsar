@@ -150,6 +150,32 @@ public class SubprefeiturasControllerTests : IClassFixture<PulsarWebApplicationF
         faixas!.Select(f => f.ChuvaMm).Should().Equal(1, 2, 3, 4, 5, 6, 7, 8);
     }
 
+    [Fact]
+    public async Task Lista_TrazDirecaoDoVentoDaUltimaLeitura()
+    {
+        var token = await TokenUsuarioComumAsync();
+        var sub = (await SubprefeiturasPorNomeAsync())[7];
+        using (var escopo = _factory.Services.CreateScope())
+        {
+            var db = escopo.ServiceProvider.GetRequiredService<PulsarDbContext>();
+            db.LeiturasClimaticas.Add(new LeituraClimatica
+            {
+                SubprefeituraId = sub.Id,
+                VisibilidadeKm = 10,
+                VentoKmH = 20,
+                VentoDirecaoGraus = 300,
+                Timestamp = DateTime.UtcNow.AddYears(1),
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var resposta = await GetComTokenAsync("/api/subprefeituras", token);
+
+        using var doc = JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+        var minha = doc.RootElement.EnumerateArray().First(e => e.GetProperty("id").GetGuid() == sub.Id);
+        minha.GetProperty("ultimaLeitura").GetProperty("ventoDirecaoGraus").GetDouble().Should().Be(300);
+    }
+
     // ── helpers ────────────────────────────────────────────────────────────────
 
     private static PrevisaoClimatica Faixa(DateTime instante, double chuva) => new()

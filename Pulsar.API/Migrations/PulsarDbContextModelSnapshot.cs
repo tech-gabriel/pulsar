@@ -429,6 +429,9 @@ namespace Pulsar.API.Migrations
                     b.Property<double>("Umidade")
                         .HasColumnType("double precision");
 
+                    b.Property<double?>("VentoDirecaoGraus")
+                        .HasColumnType("double precision");
+
                     b.Property<double>("VentoKmH")
                         .HasColumnType("double precision");
 

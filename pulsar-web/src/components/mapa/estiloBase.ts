@@ -1,4 +1,4 @@
-import type { LayerSpecification, StyleSpecification } from 'maplibre-gl';
+import type { LayerSpecification, Map as MapaMapLibre, StyleSpecification } from 'maplibre-gl';
 
 // Mapa base: estilo Liberty do OpenFreeMap (grátis, sem chave) recolorido no tom do Google Maps.
 // O mapa base não é leitura de risco, por isso os tons dele moram aqui e não em utils/paleta.ts.
@@ -141,4 +141,29 @@ export function urlReservaMapTiler(tema: 'light' | 'dark', chave: string): strin
 export function comChaveMapTiler(url: string, chave: string): string {
   if (!url.startsWith('https://api.maptiler.com/') || /[?&]key=/.test(url)) return url;
   return `${url}${url.includes('?') ? '&' : '?'}key=${chave}`;
+}
+
+const baseLayers = (mapa: MapaMapLibre) => mapa.getStyle().layers.filter((l) => !l.id.startsWith('pulsar-'));
+
+/**
+ * Sobe a água do mapa base para antes de `antesDe` (por padrão o primeiro símbolo), ou seja, por cima
+ * da mancha: ela nunca borra o mar nem as represas. Idempotente (roda a cada troca de estilo base).
+ */
+export function aguaPorCima(mapa: MapaMapLibre, antesDe?: string): void {
+  const alvo = antesDe ?? baseLayers(mapa).find((l) => l.type === 'symbol')?.id;
+  for (const l of baseLayers(mapa)) {
+    if (l.type === 'fill' && /water|ocean|sea/.test(l.id)) mapa.moveLayer(l.id, alvo);
+  }
+}
+
+/** Vias expressas em cinza (o amarelo delas brigava com a mancha de Atenção); `ligado=false` devolve o tom. */
+export function viasCinza(mapa: MapaMapLibre, tema: 'light' | 'dark', ligado: boolean): void {
+  const escuro = tema === 'dark';
+  const tom = escuro ? TOM_ESCURO : TOM_CLARO;
+  for (const l of baseLayers(mapa)) {
+    if (l.type !== 'line' || !/motorway|trunk/.test(l.id)) continue;
+    const borda = /casing|outline/.test(l.id);
+    const cinza = escuro ? (borda ? '#2a2f36' : '#4b525c') : borda ? '#c7ccd3' : '#e6e8eb';
+    mapa.setPaintProperty(l.id, 'line-color', ligado ? cinza : borda ? tom.viaBorda : tom.via);
+  }
 }

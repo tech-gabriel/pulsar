@@ -8,6 +8,8 @@ import {
   urlReservaMapTiler,
   carregarEstiloBase,
   estiloBaseCompartilhado,
+  aguaPorCima,
+  viasCinza,
 } from '../../../components/mapa/estiloBase';
 
 const fixture = {
@@ -123,5 +125,60 @@ describe('carregarEstiloBase', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(fixture), { status: 200 }));
     const e = await carregarEstiloBase('light');
     expect(camada(e, 'background').paint).toMatchObject({ 'background-color': '#f6f6f4' });
+  });
+});
+
+function mapaFalso(layers: unknown[]) {
+  return {
+    getStyle: vi.fn(() => ({ layers })),
+    moveLayer: vi.fn(),
+    setPaintProperty: vi.fn(),
+  } as unknown as import('maplibre-gl').Map & { moveLayer: ReturnType<typeof vi.fn>; setPaintProperty: ReturnType<typeof vi.fn> };
+}
+
+describe('aguaPorCima', () => {
+  it('move só as camadas fill de água para antes do id dado', () => {
+    const m = mapaFalso([
+      { id: 'water', type: 'fill' },
+      { id: 'waterway', type: 'line' },
+      { id: 'park', type: 'fill' },
+      { id: 'pulsar-water-x', type: 'fill' },
+      { id: 'label', type: 'symbol' },
+    ]);
+    aguaPorCima(m, 'pulsar-mancha-1');
+    expect(m.moveLayer).toHaveBeenCalledTimes(1);
+    expect(m.moveLayer).toHaveBeenCalledWith('water', 'pulsar-mancha-1');
+  });
+
+  it('sem id, usa o primeiro símbolo do estilo base', () => {
+    const m = mapaFalso([{ id: 'water', type: 'fill' }, { id: 'pulsar-s', type: 'symbol' }, { id: 'label', type: 'symbol' }]);
+    aguaPorCima(m);
+    expect(m.moveLayer).toHaveBeenCalledWith('water', 'label');
+  });
+});
+
+describe('viasCinza', () => {
+  const layers = [
+    { id: 'road_motorway', type: 'line' },
+    { id: 'road_motorway_casing', type: 'line' },
+    { id: 'road_trunk_primary', type: 'line' },
+    { id: 'road_minor', type: 'line' },
+    { id: 'pulsar-motorway', type: 'line' },
+  ];
+
+  it('pinta de cinza só as vias expressas', () => {
+    const m = mapaFalso(layers);
+    viasCinza(m, 'light', true);
+    expect(m.setPaintProperty).toHaveBeenCalledTimes(3);
+    expect(m.setPaintProperty).toHaveBeenCalledWith('road_motorway_casing', 'line-color', '#c7ccd3');
+    expect(m.setPaintProperty).toHaveBeenCalledWith('road_motorway', 'line-color', '#e6e8eb');
+    expect(m.setPaintProperty).toHaveBeenCalledWith('road_trunk_primary', 'line-color', '#e6e8eb');
+  });
+
+  it('desligado, devolve o amarelo do tom', () => {
+    const m = mapaFalso(layers);
+    viasCinza(m, 'light', false);
+    expect(m.setPaintProperty).toHaveBeenCalledWith('road_motorway', 'line-color', TOM_CLARO.via);
+    expect(m.setPaintProperty).toHaveBeenCalledWith('road_motorway_casing', 'line-color', TOM_CLARO.viaBorda);
   });
 });

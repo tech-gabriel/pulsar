@@ -177,6 +177,8 @@ export interface ScoreDto {
 export interface LeituraDto {
   chuvaMmH: number;
   ventoKmH: number;
+  /** Graus de onde o vento VEM (0 = norte). Null/ausente = a fonte não informou. */
+  ventoDirecaoGraus?: number | null;
   visibilidadeKm: number;
   indiceUv: number;
   temperaturaC: number;

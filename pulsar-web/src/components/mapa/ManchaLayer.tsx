@@ -31,20 +31,26 @@ const BANDAS: Record<Exclude<CamadaMapa, 'chuva'>, Banda[]> = {
   vento: [0.26, 0.46, 0.5, 0.52].map((teto, banda) => ({ banda, cor: VENTO[banda], teto })),
 };
 
-// Tema escuro (4B, 28/11): sobre o fundo marinho o vermelho virava vinho e o amarelo, oliva. No
-// escuro a mancha usa o tom mais luminoso de cada cor (os 400 do Tailwind).
+// Tema escuro: o verde e a escala do Vento usam o tom mais luminoso (os 400 do Tailwind).
 const NO_ESCURO: Record<string, string> = {
-  [PALETA.riscoAmarelo]: '#FACC15',
-  [PALETA.riscoVermelho]: '#F87171',
   [PALETA.verde]: '#4ADE80',
   [PALETA.amarelo]: '#FACC15',
   [PALETA.ambar]: '#FBBF24',
   [PALETA.vermelho]: '#F87171',
 };
 
+// Atenção e Alerta no escuro (4A, 28/11): sobre o marinho, a mancha translúcida misturava com o
+// azul (amarelo virava oliva, vermelho virava vinho) e clarear o tom só deixava rosado. Fica a cor
+// do semáforo, mais opaca, com a borda curta: a faixa translúcida onde a mistura acontece é estreita.
+const TETO_ESCURO = 0.62;
+
 const rampa = (cor: string, teto: number): ExpressionSpecification => [
   'interpolate', ['linear'], ['heatmap-density'],
   0, comAlfa(cor, 0), 0.12, comAlfa(cor, 0), 0.3, comAlfa(cor, teto * 0.8), 0.5, comAlfa(cor, teto), 1, comAlfa(cor, teto),
+];
+const rampaCurta = (cor: string, teto: number): ExpressionSpecification => [
+  'interpolate', ['linear'], ['heatmap-density'],
+  0, comAlfa(cor, 0), 0.2, comAlfa(cor, 0), 0.3, comAlfa(cor, teto * 0.9), 0.45, comAlfa(cor, teto), 1, comAlfa(cor, teto),
 ];
 
 // Rampa azul do radar de chuva (peso pelos mm).
@@ -80,7 +86,9 @@ export default function ManchaLayer({ camada, pontos, idPrimeiroSimbolo, escuro 
           }}
         />
       ) : (
-        BANDAS[camada].map(({ banda, cor, teto }) => (
+        BANDAS[camada].map(({ banda, cor, teto }) => {
+          const semaforoNoEscuro = escuro && camada !== 'vento' && banda > 0;
+          return (
           <Layer
             key={banda}
             id={`pulsar-mancha-${banda}`}
@@ -91,11 +99,12 @@ export default function ManchaLayer({ camada, pontos, idPrimeiroSimbolo, escuro 
               'heatmap-weight': 1,
               'heatmap-radius': camada === 'temperatura' && banda === 0 ? RAIO_VERDE_TEMPERATURA : RAIO,
               'heatmap-intensity': INTENSIDADE,
-              'heatmap-color': rampa(escuro ? (NO_ESCURO[cor] ?? cor) : cor, teto),
-              'heatmap-opacity': camada === 'score' ? OPACIDADE_RISCO : 1,
+              'heatmap-color': semaforoNoEscuro ? rampaCurta(cor, TETO_ESCURO) : rampa(escuro ? (NO_ESCURO[cor] ?? cor) : cor, teto),
+              'heatmap-opacity': camada === 'score' && !semaforoNoEscuro ? OPACIDADE_RISCO : 1,
             }}
           />
-        ))
+          );
+        })
       )}
     </Source>
   );

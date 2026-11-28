@@ -29,11 +29,17 @@ describe('ManchaLayer', () => {
     expect(camadas[0].paint['heatmap-weight']).toEqual(['interpolate', ['linear'], ['get', 'mm'], 0, 0, 25, 0.45]);
     expect(camadas.every((c) => c.beforeId === 'rotulo')).toBe(true);
   });
-  it('no escuro usa o tom luminoso da cor (4B): o vermelho não vira vinho', () => {
+  it('no escuro, Atenção e Alerta na cor do semáforo a 62%, sem o esmaecer do zoom (4A)', () => {
     camadas.length = 0;
     render(<ManchaLayer camada="score" pontos={{ ...vazio, features: [] }} idPrimeiroSimbolo="rotulo" escuro />);
-    expect(JSON.stringify(camadas[1].paint['heatmap-color'])).toContain('248, 113, 113'); // #F87171
-    expect(JSON.stringify(camadas[1].paint['heatmap-color'])).not.toContain('214, 44, 44'); // #D62C2C
+    const alerta = JSON.stringify(camadas[1].paint['heatmap-color']);
+    expect(alerta).toContain('rgba(214, 44, 44, 0.62)'); // #D62C2C, o vermelho do semáforo
+    expect(alerta).not.toContain('248, 113, 113'); // o tom claro que deixava rosado
+    expect(camadas[1].paint['heatmap-opacity']).toBe(1);
+    // No claro segue como antes: o esmaecer do zoom e a cor do semáforo com teto 0,44.
+    ids('score');
+    expect(JSON.stringify(camadas[1].paint['heatmap-color'])).toContain('rgba(214, 44, 44, 0.44)');
+    expect(camadas[1].paint['heatmap-opacity']).not.toBe(1);
   });
 
   it('na Temperatura o verde espalha menos que o amarelo e o vermelho (6B)', () => {

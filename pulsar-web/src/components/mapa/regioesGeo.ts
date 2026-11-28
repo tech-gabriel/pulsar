@@ -8,8 +8,6 @@ export type EstadoRegiao = 'normal' | 'fora' | 'foco' | 'selecionada';
 export interface PropsRegiao {
   subId: string | null;
   nome: string;
-  fill: string;
-  fillOpacity: number;
   borda: string;
   bordaOpacidade: number;
   peso: number;
@@ -50,16 +48,16 @@ function propsDe(
   zona: string | null,
 ): PropsRegiao {
   if (!sub) {
-    return { subId: null, nome, fill: NEUTRO, fillOpacity: 0.12, borda: NEUTRO, bordaOpacidade: 0.3, peso: 1, estado: 'normal' };
+    return { subId: null, nome, borda: NEUTRO, bordaOpacidade: 0.3, peso: 1, estado: 'normal' };
   }
   const e = estiloCamada(sub, camada);
-  const base = { subId: sub.id, nome, fill: e.fillColor, fillOpacity: e.fillOpacity, borda: e.borderColor, bordaOpacidade: 0.6, peso: e.weight };
+  const base = { subId: sub.id, nome, borda: e.borderColor, bordaOpacidade: 0.6, peso: e.weight };
   const naZona = zona == null || normalizarNome(sub.zona) === zona;
 
-  if (zona != null && !naZona) return { ...base, fillOpacity: 0.05, bordaOpacidade: 0.15, peso: 1, estado: 'fora' };
+  if (zona != null && !naZona) return { ...base, bordaOpacidade: 0.15, peso: 1, estado: 'fora' };
   if (sub.id === selecionadaId) {
-    return { ...base, fillOpacity: e.fillOpacity + 0.1, borda: BRANCO, bordaOpacidade: 1, peso: 2, estado: 'selecionada' };
+    return { ...base, borda: BRANCO, bordaOpacidade: 1, peso: 2, estado: 'selecionada' };
   }
-  if (zona != null) return { ...base, fillOpacity: e.fillOpacity + 0.05, borda: BRANCO, bordaOpacidade: 0.9, peso: 2, estado: 'foco' };
+  if (zona != null) return { ...base, borda: BRANCO, bordaOpacidade: 0.9, peso: 2, estado: 'foco' };
   return { ...base, estado: 'normal' };
 }

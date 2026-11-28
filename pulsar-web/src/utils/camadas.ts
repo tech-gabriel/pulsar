@@ -48,14 +48,14 @@ function faixaTemperatura(t: number): FaixaCamada {
   return faixa(PALETA.vermelho, 0.85, 0.35);
 }
 
-function faixaChuva(c: number): FaixaCamada {
+export function faixaChuva(c: number): FaixaCamada {
   if (c <= 0) return faixa(PALETA.neutro, 0.5, 0.08);
   if (c <= 5) return faixa(PALETA.azul, 0.6, 0.22);
   if (c <= 25) return faixa(PALETA.azul, 0.8, 0.3);
   return faixa(PALETA.azulProfundo, 0.9, 0.35);
 }
 
-function faixaVento(v: number): FaixaCamada {
+export function faixaVento(v: number): FaixaCamada {
   if (v <= 20) return faixa(PALETA.neutro, 0.6, 0.15);
   if (v <= 40) return faixa(PALETA.amarelo, 0.7, 0.25);
   if (v <= 60) return faixa(PALETA.ambar, 0.8, 0.3);

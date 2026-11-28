@@ -1,6 +1,7 @@
 import type { Camada } from '../../utils/camadas';
 import { PALETA, comAlfa } from '../../utils/paleta';
 import MiniIconeOcorrencia from './MiniIconeOcorrencia';
+import { corDoAnel } from '../../features/mapa/nivel';
 
 // ── Legenda dinâmica do mapa (ETAPA 6.1/6.3) ───────────────────────────────────
 // O conteúdo (título, barra de gradiente e labels) muda conforme a camada ativa. Aparece dentro
@@ -27,9 +28,10 @@ const LEGENDAS: Record<Camada, LegendaConfig> = {
     labels: ['0', '30', '60', '100'],
   },
   temperatura: {
-    titulo: 'Temperatura °C',
-    gradiente: gradiente(PALETA.azulProfundo, PALETA.azul, PALETA.verde, PALETA.ambar, PALETA.vermelho),
-    labels: ['15°', '22°', '27°', '32°', '35°+'],
+    // O semáforo do calor do score, pela sensação térmica: Atenção acima de 32 °C, Alerta acima de 41 °C.
+    titulo: 'Sensação térmica °C',
+    gradiente: gradiente(PALETA.verde, PALETA.riscoAmarelo, PALETA.riscoVermelho),
+    labels: ['Tranquilo', '32°', '41°+'],
   },
   chuva: {
     titulo: 'Precipitação mm/h',
@@ -74,7 +76,7 @@ interface Props {
 }
 
 /** Conteúdo interno (título + barra + labels). A key força o fade ao trocar a camada. */
-function ConteudoLegenda({ config, overlayAlagamento }: { config: LegendaConfig; overlayAlagamento: boolean }) {
+function ConteudoLegenda({ config, camada, overlayAlagamento }: { config: LegendaConfig; camada: Camada; overlayAlagamento: boolean }) {
   return (
     <div key={config.titulo} className="legend-fade">
       <p style={{ ...TITULO, marginBottom: 6 }}>{config.titulo}</p>
@@ -84,6 +86,7 @@ function ConteudoLegenda({ config, overlayAlagamento }: { config: LegendaConfig;
           <span key={l} style={LABEL}>{l}</span>
         ))}
       </div>
+      <Simbolos camada={camada} cor="var(--mapa-controle-texto-suave)" />
 
       {overlayAlagamento && (
         <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid rgba(0, 188, 255, 0.15)' }}>
@@ -118,7 +121,7 @@ export default function MapLegend({ camadaAtiva, overlayAlagamento = false }: Pr
   const config = LEGENDAS[camadaAtiva];
   return (
     <div style={{ padding: "10px 14px", minWidth: 160 }} aria-label={`Legenda: ${config.titulo}`}>
-      <ConteudoLegenda config={config} overlayAlagamento={overlayAlagamento} />
+      <ConteudoLegenda config={config} camada={camadaAtiva} overlayAlagamento={overlayAlagamento} />
     </div>
   );
 }
@@ -126,10 +129,10 @@ export default function MapLegend({ camadaAtiva, overlayAlagamento = false }: Pr
 // Cartão "Como ler" do computador (escolha de 16/11/2026, opção C): abre pelo botão "i" da pílula
 // de camadas e explica a camada ativa. No risco, a barra marca onde muda a faixa e dá o nome dela.
 const COMO_LER: Record<Camada, { titulo: string; texto: string }> = {
-  score: { titulo: 'Como ler o risco', texto: 'Número de 0 a 100 em cada região, com as cores da Defesa Civil.' },
-  temperatura: { titulo: 'Como ler a temperatura', texto: 'Temperatura agora em cada região, em °C.' },
-  chuva: { titulo: 'Como ler a chuva', texto: 'Chuva agora em cada região, em milímetros por hora.' },
-  vento: { titulo: 'Como ler o vento', texto: 'Vento agora em cada região, em km/h.' },
+  score: { titulo: 'Como ler o risco', texto: 'A mancha marca onde há risco agora, nas cores da Defesa Civil. O número de cada área vai de 0 a 100.' },
+  temperatura: { titulo: 'Como ler a temperatura', texto: 'A mancha mostra a sensação térmica de cada área, nas cores da Defesa Civil.' },
+  chuva: { titulo: 'Como ler a chuva', texto: 'A mancha azul mostra a chuva da última hora, em milímetros.' },
+  vento: { titulo: 'Como ler o vento', texto: 'A mancha mostra a força do vento em cada área, em km/h.' },
 };
 
 /** Divisões das faixas do risco (ClassificacaoRisco no backend: até 30, até 60, acima). */
@@ -167,6 +170,7 @@ export function CartaoComoLer({ camadaAtiva, overlayAlagamento = false }: Props)
           {config.labels.map((l) => <span key={l}>{l}</span>)}
         </div>
       )}
+      <Simbolos camada={camadaAtiva} cor="var(--text-secondary)" />
       {overlayAlagamento && (
         <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--border-glass)' }}>
           <p style={{ font: '600 12.5px var(--font-body)', color: 'var(--text-primary)', margin: '0 0 6px' }}>Alagamentos dos últimos 12 meses</p>
@@ -182,5 +186,39 @@ export function CartaoComoLer({ camadaAtiva, overlayAlagamento = false }: Props)
         </div>
       )}
     </div>
+  );
+}
+
+// Os símbolos do mapa limpo (27/11/2026), desenhados como no mapa: pulsar, etiqueta de Alerta
+// (losango) e de Atenção (círculo), anel das suas áreas e, no vento, os tracinhos.
+const VERDE = '#22C55E';
+type Marca = 'pulsar' | 'alerta' | 'atencao' | 'anel' | 'vento';
+const MARCA: Record<Marca, React.CSSProperties> = {
+  pulsar: { width: 8, height: 8, borderRadius: '50%', background: VERDE, boxShadow: `0 0 0 3px ${comAlfa(VERDE, 0.26)}` },
+  alerta: { width: 9, height: 9, borderRadius: 2, background: PALETA.riscoVermelho, transform: 'rotate(45deg)' },
+  atencao: { width: 10, height: 10, borderRadius: '50%', background: PALETA.riscoAmarelo },
+  anel: { width: 10, height: 10, borderRadius: '50%', background: VERDE, boxShadow: `0 0 0 2px ${corDoAnel(VERDE)}` },
+  vento: { width: 14, height: 1.5, borderRadius: 1, background: 'currentColor', transform: 'rotate(-20deg)' },
+};
+
+function Simbolos({ camada, cor }: { camada: Camada; cor: string }) {
+  const itens: [Marca, string][] = [
+    ['pulsar', 'Cada ponto é uma área. De perto, mostra o número'],
+    // A Chuva não tem etiqueta: a mancha azul já diz onde chove.
+    ...(camada === 'chuva' ? [] : [['alerta', 'Área em Alerta'], ['atencao', 'Área em Atenção']] as [Marca, string][]),
+    ['anel', 'Uma das suas áreas'],
+    ...(camada === 'vento' ? [['vento', 'Para onde o vento sopra']] as [Marca, string][] : []),
+  ];
+  return (
+    <ul className="flex flex-col" style={{ gap: 5, margin: '10px 0 0', padding: 0, listStyle: 'none' }}>
+      {itens.map(([marca, texto]) => (
+        <li key={marca} className="flex items-center" style={{ gap: 8, font: '500 11.5px var(--font-body)', color: cor }}>
+          <span aria-hidden="true" className="inline-grid flex-shrink-0" style={{ width: 14, placeItems: 'center' }}>
+            <i style={{ display: 'block', ...MARCA[marca] }} />
+          </span>
+          {texto}
+        </li>
+      ))}
+    </ul>
   );
 }

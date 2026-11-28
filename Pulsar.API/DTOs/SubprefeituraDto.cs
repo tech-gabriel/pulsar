@@ -43,6 +43,7 @@ public class SubprefeituraDto
         {
             ChuvaMmH = ultimaLeitura.ChuvaMmH,
             VentoKmH = ultimaLeitura.VentoKmH,
+            VentoDirecaoGraus = ultimaLeitura.VentoDirecaoGraus,
             VisibilidadeKm = ultimaLeitura.VisibilidadeKm,
             IndiceUv = ultimaLeitura.IndiceUv,
             TemperaturaC = ultimaLeitura.TemperaturaC,

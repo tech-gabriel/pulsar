@@ -5,6 +5,7 @@ import type { LocalSalvoDto, TipoLocal } from '../../types';
 import { ROTULO_TIPO } from '../../features/locais/regras';
 import { modoDoMarcador, posicaoDaEtiqueta } from '../../features/locais/estadoLugar';
 import { tamanhoParaZoom } from './zoom';
+import { contrasteComBranco } from '../../utils/contraste';
 
 interface Props {
   lugares: LocalSalvoDto[];
@@ -13,6 +14,8 @@ interface Props {
   emAlerta?: TipoLocal[];
   /** Onde fica o círculo de score de cada subprefeitura (o centro dela), para a etiqueta não cobri-lo. */
   areas?: { id: string; longitude: number; latitude: number }[];
+  /** Cor do nível de cada área na camada (mapa limpo, 3B): o ícone inteiro fica nela. */
+  corDaArea?: Record<string, string>;
 }
 
 /**
@@ -21,7 +24,7 @@ interface Props {
  * para o lado oposto ao círculo da região (F4b-P1, opção A).
  * Só o mapa do app desenha isto: o card de compartilhar recebe outros dados.
  */
-export default function MarcadoresLugares({ lugares, onTocar, emAlerta = [], areas = [] }: Props) {
+export default function MarcadoresLugares({ lugares, onTocar, emAlerta = [], areas = [], corDaArea = {} }: Props) {
   const { current: mapRef } = useMap();
   const [zoom, setZoom] = useState(() => mapRef?.getZoom() ?? 0);
   // Lado e haste de cada etiqueta, lidos do mapa no fim de cada zoom (ler a projeção no render
@@ -65,6 +68,9 @@ export default function MarcadoresLugares({ lugares, onTocar, emAlerta = [], are
         const nome = ROTULO_TIPO[l.tipo];
         const alerta = emAlerta.includes(l.tipo);
         const { lado, haste } = posicoes[l.tipo] ?? { lado: 'direita' as const, haste: 10 };
+        const cor = corDaArea[l.subprefeituraId];
+        // Ícone gráfico pede 3:1; no amarelo o branco não chega lá.
+        const corLugar = cor ? ({ '--cor-lugar': cor, '--cor-lugar-icone': contrasteComBranco(cor) < 3 ? '#3a2e00' : '#fff' } as React.CSSProperties) : undefined;
         // Na etiqueta, o pé (9 px) é a ponta do lado âncora: meio pé para fora deixa o centro dele no ponto exato.
         const ancora = modo === 'ponto' ? 'center' : lado === 'direita' ? 'left' : 'right';
         const desvio: [number, number] = modo === 'ponto' ? [0, 0] : [lado === 'direita' ? -4.5 : 4.5, 0];
@@ -75,7 +81,7 @@ export default function MarcadoresLugares({ lugares, onTocar, emAlerta = [], are
             // Acima dos círculos de score (que são Markers sem ponteiro).
             style={{ zIndex: 2 }}>
             <button type="button" className="lugar-marcador" data-modo={modo} data-lugar={l.tipo} data-lado={lado}
-              data-alerta={alerta ? '' : undefined}
+              data-alerta={alerta ? '' : undefined} style={corLugar}
               aria-label={`${nome}, ${l.rotulo}.${alerta ? ' Alagamento na região.' : ''} Ver chuva e risco`}
               onClick={(e) => { e.stopPropagation(); onTocar(l.tipo); }}>
               {modo === 'ponto' ? (

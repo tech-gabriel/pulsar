@@ -1,8 +1,8 @@
 import { lazy, Suspense, useState } from 'react';
 import type { FeatureCollection, GeoJsonObject, Polygon } from 'geojson';
-import type { LocalSalvoDto, OcorrenciaAlagamentoDto, SubprefeituraMapaDto, TipoLocal } from '../../types';
+import type { CelulaAgoraDto, LocalSalvoDto, OcorrenciaAlagamentoDto, SubprefeituraMapaDto, TipoLocal } from '../../types';
 import type { PontoCritico } from '../../features/cidade/pontosCriticos';
-import type { PropsTrecho } from '../../features/cidade/trechos';
+import type { PropsTrecho, Trecho } from '../../features/cidade/trechos';
 import type { Camada } from '../../utils/camadas';
 import { temWebGL } from './webgl';
 import { estiloBaseCompartilhado, URL_OPENFREEMAP } from './estiloBase';
@@ -60,6 +60,13 @@ export interface PropsMapa {
   pontoMedida?: { lat: number; lon: number; rotulo: string } | null;
   /** Avisa quando o mapa chega perto o bastante para os trechos (só então vale baixar os dados). */
   onPerto?: (perto: boolean) => void;
+  /** Risco de cada trecho agora, de longe também: alimenta a mancha (mapa limpo). */
+  celulas?: CelulaAgoraDto[] | null;
+  trechosAgora?: Map<string, Trecho> | null;
+  /** Centro de cada trecho (arquivo leve gerado no build), para a mancha e o vento. */
+  centros?: Record<string, [number, number]> | null;
+  /** Áreas acompanhadas: o pulsar ganha o anel de perto. */
+  favoritas?: Set<string>;
 }
 
 // O MapLibre (e o worker dele) vêm num chunk próprio: a página, o painel e a busca aparecem antes.

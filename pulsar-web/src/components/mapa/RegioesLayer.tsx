@@ -5,35 +5,30 @@ import type { ExpressionSpecification, LngLat, MapLayerMouseEvent } from 'maplib
 import maplibregl from './maplibre';
 import type { SubprefeituraMapaDto } from '../../types';
 import type { Camada } from '../../utils/camadas';
-import { usePrefereMenosMovimento } from '../../hooks/usePrefereMenosMovimento';
+import { useTheme } from '../../hooks/useTheme';
 import { montarRegioes } from './regioesGeo';
 import { deslocamentoDoPainel, paddingDoPainel } from './geometria';
 import { tooltipSubprefeituraHtml } from './tooltipSub';
-import { ZOOM, ZOOM_TRECHOS } from './zoom';
+import { ZOOM } from './zoom';
 import { ID_TRECHOS_FILL } from './TrechosLayer';
 import { criarRepouso } from './repouso';
 import { CAMADAS_TOQUE_POR_CIMA } from './camadasPorCima';
 
 export const ID_FONTE_REGIOES = 'pulsar-regioes';
-const FILL = 'pulsar-regioes-fill';
+/** A mancha entra antes desta camada, e a água do mapa base sobe para logo antes dela. */
+export const ID_REGIOES_FILL = 'pulsar-regioes-fill';
+const FILL = ID_REGIOES_FILL;
 const BORDA = 'pulsar-regioes-borda';
 const SEL = 'pulsar-regioes-sel';
 /** Camadas que, quando tocadas, não selecionam a subprefeitura de baixo (alagamentos e trechos). */
 const CAMADAS_POR_CIMA = [...CAMADAS_TOQUE_POR_CIMA, ID_TRECHOS_FILL];
 
 const HOVER: ExpressionSpecification = ['boolean', ['feature-state', 'hover'], false];
-const BASE_FILL: ExpressionSpecification = ['+', ['get', 'fillOpacity'], ['case', HOVER, 0.15, 0]];
-// O risco some conforme o zoom chega na rua: igual até z11, ~0,06 em z14 (0,28 × 0,214).
-const OPACIDADE_BORDA: ExpressionSpecification = ['case', HOVER, 1, ['get', 'bordaOpacidade']];
-const OPACIDADE_FILL: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], 11, BASE_FILL, 14, ['*', BASE_FILL, 0.214]];
-// Com os trechos no mapa, o preenchimento da área some enquanto eles surgem; contorno e nome ficam.
-const OPACIDADE_FILL_COM_TRECHOS: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], ZOOM_TRECHOS.de, BASE_FILL, ZOOM_TRECHOS.ate, 0];
-
-// Borda "andando" da selecionada (marching ants), como no exemplo de dasharray animado do MapLibre.
-const PASSOS_TRACEJADO: number[][] = [
-  [0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0],
-  [0, 0.5, 3, 3.5], [0, 1, 3, 3], [0, 1.5, 3, 2.5], [0, 2, 3, 2], [0, 2.5, 3, 1.5], [0, 3, 3, 1], [0, 3.5, 3, 0.5],
-];
+const FILL_TOQUE = { 'fill-color': '#000000', 'fill-opacity': 0 } as const;
+// Divisa fina tracejada; a selecionada ganha um contorno firme e parado (sem animação).
+const LARGURA_DIVISA: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], 9, 0.8, 13, 1.4];
+const LARGURA_SEL: ExpressionSpecification = ['interpolate', ['linear'], ['zoom'], 9, 1.8, 13, 3];
+const OPACIDADE_DIVISA: ExpressionSpecification = ['case', HOVER, 1, ['==', ['get', 'estado'], 'fora'], 0.3, 0.7];
 
 interface Props {
   geojson: FeatureCollection;
@@ -43,13 +38,11 @@ interface Props {
   camadaAtiva: Camada;
   zonaEmFoco: string | null;
   idPrimeiroSimbolo: string | undefined;
-  /** Trechos desenhados por cima: de perto, a área fica só no contorno. */
-  comTrechos?: boolean;
 }
 
-export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, idPrimeiroSimbolo, comTrechos = false }: Props) {
+export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, onSelecionarSub, camadaAtiva, zonaEmFoco, idPrimeiroSimbolo }: Props) {
   const { current: mapRef } = useMap();
-  const menosMovimento = usePrefereMenosMovimento();
+  const escuro = useTheme().theme === 'dark';
   const dados = useMemo(
     () => montarRegioes(geojson, subprefeituras, camadaAtiva, subSelecionada?.id ?? null, zonaEmFoco),
     [geojson, subprefeituras, camadaAtiva, subSelecionada, zonaEmFoco],
@@ -143,55 +136,24 @@ export default function RegioesLayer({ geojson, subprefeituras, subSelecionada, 
     };
   }, [mapRef]);
 
-  // Animações: borda da selecionada andando e pulso da borda da região em foco. Só rodam quando há
-  // o que animar: o laço repinta o mapa a cada quadro e, ligado à toa, gasta bateria e nunca deixa
-  // o mapa ficar ocioso.
-  const animar = !menosMovimento && (subSelecionada != null || zonaEmFoco != null);
-  useEffect(() => {
-    const mapa = mapRef?.getMap();
-    if (!mapa || !animar) return;
-    let quadro = 0;
-    let ultimo = -1;
-    const tique = (t: number) => {
-      const passo = Math.floor(t / 70);
-      if (passo !== ultimo && mapa.style && mapa.getLayer(SEL) && mapa.getLayer(BORDA)) {
-        ultimo = passo;
-        mapa.setPaintProperty(SEL, 'line-dasharray', PASSOS_TRACEJADO[passo % PASSOS_TRACEJADO.length]);
-        const pulso = 0.8 + 0.2 * Math.sin((t / 1400) * 2 * Math.PI);
-        mapa.setPaintProperty(BORDA, 'line-opacity', ['case', HOVER, 1, ['==', ['get', 'estado'], 'foco'], pulso, ['get', 'bordaOpacidade']]);
-      }
-      quadro = requestAnimationFrame(tique);
-    };
-    quadro = requestAnimationFrame(tique);
-    return () => {
-      cancelAnimationFrame(quadro);
-      // Volta a borda ao valor fixo (o pulso deixou um número no lugar da expressão).
-      // Ao sair da página o <Map> pai já destruiu o mapa (sem style): só restaura se ainda existe.
-      if (mapa.style && mapa.getLayer(BORDA)) mapa.setPaintProperty(BORDA, 'line-opacity', OPACIDADE_BORDA);
-    };
-  }, [mapRef, animar]);
-
   return (
     <Source id={ID_FONTE_REGIOES} type="geojson" data={dados}>
-      <Layer id={FILL} type="fill" beforeId={idPrimeiroSimbolo} paint={{ 'fill-color': ['get', 'fill'], 'fill-opacity': comTrechos ? OPACIDADE_FILL_COM_TRECHOS : OPACIDADE_FILL }} />
+      <Layer id={FILL} type="fill" beforeId={idPrimeiroSimbolo} paint={FILL_TOQUE} />
       <Layer
         id={BORDA}
         type="line"
         beforeId={idPrimeiroSimbolo}
         filter={['!=', ['get', 'estado'], 'selecionada']}
         layout={{ 'line-join': 'round' }}
-        paint={{
-          'line-color': ['case', HOVER, 'rgba(255,255,255,0.6)', ['get', 'borda']],
-          'line-opacity': OPACIDADE_BORDA,
-          'line-width': ['case', HOVER, 2.5, ['get', 'peso']],
-        }}
+        paint={{ 'line-color': escuro ? 'rgba(169,205,230,.7)' : 'rgba(51,65,85,.7)', 'line-opacity': OPACIDADE_DIVISA, 'line-width': LARGURA_DIVISA, 'line-dasharray': [3, 2] }}
       />
       <Layer
         id={SEL}
         type="line"
         beforeId={idPrimeiroSimbolo}
         filter={['==', ['get', 'estado'], 'selecionada']}
-        paint={{ 'line-color': '#ffffff', 'line-width': 2, 'line-dasharray': [2, 2] }}
+        layout={{ 'line-join': 'round' }}
+        paint={{ 'line-color': escuro ? '#F0F9FF' : '#0F172A', 'line-opacity': 0.9, 'line-width': LARGURA_SEL }}
       />
     </Source>
   );

@@ -42,6 +42,7 @@ public class ClimateService : IClimateService
             SubprefeituraId = subprefeituraId,
             ChuvaMmH = dados.ChuvaMmH,
             VentoKmH = dados.VentoKmH,
+            VentoDirecaoGraus = dados.VentoDirecaoGraus,
             VisibilidadeKm = dados.VisibilidadeKm > 0 ? dados.VisibilidadeKm : 10.0,
             IndiceUv = dados.IndiceUv,
             TemperaturaC = dados.TemperaturaC,

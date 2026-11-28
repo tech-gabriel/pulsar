@@ -25,6 +25,38 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    versao: '1.39.0',
+    data: '2026-11-28',
+    resumo: 'Um mapa mais limpo.',
+    itens: [
+      {
+        tipo: 'novo',
+        titulo: 'Mapa mais limpo',
+        descricao: 'As regiões não são mais pintadas inteiras. O risco aparece como uma mancha onde ele está, e cada área vira um ponto com a nota. Áreas em atenção ou alerta ganham uma etiqueta com o motivo, como "38 mm em 3 h".',
+      },
+      {
+        tipo: 'novo',
+        titulo: 'Vento em movimento',
+        descricao: 'Na camada Vento, tracinhos mostram para onde o vento sopra, e o cartão de baixo diz de onde ele vem, como "Vento de noroeste, até 61 km/h".',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Casa e trabalho no mapa',
+        descricao: 'Quando a região da sua casa ou do trabalho entra em atenção ou alerta, o ícone ganha a cor do risco e o cartão de baixo avisa.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Temperatura pela sensação térmica',
+        descricao: 'A camada Temperatura usa as cores da Defesa Civil: atenção acima de 32 °C de sensação e alerta acima de 41 °C.',
+      },
+      {
+        tipo: 'melhoria',
+        titulo: 'Mapa parado não redesenha a tela',
+        descricao: 'Sem ninguém mexer, o mapa fica quieto, sem animação gastando bateria.',
+      },
+    ],
+  },
+  {
     versao: '1.38.1',
     data: '2026-11-27',
     itens: [
